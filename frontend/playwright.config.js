@@ -9,7 +9,10 @@ import { defineConfig, devices } from '@playwright/test'
 // on its own ports so it doesn't collide with a running `make dev`.
 const PORT = 8765
 const MTX = resolve('../.tools/mediamtx')
-export const KINO = existsSync(MTX)
+// E2E_BASE_URL points the suite at an already running stack (e.g. docker compose)
+// instead of starting servers; E2E_KINO=1 says that stack has a media server.
+const EXTERNAL = process.env.E2E_BASE_URL
+export const KINO = EXTERNAL ? process.env.E2E_KINO === '1' : existsSync(MTX)
 const db = join(tmpdir(), `screenmates-e2e-${Date.now()}.db`)
 const python = process.env.PYTHON || (existsSync('../backend/.venv/bin/python') ? '.venv/bin/python' : 'python')
 
@@ -50,10 +53,10 @@ export default defineConfig({
   retries: process.env.CI ? 1 : 0,
   reporter: process.env.CI ? 'github' : 'list',
   use: {
-    baseURL: `http://127.0.0.1:${PORT}`,
+    baseURL: EXTERNAL || `http://127.0.0.1:${PORT}`,
     trace: 'retain-on-failure',
     ...devices['Desktop Chrome'],
     viewport: { width: 1400, height: 900 },
   },
-  webServer: KINO ? [backend, mediamtx] : [backend],
+  webServer: EXTERNAL ? [] : KINO ? [backend, mediamtx] : [backend],
 })
