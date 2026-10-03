@@ -9,7 +9,7 @@ from fastapi.staticfiles import StaticFiles
 from . import tmdb
 from .config import settings
 from .db import init_db
-from .routers import catalog, features, lists, misc, users, watched
+from .routers import catalog, features, kino, lists, misc, users, watched
 from .seed import seed_if_empty
 
 __version__ = "0.2.0"
@@ -40,7 +40,7 @@ async def tmdb_error(_: Request, exc: tmdb.TMDBError):
     return JSONResponse({"detail": str(exc)}, status_code=502)
 
 
-for r in (catalog.router, users.router, watched.router, lists.router, features.router, misc.router):
+for r in (catalog.router, users.router, watched.router, lists.router, features.router, misc.router, kino.router):
     app.include_router(r)
 
 

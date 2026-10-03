@@ -159,6 +159,22 @@ class AppMeta(SQLModel, table=True):
     last_sync: datetime | None = None
 
 
+class KinoState(SQLModel, table=True):
+    """Singleton (id=1) for the live "Kino": what's on air and the secrets for MediaMTX.
+
+    `secret` authenticates the backend's own WHIP/WHEP requests to MediaMTX;
+    `obs_key` is the stream key the host pastes into OBS. Both never leave the
+    server except the OBS key, which only the host can see.
+    """
+
+    id: int | None = Field(default=1, primary_key=True)
+    secret: str = ""
+    obs_key: str = ""
+    titel: str = ""
+    movie_id: int | None = None
+    gestartet: datetime | None = None
+
+
 class Info(SQLModel, table=True):
     """Singleton (id=1) markdown info panel."""
 

@@ -15,7 +15,7 @@ from sqlmodel import Session, SQLModel  # noqa: E402
 from app.config import settings  # noqa: E402
 from app.db import engine  # noqa: E402
 from app.main import app  # noqa: E402
-from app.routers import misc, users  # noqa: E402
+from app.routers import kino, misc, users  # noqa: E402
 
 
 @pytest.fixture
@@ -24,6 +24,8 @@ def client():
     SQLModel.metadata.drop_all(engine)
     users._fails.clear()
     misc._host_fails.clear()
+    kino._presence.clear()
+    kino._audience.clear()
     with TestClient(app) as c:
         yield c
 
@@ -38,6 +40,12 @@ def browser(client):
 def db(client):
     with Session(engine) as s:
         yield s
+
+
+@pytest.fixture
+def kino_on(monkeypatch):
+    monkeypatch.setattr(settings, "mediamtx_webrtc_url", "http://mtx:8889")
+    monkeypatch.setattr(settings, "mediamtx_api_url", "http://mtx:9997")
 
 
 @pytest.fixture
