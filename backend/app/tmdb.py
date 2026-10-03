@@ -123,6 +123,10 @@ def normalise(raw: dict[str, Any]) -> dict[str, Any]:
         "popularity": raw.get("popularity") or 0.0,
         "genres": json.dumps(genres, ensure_ascii=False),
         "collection": collection.get("name", "") if isinstance(collection, dict) else "",
+        # only details carry keywords; "" leaves what we already have untouched
+        "keywords": json.dumps([k["name"] for k in raw["keywords"].get("keywords", [])], ensure_ascii=False)
+        if isinstance(raw.get("keywords"), dict)
+        else "",
     }
 
 
@@ -132,7 +136,7 @@ async def search(query: str, page: int = 1) -> list[dict[str, Any]] | None:
 
 
 async def details(movie_id: int) -> dict[str, Any] | None:
-    data = await _get(f"/movie/{movie_id}")
+    data = await _get(f"/movie/{movie_id}", {"append_to_response": "keywords"})
     return normalise(data) if data else None
 
 

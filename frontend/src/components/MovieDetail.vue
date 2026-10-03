@@ -10,6 +10,7 @@ import Icon from './Icon.vue'
 import Modal from './Modal.vue'
 import Poster from './Poster.vue'
 import WatchedEntry from './WatchedEntry.vue'
+import WemGefaellts from './WemGefaellts.vue'
 import WoLaeuft from './WoLaeuft.vue'
 
 const app = useApp()
@@ -139,6 +140,8 @@ function person(p) {
       <p class="overview">{{ film.overview || 'Keine Beschreibung vorhanden.' }}</p>
 
       <WoLaeuft v-if="anbieter" :anbieter="anbieter" />
+
+      <WemGefaellts :movie-id="film.id" />
 
       <template v-if="abende.length">
         <h3 class="section-title">Eure Bewertung</h3>

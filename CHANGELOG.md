@@ -1,5 +1,23 @@
 # Changelog
 
+## Unveröffentlicht
+
+### Neu
+- **„Wem gefällt's?"** in jeder Filmansicht: geschätzte Sterne pro Person aus ihren eigenen
+  Bewertungen, mit Begründung („wie Freitag der 13., ★ 5"). Ab 8 Bewertungen, bis 25 als „erste
+  Tendenz". Im Rückblick-Test bis zu 20 % genauer als der Durchschnitt der Person. Was die
+  Prognose kann und was nicht, steht in `docs/PROGNOSE.md`.
+- **Termin und Einladung:** Datum und Ort für den nächsten Abend. „Einladen" erzeugt eine Karte
+  als Bild (Termin, Poster der Vorschläge ohne Veto, wer dabei ist) und einen Text mit Link. Auf
+  dem Handy geht beides direkt ins Teilen-Menü, sonst Bild speichern und Text kopieren.
+- **„Heute vor einem Jahr":** Auf dem Filmabend erscheint, was ihr um dieses Datum in früheren
+  Jahren geschaut habt, mit euren Sternen und dem beliebtesten Kommentar.
+
+### Betrieb
+- Erste echte Migration (`0002`): Tabelle `abend` und Spalte `movie.keywords`. Fehlende Stichworte
+  älterer Filme holt die Prognose nach und nach aus TMDB (höchstens 30 pro Anfrage).
+- `scripts/prognose-backtest.py` misst die Prognose an echten TMDB-Filmen.
+
 ## 0.4.0 – 2026-10-03
 
 Der **Filmabend wird persönlicher**: Wo läuft der Film, wer hat welches Abo, wie fand ihn wer –

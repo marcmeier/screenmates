@@ -10,9 +10,10 @@ Gästebuch nachdiskutieren.
 
 Drei Bereiche für die drei Dinge, für die man herkommt:
 
-- **Filmabend** – wer ist dabei, gerankte Vorschläge der Gruppe, ein **Veto** pro Person,
+- **Filmabend** – wer ist dabei, **Termin und Einladungskarte** für den Gruppenchat, gerankte
+  Vorschläge der Gruppe, ein **Veto** pro Person,
   ein **Glücksrad**, dessen Felder nach Stimmen gewichtet sind, Hausregeln & Infos und ein
-  Aktivitäts-Feed.
+  Aktivitäts-Feed. Dazu **„Heute vor einem Jahr"**: was ihr um dieses Datum früher geschaut habt.
 - **Finden** – *ein* Suchfeld für alles: Leer zeigt es Horror nach Subgenre, Jahrzehnt, Note
   und Länge – auf Wunsch nur, was **bei uns im Abo läuft** –, getippt findet es Filme und Personen (mit Horror-Filmografie), und **„KI fragen“**
   macht aus „langsamer Folk-Horror, aber nicht zu brutal“ passende, real existierende Filme.
@@ -24,7 +25,8 @@ Drei Bereiche für die drei Dinge, für die man herkommt:
   Zuschauenden. Danach trägt ein Klick den Film als gesehen ein, mit allen, die dabei waren.
 
 Dazu: eine Detailansicht mit Trailer, **„Wo läuft's?“** (Abo, leihen, kaufen; Abos der Gruppe
-zuerst), Besetzung, ähnlichen Filmen und euren Bewertungen; **Wünsche & Ideen** mit Voting
+zuerst), **„Wem gefällt's?"** (geschätzte Sterne pro Person aus den eigenen Bewertungen, siehe
+[`docs/PROGNOSE.md`](docs/PROGNOSE.md)), Besetzung, ähnlichen Filmen und euren Bewertungen; **Wünsche & Ideen** mit Voting
 und **Film als Passwort** – keine Accounts: Man wählt seinen Namen und schützt ihn optional
 mit einem Film, den man beim Anmelden anklicken muss. Wer den Host-Film kennt, wird Host
 (`Strg+Shift+H`) und verwaltet Katalog und Gruppe.
@@ -145,7 +147,7 @@ Doku unter `/docs`, wenn das Backend läuft.
 
 ```bash
 make lint        # ruff + eslint
-make test        # 92 Backend-Tests + 28 Playwright-E2E-Schritte gegen das echte Backend
+make test        # 106 Backend-Tests + 31 Playwright-E2E-Schritte gegen das echte Backend
                  # (die 5 Kino-Schritte mit echtem MediaMTX, falls installiert)
 ```
 
