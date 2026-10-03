@@ -12,7 +12,7 @@ from .db import init_db
 from .routers import abend, catalog, features, kino, lists, misc, users, watched
 from .seed import seed_if_empty
 
-__version__ = "0.4.0"
+__version__ = "0.5.0"
 
 
 @asynccontextmanager
