@@ -128,10 +128,12 @@ def _one(db: DBSession, w: Watched) -> dict:
 
 
 @router.get("/watched")
-def list_watched(alle: bool = False, db: DBSession = Depends(get_session)):
+def list_watched(alle: bool = False, movie_id: int | None = None, db: DBSession = Depends(get_session)):
     stmt = select(Watched).order_by(col(Watched.watched_at).desc())
     if not alle:
         stmt = stmt.where(col(Watched.hidden).is_(False))
+    if movie_id is not None:  # the film's evenings, newest first (detail sheet)
+        stmt = stmt.where(Watched.movie_id == movie_id)
     return {"watched": _payload(db, list(db.exec(stmt).all()))}
 
 

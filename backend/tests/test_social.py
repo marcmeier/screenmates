@@ -197,3 +197,13 @@ def test_sync_upserts_canon(client, tmdb_on):
     status = client.get("/api/status").json()
     assert status["movie_count"] == 15
     assert status["last_sync"] is not None
+
+
+def test_watched_can_be_filtered_by_film(client):
+    login(client, "marc")
+    client.post("/api/watched", json={"movie_id": 694})
+    client.post("/api/watched", json={"movie_id": 348})
+    client.post("/api/watched", json={"movie_id": 694})  # watched twice
+    entries = client.get("/api/watched", params={"movie_id": 694}).json()["watched"]
+    assert [e["movie_id"] for e in entries] == [694, 694]
+    assert client.get("/api/watched", params={"movie_id": 9552}).json()["watched"] == []

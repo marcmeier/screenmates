@@ -103,7 +103,7 @@ test('rating: the n-th star gives n stars', async () => {
   await page.getByRole('navigation', { name: 'Liste' }).getByRole('link', { name: /Gesehen/ }).click()
   await expect(page.locator('.entry h3')).toContainText(page.winner)
   await page.getByRole('radio', { name: '3 von 5 Sternen' }).click()
-  await expect(page.locator('.avg .num')).toHaveText('3.0')
+  await expect(page.locator('.avg .num')).toHaveText('3,0')
 })
 
 test('guestbook threads replies', async () => {
@@ -113,6 +113,45 @@ test('guestbook threads replies', async () => {
   await page.getByLabel('Antwort').fill('Absolut')
   await page.locator('.reply').getByRole('button', { name: 'Senden' }).click()
   await expect(page.locator('.note.nested')).toContainText('Absolut')
+})
+
+test('a watched film can be rated and discussed right in its detail sheet', async () => {
+  await page.getByRole('button', { name: `${page.winner} – Details` }).first().click()
+  const sheet = page.getByRole('dialog', { name: page.winner })
+  await expect(sheet.getByRole('heading', { name: 'Eure Bewertung' })).toBeVisible()
+  await expect(sheet.locator('.ours')).toHaveText('Ihr: ★ 3,0') // the rating given in the chronicle
+  await sheet.getByRole('radio', { name: '5 von 5 Sternen' }).click()
+  await expect(sheet.locator('.ours')).toHaveText('Ihr: ★ 5,0')
+  await sheet.getByLabel('Kommentar', { exact: true }).fill('Aus der Detailansicht')
+  await sheet.locator('form.add').getByRole('button', { name: 'Senden' }).click()
+  await expect(sheet.locator('.note p', { hasText: 'Aus der Detailansicht' })).toBeVisible()
+  await page.keyboard.press('Escape')
+  // same data in the chronicle
+  await expect(page.locator('main .entry .note p', { hasText: 'Aus der Detailansicht' })).toBeVisible()
+  await expect(page.locator('main .entry .avg .num')).toHaveText('5,0')
+})
+
+test('films not seen yet have no rating section', async () => {
+  await nav('Finden')
+  await page.getByRole('button', { name: 'Hereditary – Das Vermächtnis – Details' }).click()
+  const sheet = page.getByRole('dialog', { name: /Hereditary/ })
+  await expect(sheet.getByText('Ähnliche Filme')).toBeVisible()
+  await expect(sheet.getByRole('heading', { name: 'Eure Bewertung' })).toHaveCount(0)
+  await page.keyboard.press('Escape')
+})
+
+test('the sidebar folds to icons and remembers it', async () => {
+  const sidebar = page.locator('.sidebar')
+  const wide = (await sidebar.boundingBox()).width
+  await page.getByRole('button', { name: 'Leiste einklappen' }).click()
+  await expect.poll(async () => (await sidebar.boundingBox()).width).toBeLessThan(90)
+  // still fully usable: links keep their names (for tooltips and screen readers)
+  await nav('Unsere Filme')
+  await expect(page.getByRole('heading', { name: 'Unsere Filme' })).toBeVisible()
+  await page.reload()
+  await expect.poll(async () => (await page.locator('.sidebar').boundingBox()).width).toBeLessThan(90)
+  await page.getByRole('button', { name: 'Leiste ausklappen' }).click()
+  await expect.poll(async () => (await page.locator('.sidebar').boundingBox()).width).toBe(wide)
 })
 
 test('wishes can be voted on', async () => {

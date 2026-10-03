@@ -3,14 +3,15 @@ import { computed, ref } from 'vue'
 import { api } from '../api'
 import { useApp } from '../stores/app'
 import { useUi } from '../stores/ui'
-import { datum } from '../format'
+import { datum, dezimal } from '../format'
 import Icon from './Icon.vue'
 import Kommentar from './Kommentar.vue'
 import Poster from './Poster.vue'
 import StarRating from './StarRating.vue'
 import UserAvatar from './UserAvatar.vue'
 
-const props = defineProps({ entry: { type: Object, required: true } })
+// `kompakt`: inside a film's detail sheet, where poster and title are already shown.
+const props = defineProps({ entry: { type: Object, required: true }, kompakt: Boolean })
 const emit = defineEmits(['update', 'removed'])
 const app = useApp()
 const ui = useUi()
@@ -22,7 +23,13 @@ const myRating = computed(() => props.entry.ratings.find((r) => r.user_id === ap
 const others = computed(() => props.entry.ratings.filter((r) => r.user_id !== app.me?.id))
 const dateValue = computed(() => props.entry.watched_at.slice(0, 10))
 
-const update = (p) => p.then((e) => emit('update', e))
+// Update this card at once, and tell every other view showing the same evening
+// (the chronicle behind an open detail sheet, the sheet itself) to refresh.
+const update = (p) =>
+  p.then((e) => {
+    emit('update', e)
+    ui.changed()
+  })
 
 function rate(stars) {
   update(api.post(`/api/watched/${props.entry.id}/rating`, { stars }))
@@ -74,16 +81,17 @@ async function remove() {
 </script>
 
 <template>
-  <article class="entry" :class="{ hidden: entry.hidden }">
-    <button class="cover" :aria-label="`${m?.title} – Details`" @click="m && ui.open(m)">
+  <article class="entry" :class="{ hidden: entry.hidden, kompakt }">
+    <button v-if="!kompakt" class="cover" :aria-label="`${m?.title} – Details`" @click="m && ui.open(m)">
       <Poster v-if="m" :movie="m" />
     </button>
 
     <div class="body">
       <header class="head">
         <div>
-          <h3>{{ m?.title }} <span class="muted year">{{ m?.year }}</span></h3>
+          <h3 v-if="!kompakt">{{ m?.title }} <span class="muted year">{{ m?.year }}</span></h3>
           <div class="row sub">
+            <span v-if="kompakt" class="muted">Geschaut am</span>
             <input v-if="editDate" type="date" :value="dateValue" autofocus aria-label="Datum" @change="setDate" @blur="editDate = false" />
             <button v-else class="ghost small date" :disabled="!app.me" title="Datum ändern" @click="editDate = true">
               {{ datum(entry.watched_at) }}
@@ -94,7 +102,7 @@ async function remove() {
           </div>
         </div>
         <div v-if="entry.rating_avg" class="avg" :title="`${entry.ratings.length} Bewertungen`">
-          <span class="num">{{ entry.rating_avg.toFixed(1) }}</span><span class="muted">/5</span>
+          <span class="num">{{ dezimal(entry.rating_avg) }}</span><span class="muted">/5</span>
         </div>
       </header>
 
@@ -170,4 +178,6 @@ h3 { margin: 0; font-size: 1.15rem; }
 .add { display: flex; gap: 0.5rem; margin-top: 0.8rem; }
 .host { margin-top: 0.8rem; justify-content: flex-end; }
 @media (max-width: 600px) { .entry { grid-template-columns: 70px minmax(0, 1fr); } }
+.entry.kompakt { grid-template-columns: minmax(0, 1fr); background: transparent; border: none; padding: 0; }
+.entry.kompakt .sub { margin-top: 0; }
 </style>

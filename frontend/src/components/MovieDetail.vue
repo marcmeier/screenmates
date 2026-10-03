@@ -5,10 +5,11 @@ import { useApp } from '../stores/app'
 import { useUi } from '../stores/ui'
 import { useMovieActions } from '../composables/useMovieActions'
 import { navigate } from '../composables/useRoute'
-import { laufzeit } from '../format'
+import { laufzeit, dezimal } from '../format'
 import Icon from './Icon.vue'
 import Modal from './Modal.vue'
 import Poster from './Poster.vue'
+import WatchedEntry from './WatchedEntry.vue'
 
 const app = useApp()
 const ui = useUi()
@@ -17,7 +18,26 @@ const { toggleMerken, toggleVorschlag, alsGesehen, istVorgeschlagen } = useMovie
 const film = ref(null)
 const credits = ref({ cast: [], crew: [] })
 const similar = ref([])
+const abende = ref([]) // our watched entries for this film, newest first
 let ctrl = null
+
+// Ratings and guestbook belong where people look at a film, not only in "Gesehen".
+async function ladeAbende(id = film.value?.id) {
+  if (!id) return
+  abende.value = (await api.get(`/api/watched?movie_id=${id}`, { quiet: true }).catch(() => ({ watched: [] }))).watched
+}
+watch(() => ui.changes, () => ladeAbende())
+
+function ersetze(entry) {
+  const i = abende.value.findIndex((e) => e.id === entry.id)
+  if (i >= 0) abende.value[i] = entry
+}
+
+// Average over every evening and every person, like the group's own score.
+const unserSchnitt = computed(() => {
+  const stars = abende.value.flatMap((e) => e.ratings.map((r) => r.stars))
+  return stars.length ? { wert: dezimal(stars.reduce((a, b) => a + b, 0) / stars.length), n: stars.length } : null
+})
 
 watch(
   () => ui.detail,
@@ -30,6 +50,8 @@ watch(
     film.value = m
     credits.value = { cast: [], crew: [] }
     similar.value = []
+    abende.value = []
+    ladeAbende(m.id)
     const [full, c, s] = await Promise.allSettled([
       api.get(`/api/movies/${m.id}`, { signal, quiet: true }),
       api.get(`/api/movies/${m.id}/credits`, { signal, quiet: true }),
@@ -65,7 +87,8 @@ function person(p) {
         <div class="row facts">
           <span v-if="film.year">{{ film.year }}</span>
           <span v-if="film.runtime">{{ laufzeit(film.runtime) }}</span>
-          <span v-if="film.vote_average" class="gold">★ {{ film.vote_average.toFixed(1) }} <span class="muted">({{ film.vote_count }})</span></span>
+          <span v-if="film.vote_average" class="gold" title="Bewertung bei TMDB">★ {{ dezimal(film.vote_average) }} <span class="muted">({{ film.vote_count }})</span></span>
+          <span v-if="unserSchnitt" class="ours" :title="`${unserSchnitt.n} Bewertungen aus eurer Gruppe`">Ihr: ★ {{ unserSchnitt.wert }}</span>
           <span v-for="g in film.genres" :key="g" class="chip">{{ g }}</span>
         </div>
         <p v-if="regie.length" class="muted">
@@ -91,6 +114,13 @@ function person(p) {
 
     <div class="sections">
       <p class="overview">{{ film.overview || 'Keine Beschreibung vorhanden.' }}</p>
+
+      <template v-if="abende.length">
+        <h3 class="section-title">Eure Bewertung</h3>
+        <div class="abende">
+          <WatchedEntry v-for="e in abende" :key="e.id" :entry="e" kompakt @update="ersetze" @removed="ladeAbende()" />
+        </div>
+      </template>
 
       <template v-if="credits.cast.length">
         <h3 class="section-title">Besetzung</h3>
@@ -136,6 +166,9 @@ h2 { margin: 0; font-size: 1.7rem; letter-spacing: -0.02em; }
 .chip.seen { color: var(--ok); border-color: var(--ok); padding: 6px 12px; }
 .sections { padding: 0.4rem 1.6rem 1.8rem; }
 .overview { line-height: 1.65; margin: 1.2rem 0 0; }
+.ours { color: var(--gold); font-weight: 700; border: 1px solid rgba(245, 166, 35, 0.4); border-radius: 999px; padding: 1px 9px; font-size: 0.85rem; }
+.abende { display: flex; flex-direction: column; gap: 1.4rem; }
+.abende > * + * { border-top: 1px solid var(--line); padding-top: 1.2rem; }
 .cast, .similar { display: flex; gap: 0.8rem; overflow-x: auto; padding-bottom: 0.5rem; }
 .person, .sim { flex: none; flex-direction: column; align-items: flex-start; gap: 4px; padding: 0; border: none; background: none; text-align: left; }
 .person:hover, .sim:hover { background: none; }
