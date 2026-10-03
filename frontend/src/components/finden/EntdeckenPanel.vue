@@ -16,6 +16,7 @@ const DEFAULTS = {
   sort: 'popularity.desc',
   include: [],
   exclude: [], // set by shelves only (e.g. no animation among the hidden gems)
+  sprachen: [], // ditto: original languages
   jahr_min: null,
   jahr_max: null,
   note_min: null,
@@ -43,11 +44,15 @@ const dienste = ref([])
 const app = useApp()
 const { items, loading, failed, more, hinweis, gesamt, load, loadMore } = useMovieList('/api/discover', 24)
 const anzahl = new Intl.NumberFormat('de-DE')
+// TMDB caps its count (20.001) and serves at most 500 pages of 20.
+const gesamtText = computed(() =>
+  gesamt.value > 10000 ? 'Mehr als 10.000 Filme' : `${anzahl.format(gesamt.value)} ${gesamt.value === 1 ? 'Film' : 'Filme'}`,
+)
 
 const rangesActive = computed(() => RANGES.some((k) => f[k] !== DEFAULTS[k] && f[k] !== ''))
 const showRanges = ref(rangesActive.value)
 const anyActive = computed(
-  () => rangesActive.value || f.include.length > 0 || f.exclude.length > 0 || f.beiUns || f.anbieter || f.kostenlos || f.stimmen_min,
+  () => rangesActive.value || f.include.length > 0 || f.exclude.length > 0 || f.sprachen.length > 0 || f.beiUns || f.anbieter || f.kostenlos || f.stimmen_min,
 )
 
 // `ohneGesehene` is applied client-side; everything else goes to the API.
@@ -63,6 +68,7 @@ function query() {
     dauer_max,
     include: include.join(','),
     exclude: exclude.join(',') || undefined,
+    sprachen: f.sprachen.join(',') || undefined,
     abos: beiUns || undefined,
     anbieter: anbieter || undefined,
     kostenlos: kostenlos || undefined,
@@ -85,7 +91,7 @@ watch(
 
 onMounted(async () => {
   if (f.ansicht === 'raster') load(query())
-  genres.value = (await api.get('/api/genres')).genres.filter((g) => g.name !== 'Horror')
+  genres.value = (await api.get('/api/genres')).genres
   if (app.status.tmdb) dienste.value = (await api.get('/api/anbieter?limit=10&zum_stoebern=true', { quiet: true })).anbieter
 })
 
@@ -146,7 +152,7 @@ const sichtbar = computed(() => (f.ohneGesehene ? items.value.filter((m) => !m.g
         <button class="small" :class="{ on: f.kostenlos }" :aria-pressed="f.kostenlos" @click="kostenlosUmschalten">Kostenlos</button>
       </div>
       <div class="bar">
-        <div class="chips" role="group" aria-label="Zusätzliche Genres">
+        <div class="chips" role="group" aria-label="Genres">
           <button
             v-for="g in genres"
             :key="g.id"
@@ -190,7 +196,7 @@ const sichtbar = computed(() => (f.ohneGesehene ? items.value.filter((m) => !m.g
         <button class="ghost small" @click="reset"><Icon name="x" :size="13" /> Filter zurücksetzen</button>
       </div>
 
-      <p v-if="gesamt && !hinweis" class="muted gesamt">{{ anzahl.format(gesamt) }} {{ gesamt === 1 ? 'Film' : 'Filme' }}</p>
+      <p v-if="gesamt && !hinweis" class="muted gesamt">{{ gesamtText }}</p>
       <p v-if="hinweis" class="notice hinweis">
         {{ hinweis }} <a v-if="hinweis.includes('Abos')" href="#/einstellungen">Zu den Einstellungen</a>
       </p>

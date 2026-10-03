@@ -153,7 +153,7 @@ def test_local_rating_sort_ignores_shorts_and_one_vote_wonders(client, db):
 
 
 @respx.mock
-def test_people_with_horror_credits_come_first(client, tmdb_on):
+def test_people_keep_tmdbs_order_whatever_their_genre(client, tmdb_on):
     respx.get(f"{TMDB}/search/person").mock(
         return_value=httpx.Response(
             200,
@@ -176,9 +176,10 @@ def test_people_with_horror_credits_come_first(client, tmdb_on):
         )
     )
     people = client.get("/api/personen", params={"q": "carpenter"}).json()["results"]
-    assert [(p["name"], p["bereich"], p["horror"]) for p in people] == [
-        ("John Carpenter", "Regie", True),
-        ("Sabrina Carpenter", "Schauspiel", False),
+    # Not a horror app any more: no genre jumps the queue.
+    assert [(p["name"], p["bereich"]) for p in people] == [
+        ("Sabrina Carpenter", "Schauspiel"),
+        ("John Carpenter", "Regie"),
     ]
 
 
@@ -210,6 +211,7 @@ def test_filmography_skips_cameos_and_starts_with_best_known(client, tmdb_on):
                     {"id": 4, "title": "Halloween", "genre_ids": [27], "job": "Director", "vote_count": 6000},
                     {"id": 4, "title": "Halloween", "genre_ids": [27], "job": "Writer", "vote_count": 6000},
                     {"id": 5, "title": "Danke", "genre_ids": [27], "job": "Thanks", "vote_count": 50},
+                    {"id": 6, "title": "Starman", "genre_ids": [878, 10749], "job": "Director", "vote_count": 800},
                 ],
             },
         )
@@ -219,4 +221,7 @@ def test_filmography_skips_cameos_and_starts_with_best_known(client, tmdb_on):
     assert [(m["title"], m["rollen"]) for m in r["results"]] == [
         ("Halloween", ["Regie", "Drehbuch"]),
         ("Firestarter", ["Musik"]),
+        ("Starman", ["Regie"]),  # every genre counts now
     ]
+    horror = client.get("/api/personen/7/filme", params={"genre": 27}).json()["results"]
+    assert [m["title"] for m in horror] == ["Halloween", "Firestarter"]

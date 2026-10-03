@@ -14,18 +14,18 @@ Alle Endpunkte liegen unter `/api`. Die interaktive Doku gibt es unter `/docs`, 
 | GET | `/movies/{id}/credits` | – | Besetzung und Schlüssel-Crew |
 | GET | `/movies/{id}/aehnliche` | – | Empfehlungen (Fallback: gemeinsame Genres) |
 | GET | `/search?q=` | – | Filmsuche (`limit`, `seite`) |
-| GET | `/discover` | – | Horror mit Filtern: `sort`, `include`/`exclude` (Genre-IDs), `jahr_*`, `note_*`, `dauer_*`, `stimmen_*`, `seite` |
+| GET | `/discover` | – | Filme mit Filtern (nur bereits erschienene): `sort`, `include` (alle diese Genres)/`exclude` (Genre-IDs), `sprachen`, `jahr_*`, `note_*`, `dauer_*`, `stimmen_*`, `seite` |
 | GET | `/genres` | – | Genre-IDs und Namen |
-| GET | `/personen?q=` | – | Personensuche (TMDB), Personen mit Horror-Bezug zuerst |
-| GET | `/personen/{id}/filme` | – | Filmografie (`nur_horror`), bekannteste zuerst, ohne reine Auftritte |
-| POST | `/sync` | H | Beliebteste und bestbewertete Horrorfilme aus TMDB übernehmen |
+| GET | `/personen?q=` | – | Personensuche (TMDB), nach Bekanntheit |
+| GET | `/personen/{id}/filme` | – | Filmografie (optional `genre`), bekannteste zuerst, ohne reine Auftritte |
+| POST | `/sync` | H | Beliebteste und bestbewertete Filme aus TMDB übernehmen |
 | POST | `/ki-suche` | – | Freitext → Filmvorschläge (braucht `LLM_API_KEY`) |
 | GET | `/movies/{id}/anbieter` | – | „Wo läuft's?": Abo/kostenlos/leihen/kaufen in DE (JustWatch über TMDB), Abos der Gruppe zuerst mit `bei` |
 | GET | `/movies/{id}/trailer` | – | Bester YouTube-Trailer (deutsch vor englisch) oder `null` |
 | GET | `/movies/{id}/prognose` | – | „Wem gefällt's?": geschätzte Sterne pro Person mit Begründung, ab 8 Bewertungen (`docs/PROGNOSE.md`) |
 | GET | `/anbieter` | – | Abo-Dienste für die Auswahl (ohne Leih-Shops) |
 
-| GET | `/stoebern` | – | Regale zum Stöbern: „Läuft bei uns", je Dienst (eigene Abos zuerst), Kostenlos, Neu, Geheimtipps, Klassiker; jedes mit seinem Raster-`filter` |
+| GET | `/stoebern` | – | Regale zum Stöbern: „Läuft bei uns", je Dienst (eigene Abos zuerst), Kostenlos, Neu, Genres, Geheimtipps, Klassiker; jedes mit seinem Raster-`filter` |
 
 `/discover` filtert auch nach Streaming: `abos=true` (Abos der Gruppe), `anbieter=8,9` (diese Dienste im Abo),
 `kostenlos=true` (kostenlos, auch mit Werbung). `/anbieter?zum_stoebern=true` liefert nur Dienste, die als

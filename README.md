@@ -1,6 +1,6 @@
 # screenmates
 
-**Der Organizer für den gemeinsamen Horror-Filmabend.** Filme entdecken,
+**Der Organizer für den gemeinsamen Filmabend** – vom Horror-Marathon bis zur Komödie. Filme entdecken,
 vorschlagen, die Filmabend-Kiste öffnen – und danach bewerten und im
 Gästebuch nachdiskutieren.
 
@@ -16,9 +16,10 @@ Drei Bereiche für die drei Dinge, für die man herkommt:
   Chancen, Stimmen erhöhen sie), Hausregeln & Infos und ein
   Aktivitäts-Feed. Dazu **„Heute vor einem Jahr"**: was ihr um dieses Datum früher geschaut habt.
 - **Finden** – zum **Stöbern** Regale wie bei einem Streamingdienst: was bei euch im Abo läuft,
-  das Horror-Angebot von Netflix, Prime Video, Disney+ & Co., Kostenloses, Neues, Geheimtipps und
-  Klassiker. Unter „Alle Filme" das Raster nach Dienst, Subgenre, Jahrzehnt, Note und Länge.
-  *Ein* Suchfeld für alles: Getippt findet es Filme und Personen (mit Horror-Filmografie), und **„KI fragen“**
+  das Angebot von Netflix, Prime Video, Disney+ & Co., Genre-Regale (Horror, Komödie, Thriller …),
+  Kostenloses, Neues, Geheimtipps und Klassiker. Unter „Alle Filme" das Raster nach Dienst, Genre,
+  Jahrzehnt, Note und Länge. *Ein* Suchfeld für alles: Getippt findet es Filme und Personen (mit
+  Filmografie), und **„KI fragen“**
   macht aus „langsamer Folk-Horror, aber nicht zu brutal“ passende, real existierende Filme.
 - **Unsere Filme** – Merkliste und die Chronik des Gesehenen: Sterne und Kommentare pro Person,
   Teilnehmende, Gästebuch mit Antworten und Herzen.
@@ -49,8 +50,8 @@ make install   # venv + npm ci
 make dev       # Backend :8000 + Vite :5173 → http://localhost:5173
 ```
 
-Ohne Konfiguration läuft screenmates sofort mit einem Demo-Katalog bekannter
-Horrorfilme. Für den echten Katalog `backend/.env.example` nach `backend/.env`
+Ohne Konfiguration läuft screenmates sofort mit einem kleinen Demo-Katalog
+(Horror-Klassiker). Für den echten Katalog `backend/.env.example` nach `backend/.env`
 kopieren, `TMDB_API_KEY` eintragen und als Host in der Verwaltung
 „Mit TMDB abgleichen“ klicken.
 
@@ -150,7 +151,7 @@ Doku unter `/docs`, wenn das Backend läuft.
 
 ```bash
 make lint        # ruff + eslint
-make test        # 112 Backend-Tests + 35 Playwright-E2E-Schritte gegen das echte Backend
+make test        # 113 Backend-Tests + 35 Playwright-E2E-Schritte gegen das echte Backend
                  # (die 5 Kino-Schritte mit echtem MediaMTX, falls installiert)
 ```
 

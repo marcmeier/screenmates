@@ -49,7 +49,7 @@ const stats = computed(() => {
   <section>
     <div v-if="entries.length" class="row tools">
       <span class="stats muted">
-        <strong>{{ stats.stunden }}</strong> Stunden Horror · <strong>{{ stats.schnitt }}</strong> ⌀ Sterne
+        <strong>{{ stats.stunden }}</strong> Stunden Film · <strong>{{ stats.schnitt }}</strong> ⌀ Sterne
       </span>
       <span class="spacer"></span>
       <input v-if="entries.length > 3" v-model="filter" type="search" placeholder="In der Chronik suchen …" aria-label="Chronik durchsuchen" />

@@ -11,7 +11,7 @@ Jeder Film wird dafür beschrieben durch:
 | Merkmal | Gewicht | Bemerkung |
 |---|---|---|
 | TMDB-Stichworte („slasher", „folk horror", „found footage" …) | 0,6 | nur Stichworte, die bei mindestens **zwei** bewerteten Filmen vorkommen. Einmalige sind Rauschen |
-| Genres | 0,3 | ohne „Horror", das haben hier alle |
+| Genres | 0,3 | seit 0.6 auch Horror selbst, denn nicht mehr jeder Film ist einer |
 | Jahrzehnt | 0,6 | Nachbar-Jahrzehnte zählen halb (1979 ≈ 1981) |
 | TMDB-Note | 0,9 | „mag gut bewertete Filme" ist der häufigste Geschmack |
 | Filmreihe | 1,5 | Teile derselben Reihe |
@@ -28,6 +28,8 @@ als Begründung untauglich gewesen; bei Scream nannte er „Das Ding aus einer a
 ## Wie gut ist sie? (Rückblick-Test)
 
 `scripts/prognose-backtest.py`: 160 der meistbewerteten Horrorfilme mit echten TMDB-Stichworten.
+Gemessen wurde, als screenmates nur Horror kannte. Über alle Genres hinweg unterscheiden sich
+Filme stärker, das sollte der Prognose eher helfen; nachgemessen ist es noch nicht.
 Simulierte Personen mit bekanntem Geschmack bewerten zufällige Filme, dazu Rauschen (σ = 0,6 Sterne,
 gerundet). Jede Bewertung wird einmal verdeckt und aus den übrigen geschätzt. Der Test misst, um
 wie viel der Fehler kleiner ist als bei der Schätzung „Durchschnitt der Person". Feintuning und
