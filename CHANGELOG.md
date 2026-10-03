@@ -1,6 +1,10 @@
 # Changelog
 
-## Unveröffentlicht
+## 0.4.0 – 2026-10-03
+
+Der **Filmabend wird persönlicher**: Wo läuft der Film, wer hat welches Abo, wie fand ihn wer –
+und wer ihn auf keinen Fall sehen will. Dazu eine Datenbank, die künftige Updates ohne
+Datenverlust mitmacht.
 
 ### Neu
 - **Seitenleiste einklappbar**: nur Icons (mit Tooltips, Kurzlogo „sm“, Live-Zähler am Kino-Icon),
@@ -27,6 +31,11 @@
   dem Neuladen.
 - Escape schloss ein Fenster nicht mehr, wenn nach einer Aktion der Fokus aus dem Fenster fiel.
 - Bewertungen überall mit deutschem Komma (4,7 statt 4.7).
+
+### Tests
+- 92 Backend-Tests, 28 Browser-Tests (auch gegen den kompletten Docker-Stack). Anbieter und
+  Trailer zusätzlich mit echten TMDB-Daten, die Migration an einer Kopie einer echten Datenbank
+  geprüft.
 
 ## 0.3.0 – 2026-10-03
 
