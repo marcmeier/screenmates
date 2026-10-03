@@ -1,34 +1,83 @@
-# API-Karte (reverse-engineered)
+# API-Karte
 
-Die Original-App (`horror.marha.de`, FastAPI) stellt 51 Endpunkte bereit.
-Diese Liste dokumentiert die Zielschnittstelle; der ✓-Status zeigt, was in
-screenmates bereits implementiert ist.
+Alle Endpunkte liegen unter `/api`. Die interaktive Doku gibt es unter `/docs`, wenn das Backend läuft.
 
-| Status | Methode | Pfad | Zweck |
-|:-:|---|---|---|
-| ✓ | GET | /api/health | Healthcheck |
-| ✓ | GET | /api/status | Katalog-/Sync-Status |
-| ✓ | GET | /api/movies | Katalogliste |
-| ✓ | GET | /api/movies/{id} | Filmdetails |
-| ✓ | GET | /api/movies/{id}/credits | Besetzung/Crew |
-| ✓ | GET | /api/movies/{id}/aehnliche | Ähnliche Filme |
-| ✓ | GET | /api/search | Suche |
-| ✓ | GET | /api/search/{id} | Detail über Suche |
-| ✓ | GET | /api/discover | Entdecken mit Filtern |
-| ✓ | GET | /api/personen | Personensuche |
-| ✓ | GET | /api/personen/{id}/filme | Filmografie |
-| ✓ | GET/POST | /api/users (+ /waehlen, /{id}, /{id}/schutz) | Nutzer & Film-als-PIN |
-| ✓ | GET/POST/PATCH/DELETE | /api/watched (+ rating, notes, hearts, dabei) | Watched-Log |
-| ✓ | GET/POST/DELETE | /api/wishlist | Merkliste |
-| ✓ | GET/POST/DELETE | /api/suggestions (+ /alle) | Vorschläge |
-| ✓ | GET/POST/PATCH/DELETE | /api/features (+ vote, notes, done) | Wünsche |
-| ✓ | GET/PUT | /api/info | Info-Panel (Markdown) |
-| ✓ | GET/POST | /api/host (+ /film) | Host-Modus & Passwort-Film |
-| ✓ | GET/POST | /api/spin | Glücksrad |
-| ✓ | POST | /api/dabei | Teilnahme |
-| ✓ | GET | /api/events | Aktivitäts-Feed |
-| ✓ | POST | /api/ki-suche | KI-Suche (Fallback ohne Key) |
-| ✓ | POST | /api/sync | TMDB-Sync |
-| ☐ | POST/GET/PATCH/DELETE | /api/clips (+ /{id}/video, /vorschau, /schneiden, /aufnahme) | Video-Clips |
-| ☐ | GET/PUT/DELETE | /api/aufnahmen (+ /film) | Aufnahmen |
-| ☐ | GET | /stream/{pfad} | Medien-Stream |
+**Recht:** – jeder · **N** gewählter Name · **E** Ersteller oder Host · **H** Host
+
+## Katalog
+
+| Methode | Pfad | Recht | Zweck |
+|---|---|:-:|---|
+| GET | `/health`, `/status` | – | Healthcheck. Katalog-, Sync- und Feature-Status |
+| GET | `/movies` | – | Katalog, nach Beliebtheit (`limit`, `offset`) |
+| GET | `/movies/{id}` · `/search/{id}` | – | Details (ergänzt fehlende Daten aus TMDB) |
+| GET | `/movies/{id}/credits` | – | Besetzung und Schlüssel-Crew |
+| GET | `/movies/{id}/aehnliche` | – | Empfehlungen (Fallback: gemeinsame Genres) |
+| GET | `/search?q=` | – | Filmsuche (`limit`, `seite`) |
+| GET | `/discover` | – | Horror mit Filtern: `sort`, `include`/`exclude` (Genre-IDs), `jahr_*`, `note_*`, `dauer_*`, `stimmen_*`, `seite` |
+| GET | `/genres` | – | Genre-IDs und Namen |
+| GET | `/personen?q=` | – | Personensuche (TMDB) |
+| GET | `/personen/{id}/filme` | – | Filmografie (`nur_horror`) |
+| POST | `/sync` | H | Beliebteste und bestbewertete Horrorfilme aus TMDB übernehmen |
+| POST | `/ki-suche` | – | Freitext → Filmvorschläge (braucht `LLM_API_KEY`) |
+
+Jeder Film trägt die Gruppen-Flags `gesehen`, `gemerkt` und `vorgeschlagen_von`.
+
+## Nutzer & Rechte
+
+| Methode | Pfad | Recht | Zweck |
+|---|---|:-:|---|
+| GET | `/users` | – | Alle Namen, `ich`, `host` |
+| POST | `/users` | – | Namen anlegen |
+| POST | `/users/waehlen` | – | Anmelden (`user_id`, ggf. `movie_id` als Film-PIN) bzw. Abmelden (`user_id: null`). Gedrosselt |
+| DELETE | `/users/{id}` | H | Nutzer löschen (Ratings und Votes weg, Kommentare anonym) |
+| GET/POST | `/users/{id}/schutz` | –/E | Schutz abfragen (nur `hat_schutz`) bzw. setzen oder entfernen |
+| POST | `/dabei` | N | Eigene Teilnahme am nächsten Abend umschalten |
+| DELETE | `/dabei` | H | Teilnahme aller zurücksetzen |
+| GET | `/host` | – | `host` (diese Session) und `eingerichtet` |
+| POST | `/host` | N | Host werden (`movie_id` = Host-Film, gedrosselt). Der erste legt den Film fest |
+| GET/POST | `/host/film` | H | Host-Film anzeigen bzw. ändern |
+
+## Filmabend
+
+| Methode | Pfad | Recht | Zweck |
+|---|---|:-:|---|
+| GET | `/suggestions` | – | Vorschläge pro Film mit `von`, nach Stimmen sortiert |
+| POST | `/suggestions` | N | Film vorschlagen (idempotent) |
+| DELETE | `/suggestions/{movie_id}` | N | Eigenen Vorschlag zurückziehen |
+| DELETE | `/suggestions` | N | Alle eigenen Vorschläge zurückziehen |
+| DELETE | `/suggestions/alle` | H | Alle Vorschläge löschen |
+| GET/POST | `/spin` | – | Pool mit `gewicht`, bzw. gewichtete Ziehung |
+| GET | `/events` | – | Aktivitäts-Feed |
+| GET/POST/DELETE | `/wishlist[/{movie_id}]` | –/N/N | Merkliste |
+
+## Gesehen
+
+| Methode | Pfad | Recht | Zweck |
+|---|---|:-:|---|
+| GET | `/watched` | – | Chronik (`alle=true` inklusive ausgeblendeter) |
+| POST | `/watched` | N | Als gesehen eintragen. Entfernt den Film aus Merkliste und Vorschlägen |
+| PATCH | `/watched/{id}` | N | Datum ändern, ausblenden |
+| DELETE | `/watched/{id}` | H | Eintrag samt Ratings und Kommentaren löschen |
+| POST | `/watched/{id}/rating` | N | 1–5 Sterne (überschreibt die eigene Wertung) |
+| DELETE | `/watched/rating/{id}` | E | Wertung löschen |
+| POST | `/watched/{id}/notes` | N | Gästebuch, mit `parent_id` als Antwort |
+| DELETE | `/watched-notes/{id}` | E | Kommentar löschen (Antworten mit) |
+| POST | `/watched/hearts` | N | Herz für einen Kommentar umschalten |
+| POST | `/watched/{id}/dabei` | N | Teilnehmende setzen |
+
+## Wünsche & Info
+
+| Methode | Pfad | Recht | Zweck |
+|---|---|:-:|---|
+| GET/POST | `/features` | –/N | Wünsche (offen nach Stimmen, dann erledigt) |
+| PATCH/DELETE | `/features/{id}` | E | Text ändern bzw. löschen |
+| PATCH | `/features/{id}/done` | H | Erledigt markieren |
+| POST | `/features/{id}/vote` | N | Stimme umschalten |
+| POST | `/features/{id}/notes` | N | Anmerkung |
+| DELETE | `/feature-notes/{id}` | E | Anmerkung löschen |
+| GET/PUT | `/info` | –/H | Markdown-Infotext |
+
+## Noch nicht umgesetzt (aus dem Original)
+
+`/clips/*`, `/aufnahmen/*`, `/stream/{pfad}`: Video-Clips aus Filmen schneiden und abspielen.

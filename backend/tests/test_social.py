@@ -1,0 +1,197 @@
+"""Watched log, ratings, notes, lists, wishes, wheel — and that deletes cascade."""
+
+import httpx
+import respx
+from sqlmodel import select
+
+from app.models import NoteHeart, WatchedNote, WatchedParticipant, WatchedRating
+
+from .conftest import become_host, login
+
+
+def test_watching_fulfils_wishlist_and_suggestions(client):
+    me = login(client, "marc")
+    client.post("/api/wishlist", json={"movie_id": 694})
+    client.post("/api/suggestions", json={"movie_id": 694})
+    entry = client.post("/api/watched", json={"movie_id": 694}).json()
+    assert entry["participants"] == [me["id"]]
+    assert client.get("/api/wishlist").json()["wishlist"] == []
+    assert client.get("/api/suggestions").json()["suggestions"] == []
+
+
+def test_rating_validation_and_upsert(client):
+    me = login(client, "marc")
+    wid = client.post("/api/watched", json={"movie_id": 694}).json()["id"]
+    assert client.post(f"/api/watched/{wid}/rating", json={"stars": 0}).status_code == 422
+    assert client.post(f"/api/watched/{wid}/rating", json={"stars": 6}).status_code == 422
+    client.post(f"/api/watched/{wid}/rating", json={"stars": 2})
+    entry = client.post(f"/api/watched/{wid}/rating", json={"stars": 4}).json()
+    assert [(r["user_id"], r["stars"]) for r in entry["ratings"]] == [(me["id"], 4)]
+    assert entry["rating_avg"] == 4.0
+    assert "id" in entry["ratings"][0]
+
+
+def test_only_own_rating_can_be_deleted(client, browser):
+    login(client, "marc")
+    wid = client.post("/api/watched", json={"movie_id": 694}).json()["id"]
+    rid = client.post(f"/api/watched/{wid}/rating", json={"stars": 5}).json()["ratings"][0]["id"]
+    lena = browser()
+    login(lena, "lena")
+    assert lena.delete(f"/api/watched/rating/{rid}").status_code == 403
+    assert client.delete(f"/api/watched/rating/{rid}").status_code == 200
+
+
+def test_notes_are_threaded_and_validated(client):
+    login(client, "marc")
+    wid = client.post("/api/watched", json={"movie_id": 694}).json()["id"]
+    other = client.post("/api/watched", json={"movie_id": 348}).json()["id"]
+    root = client.post(f"/api/watched/{wid}/notes", json={"text": "Klassiker"}).json()["notes"][0]
+    entry = client.post(f"/api/watched/{wid}/notes", json={"text": "Absolut", "parent_id": root["id"]}).json()
+    assert len(entry["notes"]) == 1
+    assert entry["notes"][0]["replies"][0]["text"] == "Absolut"
+    assert client.post(f"/api/watched/{other}/notes", json={"text": "x", "parent_id": root["id"]}).status_code == 422
+    assert client.post(f"/api/watched/{wid}/notes", json={"text": ""}).status_code == 422
+
+
+def test_hearts_toggle(client):
+    login(client, "marc")
+    wid = client.post("/api/watched", json={"movie_id": 694}).json()["id"]
+    nid = client.post(f"/api/watched/{wid}/notes", json={"text": "gut"}).json()["notes"][0]["id"]
+    assert client.post("/api/watched/hearts", json={"note_id": nid}).json() == {"hearted": True}
+    assert client.post("/api/watched/hearts", json={"note_id": nid}).json() == {"hearted": False}
+
+
+def test_deleting_watched_cascades(client, db):
+    login(client, "marc")
+    become_host(client)
+    wid = client.post("/api/watched", json={"movie_id": 694}).json()["id"]
+    client.post(f"/api/watched/{wid}/rating", json={"stars": 5})
+    nid = client.post(f"/api/watched/{wid}/notes", json={"text": "a"}).json()["notes"][0]["id"]
+    client.post(f"/api/watched/{wid}/notes", json={"text": "b", "parent_id": nid})
+    client.post("/api/watched/hearts", json={"note_id": nid})
+
+    assert client.delete(f"/api/watched/{wid}").status_code == 200
+    for model in (WatchedRating, WatchedNote, NoteHeart, WatchedParticipant):
+        assert db.exec(select(model)).all() == [], model.__name__
+
+
+def test_deleting_user_keeps_their_notes_but_drops_ratings(client, browser, db):
+    marc = login(client, "marc")
+    wid = client.post("/api/watched", json={"movie_id": 694}).json()["id"]
+    client.post(f"/api/watched/{wid}/rating", json={"stars": 5})
+    client.post(f"/api/watched/{wid}/notes", json={"text": "bleibt"})
+
+    host = browser()
+    login(host, "lena")
+    become_host(host)
+    host.delete(f"/api/users/{marc['id']}")
+
+    entry = host.get("/api/watched").json()["watched"][0]
+    assert entry["ratings"] == []
+    assert entry["participants"] == []
+    assert entry["notes"][0]["text"] == "bleibt"
+    assert entry["notes"][0]["user_id"] is None
+
+
+def test_hidden_entries(client):
+    login(client, "marc")
+    wid = client.post("/api/watched", json={"movie_id": 694}).json()["id"]
+    client.patch(f"/api/watched/{wid}", json={"hidden": True})
+    assert client.get("/api/watched").json()["watched"] == []
+    assert len(client.get("/api/watched", params={"alle": True}).json()["watched"]) == 1
+
+
+def test_suggestions_grouped_and_ranked(client, browser):
+    marc = login(client, "marc")
+    lena_c = browser()
+    lena = login(lena_c, "lena")
+    client.post("/api/suggestions", json={"movie_id": 348})
+    client.post("/api/suggestions", json={"movie_id": 694})
+    client.post("/api/suggestions", json={"movie_id": 694})  # idempotent
+    lena_c.post("/api/suggestions", json={"movie_id": 694})
+    s = client.get("/api/suggestions").json()["suggestions"]
+    assert [(m["id"], sorted(m["von"])) for m in s] == [(694, sorted([marc["id"], lena["id"]])), (348, [marc["id"]])]
+
+    client.delete("/api/suggestions/694")
+    s = client.get("/api/suggestions").json()["suggestions"]
+    assert {m["id"]: m["von"] for m in s}[694] == [lena["id"]]
+
+
+def test_spin_is_weighted_by_votes(client, browser):
+    login(client, "marc")
+    client.post("/api/suggestions", json={"movie_id": 694})
+    pool = client.get("/api/spin").json()["pool"]
+    assert [(m["id"], m["gewicht"]) for m in pool] == [(694, 1)]
+    assert client.post("/api/spin").json()["pick"]["id"] == 694
+
+
+def test_spin_falls_back_to_wishlist(client):
+    login(client, "marc")
+    assert client.post("/api/spin").json()["pick"] is None
+    client.post("/api/wishlist", json={"movie_id": 348})
+    assert client.post("/api/spin").json()["pick"]["id"] == 348
+
+
+def test_dabei_toggle_and_reset(client):
+    login(client, "marc")
+    assert client.post("/api/dabei").json() == {"dabei": True}
+    assert client.get("/api/users").json()["ich"]["dabei"] is True
+    become_host(client)
+    client.delete("/api/dabei")
+    assert client.get("/api/users").json()["ich"]["dabei"] is False
+
+
+def test_feature_permissions(client, browser):
+    login(client, "marc")
+    fid = client.post("/api/features", json={"text": "Dark Mode"}).json()["id"]
+    lena = browser()
+    login(lena, "lena")
+    assert lena.post(f"/api/features/{fid}/vote").json()["votes"] == 1
+    assert lena.post(f"/api/features/{fid}/vote").json()["votes"] == 0
+    assert lena.patch(f"/api/features/{fid}", json={"text": "hijack"}).status_code == 403
+    assert lena.delete(f"/api/features/{fid}").status_code == 403
+    assert client.patch(f"/api/features/{fid}/done", json={"done": True}).status_code == 403
+    assert client.patch(f"/api/features/{fid}", json={"text": "Dunkles Theme"}).json()["text"] == "Dunkles Theme"
+
+
+def test_info_markdown_roundtrip(client):
+    login(client, "marc")
+    become_host(client)
+    client.put("/api/info", json={"text": "# Hallo"})
+    assert client.get("/api/info").json()["text"] == "# Hallo"
+
+
+def test_ki_without_key_is_503(client):
+    assert client.post("/api/ki-suche", json={"beschreibung": "x"}).status_code == 503
+
+
+@respx.mock
+def test_ki_resolves_titles_against_catalogue(client, monkeypatch):
+    from app.config import settings
+
+    monkeypatch.setattr(settings, "llm_api_key", "k")
+    login(client, "marc")
+    client.post("/api/watched", json={"movie_id": 948})  # Halloween: already seen
+    answer = (
+        'Gerne! [{"titel": "Alien", "originaltitel": "Alien", "jahr": 1979, "warum": "Isolation"},'
+        ' {"titel": "Halloween", "originaltitel": "Halloween", "jahr": 1978, "warum": "Slasher"},'
+        ' {"titel": "Gibt es nicht", "originaltitel": "Nope Nope", "jahr": 2001, "warum": "?"}]'
+    )
+    respx.post("https://api.anthropic.com/v1/messages").mock(
+        return_value=httpx.Response(200, json={"content": [{"type": "text", "text": answer}]})
+    )
+    r = client.post("/api/ki-suche", json={"beschreibung": "Weltraum", "mit_sammlung": True}).json()
+    assert [(m["title"], m["warum"]) for m in r["results"]] == [("Alien", "Isolation")]
+
+
+@respx.mock
+def test_sync_upserts_canon(client, tmdb_on):
+    login(client, "marc")
+    become_host(client)
+    page = {"results": [{"id": 9000 + i, "title": f"Film {i}", "genre_ids": [27]} for i in range(3)]}
+    respx.get("https://api.themoviedb.org/3/discover/movie").mock(return_value=httpx.Response(200, json=page))
+    r = client.post("/api/sync").json()
+    assert r["neu"] == 3
+    status = client.get("/api/status").json()
+    assert status["movie_count"] == 15
+    assert status["last_sync"] is not None

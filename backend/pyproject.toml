@@ -1,0 +1,24 @@
+[project]
+name = "screenmates-backend"
+version = "0.2.0"
+requires-python = ">=3.12"
+
+[tool.ruff]
+line-length = 120
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP", "SIM", "RUF"]
+ignore = [
+  "B008",    # FastAPI's Depends() in defaults is the idiom
+  "RUF001",  # German typographic quotes in user-facing strings are intended
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+asyncio_mode = "auto"
+filterwarnings = [
+  # Starlette's TestClient warns about its own httpx dependency; not actionable here.
+  "ignore:Using `httpx` with `starlette.testclient`",
+]
