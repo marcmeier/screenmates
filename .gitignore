@@ -3,6 +3,7 @@ __pycache__/
 *.py[cod]
 backend/.venv/
 backend/*.db
+backend/*.db-*
 backend/screenmates.db
 backend/media/
 
