@@ -1,0 +1,13 @@
+services:
+  screenmates:
+    build: .
+    ports: ["8000:8000"]
+    env_file:
+      - path: backend/.env
+        required: false
+    volumes:
+      - screenmates-data:/data
+    restart: unless-stopped
+
+volumes:
+  screenmates-data:
