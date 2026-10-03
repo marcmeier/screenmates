@@ -10,6 +10,7 @@ export function useMovieList(endpoint, pageSize = 24) {
   const loading = ref(false)
   const failed = ref(false)
   const more = ref(false)
+  const hinweis = ref(null) // server explanation for an empty result, e.g. "no subscriptions yet"
   let page = 1
   let params = {}
   let ctrl = null
@@ -22,6 +23,7 @@ export function useMovieList(endpoint, pageSize = 24) {
     try {
       const r = await api.get(`${endpoint}?${qs({ ...params, limit: pageSize, seite: page })}`, { signal: ctrl.signal })
       const fresh = r.results || []
+      hinweis.value = r.hinweis ?? null
       const known = new Set(items.value.map((m) => m.id))
       items.value = page === 1 ? fresh : [...items.value, ...fresh.filter((m) => !known.has(m.id))]
       more.value = fresh.length === pageSize
@@ -51,5 +53,5 @@ export function useMovieList(endpoint, pageSize = 24) {
     loading.value = false
   }
 
-  return { items, loading, failed, more, load, loadMore, reset }
+  return { items, loading, failed, more, hinweis, load, loadMore, reset }
 }

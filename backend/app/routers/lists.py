@@ -1,16 +1,16 @@
-"""Wishlist ('Merkliste') and suggestions for the next evening ('Vorschläge')."""
+"""Wishlist ('Merkliste'), suggestions for the next evening ('Vorschläge') and vetoes."""
 
 from __future__ import annotations
 
 from collections import defaultdict
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from sqlmodel import Session as DBSession
 from sqlmodel import col, select
 
 from ..db import get_session
-from ..models import Movie, Suggestion, User, Wishlist
+from ..models import Movie, Suggestion, User, Veto, Wishlist
 from ..serialize import iso, movie_dict, with_flags
 from ..session import require_host, require_user
 from ..util import ensure_movie
@@ -55,9 +55,40 @@ def get_suggestions(db: DBSession = Depends(get_session)):
     for s, m in rows:
         grouped.setdefault(m.id, movie_dict(m) | {"seit": iso(s.created_at)})
         von[m.id].append(s.user_id)
-    items = [m | {"von": von[mid]} for mid, m in grouped.items()]
+    veto_von: dict[int, list[int]] = defaultdict(list)
+    for v in db.exec(select(Veto)).all():
+        veto_von[v.movie_id].append(v.user_id)
+    items = [m | {"von": von[mid], "veto_von": sorted(veto_von[mid])} for mid, m in grouped.items()]
     items.sort(key=lambda m: -len(m["von"]))  # stable: ties keep oldest first
     return {"suggestions": items}
+
+
+def _drop_orphan_vetoes(db: DBSession) -> None:
+    """A veto only means something while the film is up for the evening."""
+    suggested = select(Suggestion.movie_id)
+    for v in db.exec(select(Veto).where(col(Veto.movie_id).not_in(suggested))).all():
+        db.delete(v)
+
+
+@router.post("/veto")
+def veto(body: MovieRef, user: User = Depends(require_user), db: DBSession = Depends(get_session)):
+    """'Not with me': one veto per person; a new one replaces the old."""
+    if not db.exec(select(Suggestion).where(Suggestion.movie_id == body.movie_id)).first():
+        raise HTTPException(422, "Ein Veto gibt es nur gegen Filme, die gerade vorgeschlagen sind.")
+    for old in db.exec(select(Veto).where(Veto.user_id == user.id)).all():
+        db.delete(old)
+    db.flush()
+    db.add(Veto(user_id=user.id, movie_id=body.movie_id))
+    db.commit()
+    return {"veto": body.movie_id}
+
+
+@router.delete("/veto")
+def withdraw_veto(user: User = Depends(require_user), db: DBSession = Depends(get_session)):
+    for old in db.exec(select(Veto).where(Veto.user_id == user.id)).all():
+        db.delete(old)
+    db.commit()
+    return {"veto": None}
 
 
 @router.post("/suggestions", status_code=201)
@@ -76,6 +107,8 @@ async def add_suggestion(body: MovieRef, user: User = Depends(require_user), db:
 def clear_all(db: DBSession = Depends(get_session)):
     for s in db.exec(select(Suggestion)).all():
         db.delete(s)
+    db.flush()
+    _drop_orphan_vetoes(db)
     db.commit()
     return {"ok": True}
 
@@ -84,6 +117,8 @@ def clear_all(db: DBSession = Depends(get_session)):
 def withdraw(movie_id: int, user: User = Depends(require_user), db: DBSession = Depends(get_session)):
     for s in db.exec(select(Suggestion).where(Suggestion.movie_id == movie_id, Suggestion.user_id == user.id)).all():
         db.delete(s)
+    db.flush()
+    _drop_orphan_vetoes(db)
     db.commit()
     return {"ok": True}
 
@@ -92,5 +127,7 @@ def withdraw(movie_id: int, user: User = Depends(require_user), db: DBSession = 
 def clear_mine(user: User = Depends(require_user), db: DBSession = Depends(get_session)):
     for s in db.exec(select(Suggestion).where(Suggestion.user_id == user.id)).all():
         db.delete(s)
+    db.flush()
+    _drop_orphan_vetoes(db)
     db.commit()
     return {"ok": True}

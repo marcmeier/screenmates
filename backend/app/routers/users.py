@@ -12,7 +12,7 @@ from sqlmodel import Session as DBSession
 from sqlmodel import func, select
 
 from ..db import get_session
-from ..models import User
+from ..models import Abo, User
 from ..serialize import user_dict
 from ..session import (
     current_user,
@@ -48,6 +48,10 @@ class NameWaehlen(BaseModel):
     movie_id: int | None = None  # the protection film, when the user is guarded
 
 
+class AbosSetzen(BaseModel):
+    anbieter: list[int] = Field(max_length=60)  # TMDB provider ids
+
+
 class SchutzSetzen(BaseModel):
     movie_id: int | None = None  # None removes the protection
 
@@ -59,7 +63,11 @@ def list_users(
     host: bool = Depends(is_host),
 ):
     rows = db.exec(select(User).order_by(User.created_at)).all()
-    return {"users": [user_dict(u) for u in rows], "ich": user_dict(user) if user else None, "host": host}
+    abos: dict[int, list[int]] = defaultdict(list)
+    for uid, pid in db.exec(select(Abo.user_id, Abo.provider_id).order_by(Abo.provider_id)).all():
+        abos[uid].append(pid)
+    me = user_dict(user, abos[user.id]) if user else None
+    return {"users": [user_dict(u, abos[u.id]) for u in rows], "ich": me, "host": host}
 
 
 @router.post("/users", status_code=201)
@@ -139,6 +147,18 @@ def set_schutz(
     db.add(u)
     db.commit()
     return {"hat_schutz": u.schutz_movie_id is not None}
+
+
+@router.post("/abos")
+def set_abos(body: AbosSetzen, user: User = Depends(require_user), db: DBSession = Depends(get_session)):
+    """Replace my streaming subscriptions."""
+    for a in db.exec(select(Abo).where(Abo.user_id == user.id)).all():
+        db.delete(a)
+    db.flush()
+    for pid in sorted(set(body.anbieter)):
+        db.add(Abo(user_id=user.id, provider_id=pid))
+    db.commit()
+    return {"abos": sorted(set(body.anbieter))}
 
 
 @router.post("/dabei")

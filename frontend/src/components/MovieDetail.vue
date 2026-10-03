@@ -10,6 +10,7 @@ import Icon from './Icon.vue'
 import Modal from './Modal.vue'
 import Poster from './Poster.vue'
 import WatchedEntry from './WatchedEntry.vue'
+import WoLaeuft from './WoLaeuft.vue'
 
 const app = useApp()
 const ui = useUi()
@@ -19,6 +20,9 @@ const film = ref(null)
 const credits = ref({ cast: [], crew: [] })
 const similar = ref([])
 const abende = ref([]) // our watched entries for this film, newest first
+const anbieter = ref(null) // where it streams (null without TMDB)
+const trailer = ref(null)
+const trailerAn = ref(false) // YouTube is only contacted once someone presses play
 let ctrl = null
 
 // Ratings and guestbook belong where people look at a film, not only in "Gesehen".
@@ -51,16 +55,23 @@ watch(
     credits.value = { cast: [], crew: [] }
     similar.value = []
     abende.value = []
+    anbieter.value = null
+    trailer.value = null
+    trailerAn.value = false
     ladeAbende(m.id)
-    const [full, c, s] = await Promise.allSettled([
+    const [full, c, s, w, t] = await Promise.allSettled([
       api.get(`/api/movies/${m.id}`, { signal, quiet: true }),
       api.get(`/api/movies/${m.id}/credits`, { signal, quiet: true }),
       api.get(`/api/movies/${m.id}/aehnliche?limit=12`, { signal, quiet: true }),
+      api.get(`/api/movies/${m.id}/anbieter`, { signal, quiet: true }),
+      api.get(`/api/movies/${m.id}/trailer`, { signal, quiet: true }),
     ])
     if (signal.aborted) return
     if (full.status === 'fulfilled') Object.assign(m, full.value)
     if (c.status === 'fulfilled') credits.value = c.value
     if (s.status === 'fulfilled') similar.value = s.value.results
+    if (w.status === 'fulfilled' && w.value.verfuegbar) anbieter.value = w.value
+    if (t.status === 'fulfilled') trailer.value = t.value.trailer
   },
   { immediate: true },
 )
@@ -75,11 +86,23 @@ function person(p) {
 
 <template>
   <Modal v-if="film" :label="film.title" width="820px" @close="ui.detail = null">
-    <div class="hero" :style="film.backdrop_url ? { backgroundImage: `url(${film.backdrop_url})` } : {}">
+    <div v-if="trailerAn" class="player">
+      <iframe
+        :src="`https://www.youtube-nocookie.com/embed/${trailer.key}?autoplay=1&rel=0&hl=de`"
+        :title="`Trailer: ${film.title}`"
+        allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
+        allowfullscreen
+      ></iframe>
+      <button class="close" aria-label="Trailer schließen" @click="trailerAn = false"><Icon name="x" /></button>
+    </div>
+    <div v-else class="hero" :style="film.backdrop_url ? { backgroundImage: `url(${film.backdrop_url})` } : {}">
       <button class="close" aria-label="Schließen" @click="ui.detail = null"><Icon name="x" /></button>
+      <button v-if="trailer" class="trailer-btn" @click="trailerAn = true">
+        <Icon name="play" :size="18" /> Trailer{{ trailer.sprache && trailer.sprache !== 'de' ? ` (${trailer.sprache.toUpperCase()})` : '' }}
+      </button>
     </div>
 
-    <div class="body">
+    <div class="body" :class="{ 'unter-trailer': trailerAn }">
       <div class="frame"><Poster :movie="film" /></div>
       <div class="info">
         <h2>{{ film.title }}</h2>
@@ -114,6 +137,8 @@ function person(p) {
 
     <div class="sections">
       <p class="overview">{{ film.overview || 'Keine Beschreibung vorhanden.' }}</p>
+
+      <WoLaeuft v-if="anbieter" :anbieter="anbieter" />
 
       <template v-if="abende.length">
         <h3 class="section-title">Eure Bewertung</h3>
@@ -154,6 +179,15 @@ function person(p) {
 }
 .hero::after { content: ''; position: absolute; inset: 0; background: linear-gradient(transparent 35%, var(--bg-soft)); }
 .close { position: absolute; top: 12px; right: 12px; z-index: 2; border-radius: 50%; padding: 0.45rem; background: rgba(0, 0, 0, 0.6); }
+.player { position: relative; aspect-ratio: 16 / 9; background: #000; border-radius: 14px 14px 0 0; overflow: hidden; }
+.player iframe { width: 100%; height: 100%; border: 0; display: block; }
+.trailer-btn {
+  position: absolute; left: 1.6rem; top: 1.2rem; z-index: 2; background: rgba(0, 0, 0, 0.65);
+  border-color: rgba(255, 255, 255, 0.25); backdrop-filter: blur(4px); font-weight: 600;
+}
+.trailer-btn:hover { background: var(--accent); border-color: var(--accent); }
+.body.unter-trailer { margin-top: 1.2rem; }
+.body.unter-trailer .info { padding-top: 0; }
 .body { display: flex; gap: 1.4rem; padding: 0 1.6rem; margin-top: -110px; position: relative; z-index: 1; }
 .frame { width: 150px; aspect-ratio: 2/3; border-radius: 10px; overflow: hidden; box-shadow: var(--shadow); flex: none; border: 1px solid var(--line); }
 .info { padding-top: 70px; min-width: 0; }

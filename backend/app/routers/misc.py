@@ -24,6 +24,7 @@ from ..models import (
     Session,
     Suggestion,
     User,
+    Veto,
     Watched,
     WatchedNote,
     Wishlist,
@@ -173,9 +174,16 @@ def set_host_film(body: HostFilm, db: DBSession = Depends(get_session)):
 
 
 def _pool(db: DBSession) -> list[dict]:
-    """Suggested films, weighted by how many people want them (wishlist if none)."""
+    """Suggested films, weighted by how many people want them, minus vetoed ones.
+
+    Only when nothing is suggested at all does the wheel fall back to the wishlist;
+    if every suggestion has been vetoed, the wheel stays empty on purpose.
+    """
     counts = db.exec(select(Suggestion.movie_id, func.count()).group_by(Suggestion.movie_id)).all()
-    if not counts:
+    if counts:
+        vetoed = set(db.exec(select(Veto.movie_id)).all())
+        counts = [(mid, n) for mid, n in counts if mid not in vetoed]
+    else:
         counts = [(mid, 1) for mid in db.exec(select(Wishlist.movie_id)).all()]
     movies = {m.id: m for m in db.exec(select(Movie).where(col(Movie.id).in_([c[0] for c in counts]))).all()}
     return [movie_dict(movies[mid]) | {"gewicht": n} for mid, n in counts if mid in movies]
@@ -220,6 +228,16 @@ def events(limit: int = 30, db: DBSession = Depends(get_session)):
         )
     for n in db.exec(select(WatchedNote).order_by(col(WatchedNote.created_at).desc()).limit(limit)):
         feed.append({"typ": "kommentar", "at": n.created_at, "wer": names.get(n.user_id), "text": n.text[:120]})
+    for v in db.exec(select(Veto).order_by(col(Veto.created_at).desc()).limit(limit)):
+        feed.append(
+            {
+                "typ": "veto",
+                "at": v.created_at,
+                "wer": names.get(v.user_id),
+                "film": titles.get(v.movie_id),
+                "movie_id": v.movie_id,
+            }
+        )
     for f in db.exec(select(Feature).order_by(col(Feature.created_at).desc()).limit(limit)):
         feed.append({"typ": "wunsch", "at": f.created_at, "wer": names.get(f.user_id), "text": f.text[:120]})
     feed.sort(key=lambda e: iso(e["at"]), reverse=True)

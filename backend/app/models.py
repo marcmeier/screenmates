@@ -119,6 +119,29 @@ class Suggestion(SQLModel, table=True):
     created_at: datetime = Field(default_factory=now)
 
 
+class Abo(SQLModel, table=True):
+    """A streaming service someone in the group subscribes to (TMDB provider id)."""
+
+    __table_args__ = (UniqueConstraint("user_id", "provider_id"),)
+
+    id: int | None = Field(default=None, primary_key=True)
+    user_id: int = Field(foreign_key="user.id", index=True, ondelete="CASCADE")
+    provider_id: int
+
+
+class Veto(SQLModel, table=True):
+    """'Not with me': one veto per person against a currently suggested film.
+
+    The wheel skips vetoed films. A new veto replaces the old one; vetoes go
+    when the film is watched or the suggestions are cleared.
+    """
+
+    id: int | None = Field(default=None, primary_key=True)
+    user_id: int = Field(foreign_key="user.id", unique=True, ondelete="CASCADE")
+    movie_id: int = Field(foreign_key="movie.id", index=True, ondelete="CASCADE")
+    created_at: datetime = Field(default_factory=now)
+
+
 class Feature(SQLModel, table=True):
     """A feature wish ("Wunsch")."""
 

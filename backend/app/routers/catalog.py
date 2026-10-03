@@ -17,7 +17,7 @@ from sqlmodel import col, or_, select
 from .. import tmdb
 from ..config import settings
 from ..db import get_session
-from ..models import Movie
+from ..models import Abo, Movie
 from ..serialize import movie_dict, with_flags
 from ..util import upsert_movie
 
@@ -137,6 +137,7 @@ async def discover(
     jahr_max: int | None = Query(None, ge=1880, le=2100),
     note_min: float | None = Query(None, ge=0, le=10),
     note_max: float | None = Query(None, ge=0, le=10),
+    abos: bool = Query(False, description="Nur Filme, die bei einem Abo aus der Gruppe laufen"),
 ):
     if dauer_min is None:
         dauer_min = tmdb.MIN_RUNTIME
@@ -153,7 +154,14 @@ async def discover(
         note_max=note_max,
     )
     inc, exc = _ids(include), _ids(exclude)
-    remote = await tmdb.discover(sort=sort, page=seite, include=inc, exclude=exc, **flt)
+    anbieter = None
+    if abos:
+        if not settings.tmdb_enabled:
+            return {"results": [], "hinweis": "„Läuft bei uns“ braucht TMDB (TMDB_API_KEY)."}
+        anbieter = tmdb.abo_ids(list(set(db.exec(select(Abo.provider_id)).all())))
+        if not anbieter:
+            return {"results": [], "hinweis": "Noch niemand hat seine Abos eingetragen (Einstellungen)."}
+    remote = await tmdb.discover(sort=sort, page=seite, include=inc, exclude=exc, abo_anbieter=anbieter, **flt)
     if remote is not None:
         return {"results": with_flags(db, [movie_dict(r) for r in remote[:limit]])}
 
@@ -180,6 +188,40 @@ async def discover(
     ]
     page = rows[(seite - 1) * limit : seite * limit]
     return {"results": with_flags(db, [movie_dict(m) for m in page])}
+
+
+@router.get("/movies/{movie_id}/anbieter")
+async def where_to_watch(movie_id: int, db: DBSession = Depends(get_session)):
+    """Where the film streams in the region, and who in the group has that subscription."""
+    data = await tmdb.watch_providers(movie_id)
+    if data is None:
+        return {"verfuegbar": False}
+    wer: dict[int, list[int]] = {}
+    for uid, pid in db.exec(select(Abo.user_id, Abo.provider_id)).all():
+        wer.setdefault(pid, []).append(uid)
+    main = lambda pid: tmdb.ABO_VARIANTE.get(pid, pid)  # noqa: E731
+    abo = [p | {"bei": sorted(wer.get(main(p["id"]), []))} for p in data["abo"]]
+    abo.sort(key=lambda p: not p["bei"])  # what we already pay for comes first
+    return {"verfuegbar": True, "quelle": "JustWatch", "region": settings.tmdb_region, **data, "abo": abo}
+
+
+@router.get("/movies/{movie_id}/trailer")
+async def movie_trailer(movie_id: int):
+    """`trailer` is null when there is none: a normal case, not an error."""
+    return {"trailer": await tmdb.trailer(movie_id)}
+
+
+@router.get("/anbieter")
+async def providers(limit: Limit = 40, db: DBSession = Depends(get_session)):
+    """Streaming services to pick from, plus every one someone already has."""
+    alle = await tmdb.provider_list()
+    if alle is None:
+        return {"anbieter": [], "verfuegbar": False}
+    gewaehlt = set(db.exec(select(Abo.provider_id)).all())
+    # only real subscriptions: no rent/buy shops, no "with ads" duplicates
+    abos = [p for p in alle if p["id"] not in tmdb.STORE_IDS and p["id"] not in tmdb.ABO_VARIANTE]
+    auswahl = [p for i, p in enumerate(abos) if i < limit or p["id"] in gewaehlt]
+    return {"anbieter": auswahl, "verfuegbar": True}
 
 
 @router.get("/genres")

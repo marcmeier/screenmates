@@ -37,6 +37,21 @@ onMounted(load)
 watch(() => ui.changes, load)
 
 const meinVorschlag = (m) => app.me && m.von.includes(app.me.id)
+const meinVeto = (m) => app.me && m.veto_von.includes(app.me.id)
+const vetoVerbraucht = computed(() => app.me && vorschlaege.value.some((m) => meinVeto(m)))
+const namen = (ids) => ids.map((id) => app.userById(id)?.name ?? '?').join(', ')
+
+// One veto per person: setting it on another film moves it there.
+async function veto(m) {
+  if (meinVeto(m)) {
+    await api.del('/api/veto')
+    ui.toast(`Veto gegen „${m.title}“ zurückgenommen`)
+  } else {
+    await api.post('/api/veto', { movie_id: m.id })
+    ui.toast(`Veto gegen „${m.title}“ – das Rad lässt ihn aus`, 'ok')
+  }
+  ui.changed()
+}
 
 async function toggle(m) {
   if (meinVorschlag(m)) await api.del(`/api/suggestions/${m.id}`)
@@ -62,6 +77,7 @@ const EVENT_TEXT = {
   vorschlag: (e) => `${e.wer ?? 'Jemand'} schlägt „${e.film}“ vor`,
   kommentar: (e) => `${e.wer ?? 'Jemand'}: „${e.text}“`,
   wunsch: (e) => `${e.wer ?? 'Jemand'} wünscht sich: ${e.text}`,
+  veto: (e) => `${e.wer ?? 'Jemand'} legt ein Veto gegen „${e.film}“ ein`,
 }
 </script>
 
@@ -106,6 +122,9 @@ const EVENT_TEXT = {
           </button>
         </div>
 
+        <p v-if="app.me && vorschlaege.length" class="muted small-text veto-hint">
+          Jede Person hat ein <strong>Veto</strong>: Filme mit Veto lässt das Glücksrad aus.
+        </p>
         <div v-if="loading" class="list">
           <div v-for="i in 3" :key="i" class="skeleton" style="height: 86px"></div>
         </div>
@@ -115,7 +134,7 @@ const EVENT_TEXT = {
           <div style="margin-top: 0.8rem"><button class="small" @click="navigate('finden')">Filme finden</button></div>
         </div>
         <ol v-else class="list">
-          <li v-for="(m, i) in vorschlaege" :key="m.id" class="sugg">
+          <li v-for="(m, i) in vorschlaege" :key="m.id" class="sugg" :class="{ vetoed: m.veto_von.length }">
             <span class="rank">{{ i + 1 }}</span>
             <button class="thumb" :aria-label="`${m.title} – Details`" @click="ui.open(m)">
               <Poster :movie="m" :title="false" />
@@ -124,10 +143,22 @@ const EVENT_TEXT = {
               <button class="linklike" @click="ui.open(m)">{{ m.title }}</button>
               <div class="muted small-text">{{ m.year }} · ★ {{ dezimal(m.vote_average) }}</div>
               <div class="avatars"><UserAvatar v-for="id in m.von" :key="id" :user-id="id" /></div>
+              <div v-if="m.veto_von.length" class="veto-info"><Icon name="veto" :size="13" /> Veto von {{ namen(m.veto_von) }}</div>
             </div>
-            <button v-if="app.me" class="small" :class="{ on: meinVorschlag(m) }" @click="toggle(m)">
-              <Icon name="hand" :size="14" /> {{ meinVorschlag(m) ? 'Zurückziehen' : '+1' }}
-            </button>
+            <div v-if="app.me" class="buttons">
+              <button class="small" :class="{ on: meinVorschlag(m) }" @click="toggle(m)">
+                <Icon name="hand" :size="14" /> {{ meinVorschlag(m) ? 'Zurückziehen' : '+1' }}
+              </button>
+              <button
+                class="small ghost veto"
+                :class="{ on: meinVeto(m) }"
+                :aria-pressed="meinVeto(m)"
+                :title="meinVeto(m) ? 'Veto zurücknehmen' : vetoVerbraucht ? 'Dein Veto hierher verschieben' : 'Nicht mit mir – das Rad lässt den Film aus'"
+                @click="veto(m)"
+              >
+                <Icon name="veto" :size="14" /> {{ meinVeto(m) ? 'Veto zurück' : 'Veto' }}
+              </button>
+            </div>
           </li>
         </ol>
 
@@ -148,6 +179,7 @@ const EVENT_TEXT = {
             <p class="muted small-text">{{ pool.length }} {{ pool.length === 1 ? 'Film' : 'Filme' }} aus {{ poolQuelle }}. Je mehr Stimmen, desto größer das Feld.</p>
             <SpinWheel :pool="pool" @result="gewinner = $event" />
           </template>
+          <p v-else-if="vorschlaege.length" class="muted">Gegen alle Vorschläge gibt es ein Veto – schlagt noch etwas vor.</p>
           <p v-else class="muted">Sobald es Vorschläge (oder Filme auf der Merkliste) gibt, kann gedreht werden.</p>
 
           <div v-if="gewinner" class="winner" role="status">
@@ -180,6 +212,12 @@ const EVENT_TEXT = {
 .who .avatar { width: 22px; height: 22px; }
 .layout { display: grid; grid-template-columns: minmax(0, 1fr) 380px; gap: 2rem; align-items: start; }
 .list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 0.6rem; }
+.veto-hint { margin: -0.4rem 0 0.8rem; }
+.sugg.vetoed { opacity: 0.55; }
+.sugg.vetoed .linklike { text-decoration: line-through; }
+.veto-info { display: inline-flex; align-items: center; gap: 4px; font-size: 0.78rem; color: var(--accent); }
+.buttons { display: flex; flex-direction: column; gap: 0.3rem; align-items: stretch; }
+.veto.on { color: #fff; }
 .sugg { display: flex; align-items: center; gap: 0.9rem; background: var(--bg-soft); border: 1px solid var(--line); border-radius: var(--radius); padding: 0.6rem 0.9rem 0.6rem 0.6rem; }
 .rank { width: 1.6rem; text-align: center; font-weight: 800; color: var(--muted); font-size: 1.1rem; }
 .sugg:first-child .rank { color: var(--accent); }
