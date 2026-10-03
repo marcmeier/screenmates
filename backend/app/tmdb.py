@@ -20,6 +20,12 @@ from .config import settings
 BASE = "https://api.themoviedb.org/3"
 HORROR = 27
 
+# A movie night needs a feature film: TMDB files shorts and music videos
+# (e.g. "Thriller", 14 min) under horror too.
+MIN_RUNTIME = 60
+# Ranking by rating is meaningless for films with a handful of votes.
+MIN_VOTES_FOR_RATING = 200
+
 # TMDB's movie genre ids are stable; list results only carry ids, not names.
 GENRES: dict[int, str] = {
     28: "Action",

@@ -294,7 +294,12 @@ async def sync(db: DBSession = Depends(get_session)):
         raise HTTPException(409, "Sync läuft bereits.")
     async with _sync_lock:
         before = db.exec(select(func.count()).select_from(Movie)).one()
-        for sort, extra in (("popularity.desc", {}), ("vote_average.desc", {"stimmen_min": 500})):
+        passes = (
+            ("popularity.desc", {"stimmen_min": 50}),  # skips unreleased films with 1 vote
+            ("vote_average.desc", {"stimmen_min": 500}),
+        )
+        for sort, extra in passes:
+            extra = {"dauer_min": tmdb.MIN_RUNTIME, **extra}
             for page in range(1, SYNC_PAGES + 1):
                 results = await tmdb.discover(sort=sort, page=page, **extra) or []
                 for raw in results:

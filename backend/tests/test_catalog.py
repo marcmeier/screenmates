@@ -121,3 +121,31 @@ def test_detail_completes_list_rows_from_tmdb(client, tmdb_on):
     )
     assert client.post("/api/wishlist", json={"movie_id": 5}).status_code == 201
     assert client.get("/api/movies/5").json()["runtime"] == 90
+
+
+@respx.mock
+def test_discover_defaults_to_feature_films_with_enough_votes(client, tmdb_on):
+    route = respx.get(f"{TMDB}/discover/movie").mock(return_value=httpx.Response(200, json={"results": []}))
+    client.get("/api/discover")
+    params = route.calls.last.request.url.params
+    assert params["with_runtime.gte"] == "60"
+    assert "vote_count.gte" not in params
+    client.get("/api/discover", params={"sort": "vote_average.desc"})
+    assert route.calls.last.request.url.params["vote_count.gte"] == "200"
+    client.get("/api/discover", params={"sort": "vote_average.desc", "stimmen_min": 0, "dauer_min": 0})
+    params = route.calls.last.request.url.params
+    assert params["vote_count.gte"] == "0"
+    assert params["with_runtime.gte"] == "0"
+
+
+def test_local_rating_sort_ignores_shorts_and_one_vote_wonders(client, db):
+    from app.models import Movie
+
+    db.add(Movie(id=1, title="Thriller", runtime=14, vote_average=9.9, vote_count=800))
+    db.add(Movie(id=2, title="Family", runtime=95, vote_average=10.0, vote_count=1))
+    db.add(Movie(id=3, title="Ohne Laufzeit", runtime=None, vote_average=9.5, vote_count=900))
+    db.commit()
+    top = titles(client.get("/api/discover", params={"sort": "vote_average.desc"}))
+    assert "Thriller" not in top
+    assert "Family" not in top
+    assert top[0] == "Ohne Laufzeit"

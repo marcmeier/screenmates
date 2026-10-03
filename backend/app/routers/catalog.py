@@ -138,6 +138,10 @@ async def discover(
     note_min: float | None = Query(None, ge=0, le=10),
     note_max: float | None = Query(None, ge=0, le=10),
 ):
+    if dauer_min is None:
+        dauer_min = tmdb.MIN_RUNTIME
+    if sort == "vote_average.desc" and stimmen_min is None:
+        stimmen_min = tmdb.MIN_VOTES_FOR_RATING
     flt = dict(
         stimmen_min=stimmen_min,
         stimmen_max=stimmen_max,
@@ -160,10 +164,11 @@ async def discover(
         (Movie.year, jahr_min, jahr_max),
         (Movie.vote_average, note_min, note_max),
     ):
+        # Rows synced from list results have no runtime yet; don't hide them for it.
         if lo is not None:
-            stmt = stmt.where(column >= lo)
+            stmt = stmt.where(or_(col(column).is_(None), column >= lo))
         if hi is not None:
-            stmt = stmt.where(column <= hi)
+            stmt = stmt.where(or_(col(column).is_(None), column <= hi))
     sort_col, desc = SORTS[sort]
     stmt = stmt.order_by(col(sort_col).desc() if desc else col(sort_col).asc())
     inc_names = {tmdb.GENRES[g] for g in inc if g in tmdb.GENRES}
