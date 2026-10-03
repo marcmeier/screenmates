@@ -1,5 +1,7 @@
 """Stöbern: shelves per streaming service and theme, and the grid filters behind them."""
 
+from datetime import date
+
 import httpx
 import respx
 
@@ -62,12 +64,25 @@ def test_shelves_ours_first_services_themes(client, tmdb_on):
     ids = [r["id"] for r in regale]
     # ours first; shops, aggregators and channels have no shelf; Sky Go repeats WOW;
     # Disney Plus has too few films
-    assert ids == ["bei-uns", "dienst-9", "dienst-8", "dienst-30", "kostenlos", "neu", "geheimtipps", "klassiker"]
+    genres = ["genre-27", "genre-35", "genre-53", "genre-28", "genre-878", "genre-18", "genre-16", "genre-99"]
+    assert ids == [
+        "bei-uns",
+        "dienst-9",
+        "dienst-8",
+        "dienst-30",
+        "kostenlos",
+        "neu",
+        *genres,
+        "geheimtipps",
+        "klassiker",
+    ]
     prime = regale[1]
     assert prime["unser"] is True and prime["anbieter"]["name"] == "Amazon Prime Video"
     assert prime["filter"] == {"anbieter": 9} and len(prime["filme"]) == 14
     assert regale[0]["filter"] == {"beiUns": True}
     assert regale[4]["filter"] == {"kostenlos": True}
+    horror = next(r for r in regale if r["id"] == "genre-27")
+    assert horror["titel"] == "Horror" and horror["filter"] == {"include": [27], "stimmen_min": 50}
 
     # Each shelf asks TMDB once; the second visit comes from the cache.
     anzahl = discover.call_count
@@ -139,3 +154,21 @@ def test_paging_in_the_local_catalogue(client):
     assert len(r["results"]) == 5 and r["mehr"] is True and r["gesamt"] >= 10
     letzte = -(-r["gesamt"] // 5)
     assert client.get("/api/discover", params={"limit": 5, "seite": letzte}).json()["mehr"] is False
+
+
+@respx.mock
+def test_all_genres_but_only_films_that_are_out(client, tmdb_on):
+    """No fixed genre any more, and nothing that can't be watched yet."""
+    route = respx.get(f"{TMDB}/discover/movie").mock(return_value=httpx.Response(200, json={"results": []}))
+    client.get("/api/discover")
+    p = route.calls.last.request.url.params
+    assert "with_genres" not in p
+    assert p["primary_release_date.lte"] == date.today().isoformat()
+
+    client.get("/api/discover", params={"include": "27,35", "jahr_max": 1989, "sprachen": "en,de"})
+    p = route.calls.last.request.url.params
+    assert (p["with_genres"], p["primary_release_date.lte"], p["with_original_language"]) == (
+        "27,35",
+        "1989-12-31",
+        "en|de",
+    )

@@ -23,7 +23,6 @@ from dataclasses import dataclass, field
 MIN_BEWERTUNGEN = 8  # below this a guess is no better than the average
 TENDENZ_AB = 25  # from here on the guess is measurably better than the average
 MAX_BEWERTUNGEN = 150  # newest ratings only; keeps the solve fast
-OHNE_GENRE = {"Horror"}  # every film here is horror; it says nothing
 
 # Feature weights and regularisation, chosen by the backtest in docs/PROGNOSE.md.
 STICHWORT, GENRE, JAHRZEHNT, NOTE, REIHE = 0.6, 0.3, 0.6, 0.9, 1.5
@@ -47,7 +46,7 @@ class Film:
             titel=m.title,
             jahr=m.year,
             note=m.vote_average or 0.0,
-            genres=frozenset(json.loads(m.genres or "[]")) - OHNE_GENRE,
+            genres=frozenset(json.loads(m.genres or "[]")),
             stichworte=frozenset(json.loads(m.keywords or "[]")),
             reihe=m.collection or "",
         )

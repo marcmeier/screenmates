@@ -157,7 +157,7 @@ async function removeSchutz(u) {
         <section class="panel">
           <h2>Katalog</h2>
           <p class="muted">
-            {{ app.status.movie_count }} Filme, davon {{ app.status.canon_count }} im Horror-Kanon.
+            {{ app.status.movie_count }} Filme, davon {{ app.status.canon_count }} aus dem TMDB-Abgleich.
             <template v-if="app.status.last_sync">Letzter Abgleich {{ vorWann(app.status.last_sync) }}.</template>
           </p>
           <button v-if="app.status.tmdb" :disabled="busy" @click="sync">

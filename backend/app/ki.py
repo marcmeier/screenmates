@@ -16,7 +16,7 @@ import httpx
 from .config import settings
 
 SYSTEM = (
-    "Du bist ein Horrorfilm-Kenner und hilfst einer Freundesgruppe, den nächsten Filmabend "
+    "Du bist ein Filmkenner und hilfst einer Freundesgruppe, den nächsten Filmabend "
     "auszuwählen. Antworte ausschließlich mit einem JSON-Array, ohne Fließtext davor oder "
     'danach. Jedes Element hat die Form {"titel": string, "originaltitel": string, '
     '"jahr": number, "warum": string}. "warum" ist ein kurzer deutscher Satz, warum der Film '
@@ -40,7 +40,7 @@ def _parse(text: str) -> list[dict[str, Any]]:
 
 
 async def vorschlaege(beschreibung: str, anzahl: int, vermeiden: list[str]) -> list[dict[str, Any]]:
-    prompt = f"Beschreibung: {beschreibung.strip() or 'Überrasch uns mit einem guten Horrorfilm.'}\n"
+    prompt = f"Beschreibung: {beschreibung.strip() or 'Überrasch uns mit einem guten Film.'}\n"
     prompt += f"Schlage {anzahl} passende Filme vor."
     if vermeiden:
         prompt += " Diese kennen wir schon, bitte nicht vorschlagen: " + "; ".join(vermeiden[:150])

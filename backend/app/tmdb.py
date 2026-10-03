@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import json
 import time
+from datetime import date
 from typing import Any
 
 import httpx
@@ -21,8 +22,8 @@ from .config import settings
 BASE = "https://api.themoviedb.org/3"
 HORROR = 27
 
-# A movie night needs a feature film: TMDB files shorts and music videos
-# (e.g. "Thriller", 14 min) under horror too.
+# A movie night needs a feature film: TMDB lists shorts and music videos
+# (e.g. "Thriller", 14 min) among films too.
 MIN_RUNTIME = 60
 # Ranking by rating is meaningless for films with a handful of votes.
 MIN_VOTES_FOR_RATING = 200
@@ -178,8 +179,9 @@ async def discover(
     dauer_max: int | None = None,
     abo_anbieter: list[int] | None = None,
     monetarisierung: str | None = None,
+    sprachen: list[str] | None = None,
 ) -> list[dict[str, Any]] | None:
-    """Discover horror films. `include` genres are AND-ed with horror.
+    """Discover films. `include` genres must all apply (TMDB: comma = AND).
 
     `abo_anbieter` keeps films that are in a subscription with any of these
     providers in the configured region (TMDB/JustWatch availability).
@@ -187,16 +189,19 @@ async def discover(
     on its own it keeps everything offered that way by anyone.
     """
     params: dict[str, Any] = {
-        "with_genres": ",".join(str(g) for g in [HORROR, *(include or [])]),
+        "with_genres": ",".join(str(g) for g in include or []),
         "sort_by": sort,
         "include_adult": "false",
         "page": page,
     }
+    if not params["with_genres"]:
+        del params["with_genres"]
     if exclude:
         params["without_genres"] = ",".join(str(g) for g in exclude)
     ranges = {
         "primary_release_date.gte": f"{jahr_min}-01-01" if jahr_min else None,
-        "primary_release_date.lte": f"{jahr_max}-12-31" if jahr_max else None,
+        # Never films that aren't out yet: they can't be watched on a movie night.
+        "primary_release_date.lte": min(f"{jahr_max}-12-31" if jahr_max else "9999", date.today().isoformat()),
         "vote_average.gte": note_min,
         "vote_average.lte": note_max,
         "vote_count.gte": stimmen_min,
@@ -205,6 +210,8 @@ async def discover(
         "with_runtime.lte": dauer_max,
     }
     params.update({k: v for k, v in ranges.items() if v is not None})
+    if sprachen:
+        params["with_original_language"] = "|".join(sprachen)
     if abo_anbieter:
         params["with_watch_providers"] = "|".join(str(p) for p in abo_anbieter)  # | = any of them
     if abo_anbieter or monetarisierung:
@@ -299,7 +306,7 @@ STORE_IDS = {
     130,
     192,
 }  # Apple TV Store, Google Play, Amazon Video, maxdome, Rakuten, Sky Store, YouTube
-# Listed by TMDB but no use for browsing horror: a free-TV aggregator, anime,
+# Listed by TMDB but no use for a shelf: a free-TV aggregator, anime-only,
 # and channels that are bookable inside another service anyway.
 KEIN_REGAL = {2285, 283}
 KEIN_REGAL_ENDUNG = ("Amazon Channel", "Apple TV Channel", "Roku Premium Channel", "with Ads")  # free = "Kostenlos"

@@ -2,6 +2,18 @@
 
 ## Unveröffentlicht
 
+### Neu
+- **Alle Genres statt nur Horror.** Finden, Stöbern, Suche, Personen und KI-Suche umfassen jetzt
+  jeden Film. Horror ist ein Genre unter vielen und hat sein eigenes Regal – ganz vorn.
+- **Genre-Regale** beim Stöbern: Horror, Komödie, Thriller, Action, Science-Fiction, Drama,
+  Animation, Dokumentarfilm. Die Dienst-Regale zeigen das ganze Angebot.
+- **Filmografien** zeigen alle Filme einer Person, auf Wunsch nach Genre gefiltert.
+- Gezeigt werden nur Filme, die schon erschienen sind. Bei großen Mengen steht „Mehr als 10.000
+  Filme", denn mehr liefert TMDB nicht.
+- „Geheimtipps" an echten Daten neu eingestellt: über alle Genres hinweg verdrängten Filme mit
+  kleiner, begeisterter Fan-Basis alles andere. Jetzt mindestens zwei Jahre alt und in verbreiteten
+  Originalsprachen (u. a. *Harakiri*, *Die sieben Samurai*, *Cinema Paradiso*).
+
 ### Behoben
 - **Mit TMDB endeten Raster und Suche nach 20 Filmen**, obwohl es z. B. 320 Horrorfilme bei
   Netflix gibt: TMDB liefert 20 Filme pro Seite, die App fragte 24 an und hielt „weniger als

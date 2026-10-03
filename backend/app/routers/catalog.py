@@ -143,7 +143,7 @@ async def discover(
     limit: Limit = 24,
     seite: Page = 1,
     sort: str = Query("popularity.desc", pattern="^(" + "|".join(SORTS).replace(".", r"\.") + ")$"),
-    include: str = Query("", description="Kommagetrennte TMDB-Genre-IDs, die zusätzlich zu Horror gelten müssen"),
+    include: str = Query("", description="Kommagetrennte TMDB-Genre-IDs, die alle zutreffen müssen"),
     exclude: str = Query("", description="Kommagetrennte TMDB-Genre-IDs, die ausgeschlossen werden"),
     stimmen_min: int | None = Query(None, ge=0),
     stimmen_max: int | None = Query(None, ge=0),
@@ -156,6 +156,7 @@ async def discover(
     abos: bool = Query(False, description="Nur Filme, die bei einem Abo aus der Gruppe laufen"),
     anbieter: str = Query("", description="Kommagetrennte Provider-IDs: nur Filme im Abo bei diesen Diensten"),
     kostenlos: bool = Query(False, description="Nur Filme, die kostenlos (auch mit Werbung) laufen"),
+    sprachen: str = Query("", description="Kommagetrennte Originalsprachen (ISO 639-1), z. B. en,de"),
 ):
     if dauer_min is None:
         dauer_min = tmdb.MIN_RUNTIME
@@ -188,6 +189,7 @@ async def discover(
         exclude=exc,
         abo_anbieter=dienste,
         monetarisierung="free|ads" if kostenlos else None,
+        sprachen=[x for x in sprachen.split(",") if x.strip()] or None,
         **flt,
     )
     if remote is not None:
@@ -268,6 +270,18 @@ async def providers(
 REGAL_FILME = 14
 REGAL_DIENSTE = 8  # streaming services with a shelf of their own
 REGAL_TTL = 6 * 3600
+# Horror first: where this group comes from.
+GENRE_REGALE = [
+    (27, "Horror", "Gänsehaut garantiert"),
+    (35, "Komödie", "Zum Lachen"),
+    (53, "Thriller", "Spannung bis zum Schluss"),
+    (28, "Action", "Krachen lassen"),
+    (878, "Science-Fiction", "Andere Welten"),
+    (18, "Drama", "Großes Gefühlskino"),
+    (16, "Animation", "Nicht nur für Kinder"),
+    (99, "Dokumentarfilm", "Wirklich passiert"),
+]
+GEHEIMTIPP_SPRACHEN = ["en", "de", "fr", "it", "es", "ko", "ja", "da", "sv", "no"]
 
 
 async def _regal(db: DBSession, filter: dict, **kw) -> list[dict]:
@@ -282,19 +296,31 @@ async def _regal(db: DBSession, filter: dict, **kw) -> list[dict]:
 
 @router.get("/stoebern")
 async def stoebern(db: DBSession = Depends(get_session)):
-    """Shelves to browse: what we can watch, each streaming service, and a few themes.
+    """Shelves to browse: what we can watch, each streaming service, genres and themes.
 
     Every shelf carries the grid filter that shows all of it ("Alle zeigen").
     """
     jahr = date.today().year
     themen = [
-        ("neu", "Neu erschienen", "Horror der letzten zwei Jahre", {"jahr_min": jahr - 1}),
-        # Few but convinced voters; animation pushes odd picks up, so it stays out.
+        # At least a few votes: popularity alone also lifts films nobody has seen yet.
+        ("neu", "Neu erschienen", "Filme der letzten zwei Jahre", {"jahr_min": jahr - 1, "stimmen_min": 50}),
+        *[(f"genre-{gid}", name, unter, {"include": [gid], "stimmen_min": 50}) for gid, name, unter in GENRE_REGALE],
+        # Rated high by many, but not a blockbuster. Without the language limit, films
+        # with a small but devoted fan base (anime, some Bollywood) take every place;
+        # with it, the classics of world cinema come up.
         (
             "geheimtipps",
             "Geheimtipps",
             "Gut bewertet, aber kaum bekannt",
-            {"sort": "vote_average.desc", "note_min": 7.0, "stimmen_min": 500, "stimmen_max": 4000, "exclude": [16]},
+            {
+                "sort": "vote_average.desc",
+                "note_min": 7.2,
+                "stimmen_min": 800,
+                "stimmen_max": 6000,
+                "jahr_max": jahr - 2,
+                "exclude": [16, 99, 10402],
+                "sprachen": GEHEIMTIPP_SPRACHEN,
+            },
         ),
         ("klassiker", "Klassiker", "Die besten bis 1989", {"sort": "vote_average.desc", "jahr_max": 1989}),
     ]
@@ -367,7 +393,7 @@ async def stoebern(db: DBSession = Depends(get_session)):
 
 def _tmdb_args(flt: dict) -> dict:
     """Grid filter (frontend names) → tmdb.discover arguments."""
-    keys = ("sort", "jahr_min", "jahr_max", "note_min", "stimmen_min", "stimmen_max", "exclude")
+    keys = ("sort", "jahr_min", "jahr_max", "note_min", "stimmen_min", "stimmen_max", "include", "exclude", "sprachen")
     return {k: flt[k] for k in keys if k in flt}
 
 
@@ -391,7 +417,9 @@ def _discover_defaults(flt: dict) -> dict:
         kostenlos=False,
     )
     args = base | _tmdb_args(flt)
+    args["include"] = ",".join(str(g) for g in flt.get("include", []))
     args["exclude"] = ",".join(str(g) for g in flt.get("exclude", []))
+    args["sprachen"] = ",".join(flt.get("sprachen", []))
     return args
 
 
@@ -428,14 +456,10 @@ async def people(q: str = Query("", max_length=100)):
             "bereich": DEPARTMENTS.get(p.get("known_for_department") or "", p.get("known_for_department") or ""),
             "bild": _profile(p.get("profile_path")),
             "bekannt_fuer": [k.get("title") or k.get("name") for k in p.get("known_for", [])][:3],
-            "horror": any(tmdb.HORROR in k.get("genre_ids", []) for k in p.get("known_for", [])),
         }
         for p in results
     ]
-    # This is a horror app: "carpenter" should find John before Sabrina.
-    # Stable sort keeps TMDB's popularity order within each group.
-    people.sort(key=lambda p: not p["horror"])
-    return {"results": people}
+    return {"results": people}  # TMDB's popularity order
 
 
 JOBS = {
@@ -461,14 +485,18 @@ def _is_cameo(rolle: str) -> bool:
 
 
 @router.get("/personen/{person_id}/filme")
-async def person_films(person_id: int, nur_horror: bool = True, db: DBSession = Depends(get_session)):
+async def person_films(
+    person_id: int,
+    genre: int | None = Query(None, description="Nur Filme mit diesem TMDB-Genre"),
+    db: DBSession = Depends(get_session),
+):
     info, data = await asyncio.gather(tmdb.person(person_id), tmdb.person_movies(person_id))
     if data is None:
         raise HTTPException(404, "Person nicht gefunden.")
     seen: dict[int, dict] = {}
     # Crew first, so "Regie" leads and an uncredited cameo comes last.
     for credit in [*data.get("crew", []), *data.get("cast", [])]:
-        if nur_horror and tmdb.HORROR not in credit.get("genre_ids", []):
+        if genre is not None and genre not in credit.get("genre_ids", []):
             continue
         rolle = credit.get("character") or JOBS.get(credit.get("job") or "", credit.get("job") or "")
         if _is_cameo(rolle):

@@ -314,7 +314,7 @@ def _passes(m: dict, f: KiSuche) -> bool:
 
 @router.post("/sync", dependencies=[Depends(require_host)])
 async def sync(db: DBSession = Depends(get_session)):
-    """Pull the most popular and the best-rated horror films into the catalogue as canon."""
+    """Pull the most popular and the best-rated films into the catalogue as canon."""
     if not settings.tmdb_enabled:
         raise HTTPException(503, "TMDB ist nicht eingerichtet (TMDB_API_KEY fehlt).")
     if _sync_lock.locked():
