@@ -5,8 +5,29 @@ services:
     env_file:
       - path: backend/.env
         required: false
+    environment:
+      # Kino: talk to MediaMTX over the internal network.
+      MEDIAMTX_WEBRTC_URL: http://mediamtx:8889
+      MEDIAMTX_API_URL: http://mediamtx:9997
     volumes:
       - screenmates-data:/data
+    restart: unless-stopped
+
+  # Media server for the Kino. Its HTTP ports stay inside this network; only the
+  # WebRTC media port must be reachable from the internet (UDP, TCP as fallback).
+  mediamtx:
+    image: bluenviron/mediamtx:1.21.1
+    volumes:
+      - ./deploy/mediamtx.yml:/mediamtx.yml:ro
+    environment:
+      MTX_AUTHHTTPADDRESS: http://screenmates:8000/api/kino/mtx-auth
+      MTX_APIADDRESS: :9997
+      MTX_WEBRTCADDRESS: :8889
+      # Public hostname or IP of this server, so viewers outside your network can connect:
+      MTX_WEBRTCADDITIONALHOSTS: ${KINO_PUBLIC_HOST:-}
+    ports:
+      - "8189:8189/udp"
+      - "8189:8189/tcp"
     restart: unless-stopped
 
 volumes:

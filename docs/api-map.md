@@ -78,6 +78,20 @@ Jeder Film trägt die Gruppen-Flags `gesehen`, `gemerkt` und `vorgeschlagen_von`
 | DELETE | `/feature-notes/{id}` | E | Anmerkung löschen |
 | GET/PUT | `/info` | –/H | Markdown-Infotext |
 
+## Kino
+
+| Methode | Pfad | Recht | Zweck |
+|---|---|:-:|---|
+| GET | `/kino` | – | Live-Status, Titel, verknüpfter Film, Zuschauende, Publikum der Vorstellung |
+| POST | `/kino/programm` | H | Titel setzen, Film verknüpfen |
+| POST/DELETE | `/kino/da` | N | Herzschlag beim Zuschauen bzw. Abmelden |
+| POST | `/kino/whip` | H oder OBS-Key | Senden (WHIP-Proxy zu MediaMTX) |
+| POST | `/kino/whep` | N | Zuschauen (WHEP-Proxy) |
+| PATCH/DELETE | `/kino/sitzung/{whip,whep}/{id}` | wie oben | WebRTC-Sitzung nachverhandeln bzw. beenden |
+| GET | `/kino/obs` · POST `/kino/obs/neu` | H | Server-URL und Stream-Key für OBS, Key erneuern |
+| DELETE | `/kino` | H | Übertragung für alle beenden (auch OBS) |
+| POST | `/kino/mtx-auth` | intern | Rechteprüfung, die MediaMTX bei jeder Aktion aufruft |
+
 ## Noch nicht umgesetzt (aus dem Original)
 
 `/clips/*`, `/aufnahmen/*`, `/stream/{pfad}`: Video-Clips aus Filmen schneiden und abspielen.

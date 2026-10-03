@@ -17,6 +17,10 @@ Drei Bereiche für die drei Dinge, für die man herkommt:
   macht aus „langsamer Folk-Horror, aber nicht zu brutal“ passende, real existierende Filme.
 - **Unsere Filme** – Merkliste und die Chronik des Gesehenen: Bewertungen pro Person,
   Teilnehmende, Gästebuch mit Antworten und Herzen.
+- **Kino** – gemeinsam schauen, auch wenn alle in verschiedenen Wohnzimmern sitzen: Der Host
+  teilt seinen Bildschirm oder sendet aus OBS (eigene Filme, Spiele …), alle sehen live dasselbe
+  Bild mit unter einer Sekunde Verzögerung. Läuft etwas, leuchtet der Menüpunkt mit der Zahl der
+  Zuschauenden. Danach trägt ein Klick den Film als gesehen ein, mit allen, die dabei waren.
 
 Dazu: eine Detailansicht mit Besetzung und ähnlichen Filmen, **Wünsche & Ideen** mit Voting
 und **Film als Passwort** – keine Accounts: Man wählt seinen Namen und schützt ihn optional
@@ -25,9 +29,9 @@ mit einem Film, den man beim Anmelden anklicken muss. Wer den Host-Film kennt, w
 
 Mit TMDB-Key ist der ganze TMDB-Katalog verfügbar, ohne Key gibt es einen Demo-Katalog.
 
-| Finden | Detail | Unsere Filme | Mobil |
-|---|---|---|---|
-| ![](docs/screenshots/finden.png) | ![](docs/screenshots/detail.png) | ![](docs/screenshots/unsere-filme.png) | ![](docs/screenshots/mobil.png) |
+| Finden | Detail | Unsere Filme | Kino | Mobil |
+|---|---|---|---|---|
+| ![](docs/screenshots/finden.png) | ![](docs/screenshots/detail.png) | ![](docs/screenshots/unsere-filme.png) | ![](docs/screenshots/kino.png) | ![](docs/screenshots/mobil.png) |
 
 ## Schnellstart
 
@@ -63,6 +67,44 @@ Alles optional, über `backend/.env` oder Umgebungsvariablen:
 | `COOKIE_SECURE` | `true` hinter HTTPS. |
 | `CORS_ORIGINS` | Nur nötig, wenn Frontend und API auf verschiedenen Origins laufen. |
 
+## Kino
+
+Das Kino überträgt per WebRTC über den Medienserver [MediaMTX](https://github.com/bluenviron/mediamtx):
+Der Host sendet **einmal** dorthin, MediaMTX verteilt an alle. screenmates leitet nur die
+Verbindungsaushandlung (WHIP zum Senden, WHEP zum Schauen) weiter und prüft dabei die Rechte –
+senden darf nur der Host, schauen jeder mit Namen. MediaMTX fragt bei jeder Aktion bei
+screenmates nach (`/api/kino/mtx-auth`); seine eigenen HTTP-Ports bleiben intern.
+
+**Einrichten**
+
+```bash
+make kino-install   # lädt MediaMTX (feste Version, Prüfsumme) nach .tools/
+make dev            # startet es automatisch mit, der Menüpunkt „Kino“ erscheint
+```
+
+Mit Docker ist MediaMTX in `compose.yaml` schon dabei.
+
+**Damit Freunde von außen zuschauen können**, muss screenmates im Internet erreichbar sein
+(Server/VPS, Heimserver mit Portfreigabe oder ein privates Netz wie Tailscale), und zusätzlich:
+
+- Port **8189** (UDP, TCP als Ausweichweg) zum Medienserver freigeben,
+- `KINO_PUBLIC_HOST=dein.server.de` setzen (Compose) bzw. `MTX_WEBRTCADDITIONALHOSTS`, damit
+  die Zuschauenden eine erreichbare Adresse bekommen,
+- hinter HTTPS `COOKIE_SECURE=true` setzen.
+
+Bandbreite: Der Server braucht etwa 4–6 Mbit/s Upload **pro Zuschauer** (1080p), der Host nur einmal.
+
+**Senden**
+
+- *Bildschirm teilen* – direkt im Browser, ein Klick. Für Ton am einfachsten einen Tab teilen und
+  „Audio teilen“ anhaken.
+- *OBS* (ab Version 30) – in OBS unter Einstellungen → Stream den Dienst **WHIP** wählen und
+  Server + Bearer-Token aus der Kino-Seite eintragen; Keyframe-Intervall 1 s, keine B-Frames.
+  Damit gehen Szenen, Spielaufnahme, Filmdateien und voller Ton.
+
+Gezeigt werden sollte, was ihr zeigen dürft – eigene Aufnahmen, Spiele, DRM-freie Filme.
+Fenster von Netflix & Co. bleiben bei der Aufnahme ohnehin schwarz (DRM).
+
 ## Architektur
 
 ```
@@ -87,7 +129,8 @@ Doku unter `/docs`, wenn das Backend läuft.
 
 ```bash
 make lint        # ruff + eslint
-make test        # 51 Backend-Tests + 14 Playwright-E2E-Schritte gegen das echte Backend
+make test        # 68 Backend-Tests + 21 Playwright-E2E-Schritte gegen das echte Backend
+                 # (die 5 Kino-Schritte mit echtem MediaMTX, falls installiert)
 ```
 
 GitHub Actions führt Lint, Unit- und E2E-Tests bei jedem Push aus. Was beim Review
@@ -101,6 +144,8 @@ werden nicht übernommen.
 
 ## Roadmap
 
+- „Wo läuft's?“: Streaming-Anbieter je Film über TMDB, Filter „läuft bei uns im Abo“
+- Kino: Chat und Reaktionen während der Vorstellung
 - Video-Clips (Szenen ausschneiden und teilen) wie im Original
 - Serien (braucht einen Schlüssel `media_type` + `id`)
 - Datenbank-Migrationen (Alembic)

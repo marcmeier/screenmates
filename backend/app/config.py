@@ -26,6 +26,10 @@ class Settings(BaseSettings):
     llm_base_url: str = "https://api.anthropic.com/v1"
     llm_model: str = "claude-opus-5-5"
 
+    # Kino (live screen sharing) via MediaMTX. Empty URL disables the feature.
+    mediamtx_webrtc_url: str = ""  # e.g. http://127.0.0.1:8889
+    mediamtx_api_url: str = "http://127.0.0.1:9997"
+
     session_cookie: str = "screenmates_sid"
     # Set to true when served over HTTPS so the session cookie is never sent in clear.
     cookie_secure: bool = False
@@ -34,6 +38,10 @@ class Settings(BaseSettings):
     @property
     def tmdb_enabled(self) -> bool:
         return bool(self.tmdb_api_key)
+
+    @property
+    def kino_enabled(self) -> bool:
+        return bool(self.mediamtx_webrtc_url)
 
     @property
     def llm_enabled(self) -> bool:

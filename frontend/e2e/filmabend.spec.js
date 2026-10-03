@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test'
+import { KINO } from '../playwright.config.js'
 
 // One story, in order: a new group plans a movie night from scratch.
 test.describe.configure({ mode: 'serial' })
@@ -34,9 +35,9 @@ test('joining the next evening', async () => {
   await expect(page.locator('.crew')).toContainText('Marc')
 })
 
-test('navigation has three main areas', async () => {
+test('navigation has three main areas (plus the Kino when a media server runs)', async () => {
   const main = page.getByRole('navigation', { name: 'Hauptbereiche' }).getByRole('link')
-  await expect(main).toHaveText(['Filmabend', 'Finden', 'Unsere Filme'])
+  await expect(main).toHaveText(KINO ? ['Filmabend', 'Finden', 'Unsere Filme', /^Kino/] : ['Filmabend', 'Finden', 'Unsere Filme'])
 })
 
 test('discover filters by extra genre', async () => {

@@ -90,6 +90,7 @@ def status(db: DBSession = Depends(get_session)):
         "syncing": _sync_lock.locked(),
         "tmdb": settings.tmdb_enabled,
         "ki": settings.llm_enabled,
+        "kino": settings.kino_enabled,
         "image_base": settings.tmdb_image_base,
     }
 

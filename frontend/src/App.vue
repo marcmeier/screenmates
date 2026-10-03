@@ -1,6 +1,7 @@
 <script setup>
 import { computed, defineAsyncComponent, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useApp } from './stores/app'
+import { useKino } from './stores/kino'
 import { useUi } from './stores/ui'
 import { navigate, useRoute } from './composables/useRoute'
 import Icon from './components/Icon.vue'
@@ -18,6 +19,7 @@ const PRIMARY = [
   { id: 'abend', label: 'Filmabend', icon: 'abend', comp: AbendTab },
   { id: 'finden', label: 'Finden', icon: 'suche', comp: FindenTab },
   { id: 'sammlung', label: 'Unsere Filme', icon: 'sammlung', comp: lazy(() => import('./components/tabs/SammlungTab.vue')) },
+  { id: 'kino', label: 'Kino', icon: 'kino', comp: lazy(() => import('./components/tabs/KinoTab.vue')) },
 ]
 const SECONDARY = [
   { id: 'wuensche', label: 'Wünsche & Ideen', icon: 'wuensche', comp: lazy(() => import('./components/tabs/WuenscheTab.vue')) },
@@ -26,6 +28,9 @@ const SECONDARY = [
 const ALL = [...PRIMARY, ...SECONDARY]
 
 const app = useApp()
+const kino = useKino()
+// The Kino entry only exists once a media server is configured.
+const primary = computed(() => PRIMARY.filter((t) => t.id !== 'kino' || kino.enabled))
 const ui = useUi()
 const route = useRoute()
 const failed = ref(false)
@@ -49,6 +54,7 @@ onMounted(async () => {
   try {
     await app.bootstrap()
     if (!app.me) ui.loginOpen = true
+    kino.startPolling()
   } catch {
     failed.value = true
   }
@@ -73,7 +79,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey))
 
       <nav class="primary-nav" aria-label="Hauptbereiche">
         <a
-          v-for="t in PRIMARY"
+          v-for="t in primary"
           :key="t.id"
           :href="`#/${t.id}`"
           class="nav"
@@ -82,6 +88,9 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey))
         >
           <Icon :name="t.icon" :size="20" />
           <span>{{ t.label }}</span>
+          <span v-if="t.id === 'kino' && kino.live" class="live" :title="`Läuft gerade: ${kino.titel || 'Live'}`">
+            <span class="dot"></span>{{ kino.zuschauer.length || 'live' }}
+          </span>
         </a>
       </nav>
 
@@ -149,6 +158,11 @@ nav { display: flex; flex-direction: column; gap: 4px; }
 .nav.active { background: var(--bg-soft); color: var(--text); font-weight: 600; }
 .nav.active::before { content: ''; position: absolute; left: 0; top: 9px; bottom: 9px; width: 3px; border-radius: 3px; background: var(--accent); }
 .nav.active svg { color: var(--accent); }
+.live {
+  margin-left: auto; display: inline-flex; align-items: center; gap: 5px;
+  font-size: 0.72rem; font-weight: 700; color: #fff; background: var(--accent); padding: 2px 7px; border-radius: 999px;
+}
+.live .dot { width: 6px; height: 6px; border-radius: 50%; background: #fff; animation: pulse 1.4s ease-in-out infinite; }
 .nav.small { font-size: 0.85rem; padding: 0.45rem 0.8rem; gap: 0.7rem; }
 
 .bottom { margin-top: auto; display: flex; flex-direction: column; gap: 0.9rem; }
@@ -163,7 +177,8 @@ nav { display: flex; flex-direction: column; gap: 4px; }
 
 /* Phone: brand and profile on top, the three main areas as tabs below. */
 @media (max-width: 860px) {
-  .shell { grid-template-columns: 1fr; }
+  /* Header row hugs its content; the page gets the rest of the height. */
+  .shell { grid-template-columns: 1fr; grid-template-rows: auto 1fr; }
   .sidebar {
     z-index: 20; height: auto; padding: 0.7rem 1rem 0; gap: 0.4rem;
     display: grid; grid-template-columns: 1fr auto; align-items: center;
@@ -175,7 +190,9 @@ nav { display: flex; flex-direction: column; gap: 4px; }
   .secondary-nav, .status { display: none; }
   .me, .pick { width: auto; }
   .primary-nav { grid-column: 1 / -1; flex-direction: row; justify-content: space-around; }
-  .nav { flex: 1; justify-content: center; padding: 0.6rem 0.4rem; font-size: 0.9rem; gap: 0.45rem; white-space: nowrap; }
+  /* Bottom-tab style: icon above label, so four areas fit a phone. */
+  .nav { flex: 1; flex-direction: column; justify-content: center; padding: 0.5rem 0.2rem 0.6rem; font-size: 0.72rem; gap: 0.2rem; white-space: nowrap; }
+  .live { position: absolute; top: 2px; left: calc(50% + 6px); margin: 0; padding: 0 5px; font-size: 0.62rem; }
   .nav.active { background: none; }
   .nav.active::before { left: 12px; right: 12px; top: auto; bottom: 0; width: auto; height: 3px; }
   .main { padding-top: 1.4rem; }
