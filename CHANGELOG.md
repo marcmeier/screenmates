@@ -3,6 +3,11 @@
 ## Unveröffentlicht
 
 ### Neu
+- **Filmabend-Kiste statt Glücksrad**, wie das Öffnen einer Kiste in Counter-Strike 2: Ein Band aus
+  Postern rast unter der Markierung durch, bremst lange ab und enthüllt den Film des Abends. Die
+  **Seltenheitsfarben** (Standard, Limitiert, Geheim, Verdeckt, ★ Legendär) zeigen die echten
+  Chancen, der Kisteninhalt listet sie in Prozent. Mit Klick-Geräuschen und Fanfare (abschaltbar),
+  Beinahe-Treffern, „Überspringen" (auch Escape) und kurzer Animation bei „weniger Bewegung".
 - **„Wem gefällt's?"** in jeder Filmansicht: geschätzte Sterne pro Person aus ihren eigenen
   Bewertungen, mit Begründung („wie Freitag der 13., ★ 5"). Ab 8 Bewertungen, bis 25 als „erste
   Tendenz". Im Rückblick-Test bis zu 20 % genauer als der Durchschnitt der Person. Was die

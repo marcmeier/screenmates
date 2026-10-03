@@ -1,10 +1,10 @@
 # screenmates
 
 **Der Organizer für den gemeinsamen Horror-Filmabend.** Filme entdecken,
-vorschlagen, das Glücksrad entscheiden lassen – und danach bewerten und im
+vorschlagen, die Filmabend-Kiste öffnen – und danach bewerten und im
 Gästebuch nachdiskutieren.
 
-![Filmabend mit Vorschlägen und Glücksrad](docs/screenshots/filmabend.png)
+![Filmabend mit Termin, Vorschlägen und der Filmabend-Kiste](docs/screenshots/filmabend.png)
 
 ## Was es kann
 
@@ -12,7 +12,8 @@ Drei Bereiche für die drei Dinge, für die man herkommt:
 
 - **Filmabend** – wer ist dabei, **Termin und Einladungskarte** für den Gruppenchat, gerankte
   Vorschläge der Gruppe, ein **Veto** pro Person,
-  ein **Glücksrad**, dessen Felder nach Stimmen gewichtet sind, Hausregeln & Infos und ein
+  die **Filmabend-Kiste**, die wie eine CS2-Kiste aufgeht (Seltenheitsfarben nach den echten
+  Chancen, Stimmen erhöhen sie), Hausregeln & Infos und ein
   Aktivitäts-Feed. Dazu **„Heute vor einem Jahr"**: was ihr um dieses Datum früher geschaut habt.
 - **Finden** – *ein* Suchfeld für alles: Leer zeigt es Horror nach Subgenre, Jahrzehnt, Note
   und Länge – auf Wunsch nur, was **bei uns im Abo läuft** –, getippt findet es Filme und Personen (mit Horror-Filmografie), und **„KI fragen“**
@@ -147,7 +148,7 @@ Doku unter `/docs`, wenn das Backend läuft.
 
 ```bash
 make lint        # ruff + eslint
-make test        # 106 Backend-Tests + 31 Playwright-E2E-Schritte gegen das echte Backend
+make test        # 106 Backend-Tests + 33 Playwright-E2E-Schritte gegen das echte Backend
                  # (die 5 Kino-Schritte mit echtem MediaMTX, falls installiert)
 ```
 
