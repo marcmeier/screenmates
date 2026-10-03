@@ -22,7 +22,8 @@ body {
   margin: 0;
   background: var(--bg);
   color: var(--text);
-  font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+  font-family: 'Inter Variable', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  font-optical-sizing: auto;
   font-size: 15px;
   line-height: 1.45;
   -webkit-font-smoothing: antialiased;
