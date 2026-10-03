@@ -1,25 +1,31 @@
 """SQLModel tables for screenmates.
 
-The schema mirrors the reverse-engineered Filmabend app: a movie catalogue
-synced from TMDB plus the social layer on top (users, watched log, wishlist,
-suggestions, feature requests, host mode).
+A movie catalogue synced from TMDB plus the social layer on top (users,
+watched log, wishlist, suggestions, feature wishes, host mode).
+
+Children reference their parents with ON DELETE CASCADE, so deleting a user,
+a watched entry or a feature never leaves orphans behind. Authorship links
+(who wrote a note, who filed a wish) use SET NULL instead: the content stays
+when its author is removed.
 """
+
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
+from sqlalchemy import UniqueConstraint
 from sqlmodel import Field, SQLModel
 
 
 def now() -> datetime:
-    return datetime.now(timezone.utc)
+    return datetime.now(UTC)
 
 
 class Movie(SQLModel, table=True):
-    """A film or series. `id` is the TMDB id (negative for seed/local items)."""
+    """A film. `id` is the TMDB movie id."""
 
     id: int = Field(primary_key=True)
-    media_type: str = Field(default="movie", index=True)  # movie | tv
+    media_type: str = Field(default="movie", index=True)
     title: str
     original_title: str = ""
     overview: str = ""
@@ -31,7 +37,7 @@ class Movie(SQLModel, table=True):
     vote_average: float = 0.0
     vote_count: int = 0
     popularity: float = 0.0
-    genres: str = "[]"  # JSON array of names
+    genres: str = "[]"  # JSON array of genre names
     collection: str = ""  # TMDB belongs_to_collection name
     is_canon: bool = Field(default=False, index=True)
     added_at: datetime = Field(default_factory=now)
@@ -39,30 +45,34 @@ class Movie(SQLModel, table=True):
 
 class User(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
-    name: str = Field(index=True)
+    name: str = Field(unique=True, index=True)
     color: str = ""
-    schutz_movie_id: int | None = None  # "film as PIN" protection
+    schutz_movie_id: int | None = None  # "film as PIN" — never sent to clients
+    dabei: bool = False  # in for the next movie night
     created_at: datetime = Field(default_factory=now)
 
 
 class Session(SQLModel, table=True):
     sid: str = Field(primary_key=True)
-    user_id: int | None = Field(default=None, foreign_key="user.id")
+    user_id: int | None = Field(default=None, foreign_key="user.id", ondelete="SET NULL")
+    is_host: bool = False
     created_at: datetime = Field(default_factory=now)
 
 
 class Watched(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
-    movie_id: int = Field(foreign_key="movie.id", index=True)
+    movie_id: int = Field(foreign_key="movie.id", index=True, ondelete="CASCADE")
     watched_at: datetime = Field(default_factory=now)
     hidden: bool = False
     created_at: datetime = Field(default_factory=now)
 
 
 class WatchedRating(SQLModel, table=True):
+    __table_args__ = (UniqueConstraint("watched_id", "user_id"),)
+
     id: int | None = Field(default=None, primary_key=True)
-    watched_id: int = Field(foreign_key="watched.id", index=True)
-    user_id: int = Field(foreign_key="user.id")
+    watched_id: int = Field(foreign_key="watched.id", index=True, ondelete="CASCADE")
+    user_id: int = Field(foreign_key="user.id", ondelete="CASCADE")
     stars: int = 0
 
 
@@ -70,36 +80,42 @@ class WatchedNote(SQLModel, table=True):
     """Guestbook comment on a watched entry; threaded via parent_id."""
 
     id: int | None = Field(default=None, primary_key=True)
-    watched_id: int = Field(foreign_key="watched.id", index=True)
-    user_id: int | None = Field(default=None, foreign_key="user.id")
+    watched_id: int = Field(foreign_key="watched.id", index=True, ondelete="CASCADE")
+    user_id: int | None = Field(default=None, foreign_key="user.id", ondelete="SET NULL")
     text: str = ""
-    parent_id: int | None = None
+    parent_id: int | None = Field(default=None, foreign_key="watchednote.id", ondelete="CASCADE")
     created_at: datetime = Field(default_factory=now)
 
 
 class NoteHeart(SQLModel, table=True):
+    __table_args__ = (UniqueConstraint("note_id", "user_id"),)
+
     id: int | None = Field(default=None, primary_key=True)
-    note_id: int = Field(foreign_key="watchednote.id", index=True)
-    user_id: int = Field(foreign_key="user.id")
+    note_id: int = Field(foreign_key="watchednote.id", index=True, ondelete="CASCADE")
+    user_id: int = Field(foreign_key="user.id", ondelete="CASCADE")
 
 
 class WatchedParticipant(SQLModel, table=True):
+    __table_args__ = (UniqueConstraint("watched_id", "user_id"),)
+
     id: int | None = Field(default=None, primary_key=True)
-    watched_id: int = Field(foreign_key="watched.id", index=True)
-    user_id: int = Field(foreign_key="user.id", index=True)
+    watched_id: int = Field(foreign_key="watched.id", index=True, ondelete="CASCADE")
+    user_id: int = Field(foreign_key="user.id", index=True, ondelete="CASCADE")
 
 
 class Wishlist(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
-    movie_id: int = Field(foreign_key="movie.id", index=True)
-    user_id: int | None = Field(default=None, foreign_key="user.id")
+    movie_id: int = Field(foreign_key="movie.id", unique=True, ondelete="CASCADE")
+    user_id: int | None = Field(default=None, foreign_key="user.id", ondelete="SET NULL")
     created_at: datetime = Field(default_factory=now)
 
 
 class Suggestion(SQLModel, table=True):
+    __table_args__ = (UniqueConstraint("movie_id", "user_id"),)
+
     id: int | None = Field(default=None, primary_key=True)
-    movie_id: int = Field(foreign_key="movie.id", index=True)
-    user_id: int | None = Field(default=None, foreign_key="user.id")
+    movie_id: int = Field(foreign_key="movie.id", index=True, ondelete="CASCADE")
+    user_id: int = Field(foreign_key="user.id", ondelete="CASCADE")
     created_at: datetime = Field(default_factory=now)
 
 
@@ -108,32 +124,39 @@ class Feature(SQLModel, table=True):
 
     id: int | None = Field(default=None, primary_key=True)
     text: str
-    user_id: int | None = Field(default=None, foreign_key="user.id")
+    user_id: int | None = Field(default=None, foreign_key="user.id", ondelete="SET NULL")
     done: bool = False
     created_at: datetime = Field(default_factory=now)
 
 
 class FeatureVote(SQLModel, table=True):
+    __table_args__ = (UniqueConstraint("feature_id", "user_id"),)
+
     id: int | None = Field(default=None, primary_key=True)
-    feature_id: int = Field(foreign_key="feature.id", index=True)
-    user_id: int = Field(foreign_key="user.id")
+    feature_id: int = Field(foreign_key="feature.id", index=True, ondelete="CASCADE")
+    user_id: int = Field(foreign_key="user.id", ondelete="CASCADE")
 
 
 class FeatureNote(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
-    feature_id: int = Field(foreign_key="feature.id", index=True)
-    user_id: int | None = Field(default=None, foreign_key="user.id")
+    feature_id: int = Field(foreign_key="feature.id", index=True, ondelete="CASCADE")
+    user_id: int | None = Field(default=None, foreign_key="user.id", ondelete="SET NULL")
     text: str = ""
     created_at: datetime = Field(default_factory=now)
 
 
 class HostState(SQLModel, table=True):
-    """Singleton (id=1): host-mode toggle, key combo, and the password film."""
+    """Singleton (id=1) holding the host password film."""
 
     id: int | None = Field(default=1, primary_key=True)
-    an: bool = False
-    schluessel: str = ""
     movie_id: int | None = None
+
+
+class AppMeta(SQLModel, table=True):
+    """Singleton (id=1) for bookkeeping such as the last TMDB sync."""
+
+    id: int | None = Field(default=1, primary_key=True)
+    last_sync: datetime | None = None
 
 
 class Info(SQLModel, table=True):

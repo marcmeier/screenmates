@@ -1,18 +1,29 @@
 """The watched log: entries, ratings, guestbook notes, hearts, participants."""
+
 from __future__ import annotations
 
+from collections import defaultdict
 from datetime import datetime
 
 from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from sqlmodel import Session as DBSession
-from sqlmodel import select
+from sqlmodel import col, select
 
 from ..db import get_session
-from ..models import (Movie, NoteHeart, User, Watched, WatchedNote,
-                      WatchedParticipant, WatchedRating)
-from ..serialize import movie_dict
-from ..session import current_user
+from ..models import (
+    Movie,
+    NoteHeart,
+    Suggestion,
+    User,
+    Watched,
+    WatchedNote,
+    WatchedParticipant,
+    WatchedRating,
+    Wishlist,
+)
+from ..serialize import iso, movie_dict
+from ..session import current_user, is_host, require_host, require_owner_or_host, require_user
 from ..util import ensure_movie
 
 router = APIRouter(prefix="/api", tags=["watched"])
@@ -20,10 +31,11 @@ router = APIRouter(prefix="/api", tags=["watched"])
 
 class AlsGesehen(BaseModel):
     movie_id: int
+    watched_at: datetime | None = None
 
 
 class Bewerten(BaseModel):
-    stars: int
+    stars: int = Field(ge=1, le=5)
 
 
 class GesehenAendern(BaseModel):
@@ -32,155 +44,217 @@ class GesehenAendern(BaseModel):
 
 
 class Gaestebuch(BaseModel):
-    text: str
+    text: str = Field(min_length=1, max_length=2000)
     parent_id: int | None = None
 
 
 class Dabei(BaseModel):
-    user_ids: list[int]
+    user_ids: list[int] = Field(max_length=100)
 
 
 class Herz(BaseModel):
     note_id: int
 
 
-def _entry_dict(db: DBSession, w: Watched) -> dict:
-    m = db.get(Movie, w.movie_id)
-    ratings = db.exec(select(WatchedRating).where(WatchedRating.watched_id == w.id)).all()
-    notes = db.exec(select(WatchedNote).where(WatchedNote.watched_id == w.id)).all()
-    parts = db.exec(select(WatchedParticipant).where(WatchedParticipant.watched_id == w.id)).all()
-    avg = round(sum(r.stars for r in ratings) / len(ratings), 1) if ratings else None
-    return {
-        "id": w.id,
-        "movie_id": w.movie_id,
-        "movie": movie_dict(m) if m else None,
-        "watched_at": w.watched_at.isoformat(),
-        "hidden": w.hidden,
-        "rating_avg": avg,
-        "ratings": [{"user_id": r.user_id, "stars": r.stars} for r in ratings],
-        "participants": [p.user_id for p in parts],
-        "notes": [_note_dict(db, n) for n in notes if n.parent_id is None],
-    }
-
-
-def _note_dict(db: DBSession, n: WatchedNote) -> dict:
-    hearts = db.exec(select(NoteHeart).where(NoteHeart.note_id == n.id)).all()
-    replies = db.exec(
-        select(WatchedNote).where(WatchedNote.parent_id == n.id)
+def _payload(db: DBSession, entries: list[Watched]) -> list[dict]:
+    """Serialise watched entries with a fixed number of queries, regardless of size."""
+    if not entries:
+        return []
+    ids = [w.id for w in entries]
+    movies = {m.id: m for m in db.exec(select(Movie).where(col(Movie.id).in_({w.movie_id for w in entries}))).all()}
+    ratings = defaultdict(list)
+    for r in db.exec(select(WatchedRating).where(col(WatchedRating.watched_id).in_(ids))).all():
+        ratings[r.watched_id].append(r)
+    parts = defaultdict(list)
+    for p in db.exec(select(WatchedParticipant).where(col(WatchedParticipant.watched_id).in_(ids))).all():
+        parts[p.watched_id].append(p.user_id)
+    notes = db.exec(
+        select(WatchedNote).where(col(WatchedNote.watched_id).in_(ids)).order_by(WatchedNote.created_at)
     ).all()
-    return {
-        "id": n.id,
-        "user_id": n.user_id,
-        "text": n.text,
-        "created_at": n.created_at.isoformat(),
-        "hearts": [h.user_id for h in hearts],
-        "replies": [_note_dict(db, r) for r in replies],
+    hearts = defaultdict(list)
+    if notes:
+        note_ids = [n.id for n in notes]
+        for h in db.exec(select(NoteHeart).where(col(NoteHeart.note_id).in_(note_ids))).all():
+            hearts[h.note_id].append(h.user_id)
+
+    # Build the comment trees in memory.
+    nodes = {
+        n.id: {
+            "id": n.id,
+            "user_id": n.user_id,
+            "text": n.text,
+            "created_at": iso(n.created_at),
+            "hearts": hearts[n.id],
+            "replies": [],
+        }
+        for n in notes
     }
+    roots = defaultdict(list)
+    for n in notes:
+        if n.parent_id in nodes:
+            nodes[n.parent_id]["replies"].append(nodes[n.id])
+        else:
+            roots[n.watched_id].append(nodes[n.id])
+
+    out = []
+    for w in entries:
+        rs = ratings[w.id]
+        out.append(
+            {
+                "id": w.id,
+                "movie_id": w.movie_id,
+                "movie": movie_dict(movies[w.movie_id]) if w.movie_id in movies else None,
+                "watched_at": iso(w.watched_at),
+                "hidden": w.hidden,
+                "rating_avg": round(sum(r.stars for r in rs) / len(rs), 1) if rs else None,
+                "ratings": [{"id": r.id, "user_id": r.user_id, "stars": r.stars} for r in rs],
+                "participants": parts[w.id],
+                "notes": roots[w.id],
+            }
+        )
+    return out
+
+
+def _get(db: DBSession, watched_id: int) -> Watched:
+    w = db.get(Watched, watched_id)
+    if w is None:
+        raise HTTPException(404, "Eintrag nicht gefunden.")
+    return w
+
+
+def _one(db: DBSession, w: Watched) -> dict:
+    db.refresh(w)
+    return _payload(db, [w])[0]
 
 
 @router.get("/watched")
-def list_watched(db: DBSession = Depends(get_session)):
-    rows = db.exec(select(Watched).order_by(Watched.watched_at.desc())).all()
-    return {"watched": [_entry_dict(db, w) for w in rows]}
+def list_watched(alle: bool = False, db: DBSession = Depends(get_session)):
+    stmt = select(Watched).order_by(col(Watched.watched_at).desc())
+    if not alle:
+        stmt = stmt.where(col(Watched.hidden).is_(False))
+    return {"watched": _payload(db, list(db.exec(stmt).all()))}
 
 
-@router.post("/watched")
-async def add_watched(body: AlsGesehen, db: DBSession = Depends(get_session)):
+@router.post("/watched", status_code=201)
+async def add_watched(body: AlsGesehen, user: User = Depends(require_user), db: DBSession = Depends(get_session)):
     await ensure_movie(db, body.movie_id)
     w = Watched(movie_id=body.movie_id)
+    if body.watched_at:
+        w.watched_at = body.watched_at
     db.add(w)
+    db.flush()
+    db.add(WatchedParticipant(watched_id=w.id, user_id=user.id))
+    # Seeing a film fulfils it: drop it from the wishlist and the open suggestions.
+    for stale in [
+        *db.exec(select(Wishlist).where(Wishlist.movie_id == body.movie_id)).all(),
+        *db.exec(select(Suggestion).where(Suggestion.movie_id == body.movie_id)).all(),
+    ]:
+        db.delete(stale)
     db.commit()
-    db.refresh(w)
-    return _entry_dict(db, w)
+    return _one(db, w)
 
 
-@router.patch("/watched/{watched_id}")
+@router.patch("/watched/{watched_id}", dependencies=[Depends(require_user)])
 def edit_watched(watched_id: int, body: GesehenAendern, db: DBSession = Depends(get_session)):
-    w = db.get(Watched, watched_id)
-    if w is None:
-        raise HTTPException(404)
+    w = _get(db, watched_id)
     if body.watched_at is not None:
         w.watched_at = body.watched_at
     if body.hidden is not None:
         w.hidden = body.hidden
     db.add(w)
     db.commit()
-    return _entry_dict(db, w)
+    return _one(db, w)
 
 
-@router.delete("/watched/{watched_id}")
+@router.delete("/watched/{watched_id}", dependencies=[Depends(require_host)])
 def delete_watched(watched_id: int, db: DBSession = Depends(get_session)):
-    w = db.get(Watched, watched_id)
-    if w:
-        db.delete(w)
-        db.commit()
+    db.delete(_get(db, watched_id))
+    db.commit()
     return {"ok": True}
 
 
 @router.post("/watched/{watched_id}/rating")
-def rate(watched_id: int, body: Bewerten, db: DBSession = Depends(get_session), user: User | None = Depends(current_user)):
-    if user is None:
-        raise HTTPException(401, "Kein Nutzer gewählt")
-    existing = db.exec(
+def rate(watched_id: int, body: Bewerten, user: User = Depends(require_user), db: DBSession = Depends(get_session)):
+    w = _get(db, watched_id)
+    r = db.exec(
         select(WatchedRating).where(WatchedRating.watched_id == watched_id, WatchedRating.user_id == user.id)
-    ).first()
-    if existing:
-        existing.stars = body.stars
-        db.add(existing)
-    else:
-        db.add(WatchedRating(watched_id=watched_id, user_id=user.id, stars=body.stars))
+    ).first() or WatchedRating(watched_id=watched_id, user_id=user.id)
+    r.stars = body.stars
+    db.add(r)
     db.commit()
-    return _entry_dict(db, db.get(Watched, watched_id))
+    return _one(db, w)
 
 
 @router.delete("/watched/rating/{rating_id}")
-def delete_rating(rating_id: int, db: DBSession = Depends(get_session)):
+def delete_rating(
+    rating_id: int,
+    db: DBSession = Depends(get_session),
+    user: User | None = Depends(current_user),
+    host: bool = Depends(is_host),
+):
     r = db.get(WatchedRating, rating_id)
-    if r:
-        db.delete(r)
-        db.commit()
+    if r is None:
+        raise HTTPException(404)
+    require_owner_or_host(r.user_id, user, host)
+    db.delete(r)
+    db.commit()
     return {"ok": True}
 
 
-@router.post("/watched/{watched_id}/notes")
-def add_note(watched_id: int, body: Gaestebuch, db: DBSession = Depends(get_session), user: User | None = Depends(current_user)):
-    n = WatchedNote(watched_id=watched_id, user_id=user.id if user else None, text=body.text, parent_id=body.parent_id)
-    db.add(n)
+@router.post("/watched/{watched_id}/notes", status_code=201)
+def add_note(
+    watched_id: int, body: Gaestebuch, user: User = Depends(require_user), db: DBSession = Depends(get_session)
+):
+    w = _get(db, watched_id)
+    if body.parent_id is not None:
+        parent = db.get(WatchedNote, body.parent_id)
+        if parent is None or parent.watched_id != watched_id:
+            raise HTTPException(422, "Antwort passt nicht zu diesem Eintrag.")
+    db.add(WatchedNote(watched_id=watched_id, user_id=user.id, text=body.text.strip(), parent_id=body.parent_id))
     db.commit()
-    db.refresh(n)
-    return _note_dict(db, n)
+    return _one(db, w)
 
 
 @router.delete("/watched-notes/{note_id}")
-def delete_note(note_id: int, db: DBSession = Depends(get_session)):
+def delete_note(
+    note_id: int,
+    db: DBSession = Depends(get_session),
+    user: User | None = Depends(current_user),
+    host: bool = Depends(is_host),
+):
     n = db.get(WatchedNote, note_id)
-    if n:
-        db.delete(n)
-        db.commit()
+    if n is None:
+        raise HTTPException(404)
+    require_owner_or_host(n.user_id, user, host)
+    db.delete(n)
+    db.commit()
     return {"ok": True}
 
 
 @router.post("/watched/hearts")
-def heart(body: Herz, db: DBSession = Depends(get_session), user: User | None = Depends(current_user)):
-    if user is None:
-        raise HTTPException(401)
-    existing = db.exec(
-        select(NoteHeart).where(NoteHeart.note_id == body.note_id, NoteHeart.user_id == user.id)
-    ).first()
+def heart(body: Herz, user: User = Depends(require_user), db: DBSession = Depends(get_session)):
+    if db.get(WatchedNote, body.note_id) is None:
+        raise HTTPException(404)
+    existing = db.exec(select(NoteHeart).where(NoteHeart.note_id == body.note_id, NoteHeart.user_id == user.id)).first()
     if existing:
         db.delete(existing)
-        db.commit()
-        return {"hearted": False}
-    db.add(NoteHeart(note_id=body.note_id, user_id=user.id))
+    else:
+        db.add(NoteHeart(note_id=body.note_id, user_id=user.id))
     db.commit()
-    return {"hearted": True}
+    return {"hearted": existing is None}
 
 
-@router.post("/watched/{watched_id}/dabei")
+@router.post("/watched/{watched_id}/dabei", dependencies=[Depends(require_user)])
 def set_participants(watched_id: int, body: Dabei, db: DBSession = Depends(get_session)):
+    w = _get(db, watched_id)
+    wanted = set(body.user_ids)
+    known = set(db.exec(select(User.id).where(col(User.id).in_(wanted))).all()) if wanted else set()
+    if wanted - known:
+        raise HTTPException(422, "Unbekannte Nutzer.")
     for p in db.exec(select(WatchedParticipant).where(WatchedParticipant.watched_id == watched_id)).all():
         db.delete(p)
-    for uid in body.user_ids:
+    db.flush()
+    for uid in sorted(wanted):
         db.add(WatchedParticipant(watched_id=watched_id, user_id=uid))
     db.commit()
-    return _entry_dict(db, db.get(Watched, watched_id))
+    return _one(db, w)
