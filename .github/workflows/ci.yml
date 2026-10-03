@@ -43,6 +43,8 @@ jobs:
         working-directory: frontend
       - run: npx playwright install --with-deps chromium
         working-directory: frontend
+      - name: MediaMTX for the Kino tests
+        run: ./scripts/mediamtx.sh
       - run: npm run test:e2e
         working-directory: frontend
         env: { PYTHON: python }

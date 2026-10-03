@@ -1,0 +1,37 @@
+# MediaMTX for the screenmates "Kino": one WebRTC path, fanned out to all viewers.
+#
+# Browsers and OBS never talk to MediaMTX's HTTP port directly – screenmates
+# proxies WHIP/WHEP signalling and asks MediaMTX to check every publish/read
+# against its own auth endpoint. Only the media port (8189) must be public.
+
+logLevel: info
+
+# Every action is checked by screenmates. The API stays on localhost and is
+# excluded so the backend can read the stream status.
+authMethod: http
+authHTTPAddress: http://127.0.0.1:8000/api/kino/mtx-auth
+authHTTPExclude:
+  - action: api
+
+api: true
+apiAddress: 127.0.0.1:9997
+
+# Only WebRTC: WHIP in (browser or OBS ≥ 30), WHEP out.
+rtsp: false
+rtmp: false
+hls: false
+srt: false
+moq: false
+
+webrtc: true
+webrtcAddress: 127.0.0.1:8889
+webrtcLocalUDPAddress: :8189
+webrtcLocalTCPAddress: :8189
+# Public hostname/IP of the server, so viewers outside your LAN get a reachable
+# ICE candidate. Override with MTX_WEBRTCADDITIONALHOSTS=kino.example.com
+webrtcAdditionalHosts: []
+webrtcICEServers2:
+  - url: stun:stun.l.google.com:19302
+
+paths:
+  kino: {}
