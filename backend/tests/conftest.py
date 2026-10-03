@@ -1,5 +1,6 @@
 import os
 import tempfile
+from pathlib import Path
 
 # Configure an isolated database and disable external services *before* the app
 # (and its cached settings) is imported. Real env vars beat backend/.env.
@@ -10,7 +11,7 @@ os.environ["LLM_API_KEY"] = ""
 
 import pytest  # noqa: E402
 from fastapi.testclient import TestClient  # noqa: E402
-from sqlmodel import Session, SQLModel  # noqa: E402
+from sqlmodel import Session  # noqa: E402
 
 from app import tmdb  # noqa: E402
 from app.config import settings  # noqa: E402
@@ -22,7 +23,10 @@ from app.routers import kino, misc, users  # noqa: E402
 @pytest.fixture
 def client():
     """A fresh database (seeded by the lifespan) and an anonymous browser."""
-    SQLModel.metadata.drop_all(engine)
+    # A fresh file per test: the lifespan migrates it from scratch, like a new install.
+    engine.dispose()
+    for suffix in ("", "-wal", "-shm"):
+        Path(f"{_tmp}/test.db{suffix}").unlink(missing_ok=True)
     users._fails.clear()
     misc._host_fails.clear()
     kino._presence.clear()

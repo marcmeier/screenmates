@@ -15,6 +15,8 @@ WORKDIR /app/backend
 COPY backend/requirements.txt ./
 RUN pip install --no-cache-dir -r requirements.txt
 COPY backend/app ./app
+COPY backend/alembic.ini ./
+COPY backend/migrations ./migrations
 COPY --from=web /web/dist /app/frontend/dist
 RUN useradd --system --uid 10001 screenmates && mkdir /data && chown screenmates /data
 USER screenmates

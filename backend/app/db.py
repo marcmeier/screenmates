@@ -1,7 +1,7 @@
 from collections.abc import Generator
 
-from sqlalchemy import event, inspect
-from sqlmodel import Session, SQLModel, create_engine
+from sqlalchemy import event
+from sqlmodel import Session, create_engine
 
 from .config import settings
 
@@ -22,33 +22,11 @@ if _is_sqlite:
         cur.close()
 
 
-# Bump when a model change can't be applied by `create_all` (new columns,
-# changed constraints). There are no migrations yet, so an outdated SQLite file
-# is refused with a clear message instead of failing later with SQL errors.
-SCHEMA_VERSION = 2
-
-
-class OutdatedDatabaseError(RuntimeError):
-    pass
-
-
 def init_db() -> None:
-    from . import models  # noqa: F401  (register tables)
+    """Migrate to the newest schema (see app/migrate.py)."""
+    from . import migrate, models  # noqa: F401  (register tables)
 
-    if _is_sqlite:
-        with engine.connect() as conn:
-            version = conn.exec_driver_sql("PRAGMA user_version").scalar()
-            has_tables = bool(inspect(conn).get_table_names())
-        if has_tables and version < SCHEMA_VERSION:
-            raise OutdatedDatabaseError(
-                f"Die Datenbank ({settings.database_url}) stammt von einer älteren screenmates-Version "
-                f"(Schema {version}, benötigt {SCHEMA_VERSION}). Datei umbenennen oder löschen – "
-                "sie wird beim nächsten Start neu angelegt."
-            )
-    SQLModel.metadata.create_all(engine)
-    if _is_sqlite:
-        with engine.begin() as conn:
-            conn.exec_driver_sql(f"PRAGMA user_version = {SCHEMA_VERSION}")
+    migrate.upgrade()
 
 
 def get_session() -> Generator[Session, None, None]:
