@@ -10,19 +10,21 @@ Gästebuch nachdiskutieren.
 
 Drei Bereiche für die drei Dinge, für die man herkommt:
 
-- **Filmabend** – wer ist dabei, gerankte Vorschläge der Gruppe, ein **Glücksrad**,
-  dessen Felder nach Stimmen gewichtet sind, Hausregeln & Infos und ein Aktivitäts-Feed.
+- **Filmabend** – wer ist dabei, gerankte Vorschläge der Gruppe, ein **Veto** pro Person,
+  ein **Glücksrad**, dessen Felder nach Stimmen gewichtet sind, Hausregeln & Infos und ein
+  Aktivitäts-Feed.
 - **Finden** – *ein* Suchfeld für alles: Leer zeigt es Horror nach Subgenre, Jahrzehnt, Note
-  und Länge, getippt findet es Filme und Personen (mit Horror-Filmografie), und **„KI fragen“**
+  und Länge – auf Wunsch nur, was **bei uns im Abo läuft** –, getippt findet es Filme und Personen (mit Horror-Filmografie), und **„KI fragen“**
   macht aus „langsamer Folk-Horror, aber nicht zu brutal“ passende, real existierende Filme.
-- **Unsere Filme** – Merkliste und die Chronik des Gesehenen: Bewertungen pro Person,
+- **Unsere Filme** – Merkliste und die Chronik des Gesehenen: Sterne und Kommentare pro Person,
   Teilnehmende, Gästebuch mit Antworten und Herzen.
 - **Kino** – gemeinsam schauen, auch wenn alle in verschiedenen Wohnzimmern sitzen: Der Host
   teilt seinen Bildschirm oder sendet aus OBS (eigene Filme, Spiele …), alle sehen live dasselbe
   Bild mit unter einer Sekunde Verzögerung. Läuft etwas, leuchtet der Menüpunkt mit der Zahl der
   Zuschauenden. Danach trägt ein Klick den Film als gesehen ein, mit allen, die dabei waren.
 
-Dazu: eine Detailansicht mit Besetzung und ähnlichen Filmen, **Wünsche & Ideen** mit Voting
+Dazu: eine Detailansicht mit Trailer, **„Wo läuft's?“** (Abo, leihen, kaufen; Abos der Gruppe
+zuerst), Besetzung, ähnlichen Filmen und euren Bewertungen; **Wünsche & Ideen** mit Voting
 und **Film als Passwort** – keine Accounts: Man wählt seinen Namen und schützt ihn optional
 mit einem Film, den man beim Anmelden anklicken muss. Wer den Host-Film kennt, wird Host
 (`Strg+Shift+H`) und verwaltet Katalog und Gruppe.
@@ -129,6 +131,10 @@ backend/   FastAPI + SQLModel/SQLite ─┘  Produktion: FastAPI liefert API + g
   ihre Teilansichten in `components/finden` und `components/sammlung`, wiederverwendbare Bausteine
   (`MovieCard`, `Poster`, `Modal`, `FilmPicker`, `SpinWheel`), Hash-Routing ohne Router-Abhängigkeit,
   zentrale API-Fehlerbehandlung mit Toasts.
+- **Datenbank:** Schema-Änderungen laufen über Alembic-Migrationen (`backend/migrations`), die
+  die App beim Start selbst anwendet. Datenbanken aus 0.2/0.3 werden ohne Datenverlust
+  übernommen. Neue Migration nach einer Modelländerung: `make migration name="…"`; ein Test
+  schlägt fehl, wenn sie fehlt.
 - **Rechte:** Lesen darf jeder. Schreiben braucht einen gewählten Namen. Eigene Kommentare,
   Wünsche und Ratings verwaltet man selbst, alles Übergreifende macht der Host.
 
@@ -154,9 +160,7 @@ werden nicht übernommen.
 
 ## Roadmap
 
-- „Wo läuft's?“: Streaming-Anbieter je Film über TMDB, Filter „läuft bei uns im Abo“
 - Kino: Chat und Reaktionen während der Vorstellung
 - Video-Clips (Szenen ausschneiden und teilen) wie im Original
 - Serien (braucht einen Schlüssel `media_type` + `id`)
-- Datenbank-Migrationen (Alembic)
 - Live-Updates per Server-Sent Events statt Neuladen

@@ -3,7 +3,7 @@ SHELL := /bin/bash
 VENV  := backend/.venv
 PY    := $(VENV)/bin/python
 
-.PHONY: help install kino-install dev backend frontend kino-server test test-backend test-e2e lint format build run
+.PHONY: help install kino-install dev backend frontend kino-server test test-backend test-e2e migration lint format build run
 MTX   := .tools/mediamtx
 # With MediaMTX installed, `make dev`/`make run` switch the Kino on automatically.
 KINO  := $(if $(wildcard $(MTX)),MEDIAMTX_WEBRTC_URL=http://127.0.0.1:8889,)
@@ -40,6 +40,11 @@ test-backend: ## pytest
 
 test-e2e: ## Playwright gegen echtes Backend (braucht `npx playwright install chromium`)
 	cd frontend && npm run test:e2e
+
+migration: ## Neue DB-Migration aus Modelländerungen erzeugen: make migration name="spalte xy"
+	@test -n "$(name)" || (echo 'Bitte mit name="…" aufrufen' && exit 1)
+	cd backend && .venv/bin/alembic revision --autogenerate -m "$(name)"
+	@echo "Migration prüfen (Hinweise oben in der Datei) und mit committen."
 
 lint: ## ruff + eslint
 	cd backend && .venv/bin/ruff check . && .venv/bin/ruff format --check .

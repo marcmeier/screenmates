@@ -134,24 +134,3 @@ def test_delete_user_is_host_only(client, browser):
     assert [u["name"] for u in other.get("/api/users").json()["users"]] == ["lena"]
     # marc's session survives, but is no longer bound to a user.
     assert client.get("/api/users").json()["ich"] is None
-
-
-def test_outdated_database_is_refused(tmp_path):
-    import sqlite3
-
-    from sqlalchemy import create_engine
-
-    from app import db as dbmod
-
-    path = tmp_path / "old.db"
-    con = sqlite3.connect(path)
-    con.execute("create table user (id integer primary key, name text)")
-    con.close()
-    old_engine = create_engine(f"sqlite:///{path}")
-    original = dbmod.engine
-    dbmod.engine = old_engine
-    try:
-        with pytest.raises(dbmod.OutdatedDatabaseError):
-            dbmod.init_db()
-    finally:
-        dbmod.engine = original

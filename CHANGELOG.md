@@ -15,6 +15,13 @@
 - **Veto**: Jede Person kann einen vorgeschlagenen Film ablehnen; das Glücksrad lässt ihn aus.
   Vetos verfallen, wenn der Film geschaut oder die Vorschläge geleert werden.
 
+### Betrieb
+- **Datenbank-Migrationen mit Alembic.** Die App bringt die Datenbank beim Start selbst auf den
+  neuesten Stand. Datenbanken aus 0.2/0.3 werden ohne Datenverlust übernommen (fehlende Tabellen
+  werden ergänzt). Künftige Schema-Änderungen: `make migration name="…"`. Ein Test schlägt fehl,
+  wenn ein Modell geändert, aber keine Migration geschrieben wurde. Migrationen laufen mit
+  ausgeschalteten Fremdschlüsseln, damit ein Tabellen-Umbau unter SQLite keine Kaskaden auslöst.
+
 ### Behoben
 - Bewertungen und Kommentare aus einer Ansicht erschienen in anderen offenen Ansichten erst nach
   dem Neuladen.
