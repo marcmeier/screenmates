@@ -9,7 +9,7 @@
   --accent-soft: rgba(229, 9, 20, 0.14);
   --gold: #f5a623;
   --ok: #3ecf8e;
-  --sidebar: 310px;
+  --sidebar: 250px;
   --radius: 10px;
   --shadow: 0 18px 50px rgba(0, 0, 0, 0.55);
   color-scheme: dark;
@@ -22,7 +22,8 @@ body {
   margin: 0;
   background: var(--bg);
   color: var(--text);
-  font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+  font-family: 'Inter Variable', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  font-optical-sizing: auto;
   font-size: 15px;
   line-height: 1.45;
   -webkit-font-smoothing: antialiased;

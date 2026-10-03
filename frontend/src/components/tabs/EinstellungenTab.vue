@@ -87,7 +87,7 @@ async function removeSchutz(u) {
   <div class="page">
     <header class="page-head">
       <div>
-        <h1>Verwaltung</h1>
+        <h1>Einstellungen</h1>
         <p>Dein Profil, und für den Host alles rund um Katalog und Gruppe.</p>
       </div>
     </header>
@@ -106,6 +106,9 @@ async function removeSchutz(u) {
           <span class="spacer"></span>
           <button class="ghost small" @click="app.logout()"><Icon name="logout" :size="14" /> Abmelden</button>
         </div>
+        <p class="ideas muted">
+          Ideen, was screenmates noch können soll? <a href="#/wuensche">Wünsche & Ideen</a>
+        </p>
 
         <h3>Film-Schutz</h3>
         <p class="muted">
@@ -192,6 +195,8 @@ section p { margin: 0 0 0.8rem; font-size: 0.9rem; }
 .picker { margin-top: 0.9rem; }
 .error { color: #ff6b6b; }
 .secret { color: var(--text); }
+.ideas { margin: 1rem 0 0; }
+.ideas a { color: var(--text); }
 .users { list-style: none; padding: 0; margin: 0; }
 .users li { padding: 0.5rem 0; border-top: 1px solid var(--line); }
 .small { font-size: 0.78rem; }

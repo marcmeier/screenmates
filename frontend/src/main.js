@@ -1,5 +1,7 @@
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
+// Shipped with the app so everyone sees the same type, no font CDN involved.
+import '@fontsource-variable/inter'
 import './style.css'
 import App from './App.vue'
 import { ApiError } from './api'

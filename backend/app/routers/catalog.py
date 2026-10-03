@@ -187,23 +187,64 @@ def genres():
     return {"genres": [{"id": k, "name": v} for k, v in sorted(tmdb.GENRES.items(), key=lambda kv: kv[1])]}
 
 
+DEPARTMENTS = {
+    "Acting": "Schauspiel",
+    "Directing": "Regie",
+    "Writing": "Drehbuch",
+    "Production": "Produktion",
+    "Sound": "Musik",
+    "Camera": "Kamera",
+    "Editing": "Schnitt",
+    "Visual Effects": "Effekte",
+    "Art": "Szenenbild",
+    "Costume & Make-Up": "Kostüm & Maske",
+    "Lighting": "Licht",
+    "Crew": "Crew",
+}
+
+
 @router.get("/personen")
 async def people(q: str = Query("", max_length=100)):
     if not q.strip():
         return {"results": []}
     results = await tmdb.person_search(q.strip()) or []
-    return {
-        "results": [
-            {
-                "id": p["id"],
-                "name": p["name"],
-                "bereich": p.get("known_for_department") or "",
-                "bild": _profile(p.get("profile_path")),
-                "bekannt_fuer": [k.get("title") or k.get("name") for k in p.get("known_for", [])][:3],
-            }
-            for p in results
-        ]
-    }
+    people = [
+        {
+            "id": p["id"],
+            "name": p["name"],
+            "bereich": DEPARTMENTS.get(p.get("known_for_department") or "", p.get("known_for_department") or ""),
+            "bild": _profile(p.get("profile_path")),
+            "bekannt_fuer": [k.get("title") or k.get("name") for k in p.get("known_for", [])][:3],
+            "horror": any(tmdb.HORROR in k.get("genre_ids", []) for k in p.get("known_for", [])),
+        }
+        for p in results
+    ]
+    # This is a horror app: "carpenter" should find John before Sabrina.
+    # Stable sort keeps TMDB's popularity order within each group.
+    people.sort(key=lambda p: not p["horror"])
+    return {"results": people}
+
+
+JOBS = {
+    "Director": "Regie",
+    "Screenplay": "Drehbuch",
+    "Writer": "Drehbuch",
+    "Story": "Story",
+    "Novel": "Romanvorlage",
+    "Characters": "Figuren",
+    "Producer": "Produktion",
+    "Executive Producer": "Ausführende Produktion",
+    "Original Music Composer": "Musik",
+    "Music": "Musik",
+    "Director of Photography": "Kamera",
+    "Editor": "Schnitt",
+}
+
+
+def _is_cameo(rolle: str) -> bool:
+    """Documentary appearances and thank-you credits aren't part of someone's work."""
+    r = rolle.lower()
+    return r in ("self", "himself", "herself", "thanks") or "archive footage" in r or r.startswith("self ")
 
 
 @router.get("/personen/{person_id}/filme")
@@ -212,14 +253,18 @@ async def person_films(person_id: int, nur_horror: bool = True, db: DBSession = 
     if data is None:
         raise HTTPException(404, "Person nicht gefunden.")
     seen: dict[int, dict] = {}
-    for credit in [*data.get("cast", []), *data.get("crew", [])]:
+    # Crew first, so "Regie" leads and an uncredited cameo comes last.
+    for credit in [*data.get("crew", []), *data.get("cast", [])]:
         if nur_horror and tmdb.HORROR not in credit.get("genre_ids", []):
             continue
-        rolle = credit.get("character") or credit.get("job") or ""
+        rolle = credit.get("character") or JOBS.get(credit.get("job") or "", credit.get("job") or "")
+        if _is_cameo(rolle):
+            continue
         if credit["id"] in seen:
             if rolle and rolle not in seen[credit["id"]]["rollen"]:
                 seen[credit["id"]]["rollen"].append(rolle)
             continue
         seen[credit["id"]] = movie_dict(tmdb.normalise(credit)) | {"rollen": [rolle] if rolle else []}
-    films = sorted(seen.values(), key=lambda m: m["release_date"] or "0", reverse=True)
+    # Best-known first: a filmography should open with Halloween, not a 2026 making-of.
+    films = sorted(seen.values(), key=lambda m: m["vote_count"], reverse=True)
     return {"person": {"id": person_id, "name": (info or {}).get("name", "")}, "results": with_flags(db, films)}

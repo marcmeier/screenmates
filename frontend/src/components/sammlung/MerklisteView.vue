@@ -35,34 +35,32 @@ const sorted = computed(() => {
 </script>
 
 <template>
-  <div>
-    <header class="page-head">
-      <div>
-        <h1>Merkliste</h1>
-        <p>{{ movies.length }} {{ movies.length === 1 ? 'Film' : 'Filme' }}, die wir irgendwann sehen wollen.</p>
-      </div>
-      <label class="field">Sortieren
-        <select v-model="sort">
-          <option value="neu">Zuletzt gemerkt</option>
-          <option value="note">Beste Bewertung</option>
-          <option value="kurz">Kürzeste zuerst</option>
-          <option value="titel">Titel A–Z</option>
-        </select>
-      </label>
-    </header>
+  <section>
+    <div v-if="movies.length > 1" class="row tools">
+      <span class="muted">Filme, die wir irgendwann sehen wollen.</span>
+      <span class="spacer"></span>
+      <select v-model="sort" aria-label="Sortierung">
+        <option value="neu">Zuletzt gemerkt</option>
+        <option value="note">Beste Bewertung</option>
+        <option value="kurz">Kürzeste zuerst</option>
+        <option value="titel">Titel A–Z</option>
+      </select>
+    </div>
 
-    <MovieGrid :movies="sorted" :loading="loading && !movies.length" :failed="failed" empty-title="Die Merkliste ist leer" @retry="load">
+    <MovieGrid :movies="sorted" :loading="loading && !movies.length" :failed="failed" empty-title="Die Merkliste ist leer" empty-text="Bei jedem Film gibt es den Merken-Knopf." @retry="load">
       <template #card="{ movie }">
         <div v-if="movie.gemerkt_von" class="by"><UserAvatar :user-id="movie.gemerkt_von" /></div>
       </template>
     </MovieGrid>
     <p v-if="!loading && !movies.length" class="center">
-      <button class="small" @click="navigate('entdecken')">Filme entdecken</button>
+      <button class="small" @click="navigate('finden')">Filme finden</button>
     </p>
-  </div>
+  </section>
 </template>
 
 <style scoped>
+.tools { margin-bottom: 1.2rem; font-size: 0.9rem; }
+.tools select { width: auto; }
 .by { margin-top: 4px; }
 .by .avatar { width: 20px; height: 20px; font-size: 0.56rem; }
 .center { text-align: center; }

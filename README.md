@@ -8,22 +8,26 @@ Gästebuch nachdiskutieren.
 
 ## Was es kann
 
-- **Filmabend** – wer ist dabei, gerankte Vorschläge der Gruppe, ein **Glücksrad**,
-  dessen Felder nach Stimmen gewichtet sind, und ein Aktivitäts-Feed.
-- **Entdecken & Suche** – Horror nach Jahrzehnt, Note, Länge und Subgenre, dazu Volltextsuche.
-  Mit TMDB-Key ist der ganze TMDB-Katalog verfügbar, ohne Key gibt es einen Demo-Katalog.
-- **Detailansicht** – Besetzung (klickbar zur Filmografie) und ähnliche Filme.
-- **Gesehen** – die Chronik: Bewertungen pro Person, Teilnehmende, Gästebuch mit Antworten und Herzen.
-- **Personen** – Regie, Cast und Crew mit ihrer Horror-Filmografie.
-- **KI-Suche** – „langsamer Folk-Horror, aber nicht zu brutal“ → passende, real existierende Filme.
-- **Wünsche** – Feature-Ideen mit Voting.
-- **Film als Passwort** – keine Accounts: Man wählt seinen Namen und schützt ihn optional mit
-  einem Film, den man beim Anmelden anklicken muss. Wer den Host-Film kennt, wird Host
-  (`Strg+Shift+H`) und verwaltet Katalog und Gruppe.
+Drei Bereiche für die drei Dinge, für die man herkommt:
 
-| Entdecken | Detail | Chronik | Mobil |
+- **Filmabend** – wer ist dabei, gerankte Vorschläge der Gruppe, ein **Glücksrad**,
+  dessen Felder nach Stimmen gewichtet sind, Hausregeln & Infos und ein Aktivitäts-Feed.
+- **Finden** – *ein* Suchfeld für alles: Leer zeigt es Horror nach Subgenre, Jahrzehnt, Note
+  und Länge, getippt findet es Filme und Personen (mit Horror-Filmografie), und **„KI fragen“**
+  macht aus „langsamer Folk-Horror, aber nicht zu brutal“ passende, real existierende Filme.
+- **Unsere Filme** – Merkliste und die Chronik des Gesehenen: Bewertungen pro Person,
+  Teilnehmende, Gästebuch mit Antworten und Herzen.
+
+Dazu: eine Detailansicht mit Besetzung und ähnlichen Filmen, **Wünsche & Ideen** mit Voting
+und **Film als Passwort** – keine Accounts: Man wählt seinen Namen und schützt ihn optional
+mit einem Film, den man beim Anmelden anklicken muss. Wer den Host-Film kennt, wird Host
+(`Strg+Shift+H`) und verwaltet Katalog und Gruppe.
+
+Mit TMDB-Key ist der ganze TMDB-Katalog verfügbar, ohne Key gibt es einen Demo-Katalog.
+
+| Finden | Detail | Unsere Filme | Mobil |
 |---|---|---|---|
-| ![](docs/screenshots/entdecken.png) | ![](docs/screenshots/detail.png) | ![](docs/screenshots/gesehen.png) | ![](docs/screenshots/mobil.png) |
+| ![](docs/screenshots/finden.png) | ![](docs/screenshots/detail.png) | ![](docs/screenshots/unsere-filme.png) | ![](docs/screenshots/mobil.png) |
 
 ## Schnellstart
 
@@ -69,7 +73,8 @@ backend/   FastAPI + SQLModel/SQLite ─┘  Produktion: FastAPI liefert API + g
 - **Backend** (`backend/app`): Router nach Fachbereichen (`catalog`, `users`, `watched`,
   `lists`, `features`, `misc`). Autorisierung zentral als FastAPI-Dependencies in `session.py`,
   TMDB-Zugriff gekapselt in `tmdb.py` mit Fallback auf den lokalen Katalog.
-- **Frontend** (`frontend/src`): Tabs unter `components/tabs`, wiederverwendbare Bausteine
+- **Frontend** (`frontend/src`): Die drei Bereiche plus Wünsche und Einstellungen unter `components/tabs`,
+  ihre Teilansichten in `components/finden` und `components/sammlung`, wiederverwendbare Bausteine
   (`MovieCard`, `Poster`, `Modal`, `FilmPicker`, `SpinWheel`), Hash-Routing ohne Router-Abhängigkeit,
   zentrale API-Fehlerbehandlung mit Toasts.
 - **Rechte:** Lesen darf jeder. Schreiben braucht einen gewählten Namen. Eigene Kommentare,

@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, defineAsyncComponent, onMounted, ref, watch } from 'vue'
 import { api } from '../../api'
 import { useApp } from '../../stores/app'
 import { useUi } from '../../stores/ui'
@@ -10,6 +10,9 @@ import Icon from '../Icon.vue'
 import Poster from '../Poster.vue'
 import SpinWheel from '../SpinWheel.vue'
 import UserAvatar from '../UserAvatar.vue'
+
+// Markdown rendering is only needed once there is info text; load it on demand.
+const InfoCard = defineAsyncComponent(() => import('../InfoCard.vue'))
 
 const app = useApp()
 const ui = useUi()
@@ -100,7 +103,7 @@ const EVENT_TEXT = {
         <div v-else-if="!vorschlaege.length" class="empty">
           <strong>Noch keine Vorschläge</strong>
           Bei jedem Film gibt es den <Icon name="hand" :size="14" />-Knopf.
-          <div style="margin-top: 0.8rem"><button class="small" @click="navigate('entdecken')">Filme entdecken</button></div>
+          <div style="margin-top: 0.8rem"><button class="small" @click="navigate('finden')">Filme finden</button></div>
         </div>
         <ol v-else class="list">
           <li v-for="(m, i) in vorschlaege" :key="m.id" class="sugg">
@@ -129,22 +132,25 @@ const EVENT_TEXT = {
         <p v-else class="muted">Hier passiert noch nichts.</p>
       </section>
 
-      <aside class="panel wheelbox">
-        <h2 class="section-title" style="margin-top: 0">Glücksrad</h2>
-        <template v-if="pool.length">
-          <p class="muted small-text">{{ pool.length }} {{ pool.length === 1 ? 'Film' : 'Filme' }} aus {{ poolQuelle }}. Je mehr Stimmen, desto größer das Feld.</p>
-          <SpinWheel :pool="pool" @result="gewinner = $event" />
-        </template>
-        <p v-else class="muted">Sobald es Vorschläge (oder Filme auf der Merkliste) gibt, kann gedreht werden.</p>
+      <aside class="side">
+        <div class="panel wheelbox">
+          <h2 class="section-title" style="margin-top: 0">Glücksrad</h2>
+          <template v-if="pool.length">
+            <p class="muted small-text">{{ pool.length }} {{ pool.length === 1 ? 'Film' : 'Filme' }} aus {{ poolQuelle }}. Je mehr Stimmen, desto größer das Feld.</p>
+            <SpinWheel :pool="pool" @result="gewinner = $event" />
+          </template>
+          <p v-else class="muted">Sobald es Vorschläge (oder Filme auf der Merkliste) gibt, kann gedreht werden.</p>
 
-        <div v-if="gewinner" class="winner" role="status">
-          <span class="muted small-text">Heute läuft</span>
-          <strong>{{ gewinner.title }}</strong>
-          <div class="row">
-            <button class="small" @click="ui.open(gewinner)">Details</button>
-            <button v-if="app.me" class="small primary" @click="gewinnerGesehen"><Icon name="gesehen" :size="14" /> Geschaut</button>
+          <div v-if="gewinner" class="winner" role="status">
+            <span class="muted small-text">Heute läuft</span>
+            <strong>{{ gewinner.title }}</strong>
+            <div class="row">
+              <button class="small" @click="ui.open(gewinner)">Details</button>
+              <button v-if="app.me" class="small primary" @click="gewinnerGesehen"><Icon name="gesehen" :size="14" /> Geschaut</button>
+            </div>
           </div>
         </div>
+        <InfoCard />
       </aside>
     </div>
   </div>
@@ -165,7 +171,7 @@ const EVENT_TEXT = {
 .linklike:hover { background: none; text-decoration: underline; }
 .small-text { font-size: 0.8rem; }
 .avatars .avatar { width: 22px; height: 22px; font-size: 0.6rem; }
-.wheelbox { position: sticky; top: 1.5rem; }
+.side { min-width: 0; }
 .winner { margin-top: 1.2rem; border-top: 1px solid var(--line); padding-top: 1rem; display: flex; flex-direction: column; gap: 0.4rem; text-align: center; align-items: center; }
 .winner strong { font-size: 1.3rem; }
 .feed { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; }
@@ -173,6 +179,6 @@ const EVENT_TEXT = {
 .feed time { flex: none; font-size: 0.78rem; }
 @media (max-width: 1100px) {
   .layout { grid-template-columns: 1fr; }
-  .wheelbox { position: static; order: -1; }
+  .side { order: -1; }
 }
 </style>

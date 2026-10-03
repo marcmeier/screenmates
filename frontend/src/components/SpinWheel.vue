@@ -41,6 +41,18 @@ function arc(seg) {
 
 const short = (t) => (t.length > 18 ? t.slice(0, 17) + '…' : t)
 
+// Labels run along their radius. Those that end up on the left half (judged by
+// where the wheel comes to rest) are turned around so they never read upside down.
+function labelTransform(seg) {
+  const resting = (((seg.center + rotation.value) % 360) + 360) % 360
+  const flip = resting > 180
+  return {
+    transform: `rotate(${seg.center + (flip ? 90 : -90)} ${C} ${C})`,
+    x: flip ? C - 34 : C + 34,
+    anchor: flip ? 'end' : 'start',
+  }
+}
+
 async function spin() {
   if (spinning.value || !props.pool.length) return
   spinning.value = true
@@ -74,11 +86,16 @@ async function spin() {
       <template v-else>
         <path v-for="s in segments" :key="s.movie.id" :d="arc(s)" :fill="s.color" stroke="#0a0a0c" stroke-width="2" />
       </template>
-      <g v-for="s in segments" :key="'t' + s.movie.id" :transform="`rotate(${s.center - 90} ${C} ${C})`">
-        <text :x="C + 34" :y="C" dominant-baseline="middle" class="label">{{ short(s.movie.title) }}</text>
-      </g>
+      <template v-if="segments.length > 1">
+        <g v-for="s in segments" :key="'t' + s.movie.id" :transform="labelTransform(s).transform">
+          <text :x="labelTransform(s).x" :y="C" :text-anchor="labelTransform(s).anchor" dominant-baseline="middle" class="label">
+            {{ short(s.movie.title) }}
+          </text>
+        </g>
+      </template>
       <circle :cx="C" :cy="C" r="26" fill="#0a0a0c" stroke="#e50914" stroke-width="3" />
     </svg>
+    <div v-if="segments.length === 1" class="single">{{ pool[0].title }}</div>
     <button class="primary spin" :disabled="spinning || !pool.length" @click="spin">
       {{ spinning ? 'Dreht …' : 'Drehen' }}
     </button>
@@ -92,6 +109,10 @@ svg { width: 100%; height: auto; transition: transform 4.5s cubic-bezier(0.12, 0
   position: absolute; top: -6px; left: 50%; transform: translateX(-50%); z-index: 2;
   width: 0; height: 0; border-left: 12px solid transparent; border-right: 12px solid transparent; border-top: 22px solid var(--text);
   filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.6));
+}
+.single {
+  position: absolute; left: 10%; right: 10%; top: calc(50% - 4.5rem); text-align: center;
+  font-weight: 700; font-size: 1.05rem; pointer-events: none; text-shadow: 0 1px 6px rgba(0, 0, 0, 0.6);
 }
 .label { fill: #f2f2f6; font-size: 11px; font-weight: 600; }
 .spin { min-width: 140px; justify-content: center; }

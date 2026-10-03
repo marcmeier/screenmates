@@ -29,7 +29,7 @@ function replace(updated) {
 
 const shown = computed(() => {
   const q = filter.value.trim().toLowerCase()
-  let list = q ? entries.value.filter((e) => e.movie?.title.toLowerCase().includes(q)) : [...entries.value]
+  const list = q ? entries.value.filter((e) => e.movie?.title.toLowerCase().includes(q)) : [...entries.value]
   if (sort.value === 'wertung') list.sort((a, b) => (b.rating_avg ?? -1) - (a.rating_avg ?? -1))
   return list
 })
@@ -38,7 +38,6 @@ const stats = computed(() => {
   const rated = entries.value.filter((e) => e.rating_avg)
   const minutes = entries.value.reduce((s, e) => s + (e.movie?.runtime || 0), 0)
   return {
-    filme: entries.value.length,
     stunden: Math.round(minutes / 60),
     schnitt: rated.length ? (rated.reduce((s, e) => s + e.rating_avg, 0) / rated.length).toFixed(1) : '–',
   }
@@ -46,21 +45,13 @@ const stats = computed(() => {
 </script>
 
 <template>
-  <div>
-    <header class="page-head">
-      <div>
-        <h1>Gesehen</h1>
-        <p>Unsere Filmabend-Chronik mit Bewertungen und Gästebuch.</p>
-      </div>
-      <div class="stats">
-        <div><strong>{{ stats.filme }}</strong><span>Filme</span></div>
-        <div><strong>{{ stats.stunden }}</strong><span>Stunden</span></div>
-        <div><strong>{{ stats.schnitt }}</strong><span>⌀ Sterne</span></div>
-      </div>
-    </header>
-
-    <div v-if="entries.length > 3" class="row tools">
-      <input v-model="filter" type="search" placeholder="In der Chronik suchen …" aria-label="Chronik durchsuchen" />
+  <section>
+    <div v-if="entries.length" class="row tools">
+      <span class="stats muted">
+        <strong>{{ stats.stunden }}</strong> Stunden Horror · <strong>{{ stats.schnitt }}</strong> ⌀ Sterne
+      </span>
+      <span class="spacer"></span>
+      <input v-if="entries.length > 3" v-model="filter" type="search" placeholder="In der Chronik suchen …" aria-label="Chronik durchsuchen" />
       <select v-model="sort" aria-label="Sortierung">
         <option value="datum">Neueste zuerst</option>
         <option value="wertung">Beste Wertung</option>
@@ -83,16 +74,14 @@ const stats = computed(() => {
         @removed="entries = entries.filter((x) => x.id !== $event)"
       />
     </div>
-  </div>
+  </section>
 </template>
 
 <style scoped>
-.stats { display: flex; gap: 1.6rem; }
-.stats div { display: flex; flex-direction: column; align-items: flex-end; }
-.stats strong { font-size: 1.5rem; line-height: 1; }
-.stats span { font-size: 0.75rem; color: var(--muted); }
-.tools { margin-bottom: 1.2rem; flex-wrap: nowrap; }
-.tools input { max-width: 360px; }
+.tools { margin-bottom: 1.2rem; flex-wrap: wrap; }
+.tools input { width: 260px; }
 .tools select { width: auto; }
+.stats { font-size: 0.9rem; }
+.stats strong { color: var(--text); }
 .list { display: flex; flex-direction: column; gap: 1rem; }
 </style>
