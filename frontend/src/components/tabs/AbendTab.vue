@@ -1,0 +1,178 @@
+<script setup>
+import { computed, onMounted, ref, watch } from 'vue'
+import { api } from '../../api'
+import { useApp } from '../../stores/app'
+import { useUi } from '../../stores/ui'
+import { useMovieActions } from '../../composables/useMovieActions'
+import { navigate } from '../../composables/useRoute'
+import { vorWann } from '../../format'
+import Icon from '../Icon.vue'
+import Poster from '../Poster.vue'
+import SpinWheel from '../SpinWheel.vue'
+import UserAvatar from '../UserAvatar.vue'
+
+const app = useApp()
+const ui = useUi()
+const { alsGesehen } = useMovieActions()
+
+const vorschlaege = ref([])
+const pool = ref([])
+const events = ref([])
+const loading = ref(true)
+const gewinner = ref(null)
+
+async function load() {
+  const [s, p, e] = await Promise.all([api.get('/api/suggestions'), api.get('/api/spin'), api.get('/api/events?limit=15')])
+  vorschlaege.value = s.suggestions
+  pool.value = p.pool
+  events.value = e.events
+  loading.value = false
+}
+onMounted(load)
+watch(() => ui.changes, load)
+
+const meinVorschlag = (m) => app.me && m.von.includes(app.me.id)
+
+async function toggle(m) {
+  if (meinVorschlag(m)) await api.del(`/api/suggestions/${m.id}`)
+  else await api.post('/api/suggestions', { movie_id: m.id })
+  ui.changed()
+}
+
+async function allesLeeren() {
+  if (!confirm('Alle Vorschläge löschen? Das betrifft alle.')) return
+  await api.del('/api/suggestions/alle')
+  ui.toast('Vorschläge geleert')
+  ui.changed()
+}
+
+async function gewinnerGesehen() {
+  await alsGesehen(gewinner.value)
+  gewinner.value = null
+}
+
+const poolQuelle = computed(() => (vorschlaege.value.length ? 'Vorschlägen' : 'der Merkliste'))
+const EVENT_TEXT = {
+  gesehen: (e) => `„${e.film}“ wurde geschaut`,
+  vorschlag: (e) => `${e.wer ?? 'Jemand'} schlägt „${e.film}“ vor`,
+  kommentar: (e) => `${e.wer ?? 'Jemand'}: „${e.text}“`,
+  wunsch: (e) => `${e.wer ?? 'Jemand'} wünscht sich: ${e.text}`,
+}
+</script>
+
+<template>
+  <div>
+    <header class="page-head">
+      <div>
+        <h1>Nächster Filmabend</h1>
+        <p>Wer ist dabei, was steht zur Wahl – und am Ende entscheidet das Rad.</p>
+      </div>
+    </header>
+
+    <section class="panel crew">
+      <div class="row">
+        <span class="muted">Dabei:</span>
+        <template v-if="app.dabei.length">
+          <span v-for="u in app.dabei" :key="u.id" class="chip who"><UserAvatar :user="u" /> {{ u.name }}</span>
+        </template>
+        <span v-else class="muted">noch niemand</span>
+        <span class="spacer"></span>
+        <button v-if="app.me" :class="app.me.dabei ? 'on' : 'primary'" @click="app.toggleDabei()">
+          <Icon :name="app.me.dabei ? 'gesehen' : 'plus'" :size="16" />
+          {{ app.me.dabei ? 'Ich bin dabei' : 'Ich bin dabei!' }}
+        </button>
+      </div>
+    </section>
+
+    <div class="layout">
+      <section>
+        <div class="row">
+          <h2 class="section-title">Vorschläge</h2>
+          <span class="spacer"></span>
+          <button v-if="app.host && vorschlaege.length" class="ghost small danger" @click="allesLeeren">
+            <Icon name="muell" :size="14" /> Alle leeren
+          </button>
+        </div>
+
+        <div v-if="loading" class="list">
+          <div v-for="i in 3" :key="i" class="skeleton" style="height: 86px"></div>
+        </div>
+        <div v-else-if="!vorschlaege.length" class="empty">
+          <strong>Noch keine Vorschläge</strong>
+          Bei jedem Film gibt es den <Icon name="hand" :size="14" />-Knopf.
+          <div style="margin-top: 0.8rem"><button class="small" @click="navigate('entdecken')">Filme entdecken</button></div>
+        </div>
+        <ol v-else class="list">
+          <li v-for="(m, i) in vorschlaege" :key="m.id" class="sugg">
+            <span class="rank">{{ i + 1 }}</span>
+            <button class="thumb" :aria-label="`${m.title} – Details`" @click="ui.open(m)">
+              <Poster :movie="m" :title="false" />
+            </button>
+            <div class="what">
+              <button class="linklike" @click="ui.open(m)">{{ m.title }}</button>
+              <div class="muted small-text">{{ m.year }} · ★ {{ m.vote_average.toFixed(1) }}</div>
+              <div class="avatars"><UserAvatar v-for="id in m.von" :key="id" :user-id="id" /></div>
+            </div>
+            <button v-if="app.me" class="small" :class="{ on: meinVorschlag(m) }" @click="toggle(m)">
+              <Icon name="hand" :size="14" /> {{ meinVorschlag(m) ? 'Zurückziehen' : '+1' }}
+            </button>
+          </li>
+        </ol>
+
+        <h2 class="section-title">Aktivität</h2>
+        <ul v-if="events.length" class="feed">
+          <li v-for="(e, i) in events" :key="i">
+            <span>{{ EVENT_TEXT[e.typ](e) }}</span>
+            <time class="muted" :datetime="e.at">{{ vorWann(e.at) }}</time>
+          </li>
+        </ul>
+        <p v-else class="muted">Hier passiert noch nichts.</p>
+      </section>
+
+      <aside class="panel wheelbox">
+        <h2 class="section-title" style="margin-top: 0">Glücksrad</h2>
+        <template v-if="pool.length">
+          <p class="muted small-text">{{ pool.length }} {{ pool.length === 1 ? 'Film' : 'Filme' }} aus {{ poolQuelle }}. Je mehr Stimmen, desto größer das Feld.</p>
+          <SpinWheel :pool="pool" @result="gewinner = $event" />
+        </template>
+        <p v-else class="muted">Sobald es Vorschläge (oder Filme auf der Merkliste) gibt, kann gedreht werden.</p>
+
+        <div v-if="gewinner" class="winner" role="status">
+          <span class="muted small-text">Heute läuft</span>
+          <strong>{{ gewinner.title }}</strong>
+          <div class="row">
+            <button class="small" @click="ui.open(gewinner)">Details</button>
+            <button v-if="app.me" class="small primary" @click="gewinnerGesehen"><Icon name="gesehen" :size="14" /> Geschaut</button>
+          </div>
+        </div>
+      </aside>
+    </div>
+  </div>
+</template>
+
+<style scoped>
+.crew { margin-bottom: 0.5rem; }
+.who { padding: 2px 10px 2px 2px; color: var(--text); }
+.who .avatar { width: 22px; height: 22px; }
+.layout { display: grid; grid-template-columns: minmax(0, 1fr) 380px; gap: 2rem; align-items: start; }
+.list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 0.6rem; }
+.sugg { display: flex; align-items: center; gap: 0.9rem; background: var(--bg-soft); border: 1px solid var(--line); border-radius: var(--radius); padding: 0.6rem 0.9rem 0.6rem 0.6rem; }
+.rank { width: 1.6rem; text-align: center; font-weight: 800; color: var(--muted); font-size: 1.1rem; }
+.sugg:first-child .rank { color: var(--accent); }
+.thumb { padding: 0; width: 46px; height: 69px; border-radius: 6px; overflow: hidden; flex: none; background: var(--bg-raised); }
+.what { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.linklike { padding: 0; border: none; background: none; font-weight: 600; font-size: 0.98rem; text-align: left; }
+.linklike:hover { background: none; text-decoration: underline; }
+.small-text { font-size: 0.8rem; }
+.avatars .avatar { width: 22px; height: 22px; font-size: 0.6rem; }
+.wheelbox { position: sticky; top: 1.5rem; }
+.winner { margin-top: 1.2rem; border-top: 1px solid var(--line); padding-top: 1rem; display: flex; flex-direction: column; gap: 0.4rem; text-align: center; align-items: center; }
+.winner strong { font-size: 1.3rem; }
+.feed { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; }
+.feed li { display: flex; gap: 1rem; justify-content: space-between; padding: 0.55rem 0; border-bottom: 1px solid var(--line); font-size: 0.88rem; }
+.feed time { flex: none; font-size: 0.78rem; }
+@media (max-width: 1100px) {
+  .layout { grid-template-columns: 1fr; }
+  .wheelbox { position: static; order: -1; }
+}
+</style>

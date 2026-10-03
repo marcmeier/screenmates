@@ -1,24 +1,62 @@
-// Tiny fetch wrapper. Always sends cookies so the session (screenmates_sid) sticks.
-async function req(method, path, body) {
-  const opts = { method, credentials: 'include', headers: {} }
+import { useUi } from './stores/ui'
+
+/** Error thrown for every failed request. It has already been shown to the user. */
+export class ApiError extends Error {
+  constructor(status, message) {
+    super(message)
+    this.status = status
+  }
+}
+
+function describe(status, body) {
+  const detail = body?.detail
+  if (Array.isArray(detail)) {
+    // FastAPI validation errors: [{loc, msg, ...}]
+    return 'Ungültige Eingabe: ' + detail.map((d) => d.msg).join(', ')
+  }
+  if (typeof detail === 'string') return detail
+  if (status >= 500) return 'Der Server hat ein Problem. Bitte später nochmal versuchen.'
+  return `Anfrage fehlgeschlagen (${status}).`
+}
+
+async function req(method, path, body, { signal, quiet = false } = {}) {
+  const opts = { method, credentials: 'same-origin', headers: {}, signal }
   if (body !== undefined) {
     opts.headers['Content-Type'] = 'application/json'
     opts.body = JSON.stringify(body)
   }
-  const res = await fetch(path, opts)
-  if (!res.ok) {
-    let detail = res.statusText
-    try { detail = (await res.json()).detail || detail } catch {}
-    throw new Error(detail)
+
+  let res
+  try {
+    res = await fetch(path, opts)
+  } catch (e) {
+    if (e.name === 'AbortError') throw e
+    const err = new ApiError(0, 'Keine Verbindung zum Server.')
+    if (!quiet) useUi().toast(err.message, 'error')
+    throw err
   }
-  const ct = res.headers.get('content-type') || ''
-  return ct.includes('application/json') ? res.json() : res.text()
+
+  const isJson = (res.headers.get('content-type') || '').includes('application/json')
+  const data = isJson ? await res.json().catch(() => null) : await res.text()
+  if (!res.ok) {
+    const err = new ApiError(res.status, describe(res.status, data))
+    const ui = useUi()
+    if (res.status === 401) ui.loginOpen = true
+    if (!quiet) ui.toast(err.message, 'error')
+    throw err
+  }
+  return data
 }
 
 export const api = {
-  get: (p) => req('GET', p),
-  post: (p, b) => req('POST', p, b),
-  put: (p, b) => req('PUT', p, b),
-  patch: (p, b) => req('PATCH', p, b),
-  del: (p, b) => req('DELETE', p, b),
+  get: (p, o) => req('GET', p, undefined, o),
+  post: (p, b, o) => req('POST', p, b, o),
+  put: (p, b, o) => req('PUT', p, b, o),
+  patch: (p, b, o) => req('PATCH', p, b, o),
+  del: (p, o) => req('DELETE', p, undefined, o),
 }
+
+export const qs = (params) =>
+  new URLSearchParams(
+    Object.entries(params).filter(([, v]) => v !== null && v !== undefined && v !== ''),
+  ).toString()

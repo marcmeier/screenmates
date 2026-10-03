@@ -1,99 +1,101 @@
 <script setup>
 import { ref } from 'vue'
-import { api } from '../api'
-import { useApp } from '../store'
+import { useApp } from '../stores/app'
+import { useUi } from '../stores/ui'
+import FilmPicker from './FilmPicker.vue'
+import Icon from './Icon.vue'
+import Modal from './Modal.vue'
+import UserAvatar from './UserAvatar.vue'
 
 const app = useApp()
-const emit = defineEmits(['close'])
+const ui = useUi()
 const newName = ref('')
 const error = ref('')
-// Film-as-PIN: when a guarded user is picked, they must click the right film.
-const schutzFor = ref(null)
-const schutzQuery = ref('')
-const schutzResults = ref([])
+const busy = ref(false)
+// Film-as-PIN: a guarded name is unlocked by clicking the right film.
+const guarded = ref(null)
 
-async function pick(u) {
+function close() {
+  ui.loginOpen = false
+}
+
+async function attempt(fn) {
   error.value = ''
-  if (u.hat_schutz) { schutzFor.value = u; schutzQuery.value = ''; schutzResults.value = []; return }
-  try { await app.choose(u.id); emit('close') } catch (e) { error.value = e.message }
-}
-
-async function searchFilm() {
-  if (!schutzQuery.value.trim()) { schutzResults.value = []; return }
-  const r = await api.get(`/api/search?q=${encodeURIComponent(schutzQuery.value.trim())}&limit=8`)
-  schutzResults.value = r.results || []
-}
-
-async function confirmSchutz(movie) {
+  busy.value = true
   try {
-    await app.choose(schutzFor.value.id, movie.id)
-    schutzFor.value = null
-    emit('close')
-  } catch (e) { error.value = 'Falscher Film – versuch es nochmal.' }
+    await fn()
+    ui.toast(`Hallo ${app.me.name}!`, 'ok')
+    ui.changed()
+    close()
+  } catch (e) {
+    error.value = e.message
+  } finally {
+    busy.value = false
+  }
 }
 
-async function create() {
-  error.value = ''
-  if (!newName.value.trim()) return
-  try {
-    const u = await api.post('/api/users', { name: newName.value.trim() })
-    newName.value = ''
-    await app.refreshUsers()
-    await app.choose(u.id)
-    emit('close')
-  } catch (e) { error.value = e.message }
+function pick(u) {
+  if (u.hat_schutz) {
+    error.value = ''
+    guarded.value = u
+  } else {
+    attempt(() => app.choose(u.id))
+  }
+}
+
+const unlock = (movie) => attempt(() => app.choose(guarded.value.id, movie.id))
+
+function create() {
+  const name = newName.value.trim()
+  if (name) attempt(() => app.createUser(name))
 }
 </script>
 
 <template>
-  <div class="overlay" @click.self="emit('close')">
-    <div class="panel">
-      <div class="brand"><span class="logo">screenmates</span></div>
-      <h2 v-if="!schutzFor">Wer schaut mit?</h2>
+  <Modal label="Namen wählen" @close="close">
+    <div class="wrap">
+      <div class="brand">screen<span>mates</span></div>
 
-      <template v-if="!schutzFor">
-        <div class="users">
-          <button v-for="u in app.users" :key="u.id" class="userbtn" @click="pick(u)">
-            <span class="dot" :style="{ background: u.color }"></span>
-            {{ u.name }}
-            <span v-if="u.hat_schutz" class="lock" title="Durch Film geschützt">🔒</span>
+      <template v-if="!guarded">
+        <h2>Wer schaut mit?</h2>
+        <div v-if="app.users.length" class="users">
+          <button v-for="u in app.users" :key="u.id" class="user" :disabled="busy" @click="pick(u)">
+            <UserAvatar :user="u" />
+            <span>{{ u.name }}</span>
+            <Icon v-if="u.hat_schutz" name="schloss" :size="14" class="lock" />
           </button>
         </div>
-        <div class="create">
-          <input v-model="newName" placeholder="Neuer Name …" @keyup.enter="create" />
-          <button class="primary" @click="create">Anlegen</button>
-        </div>
+        <p v-else class="muted center">Noch niemand da – leg den ersten Namen an.</p>
+
+        <form class="create" @submit.prevent="create">
+          <input v-model="newName" maxlength="30" placeholder="Neuer Name …" aria-label="Neuer Name" />
+          <button class="primary" :disabled="busy || !newName.trim()"><Icon name="plus" :size="16" /> Anlegen</button>
+        </form>
       </template>
 
       <template v-else>
-        <h2>Film-Passwort für {{ schutzFor.name }}</h2>
-        <p class="muted">Klick den Film an, den {{ schutzFor.name }} als Passwort gewählt hat.</p>
-        <input v-model="schutzQuery" placeholder="Film suchen …" @input="searchFilm" autofocus />
-        <div class="schutzlist">
-          <button v-for="m in schutzResults" :key="m.id" class="filmbtn" @click="confirmSchutz(m)">
-            {{ m.title }} <span class="muted">{{ m.year }}</span>
-          </button>
-        </div>
-        <button class="ghost" @click="schutzFor = null">Abbrechen</button>
+        <button class="ghost small back" @click="guarded = null"><Icon name="pfeil" :size="14" /> Zurück</button>
+        <h2>Film-Passwort für {{ guarded.name }}</h2>
+        <p class="muted center">Such den Film, den {{ guarded.name }} als Passwort gewählt hat, und klick ihn an.</p>
+        <FilmPicker :busy="busy" @pick="unlock" />
       </template>
 
-      <p v-if="error" class="error">{{ error }}</p>
+      <p v-if="error" class="error" role="alert">{{ error }}</p>
     </div>
-  </div>
+  </Modal>
 </template>
 
 <style scoped>
-.overlay { position: fixed; inset: 0; background: rgba(5,5,8,0.92); display: flex; align-items: center; justify-content: center; z-index: 50; }
-.panel { background: var(--bg-soft); border: 1px solid var(--line); border-radius: 14px; padding: 2rem; width: min(440px, 92vw); }
-.brand { text-align: center; margin-bottom: 0.4rem; }
-.logo { color: var(--accent); font-weight: 800; letter-spacing: -0.5px; font-size: 1.4rem; }
-h2 { text-align: center; font-weight: 600; margin: 0.5rem 0 1.4rem; }
-.users { display: flex; flex-wrap: wrap; gap: 0.6rem; justify-content: center; margin-bottom: 1.4rem; }
-.userbtn { display: flex; align-items: center; gap: 0.5rem; }
-.dot { width: 12px; height: 12px; border-radius: 50%; display: inline-block; }
-.lock { font-size: 0.8rem; }
+.wrap { padding: 2rem; }
+.brand { text-align: center; font-weight: 800; font-size: 1.3rem; letter-spacing: -0.02em; }
+.brand span { color: var(--accent); }
+h2 { text-align: center; font-weight: 600; font-size: 1.25rem; margin: 0.6rem 0 1.4rem; }
+.center { text-align: center; }
+.users { display: flex; flex-wrap: wrap; gap: 0.6rem; justify-content: center; margin-bottom: 1.6rem; }
+.user { padding: 0.45rem 0.9rem 0.45rem 0.45rem; border-radius: 999px; }
+.lock { color: var(--muted); }
 .create { display: flex; gap: 0.5rem; }
-.schutzlist { display: flex; flex-direction: column; gap: 0.4rem; margin: 0.8rem 0; max-height: 240px; overflow: auto; }
-.filmbtn { text-align: left; }
-.error { color: var(--accent); text-align: center; margin-top: 1rem; }
+.create button { flex: none; }
+.back { margin-bottom: 0.4rem; }
+.error { color: #ff6b6b; text-align: center; margin: 1rem 0 0; }
 </style>
