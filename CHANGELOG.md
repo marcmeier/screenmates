@@ -7,6 +7,13 @@
   pro Gerät gemerkt. Auf dem Handy unverändert.
 - **Bewerten und Kommentieren direkt in der Detailansicht** jedes gesehenen Films – nicht mehr
   nur unter Unsere Filme → Gesehen. Dazu der Gruppen-Schnitt „Ihr: ★ 4,7“ neben der TMDB-Wertung.
+- **„Wo läuft's?“** in jeder Filmansicht: Abo, kostenlos, leihen, kaufen in Deutschland (Daten:
+  JustWatch über TMDB). Abos, die jemand aus der Gruppe hat, stehen vorn – mit Namen.
+- **Meine Abos** in den Einstellungen (nur echte Abo-Dienste, keine Leih-Shops) und der Filter
+  **„Läuft bei uns“** in Finden. „Prime Video mit Werbung“ zählt als Prime Video.
+- **Trailer** in der Detailansicht, deutsch bevorzugt; YouTube (nocookie) lädt erst beim Klick.
+- **Veto**: Jede Person kann einen vorgeschlagenen Film ablehnen; das Glücksrad lässt ihn aus.
+  Vetos verfallen, wenn der Film geschaut oder die Vorschläge geleert werden.
 
 ### Behoben
 - Bewertungen und Kommentare aus einer Ansicht erschienen in anderen offenen Ansichten erst nach

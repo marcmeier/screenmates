@@ -72,7 +72,7 @@ def with_flags(db: DBSession, movies: list[dict[str, Any]]) -> list[dict[str, An
     return movies
 
 
-def user_dict(u: User) -> dict[str, Any]:
+def user_dict(u: User, abos: list[int] | None = None) -> dict[str, Any]:
     return {
         "id": u.id,
         "name": u.name,
@@ -80,4 +80,5 @@ def user_dict(u: User) -> dict[str, Any]:
         "dabei": u.dabei,
         "hat_schutz": u.schutz_movie_id is not None,
         "created_at": iso(u.created_at),
+        "abos": abos or [],  # TMDB provider ids
     }

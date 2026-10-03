@@ -1,6 +1,7 @@
 <script setup>
 import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { api } from '../../api'
+import { useApp } from '../../stores/app'
 import { useMovieList } from '../../composables/useMovieList'
 import { debounce } from '../../format'
 import Icon from '../Icon.vue'
@@ -9,7 +10,7 @@ import MovieGrid from '../MovieGrid.vue'
 // Browsing without a query: horror with genre chips up front and the numeric
 // filters folded away, so the page starts calm.
 const STORAGE = 'screenmates.entdecken'
-const DEFAULTS = { sort: 'popularity.desc', include: [], jahr_min: null, jahr_max: null, note_min: null, dauer_max: null, ohneGesehene: false }
+const DEFAULTS = { sort: 'popularity.desc', include: [], jahr_min: null, jahr_max: null, note_min: null, dauer_max: null, ohneGesehene: false, beiUns: false }
 const RANGES = ['jahr_min', 'jahr_max', 'note_min', 'dauer_max', 'ohneGesehene']
 
 function restore() {
@@ -22,16 +23,17 @@ function restore() {
 
 const f = reactive(restore())
 const genres = ref([])
-const { items, loading, failed, more, load, loadMore } = useMovieList('/api/discover', 24)
+const app = useApp()
+const { items, loading, failed, more, hinweis, load, loadMore } = useMovieList('/api/discover', 24)
 
 const rangesActive = computed(() => RANGES.some((k) => f[k] !== DEFAULTS[k] && f[k] !== ''))
 const showRanges = ref(rangesActive.value)
-const anyActive = computed(() => rangesActive.value || f.include.length > 0)
+const anyActive = computed(() => rangesActive.value || f.include.length > 0 || f.beiUns)
 
 // `ohneGesehene` is applied client-side; everything else goes to the API.
 function query() {
-  const { sort, jahr_min, jahr_max, note_min, dauer_max, include } = f
-  return { sort, jahr_min, jahr_max, note_min, dauer_max, include: include.join(',') }
+  const { sort, jahr_min, jahr_max, note_min, dauer_max, include, beiUns } = f
+  return { sort, jahr_min, jahr_max, note_min, dauer_max, include: include.join(','), abos: beiUns || undefined }
 }
 
 const reload = debounce(() => load(query()), 250)
@@ -78,6 +80,16 @@ const sichtbar = computed(() => (f.ohneGesehene ? items.value.filter((m) => !m.g
         >{{ g.name }}</button>
       </div>
       <div class="controls">
+        <button
+          v-if="app.status.tmdb"
+          class="small"
+          :class="{ on: f.beiUns }"
+          :aria-pressed="f.beiUns"
+          title="Nur Filme, die bei einem Abo aus eurer Gruppe laufen"
+          @click="f.beiUns = !f.beiUns"
+        >
+          <Icon name="gesehen" :size="14" /> Läuft bei uns
+        </button>
         <button class="small" :class="{ on: rangesActive }" :aria-expanded="showRanges" @click="showRanges = !showRanges">
           <Icon name="filter" :size="14" /> Filter
         </button>
@@ -101,7 +113,11 @@ const sichtbar = computed(() => (f.ohneGesehene ? items.value.filter((m) => !m.g
       <button class="ghost small" @click="reset"><Icon name="x" :size="13" /> Filter zurücksetzen</button>
     </div>
 
+    <p v-if="hinweis" class="notice hinweis">
+      {{ hinweis }} <a v-if="hinweis.includes('Abos')" href="#/einstellungen">Zu den Einstellungen</a>
+    </p>
     <MovieGrid
+      v-else
       :movies="sichtbar"
       :loading="loading"
       :failed="failed"
@@ -123,6 +139,8 @@ const sichtbar = computed(() => (f.ohneGesehene ? items.value.filter((m) => !m.g
 .ranges .field input { width: 120px; }
 .check { display: flex; align-items: center; gap: 0.4rem; font-size: 0.85rem; color: var(--muted); padding-bottom: 0.55rem; }
 .check input { width: auto; }
+.hinweis { margin-bottom: 1rem; }
+.hinweis a { color: inherit; margin-left: 0.4rem; }
 .active { margin: -0.4rem 0 1rem -0.5rem; }
 @media (max-width: 700px) {
   .bar { flex-direction: column-reverse; }

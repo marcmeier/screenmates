@@ -11,6 +11,7 @@ Upstream failures surface as `TMDBError`, which the app maps to HTTP 502.
 from __future__ import annotations
 
 import json
+import time
 from typing import Any
 
 import httpx
@@ -158,8 +159,13 @@ async def discover(
     stimmen_max: int | None = None,
     dauer_min: int | None = None,
     dauer_max: int | None = None,
+    abo_anbieter: list[int] | None = None,
 ) -> list[dict[str, Any]] | None:
-    """Discover horror films. `include` genres are AND-ed with horror."""
+    """Discover horror films. `include` genres are AND-ed with horror.
+
+    `abo_anbieter` keeps films that are in a subscription with any of these
+    providers in the configured region (TMDB/JustWatch availability).
+    """
     params: dict[str, Any] = {
         "with_genres": ",".join(str(g) for g in [HORROR, *(include or [])]),
         "sort_by": sort,
@@ -179,6 +185,10 @@ async def discover(
         "with_runtime.lte": dauer_max,
     }
     params.update({k: v for k, v in ranges.items() if v is not None})
+    if abo_anbieter:
+        params["with_watch_providers"] = "|".join(str(p) for p in abo_anbieter)  # | = any of them
+        params["watch_region"] = settings.tmdb_region
+        params["with_watch_monetization_types"] = "flatrate"
     data = await _get("/discover/movie", params)
     return None if data is None else [normalise(r) for r in data.get("results", [])]
 
@@ -194,3 +204,114 @@ async def person(person_id: int) -> dict[str, Any] | None:
 
 async def person_movies(person_id: int) -> dict[str, Any] | None:
     return await _get(f"/person/{person_id}/movie_credits")
+
+
+# --- Where to watch (JustWatch data via TMDB) and trailers --------------------------
+
+_cache: dict[str, tuple[float, Any]] = {}
+
+
+async def _cached(key: str, ttl: float, load) -> Any:
+    """Availability barely changes during an evening; don't ask TMDB on every click."""
+    hit = _cache.get(key)
+    if hit and hit[0] > time.monotonic():
+        return hit[1]
+    value = await load()
+    if value is not None:
+        _cache[key] = (time.monotonic() + ttl, value)
+    return value
+
+
+def _provider(p: dict[str, Any]) -> dict[str, Any]:
+    logo = p.get("logo_path")
+    return {
+        "id": p["provider_id"],
+        "name": p["provider_name"],
+        "logo": f"{settings.tmdb_image_base}/w92{logo}" if logo else None,
+    }
+
+
+async def watch_providers(movie_id: int) -> dict[str, Any] | None:
+    """Where a film streams in the configured region, grouped the way people decide."""
+
+    async def load():
+        data = await _get(f"/movie/{movie_id}/watch/providers")
+        if data is None:
+            return None
+        region = data.get("results", {}).get(settings.tmdb_region, {})
+        by_priority = lambda key: [  # noqa: E731
+            _provider(p) for p in sorted(region.get(key, []), key=lambda p: p.get("display_priority", 999))
+        ]
+        kostenlos = {p["id"]: p for p in by_priority("free") + by_priority("ads")}
+        return {
+            "link": region.get("link"),
+            "abo": by_priority("flatrate"),
+            "kostenlos": list(kostenlos.values()),
+            "leihen": by_priority("rent"),
+            "kaufen": by_priority("buy"),
+        }
+
+    return await _cached(f"wp:{movie_id}", 6 * 3600, load)
+
+
+async def provider_list() -> list[dict[str, Any]] | None:
+    """All streaming services in the region, most relevant first."""
+
+    async def load():
+        data = await _get("/watch/providers/movie", {"watch_region": settings.tmdb_region})
+        if data is None:
+            return None
+        region = settings.tmdb_region
+        ranked = sorted(data.get("results", []), key=lambda p: p.get("display_priorities", {}).get(region, 999))
+        return [_provider(p) for p in ranked]
+
+    return await _cached("providers", 24 * 3600, load)
+
+
+# Rent/buy shops, not subscriptions: offered per film, but not in "Meine Abos".
+STORE_IDS = {
+    2,
+    3,
+    10,
+    20,
+    35,
+    130,
+    192,
+}  # Apple TV Store, Google Play, Amazon Video, maxdome, Rakuten, Sky Store, YouTube
+# Variants of the same subscription (e.g. Prime Video with ads) count as the main one.
+ABO_VARIANTE = {2100: 9}
+
+
+def abo_ids(chosen: list[int]) -> list[int]:
+    """Provider ids that a set of chosen subscriptions covers, variants included."""
+    covered = set(chosen) | {variant for variant, main in ABO_VARIANTE.items() if main in chosen}
+    return sorted(covered)
+
+
+TRAILER_TYPES = {"Trailer": 0, "Teaser": 1}
+
+
+async def trailer(movie_id: int) -> dict[str, Any] | None:
+    """The best YouTube trailer: German before English, trailer before teaser, official first."""
+    lang = settings.tmdb_language.split("-")[0]
+    data = await _get(f"/movie/{movie_id}/videos", {"include_video_language": f"{lang},en,null"})
+    if not data:
+        return None
+    candidates = [
+        v
+        for v in data.get("results", [])
+        if v.get("site") == "YouTube" and v.get("type") in TRAILER_TYPES and v.get("key")
+    ]
+    if not candidates:
+        return None
+    language_rank = {lang: 0, "en": 1}
+    best = min(
+        candidates,
+        key=lambda v: (
+            language_rank.get(v.get("iso_639_1"), 2),
+            TRAILER_TYPES[v["type"]],
+            not v.get("official", False),
+            v.get("published_at") or "",
+        ),
+    )
+    return {"key": best["key"], "name": best.get("name", ""), "sprache": best.get("iso_639_1"), "typ": best["type"]}

@@ -6,6 +6,7 @@ import { useUi } from '../../stores/ui'
 import { datum, vorWann } from '../../format'
 import FilmPicker from '../FilmPicker.vue'
 import Icon from '../Icon.vue'
+import MeineAbos from '../MeineAbos.vue'
 import UserAvatar from '../UserAvatar.vue'
 
 const app = useApp()
@@ -124,6 +125,8 @@ async function removeSchutz(u) {
         </div>
         <div v-if="pickSchutz" class="picker"><FilmPicker placeholder="Deinen Passwort-Film suchen …" @pick="setSchutz" /></div>
       </section>
+
+      <MeineAbos v-if="app.status.tmdb" />
 
       <section class="panel">
         <h2>Host-Modus</h2>

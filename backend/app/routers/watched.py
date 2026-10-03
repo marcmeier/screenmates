@@ -16,6 +16,7 @@ from ..models import (
     NoteHeart,
     Suggestion,
     User,
+    Veto,
     Watched,
     WatchedNote,
     WatchedParticipant,
@@ -146,10 +147,11 @@ async def add_watched(body: AlsGesehen, user: User = Depends(require_user), db: 
     db.add(w)
     db.flush()
     db.add(WatchedParticipant(watched_id=w.id, user_id=user.id))
-    # Seeing a film fulfils it: drop it from the wishlist and the open suggestions.
+    # Seeing a film fulfils it: drop it from the wishlist, the open suggestions and any veto.
     for stale in [
         *db.exec(select(Wishlist).where(Wishlist.movie_id == body.movie_id)).all(),
         *db.exec(select(Suggestion).where(Suggestion.movie_id == body.movie_id)).all(),
+        *db.exec(select(Veto).where(Veto.movie_id == body.movie_id)).all(),
     ]:
         db.delete(stale)
     db.commit()

@@ -87,6 +87,19 @@ test('old links still work', async () => {
   await page.goto('/#/abend')
 })
 
+test('a veto keeps a film off the wheel', async () => {
+  await nav('Filmabend')
+  await expect(page.locator('.sugg')).toHaveCount(2)
+  const alien = page.locator('.sugg', { hasText: 'Alien' })
+  await alien.getByRole('button', { name: 'Veto', exact: true }).click()
+  await expect(alien).toHaveClass(/vetoed/)
+  await expect(alien.locator('.veto-info')).toContainText('Veto von Marc')
+  await expect(page.getByRole('img', { name: /Glücksrad mit 1 Filmen/ })).toBeVisible()
+  await alien.getByRole('button', { name: 'Veto zurück' }).click()
+  await expect(alien).not.toHaveClass(/vetoed/)
+  await expect(page.getByRole('img', { name: /Glücksrad mit 2 Filmen/ })).toBeVisible()
+})
+
 test('the wheel picks a suggested film', async () => {
   await nav('Filmabend')
   await expect(page.locator('.sugg')).toHaveCount(2)
@@ -129,6 +142,45 @@ test('a watched film can be rated and discussed right in its detail sheet', asyn
   // same data in the chronicle
   await expect(page.locator('main .entry .note p', { hasText: 'Aus der Detailansicht' })).toBeVisible()
   await expect(page.locator('main .entry .avg .num')).toHaveText('5,0')
+})
+
+test('detail sheet shows the trailer and where to watch (TMDB answers mocked)', async () => {
+  const id = 493922 // Hereditary from the seed catalogue
+  await page.route(`**/api/movies/${id}/anbieter`, (r) =>
+    r.fulfill({
+      json: {
+        verfuegbar: true,
+        quelle: 'JustWatch',
+        link: 'https://www.themoviedb.org/movie/493922/watch?locale=DE',
+        abo: [{ id: 9, name: 'Prime Video', logo: null, bei: [1] }, { id: 8, name: 'Netflix', logo: null, bei: [] }],
+        kostenlos: [],
+        leihen: [{ id: 2, name: 'Apple TV Store', logo: null }],
+        kaufen: [],
+      },
+    }),
+  )
+  await page.route(`**/api/movies/${id}/trailer`, (r) =>
+    r.fulfill({ json: { trailer: { key: 'abc123XYZ', name: 'Kinotrailer', sprache: 'de', typ: 'Trailer' } } }),
+  )
+  const youtube = []
+  await page.route('https://www.youtube-nocookie.com/**', (r) => {
+    youtube.push(r.request().url())
+    return r.fulfill({ contentType: 'text/html', body: '<p>Trailer</p>' })
+  })
+
+  await nav('Finden')
+  await page.getByRole('button', { name: 'Hereditary – Das Vermächtnis – Details' }).click()
+  const sheet = page.getByRole('dialog', { name: /Hereditary/ })
+  await expect(sheet.getByRole('heading', { name: "Wo läuft's?" })).toBeVisible()
+  await expect(sheet.locator('.treffer')).toContainText('Läuft bei uns: Prime Video')
+  await expect(sheet.locator('.logos li.unser')).toHaveCount(1)
+  await expect(sheet.getByText('Daten: JustWatch')).toBeVisible()
+  expect(youtube).toEqual([]) // nothing loads from YouTube before you press play
+  await sheet.getByRole('button', { name: 'Trailer' }).click()
+  await expect(sheet.locator('iframe')).toHaveAttribute('src', /youtube-nocookie\.com\/embed\/abc123XYZ/)
+  await page.keyboard.press('Escape')
+  await page.unroute('**/api/movies/**')
+  await page.unroute('https://www.youtube-nocookie.com/**')
 })
 
 test('films not seen yet have no rating section', async () => {
