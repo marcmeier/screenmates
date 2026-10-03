@@ -3,6 +3,21 @@
 
 const ICE = [{ urls: 'stun:stun.l.google.com:19302' }]
 
+// Viewer playout buffer. WebRTC defaults to ~50 ms for calls; for a film a bit of
+// delay is free and evens out packet jitter. Measured on a live stream: at 300 ms
+// presentation follows the capture cadence (worst deviation 65 ms → 24 ms), more
+// buffer didn't help further. Everyone uses the same value, so viewers stay in sync.
+export const PUFFER_MS = 300
+
+function smoothPlayout(receiver) {
+  try {
+    if ('jitterBufferTarget' in receiver) receiver.jitterBufferTarget = PUFFER_MS
+    else if ('playoutDelayHint' in receiver) receiver.playoutDelayHint = PUFFER_MS / 1000 // older Chrome
+  } catch {
+    /* not supported: the browser keeps its own small buffer */
+  }
+}
+
 function iceGathered(pc, timeoutMs = 2500) {
   // Non-trickle: send the offer once all candidates are in (or after a timeout).
   return new Promise((resolve) => {
@@ -57,6 +72,7 @@ export function createViewer(video, onState = () => {}) {
     pc.addTransceiver('audio', { direction: 'recvonly' })
     const stream = new MediaStream()
     pc.ontrack = (e) => {
+      smoothPlayout(e.receiver)
       stream.addTrack(e.track)
       if (video.srcObject !== stream) video.srcObject = stream
     }

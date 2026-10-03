@@ -103,7 +103,8 @@ Bandbreite: Der Server braucht je nach Qualitätsstufe 2–8 Mbit/s Upload **pro
 - *OBS* (ab Version 30) – in OBS unter Einstellungen → Stream den Dienst **WHIP** wählen und
   Server + Bearer-Token aus der Kino-Seite eintragen; für 1080p 6000–8000 kbit/s,
   Keyframe-Intervall 1 s, keine B-Frames.
-  Damit gehen Szenen, Spielaufnahme, Filmdateien und voller Ton.
+  Damit gehen Szenen, Spielaufnahme, Filmdateien und voller Ton. **Für Filme die beste Wahl:** die
+  Datei als „Medienquelle“ einbinden – gleichmäßiger als jedes Bildschirmteilen.
 
 **Was automatisch getestet ist** (bei jedem Push, siehe `.github/workflows/ci.yml`): Senden aus dem
 Browser, Senden wie OBS (FFmpeg per WHIP mit Stream-Key, H.264 + Opus), Zuschauen mit Ton, ein

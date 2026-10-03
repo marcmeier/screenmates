@@ -160,6 +160,9 @@ test('friends see it everywhere and watch in sync', async () => {
   await expect.poll(() => videoTime(viewer), { timeout: 15_000 }).toBeGreaterThan(1)
   const audio = await viewer.evaluate(() => document.querySelector('.screen video').srcObject.getAudioTracks().length)
   expect(audio).toBe(1)
+  // Film playout: a 300 ms buffer smooths jitter, on video and audio alike (kept in sync).
+  const targets = await viewer.evaluate(() => window.__pcs.at(-1).getReceivers().map((r) => r.jitterBufferTarget))
+  expect(targets).toEqual([300, 300])
   // H.264 at the source resolution from the start (VP8 used to start at a fraction of it).
   expect((await negotiated(viewer)).video).toBe('video/H264')
   expect(await viewer.evaluate(() => document.querySelector('.screen video').videoWidth)).toBe(640)
