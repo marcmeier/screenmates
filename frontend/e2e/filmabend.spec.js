@@ -40,8 +40,27 @@ test('navigation has three main areas (plus the Kino when a media server runs)',
   await expect(main).toHaveText(KINO ? ['Filmabend', 'Finden', 'Unsere Filme', /^Kino/] : ['Filmabend', 'Finden', 'Unsere Filme'])
 })
 
+test('finding starts with shelves to browse; "Alle zeigen" opens the grid with that filter', async () => {
+  await nav('Finden')
+  await expect(page.getByRole('tab', { name: 'Stöbern' })).toHaveAttribute('aria-selected', 'true')
+  // Without TMDB the shelves come from the local catalogue.
+  await expect(page.getByRole('region', { name: 'Beliebt' }).locator('.card')).not.toHaveCount(0)
+  const klassiker = page.getByRole('region', { name: 'Klassiker' })
+  await expect(klassiker.locator('.card')).not.toHaveCount(0)
+  await klassiker.getByRole('button', { name: 'Alle zeigen' }).click()
+  await expect(page.getByRole('tab', { name: 'Alle Filme' })).toHaveAttribute('aria-selected', 'true')
+  await expect(page.getByLabel('Sortierung')).toHaveValue('vote_average.desc')
+  const jahre = () =>
+    page.locator('.card').evaluateAll((els) => els.map((e) => Number(e.textContent.match(/(?:19|20)\d\d/g)?.at(-1))))
+  await expect.poll(async () => (await jahre()).length).toBeGreaterThan(0)
+  expect(Math.max(...(await jahre()))).toBeLessThanOrEqual(1989)
+  await page.getByRole('button', { name: 'Filter zurücksetzen' }).click()
+  await page.getByLabel('Sortierung').selectOption('popularity.desc')
+})
+
 test('discover filters by extra genre', async () => {
   await nav('Finden')
+  await expect(page.getByRole('tab', { name: 'Alle Filme' })).toHaveAttribute('aria-selected', 'true') // remembered
   await expect(page.locator('.card')).toHaveCount(12)
   await page.getByRole('button', { name: 'Science Fiction' }).click()
   await expect(page.locator('.card')).toHaveCount(2)

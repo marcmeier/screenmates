@@ -15,8 +15,10 @@ Drei Bereiche für die drei Dinge, für die man herkommt:
   die **Filmabend-Kiste**, die wie eine CS2-Kiste aufgeht (Seltenheitsfarben nach den echten
   Chancen, Stimmen erhöhen sie), Hausregeln & Infos und ein
   Aktivitäts-Feed. Dazu **„Heute vor einem Jahr"**: was ihr um dieses Datum früher geschaut habt.
-- **Finden** – *ein* Suchfeld für alles: Leer zeigt es Horror nach Subgenre, Jahrzehnt, Note
-  und Länge – auf Wunsch nur, was **bei uns im Abo läuft** –, getippt findet es Filme und Personen (mit Horror-Filmografie), und **„KI fragen“**
+- **Finden** – zum **Stöbern** Regale wie bei einem Streamingdienst: was bei euch im Abo läuft,
+  das Horror-Angebot von Netflix, Prime Video, Disney+ & Co., Kostenloses, Neues, Geheimtipps und
+  Klassiker. Unter „Alle Filme" das Raster nach Dienst, Subgenre, Jahrzehnt, Note und Länge.
+  *Ein* Suchfeld für alles: Getippt findet es Filme und Personen (mit Horror-Filmografie), und **„KI fragen“**
   macht aus „langsamer Folk-Horror, aber nicht zu brutal“ passende, real existierende Filme.
 - **Unsere Filme** – Merkliste und die Chronik des Gesehenen: Sterne und Kommentare pro Person,
   Teilnehmende, Gästebuch mit Antworten und Herzen.
@@ -148,7 +150,7 @@ Doku unter `/docs`, wenn das Backend läuft.
 
 ```bash
 make lint        # ruff + eslint
-make test        # 106 Backend-Tests + 33 Playwright-E2E-Schritte gegen das echte Backend
+make test        # 110 Backend-Tests + 34 Playwright-E2E-Schritte gegen das echte Backend
                  # (die 5 Kino-Schritte mit echtem MediaMTX, falls installiert)
 ```
 

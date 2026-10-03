@@ -3,6 +3,13 @@
 ## Unveröffentlicht
 
 ### Neu
+- **Stöbern statt Suchen-müssen:** „Finden" startet mit Regalen wie bei einem Streamingdienst:
+  „Läuft bei uns" (eure Abos), je ein Regal pro Dienst (Netflix, Prime Video, Disney+, Paramount+,
+  Joyn, WOW … eure eigenen zuerst, mit „Euer Abo"), „Kostenlos streamen", „Neu erschienen",
+  „Geheimtipps" und „Klassiker". Seitwärts wischen oder blättern, „Alle zeigen" öffnet das ganze
+  Angebot im Raster.
+- **„Alle Filme" mit Dienst-Auswahl:** Logos zum Filtern nach einem Dienst, dazu „Kostenlos" und
+  „Läuft bei uns". Die gewählte Ansicht wird gemerkt.
 - **Filmabend-Kiste statt Glücksrad**, wie das Öffnen einer Kiste in Counter-Strike 2: Ein Band aus
   Postern rast unter der Markierung durch, bremst lange ab und enthüllt den Film des Abends. Die
   **Seltenheitsfarben** (Standard, Limitiert, Geheim, Verdeckt, ★ Legendär) zeigen die echten

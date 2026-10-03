@@ -164,11 +164,14 @@ async def discover(
     dauer_min: int | None = None,
     dauer_max: int | None = None,
     abo_anbieter: list[int] | None = None,
+    monetarisierung: str | None = None,
 ) -> list[dict[str, Any]] | None:
     """Discover horror films. `include` genres are AND-ed with horror.
 
     `abo_anbieter` keeps films that are in a subscription with any of these
     providers in the configured region (TMDB/JustWatch availability).
+    `monetarisierung` ("flatrate", "free|ads", …) changes how they must be on offer;
+    on its own it keeps everything offered that way by anyone.
     """
     params: dict[str, Any] = {
         "with_genres": ",".join(str(g) for g in [HORROR, *(include or [])]),
@@ -191,8 +194,9 @@ async def discover(
     params.update({k: v for k, v in ranges.items() if v is not None})
     if abo_anbieter:
         params["with_watch_providers"] = "|".join(str(p) for p in abo_anbieter)  # | = any of them
+    if abo_anbieter or monetarisierung:
         params["watch_region"] = settings.tmdb_region
-        params["with_watch_monetization_types"] = "flatrate"
+        params["with_watch_monetization_types"] = monetarisierung or "flatrate"
     data = await _get("/discover/movie", params)
     return None if data is None else [normalise(r) for r in data.get("results", [])]
 
@@ -282,6 +286,21 @@ STORE_IDS = {
     130,
     192,
 }  # Apple TV Store, Google Play, Amazon Video, maxdome, Rakuten, Sky Store, YouTube
+# Listed by TMDB but no use for browsing horror: a free-TV aggregator, anime,
+# and channels that are bookable inside another service anyway.
+KEIN_REGAL = {2285, 283}
+KEIN_REGAL_ENDUNG = ("Amazon Channel", "Apple TV Channel", "Roku Premium Channel", "with Ads")  # free = "Kostenlos"
+
+
+def regal_tauglich(p: dict[str, Any]) -> bool:
+    return (
+        p["id"] not in STORE_IDS
+        and p["id"] not in ABO_VARIANTE
+        and p["id"] not in KEIN_REGAL
+        and not p["name"].endswith(KEIN_REGAL_ENDUNG)
+    )
+
+
 # Variants of the same subscription (e.g. Prime Video with ads) count as the main one.
 ABO_VARIANTE = {2100: 9}
 
