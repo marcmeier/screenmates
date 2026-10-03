@@ -43,11 +43,41 @@ jobs:
         working-directory: frontend
       - run: npx playwright install --with-deps chromium
         working-directory: frontend
-      - name: MediaMTX for the Kino tests
-        run: ./scripts/mediamtx.sh
+      - name: MediaMTX for the Kino tests, FFmpeg as OBS stand-in
+        run: ./scripts/mediamtx.sh && ./scripts/ffmpeg-whip.sh
       - run: npm run test:e2e
         working-directory: frontend
         env: { PYTHON: python }
       - uses: actions/upload-artifact@v4
         if: failure()
         with: { name: playwright-report, path: frontend/test-results, retention-days: 7 }
+
+  # The real deployment: build the image, start screenmates + MediaMTX with
+  # docker compose, and run the whole E2E suite (Kino included) against it.
+  docker:
+    needs: [backend, frontend]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build and start the stack
+        run: docker compose up --detach --build --wait --wait-timeout 120
+        env: { KINO_PUBLIC_HOST: 127.0.0.1 }
+      - name: Stack answers
+        run: |
+          curl -fsS http://127.0.0.1:8000/api/health
+          curl -fsS http://127.0.0.1:8000/api/kino | grep -q '"enabled":true'
+          curl -fsS http://127.0.0.1:8000/ | grep -q '<div id="app">'
+      - uses: actions/setup-node@v4
+        with: { node-version: 24, cache: npm, cache-dependency-path: frontend/package-lock.json }
+      - run: npm ci
+        working-directory: frontend
+      - run: npx playwright install --with-deps chromium
+        working-directory: frontend
+      - run: ./scripts/ffmpeg-whip.sh
+      - name: E2E against the containers
+        run: npx playwright test
+        working-directory: frontend
+        env: { E2E_BASE_URL: "http://127.0.0.1:8000", E2E_KINO: "1" }
+      - name: Container logs
+        if: failure()
+        run: docker compose logs --no-color

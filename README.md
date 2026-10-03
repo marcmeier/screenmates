@@ -102,6 +102,12 @@ Bandbreite: Der Server braucht etwa 4–6 Mbit/s Upload **pro Zuschauer** (1080p
   Server + Bearer-Token aus der Kino-Seite eintragen; Keyframe-Intervall 1 s, keine B-Frames.
   Damit gehen Szenen, Spielaufnahme, Filmdateien und voller Ton.
 
+**Was automatisch getestet ist** (bei jedem Push, siehe `.github/workflows/ci.yml`): Senden aus dem
+Browser, Senden wie OBS (FFmpeg per WHIP mit Stream-Key, H.264 + Opus), Zuschauen mit Ton, ein
+Zuschauer mit gesperrtem UDP (TCP-Ausweichweg) – und all das zusätzlich gegen den echten
+`docker compose`-Stack. Nicht automatisch prüfbar sind echtes OBS und Verbindungen über das
+Internet; dafür gibt es die Checkliste in [`docs/KINO-CHECK.md`](docs/KINO-CHECK.md).
+
 Gezeigt werden sollte, was ihr zeigen dürft – eigene Aufnahmen, Spiele, DRM-freie Filme.
 Fenster von Netflix & Co. bleiben bei der Aufnahme ohnehin schwarz (DRM).
 
