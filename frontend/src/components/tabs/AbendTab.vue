@@ -2,6 +2,7 @@
 import { computed, defineAsyncComponent, onMounted, ref, watch } from 'vue'
 import { api } from '../../api'
 import { useApp } from '../../stores/app'
+import { useKino } from '../../stores/kino'
 import { useUi } from '../../stores/ui'
 import { useMovieActions } from '../../composables/useMovieActions'
 import { navigate } from '../../composables/useRoute'
@@ -15,6 +16,7 @@ import UserAvatar from '../UserAvatar.vue'
 const InfoCard = defineAsyncComponent(() => import('../InfoCard.vue'))
 
 const app = useApp()
+const kino = useKino()
 const ui = useUi()
 const { alsGesehen } = useMovieActions()
 
@@ -71,6 +73,13 @@ const EVENT_TEXT = {
         <p>Wer ist dabei, was steht zur Wahl – und am Ende entscheidet das Rad.</p>
       </div>
     </header>
+
+    <a v-if="kino.live" href="#/kino" class="onair">
+      <span class="badge"><span class="dot"></span>LIVE</span>
+      <span>Jetzt im Kino: <strong>{{ kino.titel || 'Übertragung läuft' }}</strong></span>
+      <span class="spacer"></span>
+      <span class="go">Zuschauen <Icon name="kino" :size="16" /></span>
+    </a>
 
     <section class="panel crew">
       <div class="row">
@@ -158,6 +167,15 @@ const EVENT_TEXT = {
 
 <style scoped>
 .crew { margin-bottom: 0.5rem; }
+.onair {
+  display: flex; align-items: center; gap: 0.8rem; margin-bottom: 1rem; padding: 0.8rem 1rem; text-decoration: none;
+  border-radius: var(--radius); background: linear-gradient(90deg, rgba(229, 9, 20, 0.22), rgba(229, 9, 20, 0.06)); border: 1px solid rgba(229, 9, 20, 0.45);
+}
+.onair:hover { border-color: var(--accent); }
+.onair .badge { display: inline-flex; align-items: center; gap: 6px; background: var(--accent); color: #fff; font-size: 0.72rem; font-weight: 800; letter-spacing: 0.08em; padding: 3px 8px; border-radius: 5px; }
+.onair .dot { width: 7px; height: 7px; border-radius: 50%; background: #fff; animation: blink 1.4s ease-in-out infinite; }
+@keyframes blink { 50% { opacity: 0.3; } }
+.onair .go { display: inline-flex; align-items: center; gap: 0.4rem; font-weight: 600; }
 .who { padding: 2px 10px 2px 2px; color: var(--text); }
 .who .avatar { width: 22px; height: 22px; }
 .layout { display: grid; grid-template-columns: minmax(0, 1fr) 380px; gap: 2rem; align-items: start; }

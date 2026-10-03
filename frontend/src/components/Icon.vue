@@ -27,6 +27,11 @@ const PATHS = {
   pfeil: 'M15 18l-6-6 6-6',
   filter: 'M4 5h16l-6 7v6l-4 2v-8z',
   sammlung: 'M4 8h16v12H4zM6 5h12M8 2h8',
+  kino: 'M3 5h18v12H3zM8 21h8M12 17v4M10 8.5v5l4.5-2.5z',
+  ton: 'M4 9h4l5-4v14l-5-4H4zM16 9a4 4 0 0 1 0 6M18.5 6.5a8 8 0 0 1 0 11',
+  stumm: 'M4 9h4l5-4v14l-5-4H4zM17 9l5 6M22 9l-5 6',
+  vollbild: 'M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5',
+  kopieren: 'M8 8h12v12H8zM4 16V4h12',
   logout: 'M15 4h4v16h-4M10 8l-4 4 4 4M6 12h10',
 }
 </script>
