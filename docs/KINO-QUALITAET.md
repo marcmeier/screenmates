@@ -54,3 +54,36 @@ Prozessor („cpu“) oder Verbindung („bandwidth“) zurückregelt.
 Gemessen auf einem Rechner (12 Kerne, Software-Encoder in Chromium) mit Server auf demselben
 Gerät. Über das Internet begrenzt die Upload-Bandbreite des Servers; auf schwächeren Rechnern
 kann der Encoder („cpu“) begrenzen – dann hilft „Mittel“.
+
+## Echter Film, echter Rechner (Live-Messung beim ersten Test)
+
+Gemessen an einer laufenden Übertragung (Brave, geteilter Tab mit Film, ein Zuschauer im
+privaten Fenster), als zusätzlicher Mess-Zuschauer über 20 s:
+
+| | Wert |
+|---|---|
+| Video | H.264, 1850×920 (Fenstergröße), 23,8 fps (Film: 24 fps), 6,1 Mbit/s |
+| Bildqualität | QP ⌀ 21,7 – sehr gut |
+| Aussetzer | 0 verworfene Bilder, 0 Freezes, 0 Paketverluste |
+| Puffer beim Zuschauer | ~100 ms |
+| Prozessor | Browser zusammen ~1,7 von 12 Kernen – keine Grenze |
+| **Ton** | **Opus, mono, ~31 kbit/s** – das schwächste Glied |
+
+Am Bild war kaum noch etwas zu holen; voll 1080p gibt es, wenn der geteilte Tab Vollbild ist.
+
+## Ton: Stereo statt Telefonqualität
+
+Chrome sendet Opus ohne Zusatz als Mono mit ~32 kbit/s und sprachoptimiert. Gemessen mit
+440 Hz links / 880 Hz rechts und Frequenzanalyse je Kanal beim Zuschauer:
+
+| | gesendet | MediaMTX | beim Zuschauer | links 440/880 Hz | rechts 440/880 Hz |
+|---|---|---|---|---|---|
+| vorher | mono | 1 Kanal | 33 kbit/s | -34 / -34 dB | -34 / -34 dB |
+| nur Sender stereo | stereo | 2 Kanäle | 191 kbit/s | -34 / -34 dB | -34 / -34 dB |
+| **Sender + Zuschauer** | stereo | 2 Kanäle | **194 kbit/s** | **-28 / -119 dB** | **-109 / -28 dB** |
+
+Zwei Dinge waren nötig: Der Sender schickt `stereo=1;sprop-stereo=1;maxaveragebitrate=…`
+(Hoch 192, Mittel 128, Sparsam 96 kbit/s) und nimmt ohne Sprachfilter auf (keine Echo- und
+Rauschunterdrückung, keine automatische Lautstärke). **Und der Zuschauer muss mit `stereo=1`
+ankündigen, dass er Stereo hören will** – sonst mischt Chrome das Signal wieder zu Mono.
+Die E2E-Suite prüft das mit derselben Zwei-Ton-Messung.

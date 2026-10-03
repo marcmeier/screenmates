@@ -9,7 +9,8 @@ import { KINO } from '../playwright.config.js'
 test.skip(!KINO, 'MediaMTX fehlt – `make kino-install` aktiviert die Kino-Tests')
 test.describe.configure({ mode: 'serial' })
 
-// Headless Chromium has no screen to pick: stand in an animated canvas plus a tone.
+// Headless Chromium has no screen to pick: stand in an animated canvas plus a
+// stereo test tone (440 Hz left, 880 Hz right).
 function fakeScreen() {
   navigator.mediaDevices.getDisplayMedia = async () => {
     const c = Object.assign(document.createElement('canvas'), { width: 640, height: 360 })
@@ -20,11 +21,17 @@ function fakeScreen() {
       g.fillRect(0, 0, 640, 360)
     }, 33)
     const stream = c.captureStream(30)
-    const ac = new AudioContext()
-    const osc = ac.createOscillator()
+    const ac = new AudioContext({ sampleRate: 48000 })
+    const merger = ac.createChannelMerger(2)
+    for (const [hz, channel] of [[440, 0], [880, 1]]) {
+      const osc = ac.createOscillator()
+      osc.frequency.value = hz
+      osc.connect(merger, 0, channel)
+      osc.start()
+    }
     const dest = ac.createMediaStreamDestination()
-    osc.connect(dest)
-    osc.start()
+    dest.channelCount = 2
+    merger.connect(dest)
     stream.addTrack(dest.stream.getAudioTracks()[0])
     return stream
   }
@@ -90,6 +97,30 @@ async function join(browser, name, ctx = null) {
 // The menu entry, not the "Jetzt im Kino" banner that also links there.
 const kinoLink = (page) => page.getByRole('navigation', { name: 'Hauptbereiche' }).getByRole('link', { name: /^Kino/ })
 
+// Level (dB) of a frequency in each received channel: real stereo keeps them apart.
+function stereoLevels(page) {
+  return page.evaluate(async () => {
+    const ac = new AudioContext({ sampleRate: 48000 })
+    const split = ac.createChannelSplitter(2)
+    ac.createMediaStreamSource(document.querySelector('.screen video').srcObject).connect(split)
+    const analysers = [0, 1].map((ch) => {
+      const a = ac.createAnalyser()
+      a.fftSize = 8192
+      split.connect(a, ch)
+      return a
+    })
+    await new Promise((r) => setTimeout(r, 2000))
+    const level = (a, hz) => {
+      const d = new Float32Array(a.frequencyBinCount)
+      a.getFloatFrequencyData(d)
+      const bin = Math.round((hz / (ac.sampleRate / 2)) * a.frequencyBinCount)
+      return Math.max(d[bin - 1], d[bin], d[bin + 1])
+    }
+    const [left, right] = analysers
+    return { left440: level(left, 440), left880: level(left, 880), right440: level(right, 440), right880: level(right, 880) }
+  })
+}
+
 const videoTime = (page) => page.evaluate(() => document.querySelector('.screen video')?.currentTime ?? 0)
 
 test.beforeAll(async ({ browser }) => {
@@ -135,6 +166,10 @@ test('friends see it everywhere and watch in sync', async () => {
   await expect(host.locator('.onair .stats')).toContainText('640×360')
   await viewer.getByRole('button', { name: 'Ton an' }).first().click()
   expect(await viewer.evaluate(() => document.querySelector('.screen video').muted)).toBe(false)
+  // Film sound: stereo arrives as stereo (Opus used to be mixed down to mono at ~32 kbit/s).
+  const db = await stereoLevels(viewer)
+  expect(db.left440 - db.left880, 'left channel carries the left tone').toBeGreaterThan(30)
+  expect(db.right880 - db.right440, 'right channel carries the right tone').toBeGreaterThan(30)
   await expect(host.locator('.viewers')).toContainText('2 schauen', { timeout: 15_000 })
 })
 

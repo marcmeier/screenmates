@@ -43,7 +43,8 @@ const statsZeile = computed(() => {
   const s = kino.sendStats
   if (!s?.breite) return null
   const mbit = s.kbps != null ? ` · ${(s.kbps / 1000).toFixed(1).replace('.', ',')} Mbit/s` : ''
-  return `${s.breite}×${s.hoehe} · ${s.fps} fps${mbit} · ${s.codec}`
+  const ton = s.tonKbps != null ? ` · Ton ${s.tonKbps} kbit/s${s.stereo ? ' Stereo' : ''}` : ''
+  return `${s.breite}×${s.hoehe} · ${s.fps} fps${mbit} · ${s.codec}${ton}`
 })
 const GRENZE = {
   cpu: 'Dein Rechner kommt beim Kodieren nicht hinterher – „Mittel“ wählen oder andere Programme schließen.',
