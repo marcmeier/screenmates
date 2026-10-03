@@ -92,14 +92,17 @@ Mit Docker ist MediaMTX in `compose.yaml` schon dabei.
   die Zuschauenden eine erreichbare Adresse bekommen,
 - hinter HTTPS `COOKIE_SECURE=true` setzen.
 
-Bandbreite: Der Server braucht etwa 4–6 Mbit/s Upload **pro Zuschauer** (1080p), der Host nur einmal.
+Bandbreite: Der Server braucht je nach Qualitätsstufe 2–8 Mbit/s Upload **pro Zuschauer**, der Host sendet nur einmal.
 
 **Senden**
 
 - *Bildschirm teilen* – direkt im Browser, ein Klick. Für Ton am einfachsten einen Tab teilen und
-  „Audio teilen“ anhaken.
+  „Audio teilen“ anhaken. Wählbar: **Qualität** Hoch (1080p) / Mittel (720p) / Sparsam (480p) und
+  **Inhalt** Film (Schärfe zuerst) / Spiel (flüssig, bis 60 fps). Gesendet wird H.264 – warum, steht
+  mit Messwerten in [`docs/KINO-QUALITAET.md`](docs/KINO-QUALITAET.md).
 - *OBS* (ab Version 30) – in OBS unter Einstellungen → Stream den Dienst **WHIP** wählen und
-  Server + Bearer-Token aus der Kino-Seite eintragen; Keyframe-Intervall 1 s, keine B-Frames.
+  Server + Bearer-Token aus der Kino-Seite eintragen; für 1080p 6000–8000 kbit/s,
+  Keyframe-Intervall 1 s, keine B-Frames.
   Damit gehen Szenen, Spielaufnahme, Filmdateien und voller Ton.
 
 **Was automatisch getestet ist** (bei jedem Push, siehe `.github/workflows/ci.yml`): Senden aus dem
