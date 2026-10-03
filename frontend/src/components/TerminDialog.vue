@@ -10,22 +10,28 @@ const props = defineProps({ termin: { type: Object, default: null } })
 const emit = defineEmits(['close', 'saved'])
 const ui = useUi()
 
-// <input type="datetime-local"> speaks local time without an offset.
-const lokal = (d) => new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16)
+// The date is German time on every device: someone abroad means 20:00 at home,
+// not 20:00 where their phone happens to be. <input type="datetime-local"> has no
+// zone, so it is filled with Berlin wall-clock time and sent without an offset,
+// which the backend reads as German time.
+const berlin = new Intl.DateTimeFormat('sv-SE', {
+  timeZone: 'Europe/Berlin', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit',
+})
+const wandzeit = (iso) => berlin.format(new Date(iso)).replace(' ', 'T') // "2026-10-09T20:00"
 function naechsterFreitag() {
-  const d = new Date()
-  d.setDate(d.getDate() + ((5 - d.getDay() + 7) % 7 || 7))
-  d.setHours(20, 0, 0, 0)
-  return d
+  const heute = berlin.format(new Date()).slice(0, 10)
+  const d = new Date(`${heute}T12:00:00Z`)
+  d.setUTCDate(d.getUTCDate() + ((5 - d.getUTCDay() + 7) % 7 || 7))
+  return `${d.toISOString().slice(0, 10)}T20:00`
 }
-const wann = ref(lokal(props.termin?.termin ? new Date(props.termin.termin) : naechsterFreitag()))
+const wann = ref(props.termin?.termin ? wandzeit(props.termin.termin) : naechsterFreitag())
 const notiz = ref(props.termin?.notiz ?? '')
 const busy = ref(false)
 
 async function speichern() {
   busy.value = true
   try {
-    const t = await api.put('/api/termin', { termin: new Date(wann.value).toISOString(), notiz: notiz.value })
+    const t = await api.put('/api/termin', { termin: `${wann.value}:00`, notiz: notiz.value })
     ui.toast('Termin gespeichert', 'ok')
     ui.changed()
     emit('saved', t)
@@ -46,7 +52,7 @@ async function entfernen() {
     <form class="termin" @submit.prevent="speichern">
       <h2><Icon name="kalender" /> Termin</h2>
       <label>
-        <span>Wann?</span>
+        <span>Wann? <em class="muted">(deutsche Zeit)</em></span>
         <input v-model="wann" type="datetime-local" required />
       </label>
       <label>
