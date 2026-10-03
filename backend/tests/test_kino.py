@@ -196,3 +196,29 @@ def test_ending_twice_and_watching_nothing_are_handled(client, kino_on):
     assert client.delete("/api/kino/sitzung/whep/gone-1").status_code == 200
     r = client.post("/api/kino/whep", content=SDP)
     assert (r.status_code, r.json()["detail"]) == (404, "Gerade wird nichts übertragen.")
+
+
+ANSWER = (
+    "v=0\r\n"
+    "m=video 9 UDP/TLS/RTP/SAVPF 106\r\n"
+    "a=candidate:1 1 tcp 1671430143 2001:db8::1 8189 typ host tcptype passive\r\n"
+    "a=candidate:2 1 udp 2130706431 192.0.2.10 8189 typ host\r\n"
+    "a=end-of-candidates\r\n"
+)
+
+
+@respx.mock
+def test_obs_clients_get_udp_candidates_only_browsers_get_all(client, browser, kino_on):
+    respx.post(f"{MTX}/kino/whip").mock(
+        return_value=httpx.Response(201, content=ANSWER.encode(), headers={"location": "/kino/whip/x1"})
+    )
+    login(client, "marc")
+    become_host(client)
+    from_browser = client.post("/api/kino/whip", content=SDP).text
+    assert " tcp " in from_browser and " udp " in from_browser
+
+    key = client.get("/api/kino/obs").json()["key"]
+    from_obs = browser().post("/api/kino/whip", content=SDP, headers={"authorization": f"Bearer {key}"}).text
+    assert " tcp " not in from_obs
+    assert "a=candidate:2 1 udp" in from_obs
+    assert from_obs.endswith("a=end-of-candidates\r\n")

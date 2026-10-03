@@ -189,7 +189,19 @@ async def _may_publish(request: Request, db: DBSession, host: bool) -> None:
     raise HTTPException(403, "Senden darf nur der Host (oder OBS mit dem Stream-Key).")
 
 
-async def _relay(method: str, upstream: str, request: Request, db: DBSession) -> Response:
+def _without_tcp_candidates(sdp: bytes) -> bytes:
+    """Drop ICE-TCP candidates from an SDP answer.
+
+    OBS (libjuice) only does UDP anyway, and FFmpeg's WHIP muxer aborts with
+    "Protocol tcp is not supported by RTC" when MediaMTX happens to list a TCP
+    candidate first; the order varies, so it failed only sometimes.
+    """
+    lines = sdp.split(b"\r\n")
+    keep = [ln for ln in lines if not (ln.startswith(b"a=candidate:") and b" tcp " in ln)]
+    return b"\r\n".join(keep)
+
+
+async def _relay(method: str, upstream: str, request: Request, db: DBSession, *, udp_only: bool = False) -> Response:
     _require_enabled()
     headers = {"Authorization": f"Bearer {_state(db).secret}"}
     for h in ("content-type", "if-match"):
@@ -208,7 +220,8 @@ async def _relay(method: str, upstream: str, request: Request, db: DBSession) ->
             return Response(status_code=200)  # already gone (show ended): deleting is idempotent
         if upstream.endswith("/whep"):
             raise HTTPException(404, "Gerade wird nichts übertragen.")
-    out = Response(content=r.content, status_code=r.status_code, media_type=r.headers.get("content-type"))
+    body = _without_tcp_candidates(r.content) if udp_only and r.status_code == 201 else r.content
+    out = Response(content=body, status_code=r.status_code, media_type=r.headers.get("content-type"))
     for h in ("etag", "accept-patch"):
         if h in r.headers:
             out.headers[h] = r.headers[h]
@@ -224,7 +237,9 @@ async def _relay(method: str, upstream: str, request: Request, db: DBSession) ->
 @router.post("/whip")
 async def whip(request: Request, db: DBSession = Depends(get_session), host: bool = Depends(is_host)):
     await _may_publish(request, db, host)
-    return await _relay("POST", f"{PATH}/whip", request, db)
+    # Browsers handle every candidate (and benefit from the TCP fallback); OBS-style
+    # clients that authenticate with the stream key get UDP candidates only.
+    return await _relay("POST", f"{PATH}/whip", request, db, udp_only=not host)
 
 
 @router.post("/whep", dependencies=[Depends(require_user)])
