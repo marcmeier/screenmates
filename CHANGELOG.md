@@ -1,6 +1,10 @@
 # Changelog
 
-## Unveröffentlicht
+## 0.5.0 – 2026-10-03
+
+**Stöbern, losen, einladen:** „Finden" zeigt das Horror-Angebot von Netflix, Prime & Co. in
+Regalen, die Filmabend-Kiste ersetzt das Glücksrad, und der Abend bekommt Termin, Einladungskarte
+und Erinnerungen. Dazu schätzt screenmates, wem ein Film gefallen wird – ehrlich gemessen.
 
 ### Neu
 - **Stöbern statt Suchen-müssen:** „Finden" startet mit Regalen wie bei einem Streamingdienst:
@@ -29,6 +33,11 @@
 - Erste echte Migration (`0002`): Tabelle `abend` und Spalte `movie.keywords`. Fehlende Stichworte
   älterer Filme holt die Prognose nach und nach aus TMDB (höchstens 30 pro Anfrage).
 - `scripts/prognose-backtest.py` misst die Prognose an echten TMDB-Filmen.
+
+### Tests
+- 110 Backend-Tests, 34 Browser-Tests (auch gegen den Docker-Stack und in UTC). Neue Prüfungen
+  jeweils mit absichtlich eingebauten Fehlern gegengecheckt; Regale und Prognose zusätzlich mit
+  echten TMDB-Daten, die Migration an einer Kopie einer echten Datenbank.
 
 ## 0.4.0 – 2026-10-03
 
