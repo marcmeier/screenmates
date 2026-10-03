@@ -65,7 +65,8 @@ export function createViewer(video, onState = () => {}) {
       if (['failed', 'disconnected', 'closed'].includes(pc?.connectionState)) schedule()
     }
     try {
-      location = await negotiate(pc, '/api/kino/whep')
+      // The receiver must ask for stereo, or Chrome mixes the sound down to mono.
+      location = await negotiate(pc, '/api/kino/whep', (sdp) => withStereoOpus(sdp))
     } catch (e) {
       if (e.status === 401) return onState('getrennt') // no name chosen: don't hammer the server
       schedule()
@@ -99,9 +100,9 @@ export function createViewer(video, onState = () => {}) {
 // keeping the resolution and giving Chrome a start bitrate puts 1080p on screen from
 // the first second instead of ramping up from 480x270 over ~15 s.
 export const QUALITAET = {
-  hoch: { label: 'Hoch – 1080p', height: 1080, maxBitrate: 8_000_000, startKbps: 4000 },
-  mittel: { label: 'Mittel – 720p', height: 720, maxBitrate: 4_000_000, startKbps: 2500 },
-  sparsam: { label: 'Sparsam – 480p', height: 480, maxBitrate: 2_000_000, startKbps: 1200 },
+  hoch: { label: 'Hoch – 1080p', height: 1080, maxBitrate: 8_000_000, startKbps: 4000, audioKbps: 192 },
+  mittel: { label: 'Mittel – 720p', height: 720, maxBitrate: 4_000_000, startKbps: 2500, audioKbps: 128 },
+  sparsam: { label: 'Sparsam – 480p', height: 480, maxBitrate: 2_000_000, startKbps: 1200, audioKbps: 96 },
 }
 export const INHALT = {
   film: { label: 'Film – Schärfe zuerst', fps: 30, degradation: 'maintain-resolution' },
@@ -113,7 +114,14 @@ export async function pickScreen({ audio = true, inhalt = 'film' } = {}) {
   const fps = INHALT[inhalt].fps
   const stream = await navigator.mediaDevices.getDisplayMedia({
     video: { frameRate: { ideal: fps, max: fps }, width: { ideal: 1920 }, height: { ideal: 1080 } },
-    audio,
+    // Film sound, not a phone call: no voice processing, keep both channels.
+    audio: audio && {
+      echoCancellation: false,
+      noiseSuppression: false,
+      autoGainControl: false,
+      channelCount: { ideal: 2 },
+      sampleRate: { ideal: 48000 },
+    },
   })
   const [video] = stream.getVideoTracks()
   if (video) video.contentHint = 'motion' // films and games are moving pictures, not slides
@@ -129,18 +137,36 @@ function preferCodecs(transceiver) {
   transceiver.setCodecPreferences([...caps].sort((a, b) => rank(a) - rank(b)))
 }
 
+// Opus defaults to mono at ~32 kbit/s, tuned for voice. Asking for stereo with
+// a real bitrate makes film sound sound like film.
+export function withStereoOpus(sdp, kbps = null) {
+  const opus = sdp.match(/a=rtpmap:(\d+) opus\/48000\/2/i)?.[1]
+  if (!opus) return sdp
+  const extra = ['stereo=1', 'sprop-stereo=1', ...(kbps ? [`maxaveragebitrate=${kbps * 1000}`] : [])]
+  return sdp
+    .split('\r\n')
+    .map((line) => {
+      if (!line.startsWith(`a=fmtp:${opus} `)) return line
+      const have = new Set(line.slice(line.indexOf(' ') + 1).split(';').map((p) => p.split('=')[0]))
+      const add = extra.filter((p) => !have.has(p.split('=')[0]))
+      return add.length ? `${line};${add.join(';')}` : line
+    })
+    .join('\r\n')
+}
+
 // Chrome reads start/min/max bitrate hints from the video codecs' fmtp lines
 // (other browsers ignore them). RTX lines (apt=…) are left alone.
-function withBitrateHints(sdp, q) {
+function withQualityHints(sdp, q) {
   const hint = `x-google-start-bitrate=${q.startKbps};x-google-min-bitrate=${Math.round(q.startKbps / 3)};x-google-max-bitrate=${q.maxBitrate / 1000}`
   let inVideo = false
-  return sdp
+  const video = sdp
     .split('\r\n')
     .map((line) => {
       if (line.startsWith('m=')) inVideo = line.startsWith('m=video')
       return inVideo && line.startsWith('a=fmtp:') && !line.includes('apt=') ? `${line};${hint}` : line
     })
     .join('\r\n')
+  return withStereoOpus(video, q.audioKbps)
 }
 
 /**
@@ -153,7 +179,12 @@ export async function publish(stream, onEnded = () => {}, { qualitaet = 'hoch', 
   const pc = new RTCPeerConnection({ iceServers: ICE })
   for (const track of stream.getTracks()) {
     const transceiver = pc.addTransceiver(track, { direction: 'sendonly', streams: [stream] })
-    if (track.kind !== 'video') continue
+    if (track.kind === 'audio') {
+      const params = transceiver.sender.getParameters()
+      params.encodings = [{ maxBitrate: q.audioKbps * 1000 }]
+      await transceiver.sender.setParameters(params).catch(() => {})
+      continue
+    }
     preferCodecs(transceiver)
     const height = track.getSettings().height || q.height
     const params = transceiver.sender.getParameters()
@@ -177,7 +208,7 @@ export async function publish(stream, onEnded = () => {}, { qualitaet = 'hoch', 
   stream.getVideoTracks()[0]?.addEventListener('ended', end)
   pc.onconnectionstatechange = () => ['failed', 'closed'].includes(pc.connectionState) && end()
   try {
-    location = await negotiate(pc, '/api/kino/whip', (sdp) => withBitrateHints(sdp, q))
+    location = await negotiate(pc, '/api/kino/whip', (sdp) => withQualityHints(sdp, q))
   } catch (e) {
     end()
     throw e
@@ -188,8 +219,11 @@ export async function publish(stream, onEnded = () => {}, { qualitaet = 'hoch', 
     const all = [...(await pc.getStats()).values()]
     const rtp = all.find((s) => s.type === 'outbound-rtp' && s.kind === 'video')
     if (!rtp) return null
-    const now = { t: performance.now(), bytes: rtp.bytesSent }
-    const kbps = last ? Math.round(((now.bytes - last.bytes) * 8) / (now.t - last.t)) : null
+    const audio = all.find((s) => s.type === 'outbound-rtp' && s.kind === 'audio')
+    const now = { t: performance.now(), bytes: rtp.bytesSent, audioBytes: audio?.bytesSent ?? 0 }
+    const rate = (key) => (last ? Math.round(((now[key] - last[key]) * 8) / (now.t - last.t)) : null)
+    const kbps = rate('bytes')
+    const tonKbps = audio ? rate('audioBytes') : null
     last = now
     return {
       breite: rtp.frameWidth,
@@ -198,6 +232,8 @@ export async function publish(stream, onEnded = () => {}, { qualitaet = 'hoch', 
       kbps,
       codec: all.find((s) => s.id === rtp.codecId)?.mimeType?.replace('video/', ''),
       grenze: rtp.qualityLimitationReason, // none | cpu | bandwidth | other
+      tonKbps,
+      stereo: /stereo=1/.test(pc.localDescription?.sdp ?? ''),
     }
   }
   return { stop: end, stats }
