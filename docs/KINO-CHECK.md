@@ -9,7 +9,9 @@ zuschauen. Diese Liste dauert etwa 15 Minuten.
 2. OBS ≥ 30 → *Einstellungen → Stream*: Dienst **WHIP**, Server und Bearer-Token aus screenmates einfügen.
 3. *Einstellungen → Ausgabe* (Modus „Erweitert“): Keyframe-Intervall **1 s**, **B-Frames 0**
    (bei x264 unter „x264-Optionen“: `bframes=0`).
-4. Eine Szene mit Bewegung und Ton (Video-Datei oder Spiel), dann **Streaming starten**.
+4. Eine Szene mit Bewegung und Ton, dann **Streaming starten**. Für Filme die Datei als
+   **„Medienquelle“** einbinden (nicht den Bildschirm aufnehmen): Das gibt gleichmäßige 24 fps
+   ohne den 3:2-Ruckler des Bildschirms.
 
 Prüfen:
 

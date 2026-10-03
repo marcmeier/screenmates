@@ -87,3 +87,26 @@ Zwei Dinge waren nötig: Der Sender schickt `stereo=1;sprop-stereo=1;maxaverageb
 Rauschunterdrückung, keine automatische Lautstärke). **Und der Zuschauer muss mit `stereo=1`
 ankündigen, dass er Stereo hören will** – sonst mischt Chrome das Signal wieder zu Mono.
 Die E2E-Suite prüft das mit derselben Zwei-Ton-Messung.
+
+## Gleichmäßigkeit: Puffer beim Zuschauer
+
+Eindruck aus dem Test: „läuft intern ein wenig jittrig“. Gemessen per `requestVideoFrameCallback`
+für jedes Bild: Abstand der Aufnahme-Zeitstempel gegen Abstand der Anzeige beim Zuschauer
+(laufender Stream, 20 s je Messung, nacheinander):
+
+| Puffer (`jitterBufferTarget`) | Anzeige-Streuung | Aufnahme-Streuung | Abweichung Anzeige↔Aufnahme p95 / max |
+|---|---|---|---|
+| Standard (~46 ms) | 16,1 ms | 14,0 ms | 23 ms / **65 ms** |
+| **300 ms** | **13,5 ms** | 13,1 ms | **14 ms / 24 ms** |
+| 600 ms | 14,3 ms | 11,1 ms | 20 ms / 31 ms |
+
+WebRTC ist auf Videocalls getrimmt und zeigt Bilder so früh wie möglich. Mit 300 ms Puffer
+fügt der Transport praktisch keine Unruhe mehr hinzu; mehr Puffer brachte nichts. Alle
+Zuschauenden nutzen denselben Wert und bleiben damit untereinander synchron. Über das Internet
+hilft der Puffer zusätzlich: verlorene Pakete können noch nachgefordert werden, bevor das Bild
+gezeigt wird – weniger Klötzchen, weniger angeforderte Keyframes.
+
+Was kein Puffer glättet: Unruhe, die schon beim Aufnehmen entsteht. Ein 24-fps-Film auf einem
+60-Hz-Bildschirm läuft im 3:2-Takt, ein geteilter Tab übernimmt diesen Takt (gemessen: Abstände
+17–67 ms statt gleichmäßig 42 ms). Abhilfe: **OBS mit dem Film als „Medienquelle“** – OBS liest
+die Datei direkt und sendet exakt gleichmäßige Bilder, dazu mit gründlicherer Kodierung.
