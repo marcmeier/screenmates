@@ -49,6 +49,7 @@ class Movie(SQLModel, table=True):
     popularity: float = 0.0
     genres: str = "[]"  # JSON array of genre names
     collection: str = ""  # TMDB belongs_to_collection name
+    keywords: str = ""  # JSON array of TMDB keywords; "" = not fetched yet
     is_canon: bool = Field(default=False, index=True)
     added_at: datetime = Field(default_factory=now)
 
@@ -206,6 +207,16 @@ class KinoState(SQLModel, table=True):
     titel: str = ""
     movie_id: int | None = None
     gestartet: datetime | None = None
+
+
+class Abend(SQLModel, table=True):
+    """The next movie night's date (single row, id=1). Shown on invitations."""
+
+    id: int | None = Field(default=1, primary_key=True)
+    termin: datetime | None = None
+    notiz: str = ""  # where, e.g. "bei Marc" or "online im Kino"
+    gesetzt_von: int | None = Field(default=None, foreign_key="user.id", ondelete="SET NULL")
+    gesetzt_am: datetime | None = None
 
 
 class Info(SQLModel, table=True):

@@ -20,6 +20,12 @@ Alle Endpunkte liegen unter `/api`. Die interaktive Doku gibt es unter `/docs`, 
 | GET | `/personen/{id}/filme` | – | Filmografie (`nur_horror`), bekannteste zuerst, ohne reine Auftritte |
 | POST | `/sync` | H | Beliebteste und bestbewertete Horrorfilme aus TMDB übernehmen |
 | POST | `/ki-suche` | – | Freitext → Filmvorschläge (braucht `LLM_API_KEY`) |
+| GET | `/movies/{id}/anbieter` | – | „Wo läuft's?": Abo/kostenlos/leihen/kaufen in DE (JustWatch über TMDB), Abos der Gruppe zuerst mit `bei` |
+| GET | `/movies/{id}/trailer` | – | Bester YouTube-Trailer (deutsch vor englisch) oder `null` |
+| GET | `/movies/{id}/prognose` | – | „Wem gefällt's?": geschätzte Sterne pro Person mit Begründung, ab 8 Bewertungen (`docs/PROGNOSE.md`) |
+| GET | `/anbieter` | – | Abo-Dienste für die Auswahl (ohne Leih-Shops) |
+
+`/discover?abos=true` zeigt nur, was bei jemandem aus der Gruppe im Abo läuft.
 
 Jeder Film trägt die Gruppen-Flags `gesehen`, `gemerkt` und `vorgeschlagen_von`.
 
@@ -32,6 +38,7 @@ Jeder Film trägt die Gruppen-Flags `gesehen`, `gemerkt` und `vorgeschlagen_von`
 | POST | `/users/waehlen` | – | Anmelden (`user_id`, ggf. `movie_id` als Film-PIN) bzw. Abmelden (`user_id: null`). Gedrosselt |
 | DELETE | `/users/{id}` | H | Nutzer löschen (Ratings und Votes weg, Kommentare anonym) |
 | GET/POST | `/users/{id}/schutz` | –/E | Schutz abfragen (nur `hat_schutz`) bzw. setzen oder entfernen |
+| POST | `/abos` | N | Eigene Streaming-Abos setzen (Provider-IDs) |
 | POST | `/dabei` | N | Eigene Teilnahme am nächsten Abend umschalten |
 | DELETE | `/dabei` | H | Teilnahme aller zurücksetzen |
 | GET | `/host` | – | `host` (diese Session) und `eingerichtet` |
@@ -47,7 +54,11 @@ Jeder Film trägt die Gruppen-Flags `gesehen`, `gemerkt` und `vorgeschlagen_von`
 | DELETE | `/suggestions/{movie_id}` | N | Eigenen Vorschlag zurückziehen |
 | DELETE | `/suggestions` | N | Alle eigenen Vorschläge zurückziehen |
 | DELETE | `/suggestions/alle` | H | Alle Vorschläge löschen |
-| GET/POST | `/spin` | – | Pool mit `gewicht`, bzw. gewichtete Ziehung |
+| POST/DELETE | `/veto` | N | Eigenes Veto gegen einen Vorschlag setzen bzw. zurücknehmen (eins pro Person) |
+| GET/POST | `/spin` | – | Pool mit `gewicht` (ohne Filme mit Veto), bzw. gewichtete Ziehung |
+| GET | `/termin` | – | Nächster Termin mit `notiz` (vergangene Termine: `null`) |
+| PUT/DELETE | `/termin` | N | Termin setzen (ohne Zeitzone = deutsche Zeit) bzw. entfernen |
+| GET | `/erinnerungen` | – | „Heute vor einem Jahr": Gesehenes aus früheren Jahren, ±3 Tage (`heute=` zum Testen) |
 | GET | `/events` | – | Aktivitäts-Feed |
 | GET/POST/DELETE | `/wishlist[/{movie_id}]` | –/N/N | Merkliste |
 

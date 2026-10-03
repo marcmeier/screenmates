@@ -7,6 +7,8 @@ import { useUi } from '../../stores/ui'
 import { useMovieActions } from '../../composables/useMovieActions'
 import { navigate } from '../../composables/useRoute'
 import { dezimal, vorWann } from '../../format'
+import { terminText } from '../../einladung'
+import Erinnerungen from '../Erinnerungen.vue'
 import Icon from '../Icon.vue'
 import Poster from '../Poster.vue'
 import SpinWheel from '../SpinWheel.vue'
@@ -14,6 +16,8 @@ import UserAvatar from '../UserAvatar.vue'
 
 // Markdown rendering is only needed once there is info text; load it on demand.
 const InfoCard = defineAsyncComponent(() => import('../InfoCard.vue'))
+const Einladung = defineAsyncComponent(() => import('../Einladung.vue'))
+const TerminDialog = defineAsyncComponent(() => import('../TerminDialog.vue'))
 
 const app = useApp()
 const kino = useKino()
@@ -25,14 +29,29 @@ const pool = ref([])
 const events = ref([])
 const loading = ref(true)
 const gewinner = ref(null)
+const termin = ref(null)
+const erinnerungen = ref([])
+const terminOffen = ref(false)
+const einladungOffen = ref(false)
 
 async function load() {
-  const [s, p, e] = await Promise.all([api.get('/api/suggestions'), api.get('/api/spin'), api.get('/api/events?limit=15')])
+  const [s, p, e, t, er] = await Promise.all([
+    api.get('/api/suggestions'),
+    api.get('/api/spin'),
+    api.get('/api/events?limit=15'),
+    api.get('/api/termin'),
+    api.get('/api/erinnerungen'),
+  ])
   vorschlaege.value = s.suggestions
   pool.value = p.pool
   events.value = e.events
+  termin.value = t
+  erinnerungen.value = er.erinnerungen
   loading.value = false
 }
+const terminAnzeige = computed(() => terminText(termin.value))
+// The invitation shows what's really up for the vote: no vetoed films.
+const zurWahl = computed(() => vorschlaege.value.filter((m) => !m.veto_von.length))
 onMounted(load)
 watch(() => ui.changes, load)
 
@@ -78,6 +97,10 @@ const EVENT_TEXT = {
   kommentar: (e) => `${e.wer ?? 'Jemand'}: „${e.text}“`,
   wunsch: (e) => `${e.wer ?? 'Jemand'} wünscht sich: ${e.text}`,
   veto: (e) => `${e.wer ?? 'Jemand'} legt ein Veto gegen „${e.film}“ ein`,
+  termin: (e) => {
+    const t = terminText({ termin: e.termin })
+    return `${e.wer ?? 'Jemand'} legt den Termin fest: ${t.tag}, ${t.zeit}`
+  },
 }
 </script>
 
@@ -110,7 +133,17 @@ const EVENT_TEXT = {
           {{ app.me.dabei ? 'Ich bin dabei' : 'Ich bin dabei!' }}
         </button>
       </div>
+      <div class="row termin">
+        <Icon name="kalender" :size="16" class="muted" />
+        <span v-if="terminAnzeige"><strong>{{ terminAnzeige.tag }}</strong>, {{ terminAnzeige.zeit }}<span v-if="terminAnzeige.notiz" class="muted"> · {{ terminAnzeige.notiz }}</span></span>
+        <span v-else class="muted">Noch kein Termin</span>
+        <button v-if="app.me" class="small ghost" @click="terminOffen = true">{{ terminAnzeige ? 'Ändern' : 'Termin festlegen' }}</button>
+        <span class="spacer"></span>
+        <button class="small" @click="einladungOffen = true"><Icon name="teilen" :size="14" /> Einladen</button>
+      </div>
     </section>
+    <TerminDialog v-if="terminOffen" :termin="termin" @close="terminOffen = false" @saved="(t) => ((termin = t), (terminOffen = false))" />
+    <Einladung v-if="einladungOffen" :termin="termin" :filme="zurWahl" :dabei="app.dabei" @close="einladungOffen = false" />
 
     <div class="layout">
       <section>
@@ -191,6 +224,7 @@ const EVENT_TEXT = {
             </div>
           </div>
         </div>
+        <Erinnerungen v-if="erinnerungen.length" :erinnerungen="erinnerungen" />
         <InfoCard />
       </aside>
     </div>
@@ -198,7 +232,8 @@ const EVENT_TEXT = {
 </template>
 
 <style scoped>
-.crew { margin-bottom: 0.5rem; }
+.crew { margin-bottom: 0.5rem; display: flex; flex-direction: column; gap: 0.6rem; }
+.termin { border-top: 1px solid var(--line); padding-top: 0.6rem; font-size: 0.9rem; }
 .onair {
   display: flex; align-items: center; gap: 0.8rem; margin-bottom: 1rem; padding: 0.8rem 1rem; text-decoration: none;
   border-radius: var(--radius); background: linear-gradient(90deg, rgba(229, 9, 20, 0.22), rgba(229, 9, 20, 0.06)); border: 1px solid rgba(229, 9, 20, 0.45);

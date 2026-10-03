@@ -53,13 +53,14 @@ def test_upgrade_is_idempotent(tmp_path):
 
 
 def test_database_from_before_migrations_is_adopted_with_its_data(tmp_path):
-    """0.2/0.3 created tables with create_all; newer tables (abo, veto) were added later."""
+    """0.2/0.3 created tables with create_all; abo/veto/abend and movie.keywords came later."""
     u = url(tmp_path)
     engine = create_engine(u)
-    old = [t for name, t in SQLModel.metadata.tables.items() if name not in ("abo", "veto")]
+    old = [t for name, t in SQLModel.metadata.tables.items() if name not in ("abo", "veto", "abend")]
     SQLModel.metadata.create_all(engine, tables=old)
     engine.dispose()
     con = sqlite3.connect(tmp_path / "db.sqlite")
+    con.execute("alter table movie drop column keywords")  # added in 0.5
     con.execute("PRAGMA user_version = 2")
     con.execute("insert into user (id, name, color, dabei, created_at) values (1, 'Marc', '#e50914', 0, '2026-10-03')")
     con.execute(
@@ -72,11 +73,11 @@ def test_database_from_before_migrations_is_adopted_with_its_data(tmp_path):
 
     migrate.upgrade(u)
 
-    assert {"abo", "veto", "alembic_version"} <= tables(u)
+    assert {"abo", "veto", "abend", "alembic_version"} <= tables(u)
     assert migrate.current_revision(u) == migrate.head_revision()
     con = sqlite3.connect(tmp_path / "db.sqlite")
     assert con.execute("select name from user").fetchall() == [("Marc",)]
-    assert con.execute("select title from movie").fetchall() == [("Shining",)]
+    assert con.execute("select title, keywords from movie").fetchall() == [("Shining", "")]
     con.close()
 
 

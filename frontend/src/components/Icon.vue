@@ -36,6 +36,10 @@ const PATHS = {
   play: 'M8 5v14l11-7z',
   extern: 'M14 4h6v6M20 4l-9 9M18 14v6H4V6h6',
   logout: 'M15 4h4v16h-4M10 8l-4 4 4 4M6 12h10',
+  kalender: 'M4 6h16v14H4zM4 10h16M8 3v5M16 3v5',
+  teilen: 'M18 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM6 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm12 7a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM8.6 13.5l6.8 4M15.4 6.5l-6.8 4',
+  download: 'M12 4v11M7 10l5 5 5-5M5 20h14',
+  erinnerung: 'M12 7v5l3 2M3.5 12a8.5 8.5 0 1 0 2.5-6M3 4v4h4',
 }
 </script>
 

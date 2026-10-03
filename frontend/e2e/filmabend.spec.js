@@ -111,6 +111,33 @@ test('the wheel picks a suggested film', async () => {
   await expect(page.locator('.sugg')).toHaveCount(1)
 })
 
+test('a date for the evening and an invitation card for the group chat', async () => {
+  // A 1×1 PNG with the CORS header TMDB sends: the card's posters stay offline and deterministic.
+  const png = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=', 'base64')
+  await page.route(/image\.tmdb\.org.*[?&]karte/, (r) =>
+    r.fulfill({ body: png, contentType: 'image/png', headers: { 'access-control-allow-origin': '*' } }),
+  )
+  await page.getByRole('button', { name: 'Termin festlegen' }).click()
+  const dialog = page.getByRole('dialog', { name: 'Termin für den Filmabend' })
+  await dialog.getByPlaceholder('z. B. bei Marc').fill('bei Marc')
+  await dialog.getByRole('button', { name: 'Speichern' }).click()
+  await expect(dialog).toBeHidden()
+  await expect(page.locator('.crew .termin')).toContainText(/Freitag, \d+\. \w+, 20:00 Uhr · bei Marc/)
+  await expect(page.locator('.feed')).toContainText('Marc legt den Termin fest: Freitag')
+
+  await page.getByRole('button', { name: 'Einladen' }).click()
+  const einladung = page.getByRole('dialog', { name: 'Zum Filmabend einladen' })
+  await expect(einladung.locator('.text')).toContainText(/Filmabend am Freitag, .* um 20:00 Uhr \(bei Marc\)/)
+  await expect(einladung.locator('.text')).toContainText('Dabei: Marc')
+  await expect(einladung.locator('.text')).toContainText('#/abend')
+  const karte = einladung.getByRole('img', { name: 'Einladungskarte' })
+  await expect(karte).toBeVisible()
+  expect(await karte.evaluate((img) => [img.naturalWidth, img.naturalHeight])).toEqual([1080, 1350])
+  await expect(einladung.getByRole('link', { name: 'Bild speichern' })).toHaveAttribute('download', 'filmabend.png')
+  await page.keyboard.press('Escape')
+  await page.unroute(/image\.tmdb\.org.*[?&]karte/)
+})
+
 test('rating: the n-th star gives n stars', async () => {
   await nav('Unsere Filme')
   await page.getByRole('navigation', { name: 'Liste' }).getByRole('link', { name: /Gesehen/ }).click()
@@ -236,6 +263,27 @@ test('info card on the evening page renders sanitised markdown', async () => {
   await page.getByRole('button', { name: 'Speichern' }).click()
   await expect(page.locator('.prose h1')).toHaveText('Regeln')
   expect(await page.evaluate(() => window.pwned)).toBeUndefined()
+})
+
+test('a film watched a year ago comes back as a memory', async () => {
+  const vorEinemJahr = new Date()
+  vorEinemJahr.setFullYear(vorEinemJahr.getFullYear() - 1)
+  vorEinemJahr.setHours(20, 0, 0, 0)
+  const r = await page.request.post('/api/watched', { data: { movie_id: 948, watched_at: vorEinemJahr.toISOString() } })
+  expect(r.ok()).toBeTruthy()
+  await page.reload()
+  const erinnerung = page.locator('.erinnerung')
+  // CI clocks run on UTC; near midnight the German date may already differ by a day.
+  await expect(erinnerung.getByRole('heading', { name: /^(Heute|Diese Woche) vor einem Jahr$/ })).toBeVisible()
+  await expect(erinnerung).toContainText('Halloween')
+})
+
+test('who will like a film: an honest hint until there are enough ratings', async () => {
+  await page.locator('.erinnerung').getByRole('button', { name: 'Halloween', exact: true }).click()
+  const detail = page.getByRole('dialog', { name: 'Halloween' })
+  await expect(detail.getByText('Wem gefällt’s?')).toBeVisible()
+  await expect(detail.locator('.wem')).toContainText(/Ab 8 Bewertungen .* Noch zu wenig: Marc \(\d\/8\)/)
+  await page.keyboard.press('Escape')
 })
 
 test('a second device must know the film to use the name', async ({ browser }) => {

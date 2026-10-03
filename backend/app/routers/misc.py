@@ -16,6 +16,7 @@ from .. import ki, tmdb
 from ..config import settings
 from ..db import get_session
 from ..models import (
+    Abend,
     AppMeta,
     Feature,
     HostState,
@@ -237,6 +238,11 @@ def events(limit: int = 30, db: DBSession = Depends(get_session)):
                 "film": titles.get(v.movie_id),
                 "movie_id": v.movie_id,
             }
+        )
+    abend = db.get(Abend, 1)
+    if abend and abend.termin and abend.gesetzt_am:
+        feed.append(
+            {"typ": "termin", "at": abend.gesetzt_am, "wer": names.get(abend.gesetzt_von), "termin": iso(abend.termin)}
         )
     for f in db.exec(select(Feature).order_by(col(Feature.created_at).desc()).limit(limit)):
         feed.append({"typ": "wunsch", "at": f.created_at, "wer": names.get(f.user_id), "text": f.text[:120]})

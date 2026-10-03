@@ -35,8 +35,10 @@ img { display: block; max-width: 100%; }
 
 :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
-button {
+button,
+a.button {
   font: inherit;
+  text-decoration: none;
   font-size: 0.9rem;
   cursor: pointer;
   border: 1px solid var(--line);
@@ -49,7 +51,8 @@ button {
   gap: 0.4rem;
   transition: border-color 0.15s, background 0.15s, color 0.15s, transform 0.1s;
 }
-button:hover:not(:disabled) { border-color: #3a3a46; background: var(--bg-raised); }
+button:hover:not(:disabled),
+a.button:hover { border-color: #3a3a46; background: var(--bg-raised); }
 button:active:not(:disabled) { transform: translateY(1px); }
 button:disabled { opacity: 0.45; cursor: not-allowed; }
 button.primary { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; }
