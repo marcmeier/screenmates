@@ -145,7 +145,7 @@ Doku unter `/docs`, wenn das Backend läuft.
 
 ```bash
 make lint        # ruff + eslint
-make test        # 68 Backend-Tests + 21 Playwright-E2E-Schritte gegen das echte Backend
+make test        # 92 Backend-Tests + 28 Playwright-E2E-Schritte gegen das echte Backend
                  # (die 5 Kino-Schritte mit echtem MediaMTX, falls installiert)
 ```
 
