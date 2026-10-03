@@ -129,6 +129,10 @@ test('friends see it everywhere and watch in sync', async () => {
   await expect.poll(() => videoTime(viewer), { timeout: 15_000 }).toBeGreaterThan(1)
   const audio = await viewer.evaluate(() => document.querySelector('.screen video').srcObject.getAudioTracks().length)
   expect(audio).toBe(1)
+  // H.264 at the source resolution from the start (VP8 used to start at a fraction of it).
+  expect((await negotiated(viewer)).video).toBe('video/H264')
+  expect(await viewer.evaluate(() => document.querySelector('.screen video').videoWidth)).toBe(640)
+  await expect(host.locator('.onair .stats')).toContainText('640×360')
   await viewer.getByRole('button', { name: 'Ton an' }).first().click()
   expect(await viewer.evaluate(() => document.querySelector('.screen video').muted)).toBe(false)
   await expect(host.locator('.viewers')).toContainText('2 schauen', { timeout: 15_000 })
