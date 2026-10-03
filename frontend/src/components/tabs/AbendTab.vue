@@ -11,7 +11,7 @@ import { terminText } from '../../einladung'
 import Erinnerungen from '../Erinnerungen.vue'
 import Icon from '../Icon.vue'
 import Poster from '../Poster.vue'
-import SpinWheel from '../SpinWheel.vue'
+import KistenOeffnung from '../KistenOeffnung.vue'
 import UserAvatar from '../UserAvatar.vue'
 
 // Markdown rendering is only needed once there is info text; load it on demand.
@@ -67,7 +67,7 @@ async function veto(m) {
     ui.toast(`Veto gegen „${m.title}“ zurückgenommen`)
   } else {
     await api.post('/api/veto', { movie_id: m.id })
-    ui.toast(`Veto gegen „${m.title}“ – das Rad lässt ihn aus`, 'ok')
+    ui.toast(`Veto gegen „${m.title}“ – er kommt nicht in die Kiste`, 'ok')
   }
   ui.changed()
 }
@@ -109,7 +109,7 @@ const EVENT_TEXT = {
     <header class="page-head">
       <div>
         <h1>Nächster Filmabend</h1>
-        <p>Wer ist dabei, was steht zur Wahl – und am Ende entscheidet das Rad.</p>
+        <p>Wer ist dabei, was steht zur Wahl – und am Ende entscheidet die Kiste.</p>
       </div>
     </header>
 
@@ -156,7 +156,7 @@ const EVENT_TEXT = {
         </div>
 
         <p v-if="app.me && vorschlaege.length" class="muted small-text veto-hint">
-          Jede Person hat ein <strong>Veto</strong>: Filme mit Veto lässt das Glücksrad aus.
+          Jede Person hat ein <strong>Veto</strong>: Filme mit Veto kommen nicht in die Kiste.
         </p>
         <div v-if="loading" class="list">
           <div v-for="i in 3" :key="i" class="skeleton" style="height: 86px"></div>
@@ -186,7 +186,7 @@ const EVENT_TEXT = {
                 class="small ghost veto"
                 :class="{ on: meinVeto(m) }"
                 :aria-pressed="meinVeto(m)"
-                :title="meinVeto(m) ? 'Veto zurücknehmen' : vetoVerbraucht ? 'Dein Veto hierher verschieben' : 'Nicht mit mir – das Rad lässt den Film aus'"
+                :title="meinVeto(m) ? 'Veto zurücknehmen' : vetoVerbraucht ? 'Dein Veto hierher verschieben' : 'Nicht mit mir – der Film kommt nicht in die Kiste'"
                 @click="veto(m)"
               >
                 <Icon name="veto" :size="14" /> {{ meinVeto(m) ? 'Veto zurück' : 'Veto' }}
@@ -207,13 +207,13 @@ const EVENT_TEXT = {
 
       <aside class="side">
         <div class="panel wheelbox">
-          <h2 class="section-title" style="margin-top: 0">Glücksrad</h2>
+          <h2 class="section-title" style="margin-top: 0">Filmabend-Kiste</h2>
           <template v-if="pool.length">
-            <p class="muted small-text">{{ pool.length }} {{ pool.length === 1 ? 'Film' : 'Filme' }} aus {{ poolQuelle }}. Je mehr Stimmen, desto größer das Feld.</p>
-            <SpinWheel :pool="pool" @result="gewinner = $event" />
+            <p class="muted small-text">{{ pool.length }} {{ pool.length === 1 ? 'Film' : 'Filme' }} aus {{ poolQuelle }}. Je mehr Stimmen, desto größer die Chance – je seltener die Farbe, desto unwahrscheinlicher.</p>
+            <KistenOeffnung :pool="pool" @result="gewinner = $event" />
           </template>
           <p v-else-if="vorschlaege.length" class="muted">Gegen alle Vorschläge gibt es ein Veto – schlagt noch etwas vor.</p>
-          <p v-else class="muted">Sobald es Vorschläge (oder Filme auf der Merkliste) gibt, kann gedreht werden.</p>
+          <p v-else class="muted">Sobald es Vorschläge (oder Filme auf der Merkliste) gibt, kann die Kiste geöffnet werden.</p>
 
           <div v-if="gewinner" class="winner" role="status">
             <span class="muted small-text">Heute läuft</span>

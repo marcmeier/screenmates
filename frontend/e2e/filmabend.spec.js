@@ -87,25 +87,48 @@ test('old links still work', async () => {
   await page.goto('/#/abend')
 })
 
-test('a veto keeps a film off the wheel', async () => {
+test('a veto keeps a film out of the case', async () => {
   await nav('Filmabend')
   await expect(page.locator('.sugg')).toHaveCount(2)
   const alien = page.locator('.sugg', { hasText: 'Alien' })
   await alien.getByRole('button', { name: 'Veto', exact: true }).click()
   await expect(alien).toHaveClass(/vetoed/)
   await expect(alien.locator('.veto-info')).toContainText('Veto von Marc')
-  await expect(page.getByRole('img', { name: /Glücksrad mit 1 Filmen/ })).toBeVisible()
+  await expect(page.getByRole('list', { name: 'Kiste mit 1 Film' })).toContainText('Shining')
   await alien.getByRole('button', { name: 'Veto zurück' }).click()
   await expect(alien).not.toHaveClass(/vetoed/)
-  await expect(page.getByRole('img', { name: /Glücksrad mit 2 Filmen/ })).toBeVisible()
+  await expect(page.getByRole('list', { name: 'Kiste mit 2 Filmen' }).getByRole('listitem')).toHaveCount(2)
 })
 
-test('the wheel picks a suggested film', async () => {
-  await nav('Filmabend')
-  await expect(page.locator('.sugg')).toHaveCount(2)
-  await page.getByRole('button', { name: 'Drehen' }).click()
+test('the case shows each film with its odds', async () => {
+  const inhalt = page.getByRole('list', { name: 'Kiste mit 2 Filmen' })
+  await expect(inhalt.getByRole('listitem')).toHaveText([/Alien.*50 %/, /Shining.*50 %/])
+})
+
+test('opening the case: Escape skips the animation, the reveal names the winner', async () => {
+  await page.getByRole('button', { name: 'Kiste öffnen' }).click()
+  const buehne = page.getByRole('dialog', { name: 'Kiste öffnen' })
+  await expect(buehne.locator('.item')).toHaveCount(64)
+  await page.keyboard.press('Escape') // skip
+  await expect(buehne.locator('.enthuellung')).toContainText(/Standard · 50 %(Alien|Shining)/)
+  const gezogen = (await buehne.locator('.enthuellung strong').textContent()).trim()
+  // The marker stops on the winner's tile.
+  const [marke, sieger] = await Promise.all([buehne.locator('.marke').boundingBox(), buehne.locator('.item.sieger').boundingBox()])
+  expect(marke.x).toBeGreaterThan(sieger.x)
+  expect(marke.x).toBeLessThan(sieger.x + sieger.width)
+  await expect(buehne.locator('.item.sieger')).toContainText(gezogen)
+  await buehne.getByRole('button', { name: 'Weiter' }).click()
+  await expect(buehne).toBeHidden()
+  await expect(page.locator('.winner strong')).toHaveText(gezogen)
+})
+
+test('the full opening runs by itself and the winner can be marked as watched', async () => {
+  await page.getByRole('button', { name: 'Kiste öffnen' }).click()
+  const weiter = page.getByRole('dialog', { name: 'Kiste öffnen' }).getByRole('button', { name: 'Weiter' })
+  await expect(weiter).toBeVisible({ timeout: 12000 })
+  await weiter.click()
   const winner = page.locator('.winner strong')
-  await expect(winner).toHaveText(/Alien|Shining/, { timeout: 8000 })
+  await expect(winner).toHaveText(/Alien|Shining/)
   page.winner = await winner.textContent()
   await page.locator('.winner').getByRole('button', { name: 'Geschaut' }).click()
   await expect(page.locator('.sugg')).toHaveCount(1)
