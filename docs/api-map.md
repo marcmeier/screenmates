@@ -8,7 +8,7 @@ Alle Endpunkte liegen unter `/api`. Die interaktive Doku gibt es unter `/docs`, 
 
 | Methode | Pfad | Recht | Zweck |
 |---|---|:-:|---|
-| GET | `/health`, `/status` | – | Healthcheck. Katalog-, Sync- und Feature-Status |
+| GET | `/health`, `/status` | – | Healthcheck. Katalog-, Sync- und Feature-Status, Anzahl Merkliste und Gesehen |
 | GET | `/movies` | – | Katalog, nach Beliebtheit (`limit`, `offset`) |
 | GET | `/movies/{id}` · `/search/{id}` | – | Details (ergänzt fehlende Daten aus TMDB) |
 | GET | `/movies/{id}/credits` | – | Besetzung und Schlüssel-Crew |
@@ -16,8 +16,8 @@ Alle Endpunkte liegen unter `/api`. Die interaktive Doku gibt es unter `/docs`, 
 | GET | `/search?q=` | – | Filmsuche (`limit`, `seite`) |
 | GET | `/discover` | – | Horror mit Filtern: `sort`, `include`/`exclude` (Genre-IDs), `jahr_*`, `note_*`, `dauer_*`, `stimmen_*`, `seite` |
 | GET | `/genres` | – | Genre-IDs und Namen |
-| GET | `/personen?q=` | – | Personensuche (TMDB) |
-| GET | `/personen/{id}/filme` | – | Filmografie (`nur_horror`) |
+| GET | `/personen?q=` | – | Personensuche (TMDB), Personen mit Horror-Bezug zuerst |
+| GET | `/personen/{id}/filme` | – | Filmografie (`nur_horror`), bekannteste zuerst, ohne reine Auftritte |
 | POST | `/sync` | H | Beliebteste und bestbewertete Horrorfilme aus TMDB übernehmen |
 | POST | `/ki-suche` | – | Freitext → Filmvorschläge (braucht `LLM_API_KEY`) |
 
