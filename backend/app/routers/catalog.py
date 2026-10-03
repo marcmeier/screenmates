@@ -25,7 +25,7 @@ from ..util import upsert_movie
 router = APIRouter(prefix="/api", tags=["catalog"])
 
 Limit = Annotated[int, Query(ge=1, le=100)]
-Page = Annotated[int, Query(ge=1, le=50)]
+Page = Annotated[int, Query(ge=1, le=tmdb.MAX_SEITE)]
 
 SORTS = {
     "popularity.desc": (Movie.popularity, True),
@@ -33,6 +33,18 @@ SORTS = {
     "primary_release_date.desc": (Movie.release_date, True),
     "primary_release_date.asc": (Movie.release_date, False),
 }
+
+
+def _seite(db: DBSession, treffer: list, page: int, limit: int) -> dict:
+    """Results plus whether another page exists and how many there are.
+
+    TMDB pages hold 20 films, so "fewer than asked for" doesn't mean "the end".
+    """
+    return {
+        "results": with_flags(db, [movie_dict(r) for r in treffer[:limit]]),
+        "mehr": page < getattr(treffer, "seiten", 1),
+        "gesamt": getattr(treffer, "gesamt", len(treffer)),
+    }
 
 
 def _ids(csv: str) -> list[int]:
@@ -110,16 +122,19 @@ async def search(
         return {"results": []}
     remote = await tmdb.search(q, page=seite)
     if remote is not None:
-        return {"results": with_flags(db, [movie_dict(r) for r in remote[:limit]])}
+        return _seite(db, remote, seite, limit)
     pattern = f"%{q}%"
     rows = db.exec(
         select(Movie)
         .where(or_(col(Movie.title).ilike(pattern), col(Movie.original_title).ilike(pattern)))
         .order_by(col(Movie.popularity).desc())
-        .offset((seite - 1) * limit)
-        .limit(limit)
     ).all()
-    return {"results": with_flags(db, [movie_dict(m) for m in rows])}
+    page = rows[(seite - 1) * limit : seite * limit]
+    return {
+        "results": with_flags(db, [movie_dict(m) for m in page]),
+        "mehr": seite * limit < len(rows),
+        "gesamt": len(rows),
+    }
 
 
 @router.get("/discover")
@@ -176,7 +191,7 @@ async def discover(
         **flt,
     )
     if remote is not None:
-        return {"results": with_flags(db, [movie_dict(r) for r in remote[:limit]])}
+        return _seite(db, remote, seite, limit)
 
     stmt = select(Movie)
     for column, lo, hi in (
@@ -200,7 +215,11 @@ async def discover(
         if inc_names <= set(json.loads(m.genres)) and not exc_names & set(json.loads(m.genres))
     ]
     page = rows[(seite - 1) * limit : seite * limit]
-    return {"results": with_flags(db, [movie_dict(m) for m in page])}
+    return {
+        "results": with_flags(db, [movie_dict(m) for m in page]),
+        "mehr": seite * limit < len(rows),
+        "gesamt": len(rows),
+    }
 
 
 @router.get("/movies/{movie_id}/anbieter")

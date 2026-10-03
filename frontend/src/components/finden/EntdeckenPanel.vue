@@ -41,7 +41,8 @@ const f = reactive(restore())
 const genres = ref([])
 const dienste = ref([])
 const app = useApp()
-const { items, loading, failed, more, hinweis, load, loadMore } = useMovieList('/api/discover', 24)
+const { items, loading, failed, more, hinweis, gesamt, load, loadMore } = useMovieList('/api/discover', 24)
+const anzahl = new Intl.NumberFormat('de-DE')
 
 const rangesActive = computed(() => RANGES.some((k) => f[k] !== DEFAULTS[k] && f[k] !== ''))
 const showRanges = ref(rangesActive.value)
@@ -189,6 +190,7 @@ const sichtbar = computed(() => (f.ohneGesehene ? items.value.filter((m) => !m.g
         <button class="ghost small" @click="reset"><Icon name="x" :size="13" /> Filter zurücksetzen</button>
       </div>
 
+      <p v-if="gesamt && !hinweis" class="muted gesamt">{{ anzahl.format(gesamt) }} {{ gesamt === 1 ? 'Film' : 'Filme' }}</p>
       <p v-if="hinweis" class="notice hinweis">
         {{ hinweis }} <a v-if="hinweis.includes('Abos')" href="#/einstellungen">Zu den Einstellungen</a>
       </p>
@@ -225,6 +227,7 @@ const sichtbar = computed(() => (f.ohneGesehene ? items.value.filter((m) => !m.g
 .check { display: flex; align-items: center; gap: 0.4rem; font-size: 0.85rem; color: var(--muted); padding-bottom: 0.55rem; }
 .check input { width: auto; }
 .hinweis { margin-bottom: 1rem; }
+.gesamt { margin: -0.3rem 0 0.8rem; font-size: 0.85rem; }
 .hinweis a { color: inherit; margin-left: 0.4rem; }
 .active { margin: -0.4rem 0 1rem -0.5rem; }
 @media (max-width: 700px) {

@@ -115,3 +115,27 @@ def test_provider_picker_for_browsing(client, tmdb_on):
     assert namen == ["Disney Plus", "Netflix", "Amazon Prime Video", "WOW", "Sky Go"]
     # Settings still offer every real subscription, channels included.
     assert "Paramount+ Amazon Channel" in [p["name"] for p in client.get("/api/anbieter").json()["anbieter"]]
+
+
+@respx.mock
+def test_paging_follows_tmdb_pages_not_page_size(client, tmdb_on):
+    """TMDB pages hold 20 films: "fewer than the 24 asked for" is not the end."""
+    seite = {"results": [film(i) for i in range(20)], "total_pages": 16, "total_results": 320}
+    respx.get(f"{TMDB}/discover/movie").mock(return_value=httpx.Response(200, json=seite))
+    r = client.get("/api/discover", params={"anbieter": "8", "limit": 24, "seite": 1}).json()
+    assert (len(r["results"]), r["mehr"], r["gesamt"]) == (20, True, 320)
+    r = client.get("/api/discover", params={"anbieter": "8", "limit": 24, "seite": 16}).json()
+    assert r["mehr"] is False
+
+    respx.get(f"{TMDB}/search/movie").mock(
+        return_value=httpx.Response(200, json=seite | {"total_pages": 3, "total_results": 55})
+    )
+    r = client.get("/api/search", params={"q": "night", "limit": 24}).json()
+    assert (r["mehr"], r["gesamt"]) == (True, 55)
+
+
+def test_paging_in_the_local_catalogue(client):
+    r = client.get("/api/discover", params={"limit": 5, "seite": 1}).json()
+    assert len(r["results"]) == 5 and r["mehr"] is True and r["gesamt"] >= 10
+    letzte = -(-r["gesamt"] // 5)
+    assert client.get("/api/discover", params={"limit": 5, "seite": letzte}).json()["mehr"] is False
