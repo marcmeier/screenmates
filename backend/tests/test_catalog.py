@@ -15,6 +15,7 @@ def titles(r):
 def test_status_reports_seed(client):
     s = client.get("/api/status").json()
     assert s["movie_count"] == 12
+    assert (s["wishlist_count"], s["watched_count"]) == (0, 0)
     assert s["tmdb"] is False
 
 
@@ -149,3 +150,73 @@ def test_local_rating_sort_ignores_shorts_and_one_vote_wonders(client, db):
     assert "Thriller" not in top
     assert "Family" not in top
     assert top[0] == "Ohne Laufzeit"
+
+
+@respx.mock
+def test_people_with_horror_credits_come_first(client, tmdb_on):
+    respx.get(f"{TMDB}/search/person").mock(
+        return_value=httpx.Response(
+            200,
+            json={
+                "results": [
+                    {
+                        "id": 1,
+                        "name": "Sabrina Carpenter",
+                        "known_for_department": "Acting",
+                        "known_for": [{"title": "Pop", "genre_ids": [10402]}],
+                    },
+                    {
+                        "id": 2,
+                        "name": "John Carpenter",
+                        "known_for_department": "Directing",
+                        "known_for": [{"title": "Halloween", "genre_ids": [27, 53]}],
+                    },
+                ]
+            },
+        )
+    )
+    people = client.get("/api/personen", params={"q": "carpenter"}).json()["results"]
+    assert [(p["name"], p["bereich"], p["horror"]) for p in people] == [
+        ("John Carpenter", "Regie", True),
+        ("Sabrina Carpenter", "Schauspiel", False),
+    ]
+
+
+@respx.mock
+def test_filmography_skips_cameos_and_starts_with_best_known(client, tmdb_on):
+    respx.get(f"{TMDB}/person/7").mock(return_value=httpx.Response(200, json={"id": 7, "name": "John Carpenter"}))
+    respx.get(f"{TMDB}/person/7/movie_credits").mock(
+        return_value=httpx.Response(
+            200,
+            json={
+                "cast": [
+                    {"id": 1, "title": "Making-of", "genre_ids": [27], "character": "Self", "vote_count": 5},
+                    {
+                        "id": 2,
+                        "title": "Doku",
+                        "genre_ids": [27],
+                        "character": "Self (archive footage)",
+                        "vote_count": 9,
+                    },
+                ],
+                "crew": [
+                    {
+                        "id": 3,
+                        "title": "Firestarter",
+                        "genre_ids": [27],
+                        "job": "Original Music Composer",
+                        "vote_count": 900,
+                    },
+                    {"id": 4, "title": "Halloween", "genre_ids": [27], "job": "Director", "vote_count": 6000},
+                    {"id": 4, "title": "Halloween", "genre_ids": [27], "job": "Writer", "vote_count": 6000},
+                    {"id": 5, "title": "Danke", "genre_ids": [27], "job": "Thanks", "vote_count": 50},
+                ],
+            },
+        )
+    )
+    r = client.get("/api/personen/7/filme").json()
+    assert r["person"]["name"] == "John Carpenter"
+    assert [(m["title"], m["rollen"]) for m in r["results"]] == [
+        ("Halloween", ["Regie", "Drehbuch"]),
+        ("Firestarter", ["Musik"]),
+    ]

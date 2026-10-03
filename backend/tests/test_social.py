@@ -17,6 +17,8 @@ def test_watching_fulfils_wishlist_and_suggestions(client):
     assert entry["participants"] == [me["id"]]
     assert client.get("/api/wishlist").json()["wishlist"] == []
     assert client.get("/api/suggestions").json()["suggestions"] == []
+    status = client.get("/api/status").json()
+    assert (status["wishlist_count"], status["watched_count"]) == (0, 1)
 
 
 def test_rating_validation_and_upsert(client):

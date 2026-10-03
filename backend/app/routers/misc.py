@@ -84,6 +84,8 @@ def status(db: DBSession = Depends(get_session)):
     return {
         "movie_count": db.exec(select(func.count()).select_from(Movie)).one(),
         "canon_count": db.exec(select(func.count()).select_from(Movie).where(col(Movie.is_canon))).one(),
+        "wishlist_count": db.exec(select(func.count()).select_from(Wishlist)).one(),
+        "watched_count": db.exec(select(func.count()).select_from(Watched).where(col(Watched.hidden).is_(False))).one(),
         "last_sync": iso(_meta(db).last_sync),
         "syncing": _sync_lock.locked(),
         "tmdb": settings.tmdb_enabled,
