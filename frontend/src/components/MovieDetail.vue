@@ -47,7 +47,7 @@ const regie = computed(() => credits.value.crew.filter((c) => c.rolle === 'Direc
 
 function person(p) {
   ui.detail = null
-  navigate('personen', p.id)
+  navigate('finden', 'person', p.id)
 }
 </script>
 

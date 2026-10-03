@@ -25,6 +25,8 @@ const PATHS = {
   stift: 'M4 20h4L19 9l-4-4L4 16zM13.5 6.5l4 4',
   sync: 'M20 11a8 8 0 0 0-14.7-4M4 4v4h4M4 13a8 8 0 0 0 14.7 4M20 20v-4h-4',
   pfeil: 'M15 18l-6-6 6-6',
+  filter: 'M4 5h16l-6 7v6l-4 2v-8z',
+  sammlung: 'M4 8h16v12H4zM6 5h12M8 2h8',
   logout: 'M15 4h4v16h-4M10 8l-4 4 4 4M6 12h10',
 }
 </script>

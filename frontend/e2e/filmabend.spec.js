@@ -34,8 +34,13 @@ test('joining the next evening', async () => {
   await expect(page.locator('.crew')).toContainText('Marc')
 })
 
+test('navigation has three main areas', async () => {
+  const main = page.getByRole('navigation', { name: 'Hauptbereiche' }).getByRole('link')
+  await expect(main).toHaveText(['Filmabend', 'Finden', 'Unsere Filme'])
+})
+
 test('discover filters by extra genre', async () => {
-  await nav('Entdecken')
+  await nav('Finden')
   await expect(page.locator('.card')).toHaveCount(12)
   await page.getByRole('button', { name: 'Science Fiction' }).click()
   await expect(page.locator('.card')).toHaveCount(2)
@@ -65,11 +70,20 @@ test('detail sheet is a real dialog', async () => {
   await expect(dialog).toBeHidden()
 })
 
-test('search matches original titles', async () => {
-  await nav('Suche')
-  await page.getByLabel('Film suchen').fill('the thing')
+test('one search field: typing searches titles, clearing returns to discover', async () => {
+  const field = page.getByRole('searchbox', { name: 'Suchen' })
+  await field.fill('the thing')
   await expect(page.locator('.card')).toHaveCount(1)
   await expect(page.locator('.card')).toContainText('Das Ding')
+  await field.fill('')
+  await expect(page.locator('.card')).toHaveCount(12)
+})
+
+test('old links still work', async () => {
+  await page.goto('/#/merkliste')
+  await expect(page).toHaveURL(/#\/sammlung\/merkliste$/)
+  await expect(page.locator('.card', { hasText: 'Alien' })).toBeVisible()
+  await page.goto('/#/abend')
 })
 
 test('the wheel picks a suggested film', async () => {
@@ -84,7 +98,8 @@ test('the wheel picks a suggested film', async () => {
 })
 
 test('rating: the n-th star gives n stars', async () => {
-  await nav('Gesehen')
+  await nav('Unsere Filme')
+  await page.getByRole('navigation', { name: 'Liste' }).getByRole('link', { name: /Gesehen/ }).click()
   await expect(page.locator('.entry h3')).toContainText(page.winner)
   await page.getByRole('radio', { name: '3 von 5 Sternen' }).click()
   await expect(page.locator('.avg .num')).toHaveText('3.0')
@@ -100,7 +115,7 @@ test('guestbook threads replies', async () => {
 })
 
 test('wishes can be voted on', async () => {
-  await nav('Wünsche')
+  await nav('Wünsche & Ideen')
   await page.getByLabel('Neuer Wunsch').fill('Serien unterstützen')
   await page.getByRole('button', { name: 'Wünschen' }).click()
   await page.getByRole('button', { name: /Abstimmen, 0 Stimmen/ }).click()
@@ -122,10 +137,10 @@ test('own name gets film protection', async () => {
   await expect(page.locator('.chip.ok', { hasText: 'geschützt' })).toBeVisible()
 })
 
-test('info markdown is rendered and sanitised', async () => {
-  await nav('Info')
-  await page.getByRole('button', { name: 'Bearbeiten' }).click()
-  await page.locator('textarea').fill('# Regeln\n\n**Keine Handys.**\n\n<img src=x onerror="window.pwned=1">')
+test('info card on the evening page renders sanitised markdown', async () => {
+  await nav('Filmabend')
+  await page.getByRole('button', { name: 'Infos hinzufügen' }).click()
+  await page.getByLabel('Infos (Markdown)').fill('# Regeln\n\n**Keine Handys.**\n\n<img src=x onerror="window.pwned=1">')
   await page.getByRole('button', { name: 'Speichern' }).click()
   await expect(page.locator('.prose h1')).toHaveText('Regeln')
   expect(await page.evaluate(() => window.pwned)).toBeUndefined()
