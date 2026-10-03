@@ -1,5 +1,19 @@
 # Changelog
 
+## Unveröffentlicht
+
+### Neu
+- **Seitenleiste einklappbar**: nur Icons (mit Tooltips, Kurzlogo „sm“, Live-Zähler am Kino-Icon),
+  pro Gerät gemerkt. Auf dem Handy unverändert.
+- **Bewerten und Kommentieren direkt in der Detailansicht** jedes gesehenen Films – nicht mehr
+  nur unter Unsere Filme → Gesehen. Dazu der Gruppen-Schnitt „Ihr: ★ 4,7“ neben der TMDB-Wertung.
+
+### Behoben
+- Bewertungen und Kommentare aus einer Ansicht erschienen in anderen offenen Ansichten erst nach
+  dem Neuladen.
+- Escape schloss ein Fenster nicht mehr, wenn nach einer Aktion der Fokus aus dem Fenster fiel.
+- Bewertungen überall mit deutschem Komma (4,7 statt 4.7).
+
 ## 0.3.0 – 2026-10-03
 
 Das **Kino**: gemeinsam live schauen, auch wenn alle an verschiedenen Orten sitzen.

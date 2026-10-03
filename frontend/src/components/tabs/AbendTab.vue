@@ -6,7 +6,7 @@ import { useKino } from '../../stores/kino'
 import { useUi } from '../../stores/ui'
 import { useMovieActions } from '../../composables/useMovieActions'
 import { navigate } from '../../composables/useRoute'
-import { vorWann } from '../../format'
+import { dezimal, vorWann } from '../../format'
 import Icon from '../Icon.vue'
 import Poster from '../Poster.vue'
 import SpinWheel from '../SpinWheel.vue'
@@ -122,7 +122,7 @@ const EVENT_TEXT = {
             </button>
             <div class="what">
               <button class="linklike" @click="ui.open(m)">{{ m.title }}</button>
-              <div class="muted small-text">{{ m.year }} · ★ {{ m.vote_average.toFixed(1) }}</div>
+              <div class="muted small-text">{{ m.year }} · ★ {{ dezimal(m.vote_average) }}</div>
               <div class="avatars"><UserAvatar v-for="id in m.von" :key="id" :user-id="id" /></div>
             </div>
             <button v-if="app.me" class="small" :class="{ on: meinVorschlag(m) }" @click="toggle(m)">

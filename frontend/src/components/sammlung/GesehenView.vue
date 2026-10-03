@@ -3,6 +3,7 @@ import { computed, onMounted, ref, watch } from 'vue'
 import { api } from '../../api'
 import { useApp } from '../../stores/app'
 import { useUi } from '../../stores/ui'
+import { dezimal } from '../../format'
 import WatchedEntry from '../WatchedEntry.vue'
 
 const app = useApp()
@@ -39,7 +40,7 @@ const stats = computed(() => {
   const minutes = entries.value.reduce((s, e) => s + (e.movie?.runtime || 0), 0)
   return {
     stunden: Math.round(minutes / 60),
-    schnitt: rated.length ? (rated.reduce((s, e) => s + e.rating_avg, 0) / rated.length).toFixed(1) : '–',
+    schnitt: rated.length ? dezimal(rated.reduce((s, e) => s + e.rating_avg, 0) / rated.length) : '–',
   }
 })
 </script>

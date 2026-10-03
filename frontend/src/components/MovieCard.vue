@@ -1,4 +1,5 @@
 <script setup>
+import { dezimal } from '../format'
 import Icon from './Icon.vue'
 import Poster from './Poster.vue'
 import { useApp } from '../stores/app'
@@ -15,7 +16,7 @@ const { toggleMerken, toggleVorschlag, istVorgeschlagen } = useMovieActions()
   <article class="card" :class="{ seen: movie.gesehen }">
     <button class="cover" :aria-label="`${movie.title} – Details`" @click="ui.open(movie)">
       <Poster :movie="movie" />
-      <span v-if="movie.vote_average" class="score">★ {{ movie.vote_average.toFixed(1) }}</span>
+      <span v-if="movie.vote_average" class="score">★ {{ dezimal(movie.vote_average) }}</span>
       <span v-if="movie.gesehen" class="ribbon"><Icon name="gesehen" :size="13" /> gesehen</span>
     </button>
 

@@ -36,6 +36,28 @@ const route = useRoute()
 const failed = ref(false)
 
 const current = computed(() => ALL.find((t) => t.id === route.value.tab) || PRIMARY[0])
+
+// Icon-only sidebar, remembered per device. Phones keep their own top bar.
+const LEISTE = 'screenmates.leiste'
+function gemerkt() {
+  try {
+    return localStorage.getItem(LEISTE) === 'schmal'
+  } catch {
+    return false
+  }
+}
+const schmal = ref(gemerkt())
+watch(schmal, (v) => {
+  try {
+    localStorage.setItem(LEISTE, v ? 'schmal' : 'breit')
+  } catch {
+    /* private mode */
+  }
+})
+const breitQuery = window.matchMedia('(min-width: 861px)')
+const breit = ref(breitQuery.matches)
+breitQuery.addEventListener('change', (e) => (breit.value = e.matches))
+const eingeklappt = computed(() => schmal.value && breit.value)
 const reload = () => window.location.reload()
 
 // List counts in the navigation follow every change.
@@ -73,9 +95,12 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey))
     <div class="brand big">screen<span>mates</span></div>
   </div>
 
-  <div v-else class="shell">
+  <div v-else class="shell" :class="{ schmal: eingeklappt }">
     <aside class="sidebar">
-      <a href="#/abend" class="brand">screen<span>mates</span></a>
+      <a href="#/abend" class="brand" aria-label="screenmates – zum Filmabend">
+        <template v-if="eingeklappt">s<span>m</span></template>
+        <template v-else>screen<span>mates</span></template>
+      </a>
 
       <nav class="primary-nav" aria-label="Hauptbereiche">
         <a
@@ -85,9 +110,10 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey))
           class="nav"
           :class="{ active: current.id === t.id }"
           :aria-current="current.id === t.id ? 'page' : undefined"
+          :title="eingeklappt ? t.label : undefined"
         >
           <Icon :name="t.icon" :size="20" />
-          <span>{{ t.label }}</span>
+          <span :class="{ 'sr-only': eingeklappt }">{{ t.label }}</span>
           <span v-if="t.id === 'kino' && kino.live" class="live" :title="`Läuft gerade: ${kino.titel || 'Live'}`">
             <span class="dot"></span>{{ kino.zuschauer.length || 'live' }}
           </span>
@@ -103,20 +129,33 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey))
             class="nav small"
             :class="{ active: current.id === t.id }"
             :aria-current="current.id === t.id ? 'page' : undefined"
+            :title="eingeklappt ? t.label : undefined"
           >
             <Icon :name="t.icon" :size="16" />
-            <span>{{ t.label }}</span>
+            <span :class="{ 'sr-only': eingeklappt }">{{ t.label }}</span>
           </a>
+          <button
+            class="nav small collapse"
+            :aria-expanded="!eingeklappt"
+            :title="eingeklappt ? 'Leiste ausklappen' : undefined"
+            @click="schmal = !schmal"
+          >
+            <Icon name="pfeil" :size="16" :class="{ gedreht: eingeklappt }" />
+            <span :class="{ 'sr-only': eingeklappt }">{{ eingeklappt ? 'Leiste ausklappen' : 'Leiste einklappen' }}</span>
+          </button>
         </nav>
 
-        <button v-if="app.me" class="me" title="Profil & Einstellungen" @click="navigate('einstellungen')">
+        <button v-if="app.me" class="me" :class="{ host: app.host }" :title="eingeklappt ? `${app.me.name}${app.host ? ' (Host)' : ''} – Einstellungen` : 'Profil & Einstellungen'" @click="navigate('einstellungen')">
           <UserAvatar :user="app.me" />
-          <span class="name">{{ app.me.name }}</span>
-          <span v-if="app.host" class="host-badge">Host</span>
+          <span class="name" :class="{ 'sr-only': eingeklappt }">{{ app.me.name }}</span>
+          <span v-if="app.host && !eingeklappt" class="host-badge">Host</span>
         </button>
-        <button v-else class="primary pick" @click="ui.loginOpen = true">Namen wählen</button>
+        <button v-else class="primary pick" :title="eingeklappt ? 'Namen wählen' : undefined" @click="ui.loginOpen = true">
+          <template v-if="eingeklappt"><Icon name="plus" :size="16" /><span class="sr-only">Namen wählen</span></template>
+          <template v-else>Namen wählen</template>
+        </button>
 
-        <p class="status">
+        <p v-if="!eingeklappt" class="status">
           {{ app.status.movie_count.toLocaleString('de-DE') }} Filme im Katalog
           <span v-if="!app.status.tmdb" class="warn">Demo-Katalog · TMDB nicht verbunden</span>
         </p>
@@ -163,6 +202,21 @@ nav { display: flex; flex-direction: column; gap: 4px; }
   font-size: 0.72rem; font-weight: 700; color: #fff; background: var(--accent); padding: 2px 7px; border-radius: 999px;
 }
 .live .dot { width: 6px; height: 6px; border-radius: 50%; background: #fff; animation: pulse 1.4s ease-in-out infinite; }
+.collapse { width: 100%; border: none; background: none; text-align: left; font: inherit; cursor: pointer; }
+.collapse svg { transition: transform 0.2s; }
+.collapse .gedreht { transform: rotate(180deg); }
+
+/* Icon-only sidebar (desktop) */
+.shell.schmal { grid-template-columns: 72px minmax(0, 1fr); }
+.schmal .sidebar { padding: 1.4rem 0.6rem 1.2rem; align-items: stretch; }
+.schmal .brand { padding: 0; text-align: center; font-size: 1.35rem; }
+.schmal .nav { justify-content: center; padding: 0.75rem 0; gap: 0; }
+.schmal .nav.small { padding: 0.55rem 0; }
+.schmal .live { position: absolute; top: 3px; right: 6px; margin: 0; padding: 0 5px; font-size: 0.62rem; }
+.schmal .live .dot { display: none; }
+.schmal .me { justify-content: center; padding: 0.4rem 0; }
+.schmal .me.host :deep(.avatar) { box-shadow: 0 0 0 2px var(--bg-soft), 0 0 0 4px var(--accent); }
+.schmal .pick { padding: 0.55rem 0; }
 .nav.small { font-size: 0.85rem; padding: 0.45rem 0.8rem; gap: 0.7rem; }
 
 .bottom { margin-top: auto; display: flex; flex-direction: column; gap: 0.9rem; }
@@ -187,7 +241,7 @@ nav { display: flex; flex-direction: column; gap: 4px; }
   }
   .brand { padding: 0; }
   .bottom { margin: 0; grid-column: 2; grid-row: 1; }
-  .secondary-nav, .status { display: none; }
+  .secondary-nav, .status, .collapse { display: none; }
   .me, .pick { width: auto; }
   .primary-nav { grid-column: 1 / -1; flex-direction: row; justify-content: space-around; }
   /* Bottom-tab style: icon above label, so four areas fit a phone. */

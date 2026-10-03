@@ -1,3 +1,10 @@
+const einsNachKomma = new Intl.NumberFormat('de-DE', { minimumFractionDigits: 1, maximumFractionDigits: 1 })
+
+/** 4.66 -> "4,7": ratings everywhere look the same, with a German decimal comma. */
+export function dezimal(x) {
+  return x == null || Number.isNaN(x) ? '–' : einsNachKomma.format(x)
+}
+
 const dateFmt = new Intl.DateTimeFormat('de-DE', { day: 'numeric', month: 'short', year: 'numeric' })
 const rel = new Intl.RelativeTimeFormat('de-DE', { numeric: 'auto' })
 
