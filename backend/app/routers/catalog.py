@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+from datetime import date
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -138,6 +139,8 @@ async def discover(
     note_min: float | None = Query(None, ge=0, le=10),
     note_max: float | None = Query(None, ge=0, le=10),
     abos: bool = Query(False, description="Nur Filme, die bei einem Abo aus der Gruppe laufen"),
+    anbieter: str = Query("", description="Kommagetrennte Provider-IDs: nur Filme im Abo bei diesen Diensten"),
+    kostenlos: bool = Query(False, description="Nur Filme, die kostenlos (auch mit Werbung) laufen"),
 ):
     if dauer_min is None:
         dauer_min = tmdb.MIN_RUNTIME
@@ -154,14 +157,24 @@ async def discover(
         note_max=note_max,
     )
     inc, exc = _ids(include), _ids(exclude)
-    anbieter = None
-    if abos:
-        if not settings.tmdb_enabled:
-            return {"results": [], "hinweis": "„Läuft bei uns“ braucht TMDB (TMDB_API_KEY)."}
-        anbieter = tmdb.abo_ids(list(set(db.exec(select(Abo.provider_id)).all())))
-        if not anbieter:
+    dienste = None
+    if (abos or anbieter or kostenlos) and not settings.tmdb_enabled:
+        return {"results": [], "hinweis": "Was wo läuft, weiß screenmates nur mit TMDB (TMDB_API_KEY)."}
+    if anbieter:
+        dienste = tmdb.abo_ids(_ids(anbieter))
+    elif abos:
+        dienste = tmdb.abo_ids(list(set(db.exec(select(Abo.provider_id)).all())))
+        if not dienste:
             return {"results": [], "hinweis": "Noch niemand hat seine Abos eingetragen (Einstellungen)."}
-    remote = await tmdb.discover(sort=sort, page=seite, include=inc, exclude=exc, abo_anbieter=anbieter, **flt)
+    remote = await tmdb.discover(
+        sort=sort,
+        page=seite,
+        include=inc,
+        exclude=exc,
+        abo_anbieter=dienste,
+        monetarisierung="free|ads" if kostenlos else None,
+        **flt,
+    )
     if remote is not None:
         return {"results": with_flags(db, [movie_dict(r) for r in remote[:limit]])}
 
@@ -212,7 +225,11 @@ async def movie_trailer(movie_id: int):
 
 
 @router.get("/anbieter")
-async def providers(limit: Limit = 40, db: DBSession = Depends(get_session)):
+async def providers(
+    limit: Limit = 40,
+    zum_stoebern: bool = Query(False, description="Nur Dienste, die als Regal taugen (ohne Channels, Anime …)"),
+    db: DBSession = Depends(get_session),
+):
     """Streaming services to pick from, plus every one someone already has."""
     alle = await tmdb.provider_list()
     if alle is None:
@@ -220,8 +237,143 @@ async def providers(limit: Limit = 40, db: DBSession = Depends(get_session)):
     gewaehlt = set(db.exec(select(Abo.provider_id)).all())
     # only real subscriptions: no rent/buy shops, no "with ads" duplicates
     abos = [p for p in alle if p["id"] not in tmdb.STORE_IDS and p["id"] not in tmdb.ABO_VARIANTE]
+    if zum_stoebern:
+        abos = [p for p in abos if tmdb.regal_tauglich(p)]
+        abos.sort(key=lambda p: p["id"] not in gewaehlt)  # ours first, order kept otherwise
     auswahl = [p for i, p in enumerate(abos) if i < limit or p["id"] in gewaehlt]
     return {"anbieter": auswahl, "verfuegbar": True}
+
+
+# --- Stöbern: shelves instead of a search box -------------------------------
+
+REGAL_FILME = 14
+REGAL_DIENSTE = 8  # streaming services with a shelf of their own
+REGAL_TTL = 6 * 3600
+
+
+async def _regal(db: DBSession, filter: dict, **kw) -> list[dict]:
+    """One shelf: TMDB discover with the defaults the grid would use (cached)."""
+    key = "regal:" + json.dumps(kw, sort_keys=True)
+    kw.setdefault("dauer_min", tmdb.MIN_RUNTIME)
+    if kw.get("sort") == "vote_average.desc":
+        kw.setdefault("stimmen_min", tmdb.MIN_VOTES_FOR_RATING)
+    filme = await tmdb._cached(key, REGAL_TTL, lambda: tmdb.discover(**kw)) or []
+    return with_flags(db, [movie_dict(m) for m in filme[:REGAL_FILME]])
+
+
+@router.get("/stoebern")
+async def stoebern(db: DBSession = Depends(get_session)):
+    """Shelves to browse: what we can watch, each streaming service, and a few themes.
+
+    Every shelf carries the grid filter that shows all of it ("Alle zeigen").
+    """
+    jahr = date.today().year
+    themen = [
+        ("neu", "Neu erschienen", "Horror der letzten zwei Jahre", {"jahr_min": jahr - 1}),
+        # Few but convinced voters; animation pushes odd picks up, so it stays out.
+        (
+            "geheimtipps",
+            "Geheimtipps",
+            "Gut bewertet, aber kaum bekannt",
+            {"sort": "vote_average.desc", "note_min": 7.0, "stimmen_min": 500, "stimmen_max": 4000, "exclude": [16]},
+        ),
+        ("klassiker", "Klassiker", "Die besten bis 1989", {"sort": "vote_average.desc", "jahr_max": 1989}),
+    ]
+    if not settings.tmdb_enabled:
+        # Without TMDB nobody knows what streams where: themes from the local catalogue only.
+        lokal = []
+        for key, titel, unter, flt in [("beliebt", "Beliebt", "Aus eurem Katalog", {}), *themen]:
+            res = await discover(db=db, limit=REGAL_FILME, **_discover_defaults(flt))
+            if res["results"]:
+                lokal.append({"id": key, "titel": titel, "untertitel": unter, "filter": flt, "filme": res["results"]})
+        return {"regale": lokal, "tmdb": False}
+
+    gewaehlt = set(db.exec(select(Abo.provider_id)).all())
+    alle = [p for p in await tmdb.provider_list() or [] if tmdb.regal_tauglich(p)]
+    # Our own subscriptions first, then the most common services.
+    dienste = [p for p in alle if p["id"] in gewaehlt] + [p for p in alle if p["id"] not in gewaehlt]
+    dienste = dienste[:REGAL_DIENSTE]
+
+    specs = []
+    if gewaehlt:
+        specs.append(
+            (
+                {"id": "bei-uns", "titel": "Läuft bei uns", "untertitel": "In euren Abos, ohne Aufpreis"},
+                {"beiUns": True},
+                {"abo_anbieter": tmdb.abo_ids(list(gewaehlt))},
+            )
+        )
+    for p in dienste:
+        specs.append(
+            (
+                {
+                    "id": f"dienst-{p['id']}",
+                    "titel": p["name"],
+                    "untertitel": "Beliebt im Abo",
+                    "anbieter": p,
+                    "unser": p["id"] in gewaehlt,
+                },
+                {"anbieter": p["id"]},
+                {"abo_anbieter": tmdb.abo_ids([p["id"]])},
+            )
+        )
+    specs.append(
+        (
+            {"id": "kostenlos", "titel": "Kostenlos streamen", "untertitel": "Ohne Abo, meist mit Werbung"},
+            {"kostenlos": True},
+            {"monetarisierung": "free|ads"},
+        )
+    )
+    for key, titel, unter, flt in themen:
+        specs.append(({"id": key, "titel": titel, "untertitel": unter}, flt, _tmdb_args(flt)))
+
+    async def fuellen(kopf, flt, args):
+        try:
+            return kopf | {"filter": flt, "filme": await _regal(db, flt, **args)}
+        except tmdb.TMDBError:
+            return None
+
+    regale = []
+    for regal in await asyncio.gather(*(fuellen(*s) for s in specs)):
+        # A shelf with only a handful of films isn't worth a row, and one that mostly
+        # repeats an earlier shelf (WOW and Sky Go are both Sky) isn't either.
+        if not regal or len(regal["filme"]) < 4:
+            continue
+        ids = {m["id"] for m in regal["filme"]}
+        if any(len(ids & {m["id"] for m in r["filme"]}) > len(ids) * 0.6 for r in regale if r.get("anbieter")):
+            continue
+        regale.append(regal)
+    return {"regale": regale, "tmdb": True}
+
+
+def _tmdb_args(flt: dict) -> dict:
+    """Grid filter (frontend names) → tmdb.discover arguments."""
+    keys = ("sort", "jahr_min", "jahr_max", "note_min", "stimmen_min", "stimmen_max", "exclude")
+    return {k: flt[k] for k in keys if k in flt}
+
+
+def _discover_defaults(flt: dict) -> dict:
+    """Grid filter → keyword arguments for calling the discover endpoint directly."""
+    base = dict(
+        seite=1,
+        sort="popularity.desc",
+        include="",
+        exclude="",
+        stimmen_min=None,
+        stimmen_max=None,
+        dauer_min=None,
+        dauer_max=None,
+        jahr_min=None,
+        jahr_max=None,
+        note_min=None,
+        note_max=None,
+        abos=False,
+        anbieter="",
+        kostenlos=False,
+    )
+    args = base | _tmdb_args(flt)
+    args["exclude"] = ",".join(str(g) for g in flt.get("exclude", []))
+    return args
 
 
 @router.get("/genres")

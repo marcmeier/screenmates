@@ -25,7 +25,11 @@ Alle Endpunkte liegen unter `/api`. Die interaktive Doku gibt es unter `/docs`, 
 | GET | `/movies/{id}/prognose` | – | „Wem gefällt's?": geschätzte Sterne pro Person mit Begründung, ab 8 Bewertungen (`docs/PROGNOSE.md`) |
 | GET | `/anbieter` | – | Abo-Dienste für die Auswahl (ohne Leih-Shops) |
 
-`/discover?abos=true` zeigt nur, was bei jemandem aus der Gruppe im Abo läuft.
+| GET | `/stoebern` | – | Regale zum Stöbern: „Läuft bei uns", je Dienst (eigene Abos zuerst), Kostenlos, Neu, Geheimtipps, Klassiker; jedes mit seinem Raster-`filter` |
+
+`/discover` filtert auch nach Streaming: `abos=true` (Abos der Gruppe), `anbieter=8,9` (diese Dienste im Abo),
+`kostenlos=true` (kostenlos, auch mit Werbung). `/anbieter?zum_stoebern=true` liefert nur Dienste, die als
+Regal taugen (ohne Leih-Shops, Channels, Werbe-Varianten), eigene Abos zuerst.
 
 Jeder Film trägt die Gruppen-Flags `gesehen`, `gemerkt` und `vorgeschlagen_von`.
 
