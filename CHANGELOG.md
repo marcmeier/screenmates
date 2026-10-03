@@ -1,5 +1,16 @@
 # Changelog
 
+## Unveröffentlicht
+
+### Behoben
+- **Mit TMDB endeten Raster und Suche nach 20 Filmen**, obwohl es z. B. 320 Horrorfilme bei
+  Netflix gibt: TMDB liefert 20 Filme pro Seite, die App fragte 24 an und hielt „weniger als
+  gefragt" für das Ende. Jetzt meldet der Server, ob es weitergeht und wie viele es insgesamt sind.
+
+### Verbessert
+- Raster laden beim Scrollen von selbst nach („Mehr laden" bleibt als Knopf), und „Alle Filme"
+  zeigt die Gesamtzahl („320 Filme").
+
 ## 0.5.0 – 2026-10-03
 
 **Stöbern, losen, einladen:** „Finden" zeigt das Horror-Angebot von Netflix, Prime & Co. in

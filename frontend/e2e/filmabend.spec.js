@@ -68,6 +68,29 @@ test('discover filters by extra genre', async () => {
   await expect(page.locator('.card')).toHaveCount(12)
 })
 
+test('the grid keeps loading TMDB-sized pages (20 films) while scrolling', async () => {
+  // Three pages of 20 like TMDB sends them; the grid asks for 24 per page.
+  const seiten = (url) => {
+    const seite = Number(new URL(url).searchParams.get('seite'))
+    const results = Array.from({ length: 20 }, (_, i) => ({ id: 900000 + seite * 100 + i, title: `Testfilm ${seite}-${i}`, year: 2000, genres: [], vote_average: 6 }))
+    return { results, mehr: seite < 3, gesamt: 60 }
+  }
+  await page.route('**/api/discover?**', (r) => r.fulfill({ json: seiten(r.request().url()) }))
+  await page.getByRole('button', { name: 'Science Fiction' }).click() // any change reloads the grid
+  await expect(page.locator('.gesamt')).toHaveText('60 Filme')
+  await expect(page.locator('.grid .card')).toHaveCount(20)
+  for (let i = 0; i < 12 && (await page.locator('.grid .card').count()) < 60; i++) {
+    await page.mouse.wheel(0, 4000)
+    await page.waitForTimeout(250)
+  }
+  await expect(page.locator('.grid .card')).toHaveCount(60)
+  await expect(page.getByRole('button', { name: 'Mehr laden' })).toHaveCount(0)
+  await page.unroute('**/api/discover?**')
+  await page.getByRole('button', { name: 'Science Fiction' }).click()
+  await expect(page.locator('.card')).toHaveCount(12)
+  await page.evaluate(() => window.scrollTo(0, 0))
+})
+
 test('cards bookmark and suggest', async () => {
   for (const title of ['Alien', 'Shining']) {
     const card = page.locator('.card', { hasText: title }).first()

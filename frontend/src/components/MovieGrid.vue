@@ -1,7 +1,8 @@
 <script setup>
+import { onBeforeUnmount, ref, watch } from 'vue'
 import MovieCard from './MovieCard.vue'
 
-defineProps({
+const props = defineProps({
   movies: { type: Array, required: true },
   loading: Boolean,
   failed: Boolean,
@@ -9,7 +10,31 @@ defineProps({
   emptyTitle: { type: String, default: 'Nichts gefunden' },
   emptyText: { type: String, default: '' },
 })
-defineEmits(['more', 'retry'])
+const emit = defineEmits(['more', 'retry'])
+
+// Endless scrolling: when the "Mehr laden" button comes near the viewport,
+// the next page loads by itself. The button stays for keyboards and old browsers.
+const knopf = ref(null)
+let beobachter = null
+let inReichweite = false
+const weiter = () => inReichweite && props.more && !props.loading && emit('more')
+watch(knopf, (el) => {
+  beobachter?.disconnect()
+  inReichweite = false
+  if (!el || !('IntersectionObserver' in window)) return
+  beobachter = new IntersectionObserver(
+    ([e]) => {
+      inReichweite = e.isIntersecting
+      weiter()
+    },
+    { rootMargin: '600px 0px' },
+  )
+  beobachter.observe(el)
+})
+// The observer only reports changes. If the button was already in reach while a
+// page was loading, ask again once loading is done – otherwise scrolling stalls.
+watch(() => props.loading, (laedt) => !laedt && weiter())
+onBeforeUnmount(() => beobachter?.disconnect())
 </script>
 
 <template>
@@ -32,7 +57,7 @@ defineEmits(['more', 'retry'])
       <span v-if="emptyText">{{ emptyText }}</span>
     </div>
 
-    <div v-if="more && !loading" class="more">
+    <div v-if="more && !loading" ref="knopf" class="more">
       <button @click="$emit('more')">Mehr laden</button>
     </div>
   </div>

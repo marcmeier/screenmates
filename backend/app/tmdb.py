@@ -94,6 +94,19 @@ async def _get(path: str, params: dict[str, Any] | None = None) -> dict[str, Any
     return r.json()
 
 
+class Treffer(list):
+    """A page of TMDB results that knows how many there are in total."""
+
+    def __init__(self, items, data: dict[str, Any]):
+        super().__init__(items)
+        self.gesamt: int = data.get("total_results", len(items))
+        self.seiten: int = min(data.get("total_pages", 1), MAX_SEITE)
+
+
+# TMDB never serves pages beyond 500.
+MAX_SEITE = 500
+
+
 def _year(release_date: str) -> int | None:
     head = (release_date or "")[:4]
     return int(head) if head.isdigit() else None
@@ -132,7 +145,7 @@ def normalise(raw: dict[str, Any]) -> dict[str, Any]:
 
 async def search(query: str, page: int = 1) -> list[dict[str, Any]] | None:
     data = await _get("/search/movie", {"query": query, "include_adult": "false", "page": page})
-    return None if data is None else [normalise(r) for r in data.get("results", [])]
+    return None if data is None else Treffer([normalise(r) for r in data.get("results", [])], data)
 
 
 async def details(movie_id: int) -> dict[str, Any] | None:
@@ -198,7 +211,7 @@ async def discover(
         params["watch_region"] = settings.tmdb_region
         params["with_watch_monetization_types"] = monetarisierung or "flatrate"
     data = await _get("/discover/movie", params)
-    return None if data is None else [normalise(r) for r in data.get("results", [])]
+    return None if data is None else Treffer([normalise(r) for r in data.get("results", [])], data)
 
 
 async def person_search(query: str) -> list[dict[str, Any]] | None:
