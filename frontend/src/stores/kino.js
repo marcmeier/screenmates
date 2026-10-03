@@ -6,6 +6,7 @@ import { useUi } from './ui'
 
 let timer = null
 let publisher = null
+let statsTimer = null
 
 // The live state of the Kino, polled app-wide so the navigation can show that
 // something is on air on every page. Sending lives here too, not in the Kino
@@ -20,6 +21,7 @@ export const useKino = defineStore('kino', {
     zuschauer: [],
     publikum: [],
     localStream: null, // what this browser is sending, for the host's preview
+    sendStats: null, // what the encoder actually produces, refreshed every 2 s
   }),
   getters: {
     sende: (s) => !!s.localStream,
@@ -38,21 +40,31 @@ export const useKino = defineStore('kino', {
       timer = setInterval(() => this.refresh(), ms)
     },
 
-    async startSending({ audio = true } = {}) {
+    async startSending({ audio = true, qualitaet = 'hoch', inhalt = 'film' } = {}) {
       const ui = useUi()
       let stream
       try {
-        stream = await pickScreen({ audio })
+        stream = await pickScreen({ audio, inhalt })
       } catch {
         return // the user cancelled the picker
       }
       try {
-        publisher = await publish(stream, () => {
-          publisher = null
-          this.localStream = null
-          this.refresh()
-        })
+        publisher = await publish(
+          stream,
+          () => {
+            publisher = null
+            clearInterval(statsTimer)
+            this.localStream = null
+            this.sendStats = null
+            this.refresh()
+          },
+          { qualitaet, inhalt },
+        )
         this.localStream = markRaw(stream)
+        clearInterval(statsTimer)
+        statsTimer = setInterval(async () => {
+          this.sendStats = (await publisher?.stats().catch(() => null)) ?? null
+        }, 2000)
         if (audio && !stream.getAudioTracks().length) {
           ui.toast('Ohne Ton: Beim Teilen „Audio teilen“ anhaken (geht bei Tabs und unter Windows auch für den ganzen Bildschirm).', 'info', 7000)
         } else {
