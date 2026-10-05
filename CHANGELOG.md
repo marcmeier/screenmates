@@ -3,6 +3,8 @@
 ## Unveröffentlicht
 
 ### Neu
+- **Favicon** im Stil der eingeklappten Leiste („sm“), dazu Icons für den Homescreen von iPhone
+  und Android (`apple-touch-icon`, Web-Manifest).
 - **KI-Suche über OpenRouter.** Statt eines Anthropic-Keys geht auch ein OpenRouter-Key (`sk-or-…`,
   wird automatisch erkannt) – und damit jedes Modell dort. Standard ist das günstige
   `deepseek/deepseek-v4.1-flash` (rund 0,12 Cent pro Suche); jeder Vorschlag wird ohnehin gegen TMDB geprüft.
@@ -21,6 +23,9 @@
   Originalsprachen (u. a. *Harakiri*, *Die sieben Samurai*, *Cinema Paradiso*).
 
 ### Behoben
+- **Das Kino-Bild hat eine feste Größe:** höchstens 1280 px breit und immer so groß, dass es samt
+  Titelzeile ins Fenster passt – auf großen Monitoren musste man vorher scrollen. Auf dem Handy
+  volle Breite, im Vollbild wie gehabt bildschirmfüllend.
 - **Mit TMDB endeten Raster und Suche nach 20 Filmen**, obwohl es z. B. 320 Horrorfilme bei
   Netflix gibt: TMDB liefert 20 Filme pro Seite, die App fragte 24 an und hielt „weniger als
   gefragt" für das Ende. Jetzt meldet der Server, ob es weitergeht und wie viele es insgesamt sind.
