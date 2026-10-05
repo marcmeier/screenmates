@@ -1,5 +1,13 @@
 # Changelog
 
+## Unveröffentlicht
+
+### Neu
+- **Unterstützen per Ko-fi und PayPal.** Admins tragen auf der Über-Seite ihren Ko-fi- und
+  PayPal.me-Namen ein (oder fügen einfach den Link ein). Jeder Weg bekommt einen Knopf und am
+  Rechner einen QR-Code zum Scannen mit dem Handy – im Browser erzeugt, ohne fremden Dienst.
+  Gespeichert wird nur der Name, verlinkt werden nur ko-fi.com und paypal.me.
+
 ## 0.7.0 – 2026-10-06
 
 **Gemeinsam statt nebeneinander:** Der Gastgeber öffnet die Filmabend-Kiste und alle sehen live

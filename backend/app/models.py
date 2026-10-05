@@ -346,7 +346,7 @@ class Zaehler(SQLModel, table=True):
 
 
 class Seitentext(SQLModel, table=True):
-    """Admin-maintained texts of the about page: impressum, datenschutz, spenden (Markdown)."""
+    """Admin-maintained about page: impressum, datenschutz, spenden (Markdown); kofi, paypal (names)."""
 
     key: str = Field(primary_key=True)
     text: str = ""
