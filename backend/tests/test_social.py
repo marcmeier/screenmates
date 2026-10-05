@@ -1,6 +1,9 @@
 """Watched log, ratings, notes, lists, wishes, wheel — and that deletes cascade."""
 
+import json
+
 import httpx
+import pytest
 import respx
 from sqlmodel import select
 
@@ -184,6 +187,57 @@ def test_ki_resolves_titles_against_catalogue(client, monkeypatch):
     )
     r = client.post("/api/ki-suche", json={"beschreibung": "Weltraum", "mit_sammlung": True}).json()
     assert [(m["title"], m["warum"]) for m in r["results"]] == [("Alien", "Isolation")]
+
+
+@respx.mock
+@pytest.mark.parametrize("provider", ["openrouter", ""])  # explicit, or guessed from the "sk-or-" key
+def test_ki_via_openrouter(client, monkeypatch, provider):
+    from app.config import settings
+
+    monkeypatch.setattr(settings, "llm_api_key", "sk-or-v1-test")
+    monkeypatch.setattr(settings, "llm_provider", provider)
+    login(client, "marc")
+    answer = '[{"titel": "Alien", "originaltitel": "Alien", "jahr": 1979, "warum": "Isolation"}]'
+    route = respx.post("https://openrouter.ai/api/v1/chat/completions").mock(
+        return_value=httpx.Response(200, json={"choices": [{"message": {"role": "assistant", "content": answer}}]})
+    )
+    r = client.post("/api/ki-suche", json={"beschreibung": "Weltraum", "mit_sammlung": True}).json()
+    assert [(m["title"], m["warum"]) for m in r["results"]] == [("Alien", "Isolation")]
+    sent = route.calls.last.request
+    assert sent.headers["authorization"] == "Bearer sk-or-v1-test"
+    body = json.loads(sent.content)
+    assert body["model"] == "deepseek/deepseek-v3.2"
+    assert body["messages"][0]["role"] == "system"
+
+
+@respx.mock
+def test_ki_model_and_url_can_be_overridden(client, monkeypatch):
+    from app.config import settings
+
+    monkeypatch.setattr(settings, "llm_api_key", "sk-or-v1-test")
+    monkeypatch.setattr(settings, "llm_model", "google/gemini-3.8-flash")
+    monkeypatch.setattr(settings, "llm_base_url", "https://llm.example.com/v1/")
+    login(client, "marc")
+    route = respx.post("https://llm.example.com/v1/chat/completions").mock(
+        return_value=httpx.Response(200, json={"choices": [{"message": {"content": "[]"}}]})
+    )
+    assert client.post("/api/ki-suche", json={"beschreibung": "x"}).status_code == 200
+    assert json.loads(route.calls.last.request.content)["model"] == "google/gemini-3.8-flash"
+
+
+@respx.mock
+@pytest.mark.parametrize(
+    ("status", "meldung"), [(401, "abgelehnt"), (402, "Guthaben"), (429, "überlastet"), (500, "Fehler 500")]
+)
+def test_ki_errors_are_explained(client, monkeypatch, status, meldung):
+    from app.config import settings
+
+    monkeypatch.setattr(settings, "llm_api_key", "sk-or-v1-test")
+    login(client, "marc")
+    respx.post("https://openrouter.ai/api/v1/chat/completions").mock(return_value=httpx.Response(status))
+    r = client.post("/api/ki-suche", json={"beschreibung": "x"})
+    assert r.status_code == 502
+    assert meldung in r.json()["detail"]
 
 
 @respx.mock
