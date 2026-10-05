@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test'
-import { KINO } from '../playwright.config.js'
+import { ADMIN_SITZUNG, KINO } from '../playwright.config.js'
 
 // One story, in order: a new group plans a movie night from scratch.
 test.describe.configure({ mode: 'serial' })
@@ -16,7 +16,9 @@ test.beforeAll(async ({ browser }) => {
   await page.goto('/#/abend')
 })
 
-test.afterAll(() => {
+test.afterAll(async () => {
+  // kino.spec.js continues the story: it needs the admin's session to invite its viewers.
+  await page.context().storageState({ path: ADMIN_SITZUNG })
   expect(page.errors, 'no console or page errors during the whole story').toEqual([])
 })
 
@@ -309,16 +311,15 @@ test('wishes can be voted on', async () => {
   await expect(page.getByRole('button', { name: /Abstimmen, 1 Stimmen/ })).toBeVisible()
 })
 
-test('the admin closes the door with an access question', async () => {
+test('the admin creates an invitation link for the group', async () => {
   await nav('Einstellungen')
-  await expect(page.getByText('Noch keine Zugangsfrage')).toBeVisible()
-  await page.getByLabel('Frage').fill('Welchen Film haben wir zuerst zusammen geschaut?')
-  await page.getByRole('button', { name: 'Film wählen' }).click()
-  await page.getByPlaceholder('Antwort-Film suchen').fill('halloween')
-  await page.locator('.picker .results button', { hasText: 'Halloween' }).first().click()
-  await page.getByRole('button', { name: 'Speichern' }).click()
-  await expect(page.locator('.toast', { hasText: 'Zugangsfrage gespeichert' })).toBeVisible()
-  await expect(page.getByText('Noch keine Zugangsfrage')).toBeHidden()
+  const gruppe = page.locator('.gruppe', { hasText: 'Unsere Gruppe' })
+  await gruppe.getByRole('button', { name: 'Neuer Link' }).click()
+  await gruppe.getByPlaceholder('z. B. Gruppenchat').fill('Gruppenchat')
+  await gruppe.getByRole('button', { name: 'Link erzeugen und kopieren' }).click()
+  await expect(gruppe.locator('.link', { hasText: 'Gruppenchat' })).toContainText('mit Freigabe')
+  const { einladungen } = await (await page.request.get('/api/admin/gruppen/1/einladungen')).json()
+  page.einladung = einladungen.find((e) => e.notiz === 'Gruppenchat').token
 })
 
 test('own name gets film protection', async () => {
@@ -394,24 +395,22 @@ test('who will like a film: an honest hint until there are enough ratings', asyn
   await page.keyboard.press('Escape')
 })
 
-/** A new browser at the door: answers the access question. */
+/** A new browser opens the invitation link it got. */
 async function throughTheDoor(p) {
-  await p.goto('/#/abend')
-  await expect(p.getByRole('heading', { name: 'Welchen Film haben wir zuerst zusammen geschaut?' })).toBeVisible()
-  await p.getByLabel('Film suchen').fill('halloween')
-  await p.locator('.results button', { hasText: 'Halloween' }).first().click()
+  await p.goto(`/#/einladung/${page.einladung}`)
   await expect(p.getByRole('dialog', { name: 'Namen wählen' })).toBeVisible()
+  await expect(p.getByRole('dialog')).toContainText('Du bist eingeladen in „Unsere Gruppe“')
 }
 
 test('a second device must know the film to use the name', async ({ browser }) => {
   const phone = await browser.newPage({ viewport: { width: 390, height: 844 } })
   await phone.goto('/#/abend')
-  // First the door: nothing of the group is visible, a wrong film doesn't open it.
-  await expect(phone.getByText('Nur für unsere Gruppe')).toBeVisible()
+  // First the door: nothing of the group is visible, a made-up code doesn't open it.
+  await expect(phone.getByText('Nur mit Einladung')).toBeVisible()
   await expect(phone.getByRole('navigation')).toHaveCount(0)
-  await phone.getByLabel('Film suchen').fill('alien')
-  await phone.locator('.results button', { hasText: 'Alien' }).first().click()
-  await expect(phone.getByRole('alert')).toContainText('nicht der richtige Film')
+  await phone.getByLabel('Einladungslink oder Code').fill('ausgedachter-code')
+  await phone.getByRole('button', { name: 'Rein' }).click()
+  await expect(phone.getByRole('alert')).toContainText('gilt nicht')
   await throughTheDoor(phone)
   await phone.getByRole('button', { name: 'Marc' }).click()
   await expect(phone.getByRole('heading', { name: 'Film-Passwort für Marc' })).toBeVisible()
@@ -422,6 +421,10 @@ test('a second device must know the film to use the name', async ({ browser }) =
   await phone.locator('.results button', { hasText: 'Midsommar' }).click()
   await expect(phone.getByRole('dialog')).toBeHidden()
   await expect(phone.locator('.me')).toContainText('Marc')
+  // On the phone the profile button opens a menu – the way to the achievements.
+  await phone.locator('.me').click()
+  await phone.getByRole('menuitem', { name: /Erfolge/ }).click()
+  await expect(phone.getByRole('heading', { name: 'Erfolge', exact: true })).toBeVisible()
   await phone.close()
 })
 
@@ -465,7 +468,7 @@ test('admins rename someone and log them out everywhere', async () => {
   const lena = page.lena
   // The page may already be reloading itself; either way it ends up at the door.
   await lena.reload().catch(() => {})
-  await expect(lena.getByText('Nur für unsere Gruppe')).toBeVisible({ timeout: 15_000 })
+  await expect(lena.getByText('Nur mit Einladung')).toBeVisible({ timeout: 15_000 })
   await lena.close()
 })
 

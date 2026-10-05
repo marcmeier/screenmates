@@ -13,6 +13,8 @@ const MTX = resolve('../.tools/mediamtx')
 // instead of starting servers; E2E_KINO=1 says that stack has a media server.
 const EXTERNAL = process.env.E2E_BASE_URL
 export const KINO = EXTERNAL ? process.env.E2E_KINO === '1' : existsSync(MTX)
+// The story's admin session, saved by filmabend.spec.js for kino.spec.js (screenmates is invite-only).
+export const ADMIN_SITZUNG = join(tmpdir(), 'screenmates-e2e-admin.json')
 const db = join(tmpdir(), `screenmates-e2e-${Date.now()}.db`)
 const python = process.env.PYTHON || (existsSync('../backend/.venv/bin/python') ? '.venv/bin/python' : 'python')
 

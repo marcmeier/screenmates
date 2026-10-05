@@ -9,7 +9,7 @@ from sqlmodel import select
 from app import migrate
 from app.models import Session, User
 
-from .conftest import login, set_door
+from .conftest import login, rein
 
 
 def users(c):
@@ -29,6 +29,7 @@ def test_the_first_name_of_a_fresh_install_becomes_admin(client):
 def test_later_names_are_requests_until_an_admin_approves(client, browser):
     login(client, "marc", admin=True)
     neu = browser()
+    rein(neu)
     r = neu.post("/api/users", json={"name": "Lena"})
     assert r.status_code == 201
     lena = r.json()
@@ -50,7 +51,9 @@ def test_later_names_are_requests_until_an_admin_approves(client, browser):
 
 def test_a_request_can_be_turned_down(client, browser):
     login(client, "marc", admin=True)
-    lena = browser().post("/api/users", json={"name": "Lena"}).json()
+    b = browser()
+    rein(b)
+    lena = b.post("/api/users", json={"name": "Lena"}).json()
     assert client.delete(f"/api/users/{lena['id']}").status_code == 200
     assert [u["name"] for u in client.get("/api/admin/users").json()["users"]] == ["marc"]
 
@@ -61,6 +64,7 @@ def test_open_requests_are_capped(client, browser, monkeypatch):
     monkeypatch.setattr(users_router, "MAX_ANTRAEGE", 2)
     login(client, "marc", admin=True)
     b = browser()
+    rein(b)
     assert b.post("/api/users", json={"name": "a"}).status_code == 201
     assert b.post("/api/users", json={"name": "b"}).status_code == 201
     assert b.post("/api/users", json={"name": "c"}).status_code == 429
@@ -98,7 +102,9 @@ def test_there_is_always_an_admin(client, browser):
 
 def test_a_request_must_be_approved_before_becoming_admin(client, browser):
     login(client, "marc", admin=True)
-    lena = browser().post("/api/users", json={"name": "Lena"}).json()
+    b = browser()
+    rein(b)
+    lena = b.post("/api/users", json={"name": "Lena"}).json()
     assert client.patch(f"/api/admin/users/{lena['id']}", json={"admin": True}).status_code == 409
 
 
@@ -109,8 +115,9 @@ def test_logout_everywhere_ends_all_sessions_of_a_person(client, browser, db):
     login(laptop, "lena")
     assert {u["name"]: u["sitzungen"] for u in client.get("/api/admin/users").json()["users"]}["lena"] == 2
     assert client.post(f"/api/admin/users/{lena['id']}/abmelden").json() == {"beendet": 2}
-    assert handy.get("/api/users").json()["ich"] is None
-    assert laptop.get("/api/users").json()["ich"] is None
+    # Those browsers are back at the door.
+    assert handy.get("/api/users").status_code == 423
+    assert laptop.get("/api/users").status_code == 423
     assert db.exec(select(Session).where(Session.user_id == lena["id"])).all() == []
 
 
@@ -130,87 +137,6 @@ def test_rights_follow_the_person_not_the_browser(client):
     assert client.get("/api/users").json()["admin"] is True
 
 
-# --- the access question ---------------------------------------------------------------
-
-
-def test_without_a_question_screenmates_stays_open(client):
-    assert client.get("/api/zugang").json() == {"gesperrt": False, "offen": True, "frage": ""}
-    assert client.get("/api/users").status_code == 200
-
-
-def test_the_door_closes_everything_for_new_browsers(client, browser):
-    login(client, "marc", admin=True)
-    set_door(client, film=948, frage="Welchen Film haben wir zuerst gesehen?")
-    fremd = browser()
-    assert fremd.get("/api/zugang").json() == {
-        "gesperrt": True,
-        "offen": False,
-        "frage": "Welchen Film haben wir zuerst gesehen?",
-    }
-    for path in ("/api/users", "/api/watched", "/api/movies", "/api/search?q=alien", "/api/status", "/api/kino"):
-        assert fremd.get(path).status_code == 423, path
-    assert fremd.post("/api/users", json={"name": "x"}).status_code == 423
-    # What the door itself needs stays open; the answer never leaves the server.
-    assert fremd.get("/api/health").status_code == 200
-    treffer = fremd.get("/api/zugang/suche", params={"q": "hallo"}).json()["results"]
-    assert treffer and "gesehen" not in treffer[0]
-    assert "948" not in fremd.get("/api/zugang").text
-    # Whoever is logged in carries on.
-    assert client.get("/api/users").status_code == 200
-
-
-def test_the_right_film_opens_the_door(client, browser):
-    login(client, "marc", admin=True)
-    set_door(client, film=948)
-    b = browser()
-    r = b.post("/api/zugang", json={"movie_id": 694})
-    assert r.status_code == 403
-    assert b.post("/api/zugang", json={"movie_id": 948}).json() == {"offen": True}
-    assert b.get("/api/zugang").json()["offen"] is True
-    assert b.get("/api/users").status_code == 200
-    # Requesting a name is the next step behind the door.
-    assert b.post("/api/users", json={"name": "Lena"}).json()["freigegeben"] is False
-
-
-def test_guessing_the_door_is_throttled(client, browser):
-    login(client, "marc", admin=True)
-    set_door(client, film=948)
-    b = browser()
-    for _ in range(5):
-        assert b.post("/api/zugang", json={"movie_id": 1}).status_code == 403
-    assert b.post("/api/zugang", json={"movie_id": 948}).status_code == 429
-
-
-def test_logging_out_keeps_the_access(client):
-    login(client, "marc", admin=True)
-    set_door(client)
-    client.post("/api/users/waehlen", json={"user_id": None})
-    assert client.get("/api/users").status_code == 200
-
-
-def test_admins_see_and_lift_the_door(client):
-    login(client, "marc", admin=True)
-    set_door(client, film=948, frage="  Unser   erster Film? ")
-    z = client.get("/api/admin/zugang").json()
-    assert (z["frage"], z["movie_id"]) == ("Unser erster Film?", 948)
-    assert client.put("/api/admin/zugang", json={"frage": "", "movie_id": 948}).status_code == 422
-    client.put("/api/admin/zugang", json={"frage": "", "movie_id": None})
-    assert client.get("/api/zugang").json()["gesperrt"] is False
-
-
-def test_obs_and_mediamtx_get_through_the_door(client, kino_on):
-    login(client, "marc", admin=True)
-    set_door(client)
-    from fastapi.testclient import TestClient
-
-    from app.main import app
-
-    obs = TestClient(app)
-    # Rejected by the Kino's own check (wrong key), not by the door.
-    assert obs.post("/api/kino/whip", headers={"authorization": "Bearer falsch"}).status_code == 403
-    assert obs.post("/api/kino/mtx-auth", json={"action": "read", "path": "kino"}).status_code != 423
-
-
 # --- operator command and migration -----------------------------------------------------
 
 
@@ -222,8 +148,8 @@ def test_cli_appoints_an_admin(client, db, capsys):
     db.expire_all()
     assert db.exec(select(User).where(User.name == "marc")).one().is_admin is True
     assert cli.main(["admin", "niemand"]) == 1
-    assert cli.main(["zugang-aus"]) == 0
-    assert "offen" in capsys.readouterr().out
+    assert cli.main(["einladung"]) == 0
+    assert "#/einladung/" in capsys.readouterr().out
 
 
 def test_migration_keeps_logged_in_browsers_inside(tmp_path):

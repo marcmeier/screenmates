@@ -43,11 +43,12 @@ auf ([`docs/GRUPPEN.md`](docs/GRUPPEN.md)).
 Erfolge frei, Punkte ergeben ein Level am Avatar, jede Person hat ein Profil mit Vitrine – so
 gebaut, dass sich Spammen nicht lohnt ([`docs/ERFOLGE.md`](docs/ERFOLGE.md)).
 
-**Nur für eure Gruppe:** Admins legen eine **Zugangsfrage** fest („Welchen Film haben wir zuerst
-zusammen geschaut?“). Wer screenmates öffnet, muss erst den richtigen Film anklicken und sieht
-vorher nichts. Neue Leute **beantragen** dann einen Namen, ein Admin schaltet ihn frei. Admins
-verwalten außerdem alle Profile: umbenennen, Farbe, Admin-Recht, Film-Passwort zurücksetzen,
-überall abmelden, löschen. Der erste Name einer neuen Installation wird Admin.
+**Nur mit Einladung:** Wer screenmates öffnet, sieht ohne Einladungslink nichts. Admins einer
+Gruppe erzeugen Links für ihre Gruppe – wahlweise „direkt aufnehmen“ (persönlich verschickt) oder
+„mit Freigabe“ (z. B. im Gruppenchat), mit Ablauf und Nutzungslimit, jederzeit widerrufbar. Wer schon
+einen Namen hat, tritt mit einem Link einer weiteren Gruppe bei. Admins verwalten außerdem alle
+Profile: umbenennen, Farbe, Admin-Recht, Film-Passwort zurücksetzen, überall abmelden, löschen. Der
+erste Name einer neuen Installation wird Admin.
 
 Mit TMDB-Key ist der ganze TMDB-Katalog verfügbar, ohne Key gibt es einen Demo-Katalog.
 
@@ -89,7 +90,7 @@ Alles optional, über `backend/.env` oder Umgebungsvariablen:
 | `COOKIE_SECURE` | `true` hinter HTTPS. |
 | `CORS_ORIGINS` | Nur nötig, wenn Frontend und API auf verschiedenen Origins laufen. |
 | `MEDIA_DIR` | Ablage für Profilbilder. Standard `backend/media`, im Docker-Image `/data/media` (im selben Volume wie die Datenbank – beim Backup mitnehmen). |
-| `FORWARDED_ALLOW_IPS` | Hinter einem Reverse Proxy dessen IP (bzw. Netze, kommagetrennt), damit uvicorn die echte Client-IP aus `X-Forwarded-For` übernimmt. Die Fehlversuche an der Zugangsfrage werden pro IP gezählt. |
+| `FORWARDED_ALLOW_IPS` | Hinter einem Reverse Proxy dessen IP (bzw. Netze, kommagetrennt), damit uvicorn die echte Client-IP aus `X-Forwarded-For` übernimmt. Fehlversuche an der Tür werden pro IP gezählt. |
 
 ### Admin-Werkzeug
 
@@ -98,7 +99,7 @@ Für den Betreiber, im Container bzw. in `backend/` (`.venv/bin/python -m app.cl
 ```bash
 docker compose exec screenmates python -m app.cli namen            # alle Namen mit Stand
 docker compose exec screenmates python -m app.cli admin "Marc"     # jemanden zum Admin machen
-docker compose exec screenmates python -m app.cli zugang-aus       # Zugangsfrage aufheben
+docker compose exec screenmates python -m app.cli einladung       # Notfall-Link (einmal, 24 h, direkt)
 ```
 
 So kommt eine bestehende Installation zu ihrem ersten Admin, und so hilft man sich, wenn sich alle
@@ -170,10 +171,10 @@ backend/   FastAPI + SQLModel/SQLite ─┘  Produktion: FastAPI liefert API + g
   die App beim Start selbst anwendet. Datenbanken aus 0.2/0.3 werden ohne Datenverlust
   übernommen. Neue Migration nach einer Modelländerung: `make migration name="…"`; ein Test
   schlägt fehl, wenn sie fehlt.
-- **Rechte:** Ist eine Zugangsfrage gesetzt, kommt nur durch, wer sie beantwortet hat (oder
+- **Rechte:** Sobald es einen Namen gibt, kommt nur durch, wer mit einer Einladung kam (oder
   angemeldet ist) – geprüft zentral als App-weite Dependency in `routers/zugang.py`. Dahinter
-  darf jeder lesen, Schreiben braucht einen freigegebenen Namen. Eigene Kommentare, Wünsche und
-  Ratings verwaltet man selbst, alles Übergreifende machen Admins (`User.is_admin`).
+  darf jeder lesen, Schreiben braucht einen freigegebenen Namen; Gruppeninhalte sehen nur Mitglieder.
+  Eigene Kommentare, Wünsche und Ratings verwaltet man selbst, alles Übergreifende machen Admins.
 
 Die vollständige Endpunkt-Übersicht steht in [`docs/api-map.md`](docs/api-map.md), die interaktive
 Doku unter `/docs`, wenn das Backend läuft.

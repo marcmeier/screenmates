@@ -2,7 +2,7 @@
 
 import pytest
 
-from .conftest import become_admin, login
+from .conftest import become_admin, login, rein
 
 
 def test_reads_do_not_create_sessions(client, db):
@@ -38,8 +38,9 @@ def test_writes_require_a_name(client, method, path, body):
         ("delete", "/api/suggestions/alle", None),
         ("delete", "/api/dabei", None),
         ("get", "/api/admin/users", None),
-        ("get", "/api/admin/zugang", None),
-        ("put", "/api/admin/zugang", {"frage": "x", "movie_id": 1}),
+        ("get", "/api/admin/gruppen/1/einladungen", None),
+        ("post", "/api/admin/gruppen/1/einladungen", {}),
+        ("get", "/api/admin/gruppen/1/anfragen", None),
         ("post", "/api/admin/users", {"name": "neu"}),
         ("post", "/api/sync", None),
     ],
@@ -72,6 +73,8 @@ def test_schutz_login_flow(client, browser):
     client.post(f"/api/users/{me['id']}/schutz", json={"movie_id": 348})
 
     other = browser()
+    assert other.post("/api/users/waehlen", json={"user_id": me["id"]}).status_code == 423  # first the door
+    rein(other)
     assert other.post("/api/users/waehlen", json={"user_id": me["id"]}).status_code == 403
     assert other.post("/api/users/waehlen", json={"user_id": me["id"], "movie_id": 1}).status_code == 403
     ok = other.post("/api/users/waehlen", json={"user_id": me["id"], "movie_id": 348})
@@ -83,6 +86,7 @@ def test_schutz_guessing_is_throttled(client, browser):
     me = login(client, "marc")
     client.post(f"/api/users/{me['id']}/schutz", json={"movie_id": 348})
     attacker = browser()
+    rein(attacker)  # even someone with an invitation can't guess the film
     codes = [
         attacker.post("/api/users/waehlen", json={"user_id": me["id"], "movie_id": guess}).status_code
         for guess in range(1, 11)

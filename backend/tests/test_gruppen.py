@@ -8,7 +8,7 @@ from sqlmodel import select
 from app.models import Gruppe, KinoState, Mitglied
 from app.routers import kino
 
-from .conftest import _mitglied, login
+from .conftest import _mitglied, login, rein
 
 MTX = "http://mtx:8889"
 SDP = "v=0\r\n"
@@ -159,14 +159,18 @@ def test_group_admin_rights_on_the_movie_night(client, zwei):
 
 def test_approved_names_join_the_only_group(client, browser, db):
     login(client, "marc", admin=True)
-    neu = browser().post("/api/users", json={"name": "Neu"}).json()
+    b1 = browser()
+    rein(b1)
+    neu = b1.post("/api/users", json={"name": "Neu"}).json()
     client.patch(f"/api/admin/users/{neu['id']}", json={"freigegeben": True})
     assert db.exec(select(Mitglied).where(Mitglied.user_id == neu["id"])).one().gruppe_id == 1
-    # With two groups, an admin decides.
-    client.post("/api/admin/gruppen", json={"name": "Zwei"})
-    zwei = browser().post("/api/users", json={"name": "Zwei"}).json()
+    # With two groups, the name joins the group of the invitation it came with.
+    g2 = client.post("/api/admin/gruppen", json={"name": "Zwei"}).json()["id"]
+    b2 = browser()
+    rein(b2, gruppe=g2)
+    zwei = b2.post("/api/users", json={"name": "Zwei"}).json()
     client.patch(f"/api/admin/users/{zwei['id']}", json={"freigegeben": True})
-    assert db.exec(select(Mitglied).where(Mitglied.user_id == zwei["id"])).all() == []
+    assert [m.gruppe_id for m in db.exec(select(Mitglied).where(Mitglied.user_id == zwei["id"])).all()] == [g2]
 
 
 def test_the_first_name_runs_the_first_group(client, db):

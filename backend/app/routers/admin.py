@@ -2,7 +2,7 @@
 
 Deleting a name and resetting someone's film password live in `users.py`
 (DELETE /api/users/{id}, POST /api/users/{id}/schutz), next to the owner's own
-calls; the access question is in `zugang.py`.
+calls; invitations are in `einladungen.py`.
 """
 
 from __future__ import annotations
@@ -17,6 +17,7 @@ from sqlmodel import Session as DBSession
 from sqlmodel import col, select
 
 from ..db import get_session
+from ..gruppen import aufnehmen
 from ..models import Session, User
 from ..serialize import iso, user_dict
 from ..session import require_admin
@@ -39,7 +40,7 @@ class Aendern(BaseModel):
 
 
 def _admin_dict(u: User, sitzungen: int) -> dict:
-    return user_dict(u) | {"sitzungen": sitzungen, "seit": iso(u.created_at)}
+    return user_dict(u) | {"sitzungen": sitzungen, "seit": iso(u.created_at), "antrag_gruppe_id": u.antrag_gruppe_id}
 
 
 def _sitzungen(db: DBSession) -> Counter[int]:
@@ -74,7 +75,10 @@ def change(user_id: int, body: Aendern, db: DBSession = Depends(get_session)):
         u.color = body.color.lower()
     if body.freigegeben is not None:
         if body.freigegeben and not u.freigegeben:
-            in_einzige_gruppe(db, u)
+            if u.antrag_gruppe_id is not None:
+                aufnehmen(db, u.antrag_gruppe_id, u.id)
+            else:
+                in_einzige_gruppe(db, u)
         u.freigegeben = body.freigegeben
     if body.admin is not None:
         if body.admin and not u.freigegeben:

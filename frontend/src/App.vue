@@ -67,6 +67,13 @@ const breit = ref(breitQuery.matches)
 breitQuery.addEventListener('change', (e) => (breit.value = e.matches))
 const eingeklappt = computed(() => schmal.value && breit.value)
 const reload = () => window.location.reload()
+// Phones hide the secondary navigation: there the profile button opens a menu instead.
+const menue = ref(false)
+function profilKlick() {
+  if (breit.value) navigate('einstellungen')
+  else menue.value = !menue.value
+}
+watch(() => route.value.tab, () => (menue.value = false))
 const kuerzel = (name) => name.split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0]).join('').toUpperCase()
 
 // List counts in the navigation follow every change; achievements are checked after every write.
@@ -76,8 +83,32 @@ beiAenderung(erfolgeCheck)
 watch(() => ui.changes, () => app.refreshStatus())
 watch(() => app.me?.id, (id) => id && erfolgeCheck())
 
+// #/einladung/<code>: come in, or (with a name) join that group.
+async function einladung() {
+  if (route.value.tab !== 'einladung' || !route.value.sub) return
+  const token = route.value.sub
+  history.replaceState(null, '', '#/abend')
+  route.value = { tab: 'abend', sub: null, id: null }
+  try {
+    await app.refreshZugang()
+    if (app.me) {
+      const r = await app.annehmen(token)
+      if (r.status === 'aufgenommen') {
+        ui.toast(`Willkommen in „${r.gruppe}“!`, 'ok')
+        await app.wechseln(r.gruppe_id)
+      } else if (r.status === 'angefragt') ui.toast(`Anfrage an „${r.gruppe}“ gestellt – ein Admin der Gruppe entscheidet.`, 'ok', 6000)
+      else ui.toast(`Du bist schon in „${r.gruppe}“.`)
+      return
+    }
+    await app.einlassen(token)
+  } catch (e) {
+    app.einladungFehler = e.message
+  }
+}
+
 async function start() {
   try {
+    await einladung()
     await app.bootstrap()
     if (app.draussen) return
     if (!app.me) ui.loginOpen = true
@@ -87,6 +118,16 @@ async function start() {
   }
 }
 onMounted(start)
+// A link opened while the app is already open (only the part after # changes).
+watch(
+  () => route.value.tab,
+  async (tab) => {
+    if (tab !== 'einladung') return
+    await einladung()
+    await app.bootstrap()
+    if (!app.draussen && !app.me) ui.loginOpen = true
+  },
+)
 // Through the door: now the app itself starts.
 watch(
   () => app.draussen,
@@ -168,12 +209,23 @@ watch(
           </button>
         </nav>
 
-        <button v-if="app.me" class="me" :class="{ admin: app.admin }" :title="eingeklappt ? `${app.me.name}${app.admin ? ' (Admin)' : ''} – Einstellungen` : 'Profil & Einstellungen'" @click="navigate('einstellungen')">
+        <button v-if="app.me" class="me" :class="{ admin: app.admin }" :aria-expanded="breit ? undefined : menue" :title="eingeklappt ? `${app.me.name}${app.admin ? ' (Admin)' : ''} – Einstellungen` : 'Profil & Einstellungen'" @click="profilKlick">
           <UserAvatar :user="app.me" />
           <span class="name" :class="{ 'sr-only': eingeklappt }">{{ app.me.name }}</span>
           <span v-if="app.admin && !eingeklappt" class="admin-badge">Admin</span>
         </button>
-        <button v-else class="primary pick" :title="eingeklappt ? 'Namen wählen' : undefined" @click="ui.loginOpen = true">
+        <div v-if="menue && !breit" class="menue panel" role="menu" @click="menue = false">
+          <a href="#/erfolge" role="menuitem" class="eintrag">
+            <Icon name="pokal" :size="18" /> Erfolge <span v-if="app.me?.level" class="muted">Level {{ app.me.level }}</span>
+          </a>
+          <a href="#/wuensche" role="menuitem" class="eintrag"><Icon name="wuensche" :size="18" /> Wünsche & Ideen</a>
+          <a href="#/einstellungen" role="menuitem" class="eintrag">
+            <Icon name="verwaltung" :size="18" /> Einstellungen
+            <span v-if="app.antraege" class="antraege">{{ app.antraege }}</span>
+          </a>
+          <button role="menuitem" class="eintrag ghost" @click="app.logout()"><Icon name="logout" :size="18" /> Abmelden</button>
+        </div>
+        <button v-if="!app.me" class="primary pick" :title="eingeklappt ? 'Namen wählen' : undefined" @click="ui.loginOpen = true">
           <template v-if="eingeklappt"><Icon name="plus" :size="16" /><span class="sr-only">Namen wählen</span></template>
           <template v-else>Namen wählen</template>
         </button>
@@ -195,8 +247,8 @@ watch(
           <button class="primary" @click="ui.loginOpen = true">Namen wählen</button>
         </template>
         <template v-else>
-        <strong>Du bist noch in keiner Gruppe</strong>
-        <p class="muted">Filmabende, die Chronik und das Kino gehören einer Gruppe. Sobald dich ein Admin aufnimmt, geht’s hier los. Finden, Erfolge und Wünsche gehen schon jetzt.</p>
+          <strong>Du bist noch in keiner Gruppe</strong>
+          <p class="muted">Filmabende, die Chronik und das Kino gehören einer Gruppe. Sobald dich ein Admin aufnimmt, geht’s hier los. Finden, Erfolge und Wünsche gehen schon jetzt.</p>
         </template>
       </div>
       <KeepAlive v-else :include="['FindenTab']">
@@ -274,6 +326,7 @@ nav { display: flex; flex-direction: column; gap: 4px; }
   letter-spacing: 0.04em; color: var(--muted); background: var(--bg-soft); border: 1px solid var(--line);
 }
 .keine-gruppe { max-width: 560px; }
+.menue { display: none; }
 /* Fixed height: the folded bar keeps an empty block here, so the profile button doesn't move. */
 .status { margin: 0; padding: 0 0.6rem; font-size: 0.74rem; line-height: 1.35; color: var(--muted); display: flex; flex-direction: column; gap: 2px; height: 3.6rem; overflow: hidden; }
 .warn { color: var(--gold); }
@@ -294,6 +347,19 @@ nav { display: flex; flex-direction: column; gap: 4px; }
   .secondary-nav, .status, .collapse { display: none; }
   /* Phones stack icon and label: their own heights. */
   .nav, .me, .pick { height: auto; }
+  .bottom { position: relative; }
+  .sidebar { overflow: visible; } /* the profile menu hangs below the header */
+  .menue {
+    display: flex; flex-direction: column; position: absolute; right: 0; top: calc(100% + 6px); z-index: 30;
+    min-width: 220px; padding: 0.4rem; gap: 2px; box-shadow: 0 12px 40px rgba(0, 0, 0, 0.55);
+  }
+  .eintrag {
+    display: flex; align-items: center; gap: 0.7rem; padding: 0.7rem 0.8rem; border-radius: 8px; width: 100%;
+    color: var(--text); text-decoration: none; font-size: 0.95rem; border: none; background: none; justify-content: flex-start;
+  }
+  .eintrag:hover { background: var(--bg-raised); }
+  .eintrag .muted { margin-left: auto; font-size: 0.8rem; }
+  .eintrag .antraege { margin-left: auto; }
   .gruppenwahl { grid-column: 1 / -1; margin: 0; padding: 0; }
   .me, .pick { width: auto; }
   .primary-nav { grid-column: 1 / -1; flex-direction: row; justify-content: space-around; }

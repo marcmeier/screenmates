@@ -6,7 +6,7 @@ from PIL import Image
 
 from app import bilder
 
-from .conftest import login
+from .conftest import login, rein
 
 
 def bild(fmt="JPEG", size=(1200, 800), color=(200, 30, 30), **save) -> bytes:
@@ -90,7 +90,10 @@ def test_only_owner_or_admin(client, browser):
     login(lena, "lena")
     assert hoch(lena, marc["id"], bild()).status_code == 403
     assert lena.delete(f"/api/users/{marc['id']}/bild").status_code == 403
-    assert hoch(browser(), marc["id"], bild()).status_code == 403  # nobody logged in
+    fremd = browser()
+    assert hoch(fremd, marc["id"], bild()).status_code == 423  # not even through the door
+    rein(fremd)
+    assert hoch(fremd, marc["id"], bild()).status_code == 403  # inside, but no name
 
 
 def test_admin_removes_someones_picture(client, browser):
@@ -123,10 +126,7 @@ def test_deleting_a_user_deletes_the_picture(client, browser):
 
 
 def test_pictures_stay_behind_the_door(client, browser):
-    from .conftest import set_door
-
     me = login(client, "marc", admin=True)
     url = hoch(client, me["id"], bild()).json()["bild"]
-    set_door(client)
     assert browser().get(url).status_code == 423
     assert client.get(url).status_code == 200

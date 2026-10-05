@@ -1,5 +1,27 @@
 # Changelog
 
+## Unveröffentlicht
+
+### Neu
+- **Einladungslinks statt Zugangsfrage.** Eine gemeinsame Filmfrage passt nicht, wenn auf einem
+  Server mehrere Gruppen ohne gemeinsame Erinnerung sind. Jetzt gilt: nur mit Einladung. Admins
+  einer Gruppe erzeugen Links für ihre Gruppe – „direkt aufnehmen“ oder „mit Freigabe“, mit Ablauf
+  und Nutzungslimit, widerrufbar, zum Kopieren oder Teilen. Wer den Link öffnet, landet direkt
+  bei der Namenswahl für diese Gruppe; wer schon einen Namen hat, tritt mit dem Link bei (oder
+  fragt an). Anträge und Beitrittsanfragen entscheiden die Admins der Gruppe – kein Server-Admin
+  nötig. Notausgang: `python -m app.cli einladung`.
+- **Handy: Profil-Menü.** Der Profil-Knopf oben rechts öffnet ein Menü mit Erfolgen (samt Level),
+  Wünschen & Ideen, Einstellungen und Abmelden – auf dem Handy waren Erfolge und Wünsche vorher
+  gar nicht erreichbar.
+
+### Entfernt
+- Die Zugangsfrage (ersetzt durch Einladungen). Wer drin ist, bleibt drin.
+
+### Betrieb
+- Migration `0007`: Tabellen `einladung`, `beitrittsanfrage`; `session.einladung_id`,
+  `user.antrag_gruppe_id`; Tabelle `zugang` entfällt. Danach in Einstellungen → Gruppen
+  Einladungslinks erzeugen und verschicken.
+
 ## 0.6.0 – 2026-10-05
 
 **Für eure Gruppe – oder mehrere:** screenmates lässt sich hinter eine Zugangsfrage legen, neue

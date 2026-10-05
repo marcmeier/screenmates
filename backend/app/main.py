@@ -11,7 +11,21 @@ from . import erfolge, tmdb
 from .config import settings
 from .db import engine, init_db
 from .gruppen import kontext
-from .routers import abend, admin, catalog, features, gruppen, kino, lists, misc, profilbild, users, watched, zugang
+from .routers import (
+    abend,
+    admin,
+    catalog,
+    einladungen,
+    features,
+    gruppen,
+    kino,
+    lists,
+    misc,
+    profilbild,
+    users,
+    watched,
+    zugang,
+)
 from .routers import erfolge as erfolge_api
 from .seed import seed_if_empty
 
@@ -30,7 +44,7 @@ async def lifespan(app: FastAPI):
     await tmdb.shutdown()
 
 
-# The access question closes the whole API to browsers that haven't answered it.
+# Invite-only: the whole API is closed to browsers without an invitation or a session.
 app = FastAPI(
     title=settings.app_name,
     version=__version__,
@@ -66,6 +80,7 @@ for r in (
     profilbild.router,
     erfolge_api.router,
     gruppen.router,
+    einladungen.router,
 ):
     app.include_router(r)
 

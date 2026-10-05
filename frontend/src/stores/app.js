@@ -10,8 +10,9 @@ export const useApp = defineStore('app', {
     antraege: 0, // open name requests (admins only)
     gruppe: null, // the active group: { id, name, admin, mitglieder: [user ids] }
     gruppen: [], // all my groups
-    // The access question: closed until this browser has answered it.
-    zugang: { gesperrt: false, offen: true, frage: '' },
+    // Invite-only: closed until this browser came in with an invitation (or has a name).
+    zugang: { gesperrt: false, offen: true, einladung: null },
+    einladungFehler: '',
     status: { movie_count: 0, canon_count: 0, tmdb: false, ki: false, syncing: false, last_sync: null },
   }),
   getters: {
@@ -55,9 +56,17 @@ export const useApp = defineStore('app', {
     async refreshStatus() {
       this.status = await api.get('/api/status')
     },
-    async answer(movieId) {
-      await api.post('/api/zugang', { movie_id: movieId }, { quiet: true })
+    /** Come in with an invitation code (from a #/einladung/<code> link). */
+    async einlassen(token) {
+      await api.post('/api/zugang', { token }, { quiet: true })
+      this.einladungFehler = ''
       await this.bootstrap()
+    },
+    /** Already have a name: join the invitation's group (or ask to). */
+    async annehmen(token) {
+      const r = await api.post('/api/einladungen/annehmen', { token }, { quiet: true })
+      await this.refreshGruppen()
+      return r
     },
     async choose(userId, movieId = null) {
       const r = await api.post('/api/users/waehlen', { user_id: userId, movie_id: movieId }, { quiet: true })
