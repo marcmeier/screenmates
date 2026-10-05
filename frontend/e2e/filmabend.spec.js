@@ -28,6 +28,8 @@ test('first visit asks for a name', async () => {
   await page.getByRole('button', { name: 'Anlegen' }).click()
   await expect(page.getByRole('dialog')).toBeHidden()
   await expect(page.locator('.me')).toContainText('Marc')
+  // The first name of a fresh install administrates the group.
+  await expect(page.locator('.admin-badge')).toBeVisible()
 })
 
 test('joining the next evening', async () => {
@@ -306,12 +308,16 @@ test('wishes can be voted on', async () => {
   await expect(page.getByRole('button', { name: /Abstimmen, 1 Stimmen/ })).toBeVisible()
 })
 
-test('host mode via the secret shortcut and a film', async () => {
-  await page.keyboard.press('Control+Shift+H')
-  await expect(page.getByRole('heading', { name: 'Host-Modus' })).toBeVisible()
-  await page.getByPlaceholder('Host-Film suchen').fill('alien')
-  await page.locator('.picker .results button', { hasText: 'Alien' }).first().click()
-  await expect(page.locator('.host-badge')).toBeVisible()
+test('the admin closes the door with an access question', async () => {
+  await nav('Einstellungen')
+  await expect(page.getByText('Noch keine Zugangsfrage')).toBeVisible()
+  await page.getByLabel('Frage').fill('Welchen Film haben wir zuerst zusammen geschaut?')
+  await page.getByRole('button', { name: 'Film wählen' }).click()
+  await page.getByPlaceholder('Antwort-Film suchen').fill('halloween')
+  await page.locator('.picker .results button', { hasText: 'Halloween' }).first().click()
+  await page.getByRole('button', { name: 'Speichern' }).click()
+  await expect(page.locator('.toast', { hasText: 'Zugangsfrage gespeichert' })).toBeVisible()
+  await expect(page.getByText('Noch keine Zugangsfrage')).toBeHidden()
 })
 
 test('own name gets film protection', async () => {
@@ -351,9 +357,25 @@ test('who will like a film: an honest hint until there are enough ratings', asyn
   await page.keyboard.press('Escape')
 })
 
+/** A new browser at the door: answers the access question. */
+async function throughTheDoor(p) {
+  await p.goto('/#/abend')
+  await expect(p.getByRole('heading', { name: 'Welchen Film haben wir zuerst zusammen geschaut?' })).toBeVisible()
+  await p.getByLabel('Film suchen').fill('halloween')
+  await p.locator('.results button', { hasText: 'Halloween' }).first().click()
+  await expect(p.getByRole('dialog', { name: 'Namen wählen' })).toBeVisible()
+}
+
 test('a second device must know the film to use the name', async ({ browser }) => {
   const phone = await browser.newPage({ viewport: { width: 390, height: 844 } })
   await phone.goto('/#/abend')
+  // First the door: nothing of the group is visible, a wrong film doesn't open it.
+  await expect(phone.getByText('Nur für unsere Gruppe')).toBeVisible()
+  await expect(phone.getByRole('navigation')).toHaveCount(0)
+  await phone.getByLabel('Film suchen').fill('alien')
+  await phone.locator('.results button', { hasText: 'Alien' }).first().click()
+  await expect(phone.getByRole('alert')).toContainText('nicht der richtige Film')
+  await throughTheDoor(phone)
   await phone.getByRole('button', { name: 'Marc' }).click()
   await expect(phone.getByRole('heading', { name: 'Film-Passwort für Marc' })).toBeVisible()
   await phone.getByLabel('Film suchen').fill('alien')
@@ -364,4 +386,47 @@ test('a second device must know the film to use the name', async ({ browser }) =
   await expect(phone.getByRole('dialog')).toBeHidden()
   await expect(phone.locator('.me')).toContainText('Marc')
   await phone.close()
+})
+
+test('a newcomer requests a name and an admin approves it', async ({ browser }) => {
+  const lena = await browser.newPage()
+  await throughTheDoor(lena)
+  await lena.getByPlaceholder('Neuer Name').fill('Lena')
+  await lena.getByRole('button', { name: 'Beantragen' }).click()
+  await expect(lena.getByRole('heading', { name: 'Antrag gestellt' })).toBeVisible()
+  await lena.getByRole('button', { name: 'Alles klar' }).click()
+
+  // The admin sees the request in the navigation and approves it.
+  await page.reload()
+  await expect(page.locator('.antraege')).toHaveText('1')
+  await nav('Einstellungen')
+  const antrag = page.locator('.panel', { has: page.getByRole('heading', { name: /Anträge/ }) })
+  await expect(antrag).toContainText('Lena')
+  await antrag.getByRole('button', { name: 'Freigeben' }).click()
+  await expect(page.locator('.toast', { hasText: '„Lena“ freigegeben' })).toBeVisible()
+  await expect(page.locator('.antraege')).toHaveCount(0)
+
+  await lena.reload()
+  await lena.getByRole('button', { name: 'Lena' }).click()
+  await expect(lena.locator('.me')).toContainText('Lena')
+  await expect(lena.locator('.admin-badge')).toHaveCount(0)
+  page.lena = lena
+})
+
+test('admins rename someone and log them out everywhere', async () => {
+  const person = page.locator('.person', { hasText: 'Lena' })
+  await person.getByRole('button', { name: 'Umbenennen' }).click()
+  await page.getByLabel('Neuer Name für Lena').fill('Lena M.')
+  await page.getByLabel('Neuer Name für Lena').press('Enter')
+  await expect(page.locator('.toast', { hasText: 'Umbenannt in „Lena M.“' })).toBeVisible()
+  await expect(page.locator('.person', { hasText: 'Lena M.' })).toContainText('1 Gerät')
+
+  page.once('dialog', (d) => d.accept())
+  await page.locator('.person', { hasText: 'Lena M.' }).getByRole('button', { name: 'Überall abmelden' }).click()
+  await expect(page.locator('.person', { hasText: 'Lena M.' })).toContainText('nicht angemeldet')
+  // Her browser is back at the door with its next request.
+  const lena = page.lena
+  await lena.getByRole('link', { name: 'Finden', exact: true }).click()
+  await expect(lena.getByText('Nur für unsere Gruppe')).toBeVisible()
+  await lena.close()
 })

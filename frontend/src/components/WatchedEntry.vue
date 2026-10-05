@@ -145,7 +145,7 @@ async function remove() {
         </form>
       </div>
 
-      <footer v-if="app.host" class="row host">
+      <footer v-if="app.admin" class="row host">
         <button class="ghost small" @click="hide">{{ entry.hidden ? 'Wieder anzeigen' : 'Ausblenden' }}</button>
         <button class="ghost small danger" @click="remove"><Icon name="muell" :size="14" /> Löschen</button>
       </footer>

@@ -12,7 +12,7 @@ from sqlmodel import col, select
 from ..db import get_session
 from ..models import Movie, Suggestion, User, Veto, Wishlist
 from ..serialize import iso, movie_dict, with_flags
-from ..session import require_host, require_user
+from ..session import require_admin, require_user
 from ..util import ensure_movie
 
 router = APIRouter(prefix="/api", tags=["lists"])
@@ -103,7 +103,7 @@ async def add_suggestion(body: MovieRef, user: User = Depends(require_user), db:
     return {"ok": True}
 
 
-@router.delete("/suggestions/alle", dependencies=[Depends(require_host)])
+@router.delete("/suggestions/alle", dependencies=[Depends(require_admin)])
 def clear_all(db: DBSession = Depends(get_session)):
     for s in db.exec(select(Suggestion)).all():
         db.delete(s)

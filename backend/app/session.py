@@ -1,8 +1,10 @@
 """Cookie sessions and the authorization dependencies built on them.
 
-There are no passwords: a browser session picks a name (optionally guarded by a
-"film as PIN") and may additionally unlock host mode with the host film. Reads
-never create a session row; one is created only when a browser logs in.
+There are no passwords: a browser first answers the group's access question
+(see `routers/zugang.py`), then picks a name (optionally guarded by a "film as
+PIN"). Administration is a right of individual people (`User.is_admin`), not of
+a browser. Reads never create a session row; one is created only when a browser
+answers the access question or logs in.
 """
 
 import secrets
@@ -45,11 +47,13 @@ def ensure_session(request: Request, response: Response, db: DBSession) -> Sessi
 def current_user(sess: Session | None = Depends(current_session), db: DBSession = Depends(get_session)) -> User | None:
     if sess is None or sess.user_id is None:
         return None
-    return db.get(User, sess.user_id)
+    u = db.get(User, sess.user_id)
+    # A name waiting for approval can't be used, even if a session still points at it.
+    return u if u is not None and u.freigegeben else None
 
 
-def is_host(sess: Session | None = Depends(current_session)) -> bool:
-    return bool(sess and sess.is_host)
+def is_admin(user: User | None = Depends(current_user)) -> bool:
+    return bool(user and user.is_admin)
 
 
 def require_user(user: User | None = Depends(current_user)) -> User:
@@ -58,12 +62,12 @@ def require_user(user: User | None = Depends(current_user)) -> User:
     return user
 
 
-def require_host(host: bool = Depends(is_host)) -> None:
-    if not host:
-        raise HTTPException(403, "Nur im Host-Modus erlaubt.")
+def require_admin(admin: bool = Depends(is_admin)) -> None:
+    if not admin:
+        raise HTTPException(403, "Das darf nur ein Admin.")
 
 
-def require_owner_or_host(owner_id: int | None, user: User | None, host: bool) -> None:
-    if host or (user is not None and owner_id == user.id):
+def require_owner_or_admin(owner_id: int | None, user: User | None, admin: bool) -> None:
+    if admin or (user is not None and owner_id == user.id):
         return
-    raise HTTPException(403, "Das darf nur der Ersteller oder der Host.")
+    raise HTTPException(403, "Das darf nur der Ersteller oder ein Admin.")
