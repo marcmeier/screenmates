@@ -151,7 +151,7 @@ const EVENT_TEXT = {
         <div class="row">
           <h2 class="section-title">Vorschläge</h2>
           <span class="spacer"></span>
-          <button v-if="app.admin && vorschlaege.length" class="ghost small danger" @click="allesLeeren">
+          <button v-if="app.gruppenAdmin && vorschlaege.length" class="ghost small danger" @click="allesLeeren">
             <Icon name="muell" :size="14" /> Alle leeren
           </button>
         </div>

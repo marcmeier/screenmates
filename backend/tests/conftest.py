@@ -19,7 +19,7 @@ from app import erfolge, tmdb  # noqa: E402
 from app.config import settings  # noqa: E402
 from app.db import engine  # noqa: E402
 from app.main import app  # noqa: E402
-from app.models import User  # noqa: E402
+from app.models import Mitglied, User  # noqa: E402
 from app.routers import kino, users, zugang  # noqa: E402
 
 
@@ -34,12 +34,8 @@ def client():
     users._fails.clear()
     zugang._fehl_ip.clear()
     zugang._fehl_alle.clear()
-    kino._presence.clear()
+    kino._saele.clear()
     tmdb._cache.clear()
-    kino._audience.clear()
-    kino._seit.clear()
-    kino._gezaehlt.clear()
-    kino._sender = None
     erfolge._zuletzt = 0.0
     with TestClient(app) as c:
         yield c
@@ -77,16 +73,27 @@ def _set(name: str, **fields) -> None:
         s.commit()
 
 
-def login(c: TestClient, name: str, *, admin: bool = False) -> dict:
-    """Create (or reuse) an approved name and use it in this browser.
+def _mitglied(name: str, gruppe: int = 1, admin: bool = False) -> None:
+    with Session(engine) as s:
+        u = s.exec(select(User).where(User.name == name)).one()
+        m = s.exec(select(Mitglied).where(Mitglied.user_id == u.id, Mitglied.gruppe_id == gruppe)).first()
+        m = m or Mitglied(gruppe_id=gruppe, user_id=u.id)
+        m.ist_admin = admin
+        s.add(m)
+        s.commit()
 
-    The first name of a fresh database becomes admin by itself; tests say
-    explicitly who is admin instead (`admin=True` or `become_admin`).
+
+def login(c: TestClient, name: str, *, admin: bool = False) -> dict:
+    """Create (or reuse) an approved name in the first group and use it in this browser.
+
+    The first name of a fresh database becomes admin (and group admin) by itself;
+    tests say explicitly who is admin instead (`admin=True` or `become_admin`).
     """
     r = c.post("/api/users", json={"name": name})
     assert r.status_code in (201, 409), r.text
     if r.status_code == 201:
         _set(name, freigegeben=True, is_admin=admin)
+        _mitglied(name)
     elif admin:
         _set(name, is_admin=True)
     uid = next(u["id"] for u in c.get("/api/users").json()["users"] if u["name"] == name)

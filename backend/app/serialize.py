@@ -52,18 +52,28 @@ def movie_dict(m: Movie | dict[str, Any]) -> dict[str, Any]:
     }
 
 
-def with_flags(db: DBSession, movies: list[dict[str, Any]]) -> list[dict[str, Any]]:
+def with_flags(db: DBSession, movies: list[dict[str, Any]], gid: int | None = None) -> list[dict[str, Any]]:
     """Annotate movie dicts with the group's state: watched, wishlisted, suggested by whom.
 
-    One query per flag for the whole page instead of three per movie.
+    One query per flag for the whole page instead of three per movie. The group is
+    the request's active one unless given; without a group nothing is marked.
     """
+    from .gruppen import aktuelle_gruppe
+
+    gid = gid if gid is not None else aktuelle_gruppe()
     ids = [m["id"] for m in movies]
     if not ids:
         return movies
-    gesehen = set(db.exec(select(Watched.movie_id).where(Watched.movie_id.in_(ids))).all())
-    gemerkt = set(db.exec(select(Wishlist.movie_id).where(Wishlist.movie_id.in_(ids))).all())
+    if gid is None:
+        for m in movies:
+            m["gesehen"], m["gemerkt"], m["vorgeschlagen_von"] = False, False, []
+        return movies
+    gesehen = set(db.exec(select(Watched.movie_id).where(Watched.movie_id.in_(ids), Watched.gruppe_id == gid)).all())
+    gemerkt = set(db.exec(select(Wishlist.movie_id).where(Wishlist.movie_id.in_(ids), Wishlist.gruppe_id == gid)).all())
     vorgeschlagen: dict[int, list[int]] = defaultdict(list)
-    for mid, uid in db.exec(select(Suggestion.movie_id, Suggestion.user_id).where(Suggestion.movie_id.in_(ids))).all():
+    for mid, uid in db.exec(
+        select(Suggestion.movie_id, Suggestion.user_id).where(Suggestion.movie_id.in_(ids), Suggestion.gruppe_id == gid)
+    ).all():
         vorgeschlagen[mid].append(uid)
     for m in movies:
         m["gesehen"] = m["id"] in gesehen
@@ -72,12 +82,12 @@ def with_flags(db: DBSession, movies: list[dict[str, Any]]) -> list[dict[str, An
     return movies
 
 
-def user_dict(u: User, abos: list[int] | None = None, level: int | None = None) -> dict[str, Any]:
+def user_dict(u: User, abos: list[int] | None = None, level: int | None = None, dabei: bool = False) -> dict[str, Any]:
     return {
         "id": u.id,
         "name": u.name,
         "color": u.color,
-        "dabei": u.dabei,
+        "dabei": dabei,  # in for the next movie night of the caller's active group
         "hat_schutz": u.schutz_movie_id is not None,
         "admin": u.is_admin,
         "freigegeben": u.freigegeben,

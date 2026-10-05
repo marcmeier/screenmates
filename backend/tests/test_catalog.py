@@ -109,11 +109,20 @@ def test_tmdb_failures_become_502(client, tmdb_on):
 def test_detail_completes_list_rows_from_tmdb(client, tmdb_on):
     route = respx.get(f"{TMDB}/movie/694").mock(
         return_value=httpx.Response(
-            200, json={"id": 694, "title": "Shining", "runtime": 144, "genres": [{"id": 27, "name": "Horror"}]}
+            200,
+            json={
+                "id": 694,
+                "title": "Shining",
+                "runtime": 144,
+                "poster_path": "/shining.jpg",
+                "genres": [{"id": 27, "name": "Horror"}],
+            },
         )
     )
-    client.get("/api/movies/694")  # seed row has a runtime, so no fetch
-    assert not route.called
+    # The seed row has a runtime but no poster: fetched once, then complete.
+    assert client.get("/api/movies/694").json()["poster_url"].endswith("/shining.jpg")
+    client.get("/api/movies/694")
+    assert route.call_count == 1
     from .conftest import login
 
     login(client, "marc")

@@ -12,6 +12,7 @@ from sqlmodel import col, select
 
 from .. import erfolge
 from ..db import get_session
+from ..gruppen import aktive_gruppe, gruppen_admin, mitglieder, require_owner_or_gruppen_admin
 from ..models import (
     Movie,
     NoteHeart,
@@ -25,7 +26,7 @@ from ..models import (
     Wishlist,
 )
 from ..serialize import iso, movie_dict
-from ..session import current_user, is_admin, require_admin, require_owner_or_admin, require_user
+from ..session import current_user, require_user
 from ..util import ensure_movie
 
 router = APIRouter(prefix="/api", tags=["watched"])
@@ -117,9 +118,9 @@ def _payload(db: DBSession, entries: list[Watched]) -> list[dict]:
     return out
 
 
-def _get(db: DBSession, watched_id: int) -> Watched:
+def _get(db: DBSession, watched_id: int, gid: int) -> Watched:
     w = db.get(Watched, watched_id)
-    if w is None:
+    if w is None or w.gruppe_id != gid:
         raise HTTPException(404, "Eintrag nicht gefunden.")
     return w
 
@@ -130,8 +131,13 @@ def _one(db: DBSession, w: Watched) -> dict:
 
 
 @router.get("/watched")
-def list_watched(alle: bool = False, movie_id: int | None = None, db: DBSession = Depends(get_session)):
-    stmt = select(Watched).order_by(col(Watched.watched_at).desc())
+def list_watched(
+    alle: bool = False,
+    movie_id: int | None = None,
+    gid: int = Depends(aktive_gruppe),
+    db: DBSession = Depends(get_session),
+):
+    stmt = select(Watched).where(Watched.gruppe_id == gid).order_by(col(Watched.watched_at).desc())
     if not alle:
         stmt = stmt.where(col(Watched.hidden).is_(False))
     if movie_id is not None:  # the film's evenings, newest first (detail sheet)
@@ -140,31 +146,38 @@ def list_watched(alle: bool = False, movie_id: int | None = None, db: DBSession 
 
 
 @router.post("/watched", status_code=201)
-async def add_watched(body: AlsGesehen, user: User = Depends(require_user), db: DBSession = Depends(get_session)):
+async def add_watched(
+    body: AlsGesehen,
+    user: User = Depends(require_user),
+    gid: int = Depends(aktive_gruppe),
+    db: DBSession = Depends(get_session),
+):
     await ensure_movie(db, body.movie_id)
-    w = Watched(movie_id=body.movie_id)
+    w = Watched(movie_id=body.movie_id, gruppe_id=gid)
     if body.watched_at:
         w.watched_at = body.watched_at
     db.add(w)
     db.flush()
     db.add(WatchedParticipant(watched_id=w.id, user_id=user.id))
     # Whoever suggested it hit the mark (counts once the evening is confirmed).
-    for s in db.exec(select(Suggestion).where(Suggestion.movie_id == body.movie_id)).all():
+    for s in db.exec(select(Suggestion).where(Suggestion.movie_id == body.movie_id, Suggestion.gruppe_id == gid)).all():
         erfolge.protokoll(db, "treffer", s.user_id, str(w.id))
     # Seeing a film fulfils it: drop it from the wishlist, the open suggestions and any veto.
     for stale in [
-        *db.exec(select(Wishlist).where(Wishlist.movie_id == body.movie_id)).all(),
-        *db.exec(select(Suggestion).where(Suggestion.movie_id == body.movie_id)).all(),
-        *db.exec(select(Veto).where(Veto.movie_id == body.movie_id)).all(),
+        *db.exec(select(Wishlist).where(Wishlist.movie_id == body.movie_id, Wishlist.gruppe_id == gid)).all(),
+        *db.exec(select(Suggestion).where(Suggestion.movie_id == body.movie_id, Suggestion.gruppe_id == gid)).all(),
+        *db.exec(select(Veto).where(Veto.movie_id == body.movie_id, Veto.gruppe_id == gid)).all(),
     ]:
         db.delete(stale)
     db.commit()
     return _one(db, w)
 
 
-@router.patch("/watched/{watched_id}", dependencies=[Depends(require_user)])
-def edit_watched(watched_id: int, body: GesehenAendern, db: DBSession = Depends(get_session)):
-    w = _get(db, watched_id)
+@router.patch("/watched/{watched_id}")
+def edit_watched(
+    watched_id: int, body: GesehenAendern, gid: int = Depends(aktive_gruppe), db: DBSession = Depends(get_session)
+):
+    w = _get(db, watched_id, gid)
     if body.watched_at is not None:
         w.watched_at = body.watched_at
     if body.hidden is not None:
@@ -174,16 +187,29 @@ def edit_watched(watched_id: int, body: GesehenAendern, db: DBSession = Depends(
     return _one(db, w)
 
 
-@router.delete("/watched/{watched_id}", dependencies=[Depends(require_admin)])
-def delete_watched(watched_id: int, db: DBSession = Depends(get_session)):
-    db.delete(_get(db, watched_id))
+@router.delete("/watched/{watched_id}")
+def delete_watched(
+    watched_id: int,
+    gid: int = Depends(aktive_gruppe),
+    ok: bool = Depends(gruppen_admin),
+    db: DBSession = Depends(get_session),
+):
+    if not ok:
+        raise HTTPException(403, "Das darf nur ein Admin dieser Gruppe.")
+    db.delete(_get(db, watched_id, gid))
     db.commit()
     return {"ok": True}
 
 
 @router.post("/watched/{watched_id}/rating")
-def rate(watched_id: int, body: Bewerten, user: User = Depends(require_user), db: DBSession = Depends(get_session)):
-    w = _get(db, watched_id)
+def rate(
+    watched_id: int,
+    body: Bewerten,
+    user: User = Depends(require_user),
+    gid: int = Depends(aktive_gruppe),
+    db: DBSession = Depends(get_session),
+):
+    w = _get(db, watched_id, gid)
     r = db.exec(
         select(WatchedRating).where(WatchedRating.watched_id == watched_id, WatchedRating.user_id == user.id)
     ).first() or WatchedRating(watched_id=watched_id, user_id=user.id)
@@ -198,12 +224,14 @@ def delete_rating(
     rating_id: int,
     db: DBSession = Depends(get_session),
     user: User | None = Depends(current_user),
-    admin: bool = Depends(is_admin),
+    gid: int = Depends(aktive_gruppe),
+    admin: bool = Depends(gruppen_admin),
 ):
     r = db.get(WatchedRating, rating_id)
     if r is None:
         raise HTTPException(404)
-    require_owner_or_admin(r.user_id, user, admin)
+    _get(db, r.watched_id, gid)
+    require_owner_or_gruppen_admin(r.user_id, user, admin)
     db.delete(r)
     db.commit()
     return {"ok": True}
@@ -211,9 +239,13 @@ def delete_rating(
 
 @router.post("/watched/{watched_id}/notes", status_code=201)
 def add_note(
-    watched_id: int, body: Gaestebuch, user: User = Depends(require_user), db: DBSession = Depends(get_session)
+    watched_id: int,
+    body: Gaestebuch,
+    user: User = Depends(require_user),
+    gid: int = Depends(aktive_gruppe),
+    db: DBSession = Depends(get_session),
 ):
-    w = _get(db, watched_id)
+    w = _get(db, watched_id, gid)
     if body.parent_id is not None:
         parent = db.get(WatchedNote, body.parent_id)
         if parent is None or parent.watched_id != watched_id:
@@ -228,21 +260,30 @@ def delete_note(
     note_id: int,
     db: DBSession = Depends(get_session),
     user: User | None = Depends(current_user),
-    admin: bool = Depends(is_admin),
+    gid: int = Depends(aktive_gruppe),
+    admin: bool = Depends(gruppen_admin),
 ):
     n = db.get(WatchedNote, note_id)
     if n is None:
         raise HTTPException(404)
-    require_owner_or_admin(n.user_id, user, admin)
+    _get(db, n.watched_id, gid)
+    require_owner_or_gruppen_admin(n.user_id, user, admin)
     db.delete(n)
     db.commit()
     return {"ok": True}
 
 
 @router.post("/watched/hearts")
-def heart(body: Herz, user: User = Depends(require_user), db: DBSession = Depends(get_session)):
-    if db.get(WatchedNote, body.note_id) is None:
+def heart(
+    body: Herz,
+    user: User = Depends(require_user),
+    gid: int = Depends(aktive_gruppe),
+    db: DBSession = Depends(get_session),
+):
+    n = db.get(WatchedNote, body.note_id)
+    if n is None:
         raise HTTPException(404)
+    _get(db, n.watched_id, gid)
     existing = db.exec(select(NoteHeart).where(NoteHeart.note_id == body.note_id, NoteHeart.user_id == user.id)).first()
     if existing:
         db.delete(existing)
@@ -252,13 +293,14 @@ def heart(body: Herz, user: User = Depends(require_user), db: DBSession = Depend
     return {"hearted": existing is None}
 
 
-@router.post("/watched/{watched_id}/dabei", dependencies=[Depends(require_user)])
-def set_participants(watched_id: int, body: Dabei, db: DBSession = Depends(get_session)):
-    w = _get(db, watched_id)
+@router.post("/watched/{watched_id}/dabei")
+def set_participants(
+    watched_id: int, body: Dabei, gid: int = Depends(aktive_gruppe), db: DBSession = Depends(get_session)
+):
+    w = _get(db, watched_id, gid)
     wanted = set(body.user_ids)
-    known = set(db.exec(select(User.id).where(col(User.id).in_(wanted))).all()) if wanted else set()
-    if wanted - known:
-        raise HTTPException(422, "Unbekannte Nutzer.")
+    if wanted - mitglieder(db, gid):
+        raise HTTPException(422, "Nur Mitglieder der Gruppe können dabei gewesen sein.")
     for p in db.exec(select(WatchedParticipant).where(WatchedParticipant.watched_id == watched_id)).all():
         db.delete(p)
     db.flush()

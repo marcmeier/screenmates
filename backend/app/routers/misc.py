@@ -13,6 +13,7 @@ from sqlmodel import col, func, select
 from .. import erfolge, ki, tmdb
 from ..config import settings
 from ..db import get_session
+from ..gruppen import aktive_gruppe, aktuelle_gruppe, mitglieder, require_gruppen_admin
 from ..models import (
     Abend,
     AppMeta,
@@ -67,8 +68,15 @@ def status(db: DBSession = Depends(get_session)):
     return {
         "movie_count": db.exec(select(func.count()).select_from(Movie)).one(),
         "canon_count": db.exec(select(func.count()).select_from(Movie).where(col(Movie.is_canon))).one(),
-        "wishlist_count": db.exec(select(func.count()).select_from(Wishlist)).one(),
-        "watched_count": db.exec(select(func.count()).select_from(Watched).where(col(Watched.hidden).is_(False))).one(),
+        # The active group's lists (0 without a group).
+        "wishlist_count": db.exec(
+            select(func.count()).select_from(Wishlist).where(Wishlist.gruppe_id == aktuelle_gruppe())
+        ).one(),
+        "watched_count": db.exec(
+            select(func.count())
+            .select_from(Watched)
+            .where(col(Watched.hidden).is_(False), Watched.gruppe_id == aktuelle_gruppe())
+        ).one(),
         "last_sync": iso(_meta(db).last_sync),
         "syncing": _sync_lock.locked(),
         "tmdb": settings.tmdb_enabled,
@@ -79,14 +87,14 @@ def status(db: DBSession = Depends(get_session)):
 
 
 @router.get("/info")
-def get_info(db: DBSession = Depends(get_session)):
-    info = db.get(Info, 1) or Info(id=1)
+def get_info(gid: int = Depends(aktive_gruppe), db: DBSession = Depends(get_session)):
+    info = db.get(Info, gid) or Info(id=gid)
     return {"text": info.text, "updated_at": iso(info.updated_at) if info.text else None}
 
 
-@router.put("/info", dependencies=[Depends(require_admin)])
-def put_info(body: InfoSetzen, db: DBSession = Depends(get_session)):
-    info = db.get(Info, 1) or Info(id=1)
+@router.put("/info", dependencies=[Depends(require_gruppen_admin)])
+def put_info(body: InfoSetzen, gid: int = Depends(aktive_gruppe), db: DBSession = Depends(get_session)):
+    info = db.get(Info, gid) or Info(id=gid)
     info.text, info.updated_at = body.text, now()
     db.add(info)
     db.commit()
@@ -96,30 +104,32 @@ def put_info(body: InfoSetzen, db: DBSession = Depends(get_session)):
 # --- Spin wheel ---------------------------------------------------------------
 
 
-def _pool(db: DBSession) -> list[dict]:
+def _pool(db: DBSession, gid: int) -> list[dict]:
     """Suggested films, weighted by how many people want them, minus vetoed ones.
 
     Only when nothing is suggested at all does the wheel fall back to the wishlist;
     if every suggestion has been vetoed, the wheel stays empty on purpose.
     """
-    counts = db.exec(select(Suggestion.movie_id, func.count()).group_by(Suggestion.movie_id)).all()
+    counts = db.exec(
+        select(Suggestion.movie_id, func.count()).where(Suggestion.gruppe_id == gid).group_by(Suggestion.movie_id)
+    ).all()
     if counts:
-        vetoed = set(db.exec(select(Veto.movie_id)).all())
+        vetoed = set(db.exec(select(Veto.movie_id).where(Veto.gruppe_id == gid)).all())
         counts = [(mid, n) for mid, n in counts if mid not in vetoed]
     else:
-        counts = [(mid, 1) for mid in db.exec(select(Wishlist.movie_id)).all()]
+        counts = [(mid, 1) for mid in db.exec(select(Wishlist.movie_id).where(Wishlist.gruppe_id == gid)).all()]
     movies = {m.id: m for m in db.exec(select(Movie).where(col(Movie.id).in_([c[0] for c in counts]))).all()}
     return [movie_dict(movies[mid]) | {"gewicht": n} for mid, n in counts if mid in movies]
 
 
 @router.get("/spin")
-def spin_pool(db: DBSession = Depends(get_session)):
-    return {"pool": _pool(db)}
+def spin_pool(gid: int = Depends(aktive_gruppe), db: DBSession = Depends(get_session)):
+    return {"pool": _pool(db, gid)}
 
 
 @router.post("/spin")
-def spin(db: DBSession = Depends(get_session)):
-    pool = _pool(db)
+def spin(gid: int = Depends(aktive_gruppe), db: DBSession = Depends(get_session)):
+    pool = _pool(db, gid)
     if not pool:
         return {"pick": None, "pool": []}
     pick = random.choices(pool, weights=[m["gewicht"] for m in pool])[0]
@@ -130,16 +140,23 @@ def spin(db: DBSession = Depends(get_session)):
 
 
 @router.get("/events")
-def events(limit: int = 30, db: DBSession = Depends(get_session)):
+def events(limit: int = 30, gid: int = Depends(aktive_gruppe), db: DBSession = Depends(get_session)):
+    """The active group's feed (wishes are for the whole server, unlocks only of members)."""
     limit = max(1, min(limit, 100))
+    leute = mitglieder(db, gid)
     names = {u.id: u.name for u in db.exec(select(User)).all()}
     titles = dict(db.exec(select(Movie.id, Movie.title)).all())
     feed: list[dict] = []
     for w in db.exec(
-        select(Watched).where(col(Watched.hidden).is_(False)).order_by(col(Watched.created_at).desc()).limit(limit)
+        select(Watched)
+        .where(col(Watched.hidden).is_(False), Watched.gruppe_id == gid)
+        .order_by(col(Watched.created_at).desc())
+        .limit(limit)
     ):
         feed.append({"typ": "gesehen", "at": w.created_at, "film": titles.get(w.movie_id), "movie_id": w.movie_id})
-    for s in db.exec(select(Suggestion).order_by(col(Suggestion.created_at).desc()).limit(limit)):
+    for s in db.exec(
+        select(Suggestion).where(Suggestion.gruppe_id == gid).order_by(col(Suggestion.created_at).desc()).limit(limit)
+    ):
         feed.append(
             {
                 "typ": "vorschlag",
@@ -149,9 +166,15 @@ def events(limit: int = 30, db: DBSession = Depends(get_session)):
                 "movie_id": s.movie_id,
             }
         )
-    for n in db.exec(select(WatchedNote).order_by(col(WatchedNote.created_at).desc()).limit(limit)):
+    for n in db.exec(
+        select(WatchedNote)
+        .join(Watched)
+        .where(Watched.gruppe_id == gid)
+        .order_by(col(WatchedNote.created_at).desc())
+        .limit(limit)
+    ):
         feed.append({"typ": "kommentar", "at": n.created_at, "wer": names.get(n.user_id), "text": n.text[:120]})
-    for v in db.exec(select(Veto).order_by(col(Veto.created_at).desc()).limit(limit)):
+    for v in db.exec(select(Veto).where(Veto.gruppe_id == gid).order_by(col(Veto.created_at).desc()).limit(limit)):
         feed.append(
             {
                 "typ": "veto",
@@ -161,7 +184,7 @@ def events(limit: int = 30, db: DBSession = Depends(get_session)):
                 "movie_id": v.movie_id,
             }
         )
-    abend = db.get(Abend, 1)
+    abend = db.get(Abend, gid)
     if abend and abend.termin and abend.gesetzt_am:
         feed.append(
             {"typ": "termin", "at": abend.gesetzt_am, "wer": names.get(abend.gesetzt_von), "termin": iso(abend.termin)}
@@ -175,7 +198,7 @@ def events(limit: int = 30, db: DBSession = Depends(get_session)):
         .limit(limit)
     ):
         d = erfolge.NACH_KEY.get(e.schluessel)
-        if d:
+        if d and e.user_id in leute:
             feed.append(
                 {
                     "typ": "erfolg",

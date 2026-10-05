@@ -34,6 +34,11 @@ zuerst), **„Wem gefällt's?"** (geschätzte Sterne pro Person aus den eigenen 
 und **Film als Passwort** – keine Accounts: Man wählt seinen Namen und schützt ihn optional
 mit einem Film, den man beim Anmelden anklicken muss.
 
+**Gruppen:** Ein Server kann mehrere Freundeskreise tragen – jede Gruppe hat ihren eigenen
+Filmabend, ihre Chronik, Merkliste und ihr eigenes Kino, sichtbar nur für ihre Mitglieder. Namen,
+Level und Erfolge gelten serverweit. Server-Admins legen Gruppen an, Gruppen-Admins nehmen Leute
+auf ([`docs/GRUPPEN.md`](docs/GRUPPEN.md)).
+
 **Erfolge** wie bei Xbox und Steam: Filmabende, Kritiken, Gästebuch, Termine und Kino schalten
 Erfolge frei, Punkte ergeben ein Level am Avatar, jede Person hat ein Profil mit Vitrine – so
 gebaut, dass sich Spammen nicht lohnt ([`docs/ERFOLGE.md`](docs/ERFOLGE.md)).
@@ -46,9 +51,9 @@ verwalten außerdem alle Profile: umbenennen, Farbe, Admin-Recht, Film-Passwort 
 
 Mit TMDB-Key ist der ganze TMDB-Katalog verfügbar, ohne Key gibt es einen Demo-Katalog.
 
-| Finden | Detail | Unsere Filme | Kino | Mobil |
-|---|---|---|---|---|
-| ![](docs/screenshots/finden.png) | ![](docs/screenshots/detail.png) | ![](docs/screenshots/unsere-filme.png) | ![](docs/screenshots/kino.png) | ![](docs/screenshots/mobil.png) |
+| Finden | Detail | Unsere Filme | Kino | Erfolge | Mobil |
+|---|---|---|---|---|---|
+| ![](docs/screenshots/finden.png) | ![](docs/screenshots/detail.png) | ![](docs/screenshots/unsere-filme.png) | ![](docs/screenshots/kino.png) | ![](docs/screenshots/erfolge.png) | ![](docs/screenshots/mobil.png) |
 
 ## Schnellstart
 

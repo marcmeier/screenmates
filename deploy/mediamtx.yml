@@ -33,5 +33,6 @@ webrtcAdditionalHosts: []
 webrtcICEServers2:
   - url: stun:stun.l.google.com:19302
 
+# One path per group: kino-<group id> (see backend/app/routers/kino.py).
 paths:
-  kino: {}
+  "~^kino-[0-9]+$": {}

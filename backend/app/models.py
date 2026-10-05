@@ -59,7 +59,6 @@ class User(SQLModel, table=True):
     name: str = Field(unique=True, index=True)
     color: str = ""
     schutz_movie_id: int | None = None  # "film as PIN" — never sent to clients
-    dabei: bool = False  # in for the next movie night
     is_admin: bool = False
     freigegeben: bool = True  # False: a name request waiting for an admin
     bild: str = ""  # token of the profile picture file, "" = none (see bilder.py)
@@ -71,11 +70,32 @@ class Session(SQLModel, table=True):
     sid: str = Field(primary_key=True)
     user_id: int | None = Field(default=None, foreign_key="user.id", ondelete="SET NULL")
     zugang: bool = False  # answered the access question
+    gruppe_id: int | None = Field(default=None, foreign_key="gruppe.id", ondelete="SET NULL")  # active group
     created_at: datetime = Field(default_factory=now)
+
+
+class Gruppe(SQLModel, table=True):
+    """A circle of friends with its own movie nights (see gruppen.py)."""
+
+    id: int | None = Field(default=None, primary_key=True)
+    name: str = Field(unique=True)
+    created_at: datetime = Field(default_factory=now)
+
+
+class Mitglied(SQLModel, table=True):
+    __table_args__ = (UniqueConstraint("gruppe_id", "user_id"),)
+
+    id: int | None = Field(default=None, primary_key=True)
+    gruppe_id: int = Field(foreign_key="gruppe.id", index=True, ondelete="CASCADE")
+    user_id: int = Field(foreign_key="user.id", index=True, ondelete="CASCADE")
+    ist_admin: bool = False  # group admin
+    dabei: bool = False  # in for this group's next movie night
+    seit: datetime = Field(default_factory=now)
 
 
 class Watched(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
+    gruppe_id: int = Field(foreign_key="gruppe.id", index=True, ondelete="CASCADE")
     movie_id: int = Field(foreign_key="movie.id", index=True, ondelete="CASCADE")
     watched_at: datetime = Field(default_factory=now)
     hidden: bool = False
@@ -119,16 +139,20 @@ class WatchedParticipant(SQLModel, table=True):
 
 
 class Wishlist(SQLModel, table=True):
+    __table_args__ = (UniqueConstraint("gruppe_id", "movie_id"),)
+
     id: int | None = Field(default=None, primary_key=True)
-    movie_id: int = Field(foreign_key="movie.id", unique=True, ondelete="CASCADE")
+    gruppe_id: int = Field(foreign_key="gruppe.id", index=True, ondelete="CASCADE")
+    movie_id: int = Field(foreign_key="movie.id", ondelete="CASCADE")
     user_id: int | None = Field(default=None, foreign_key="user.id", ondelete="SET NULL")
     created_at: datetime = Field(default_factory=now)
 
 
 class Suggestion(SQLModel, table=True):
-    __table_args__ = (UniqueConstraint("movie_id", "user_id"),)
+    __table_args__ = (UniqueConstraint("gruppe_id", "movie_id", "user_id"),)
 
     id: int | None = Field(default=None, primary_key=True)
+    gruppe_id: int = Field(foreign_key="gruppe.id", index=True, ondelete="CASCADE")
     movie_id: int = Field(foreign_key="movie.id", index=True, ondelete="CASCADE")
     user_id: int = Field(foreign_key="user.id", ondelete="CASCADE")
     created_at: datetime = Field(default_factory=now)
@@ -151,8 +175,11 @@ class Veto(SQLModel, table=True):
     when the film is watched or the suggestions are cleared.
     """
 
+    __table_args__ = (UniqueConstraint("gruppe_id", "user_id"),)
+
     id: int | None = Field(default=None, primary_key=True)
-    user_id: int = Field(foreign_key="user.id", unique=True, ondelete="CASCADE")
+    gruppe_id: int = Field(foreign_key="gruppe.id", index=True, ondelete="CASCADE")
+    user_id: int = Field(foreign_key="user.id", ondelete="CASCADE")
     movie_id: int = Field(foreign_key="movie.id", index=True, ondelete="CASCADE")
     created_at: datetime = Field(default_factory=now)
 
@@ -203,7 +230,7 @@ class AppMeta(SQLModel, table=True):
 
 
 class KinoState(SQLModel, table=True):
-    """Singleton (id=1) for the live "Kino": what's on air and the secrets for MediaMTX.
+    """One row per group (id = group id) for the live "Kino": what's on air and the secrets for MediaMTX.
 
     `secret` authenticates the backend's own WHIP/WHEP requests to MediaMTX;
     `obs_key` is the stream key an admin pastes into OBS. Both never leave the
@@ -219,7 +246,7 @@ class KinoState(SQLModel, table=True):
 
 
 class Abend(SQLModel, table=True):
-    """The next movie night's date (single row, id=1). Shown on invitations."""
+    """A group's next movie night date (id = group id). Shown on invitations."""
 
     id: int | None = Field(default=1, primary_key=True)
     termin: datetime | None = None
@@ -229,7 +256,7 @@ class Abend(SQLModel, table=True):
 
 
 class Info(SQLModel, table=True):
-    """Singleton (id=1) markdown info panel."""
+    """A group's markdown info panel (id = group id)."""
 
     id: int | None = Field(default=1, primary_key=True)
     text: str = ""

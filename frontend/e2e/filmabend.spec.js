@@ -461,9 +461,35 @@ test('admins rename someone and log them out everywhere', async () => {
   page.once('dialog', (d) => d.accept())
   await page.locator('.person', { hasText: 'Lena M.' }).getByRole('button', { name: 'Überall abmelden' }).click()
   await expect(page.locator('.person', { hasText: 'Lena M.' })).toContainText('nicht angemeldet')
-  // Her browser is back at the door with its next request.
+  // Her browser is back at the door (its next request – a click, or a background poll – finds it closed).
   const lena = page.lena
-  await lena.getByRole('link', { name: 'Finden', exact: true }).click()
-  await expect(lena.getByText('Nur für unsere Gruppe')).toBeVisible()
+  // The page may already be reloading itself; either way it ends up at the door.
+  await lena.reload().catch(() => {})
+  await expect(lena.getByText('Nur für unsere Gruppe')).toBeVisible({ timeout: 15_000 })
   await lena.close()
 })
+
+test('a second group has its own movie night', async () => {
+  await nav('Einstellungen')
+  await page.getByLabel('Neue Gruppe').fill('Horror-Crew')
+  await page.getByRole('button', { name: 'Gruppe anlegen' }).click()
+  const crew = page.locator('.gruppe', { hasText: 'Horror-Crew' })
+  await crew.getByLabel('Mitglied für Horror-Crew wählen').selectOption({ label: 'Marc' })
+  await crew.getByRole('button', { name: 'Aufnehmen' }).click()
+  await expect(crew).toContainText('1 Mitglied')
+  // Now in two groups: the sidebar offers to switch.
+  await page.reload()
+  const wahl = page.getByLabel('Gruppe wechseln')
+  await expect(wahl).toHaveValue('1')
+  const gesehen = async () => (await (await page.request.get('/api/watched')).json()).watched.length
+  expect(await gesehen()).toBeGreaterThan(0)
+  await Promise.all([page.waitForEvent('load'), wahl.selectOption({ label: 'Horror-Crew' })])
+  expect(await gesehen()).toBe(0)
+  // In this group Marc hasn't said he's in yet (he did in the first one).
+  await nav('Filmabend')
+  await expect(page.locator('.crew')).toBeVisible()
+  await expect(page.locator('.crew')).not.toContainText('Marc')
+  await Promise.all([page.waitForEvent('load'), page.getByLabel('Gruppe wechseln').selectOption({ label: 'Unsere Gruppe' })])
+  expect(await gesehen()).toBeGreaterThan(0)
+})
+

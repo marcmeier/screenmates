@@ -1,46 +1,63 @@
-"""Kino: an admin shares a screen (browser) or an OBS output, everyone watches live.
+"""Kino: a group admin shares a screen (browser) or an OBS output, the group watches live.
 
 Media flows over WebRTC through MediaMTX, which fans one upload out to all
 viewers. screenmates only relays the WHIP (publish) and WHEP (watch) signalling
 and decides who may do what:
 
-- publishing: an admin's session (browser) or the OBS stream key,
-- watching: anyone who picked a name.
+- every group has its own Kino: MediaMTX path `kino-<group id>`, its own secret,
+  stream key, programme and audience, so several groups can be live at once,
+- publishing: an admin of the group (browser) or the group's OBS stream key,
+- watching: members of the group.
 
-Every relayed request carries a server-side secret; MediaMTX asks
+Every relayed request carries the group's server-side secret; MediaMTX asks
 `/api/kino/mtx-auth` to verify it, so its own HTTP port never has to be public.
 """
 
 from __future__ import annotations
 
+import re
 import secrets
 import time
+from collections import defaultdict
+from dataclasses import dataclass, field
 
 import httpx
 from fastapi import APIRouter, Depends, HTTPException, Request, Response
 from pydantic import BaseModel, Field
 from sqlmodel import Session as DBSession
+from sqlmodel import select
 
 from .. import erfolge
 from ..config import settings
 from ..db import get_session
-from ..models import KinoState, Movie, User, now
+from ..gruppen import _waehlen, aktive_gruppe, ist_gruppen_admin, mitgliedschaften, require_gruppen_admin
+from ..models import KinoState, Movie, Session, User, now
 from ..serialize import iso, movie_dict
-from ..session import current_user, is_admin, require_admin, require_user
+from ..session import current_session, current_user, is_admin, require_user
 
 router = APIRouter(prefix="/api/kino", tags=["kino"])
 
-PATH = "kino"
+PFAD = re.compile(r"kino-(\d+)")
 PRESENCE_TTL = 25  # seconds without a heartbeat until a viewer counts as gone
+MIN_SCHAUEN = 300  # achievements: seconds of watching until a show counts
 
-_presence: dict[int, float] = {}
-_audience: set[int] = set()  # everyone who watched during the current show
 
-# Achievements: who sent the current show, and who watched it for long enough.
-MIN_SCHAUEN = 300  # seconds of watching until a show counts
-_sender: int | None = None  # admin whose browser sends, or who set the programme (OBS)
-_seit: dict[int, float] = {}  # viewer -> first heartbeat of this show
-_gezaehlt: set[int] = set()  # viewers of this show already recorded
+@dataclass
+class Saal:
+    """What a group's Kino keeps in memory while a show runs."""
+
+    presence: dict[int, float] = field(default_factory=dict)
+    audience: set[int] = field(default_factory=set)  # everyone who watched during the current show
+    sender: int | None = None  # admin whose browser sends, or who set the programme (OBS)
+    seit: dict[int, float] = field(default_factory=dict)  # viewer -> first heartbeat of this show
+    gezaehlt: set[int] = field(default_factory=set)  # viewers of this show already recorded
+
+
+_saele: dict[int, Saal] = defaultdict(Saal)
+
+
+def pfad(gid: int) -> str:
+    return f"kino-{gid}"
 
 
 class Programm(BaseModel):
@@ -48,14 +65,22 @@ class Programm(BaseModel):
     movie_id: int | None = None
 
 
-def _state(db: DBSession) -> KinoState:
-    st = db.get(KinoState, 1)
+def _state(db: DBSession, gid: int) -> KinoState:
+    st = db.get(KinoState, gid)
     if st is None:
-        st = KinoState(id=1, secret=secrets.token_urlsafe(32), obs_key=secrets.token_urlsafe(24))
+        st = KinoState(id=gid, secret=secrets.token_urlsafe(32), obs_key=secrets.token_urlsafe(24))
         db.add(st)
         db.commit()
         db.refresh(st)
     return st
+
+
+def _gruppe_optional(
+    sess: Session | None = Depends(current_session),
+    user: User | None = Depends(current_user),
+    db: DBSession = Depends(get_session),
+) -> int | None:
+    return _waehlen(sess, mitgliedschaften(db, user.id)) if user else None
 
 
 def _require_enabled() -> None:
@@ -63,30 +88,32 @@ def _require_enabled() -> None:
         raise HTTPException(503, "Das Kino ist nicht eingerichtet (MEDIAMTX_WEBRTC_URL fehlt).")
 
 
-async def _mtx_path() -> dict | None:
+async def _mtx_path(gid: int) -> dict | None:
     """The stream's state from the MediaMTX API, or None when nothing is published."""
     try:
         async with httpx.AsyncClient(timeout=3) as c:
-            r = await c.get(f"{settings.mediamtx_api_url}/v3/paths/get/{PATH}")
+            r = await c.get(f"{settings.mediamtx_api_url}/v3/paths/get/{pfad(gid)}")
     except httpx.HTTPError:
         return None
     return r.json() if r.status_code == 200 else None
 
 
-def _viewers() -> list[int]:
+def _viewers(gid: int) -> list[int]:
     cutoff = time.monotonic() - PRESENCE_TTL
-    return sorted(uid for uid, seen in _presence.items() if seen >= cutoff)
+    return sorted(uid for uid, seen in _saele[gid].presence.items() if seen >= cutoff)
 
 
 # --- status & programme -------------------------------------------------------
 
 
 @router.get("")
-async def status(db: DBSession = Depends(get_session)):
+async def status(gid: int | None = Depends(_gruppe_optional), db: DBSession = Depends(get_session)):
     if not settings.kino_enabled:
         return {"enabled": False, "live": False}
-    st = _state(db)
-    path = await _mtx_path()
+    if gid is None:  # no name or no group yet: nothing to show, but no error either (it's polled)
+        return {"enabled": True, "live": False, "zuschauer": [], "publikum": []}
+    st = _state(db, gid)
+    path = await _mtx_path(gid)
     live = bool(path and path.get("ready"))
     movie = db.get(Movie, st.movie_id) if st.movie_id else None
     seit = path.get("readyTime") if live else None
@@ -96,16 +123,21 @@ async def status(db: DBSession = Depends(get_session)):
         "seit": seit or (iso(st.gestartet) if live else None),
         "titel": st.titel,
         "movie": movie_dict(movie) if movie else None,
-        "zuschauer": _viewers() if live else [],
-        "publikum": sorted(_audience),
+        "zuschauer": _viewers(gid) if live else [],
+        "publikum": sorted(_saele[gid].audience),
     }
 
 
-@router.post("/programm", dependencies=[Depends(require_admin)])
-def set_programm(body: Programm, db: DBSession = Depends(get_session), user: User | None = Depends(current_user)):
-    global _sender
-    _sender = user.id if user else _sender  # OBS sends without a session: credit whoever set the programme
-    st = _state(db)
+@router.post("/programm", dependencies=[Depends(require_gruppen_admin)])
+def set_programm(
+    body: Programm,
+    gid: int = Depends(aktive_gruppe),
+    db: DBSession = Depends(get_session),
+    user: User | None = Depends(current_user),
+):
+    saal = _saele[gid]
+    saal.sender = user.id if user else saal.sender  # OBS sends without a session: credit whoever set the programme
+    st = _state(db, gid)
     if body.movie_id is not None and db.get(Movie, body.movie_id) is None:
         raise HTTPException(422, "Film nicht im Katalog.")
     st.titel, st.movie_id = body.titel.strip(), body.movie_id
@@ -115,62 +147,67 @@ def set_programm(body: Programm, db: DBSession = Depends(get_session), user: Use
 
 
 @router.post("/da")
-def heartbeat(user: User = Depends(require_user), db: DBSession = Depends(get_session)):
+def heartbeat(
+    user: User = Depends(require_user), gid: int = Depends(aktive_gruppe), db: DBSession = Depends(get_session)
+):
     """Viewers ping while the player is open; that's the live audience."""
-    _presence[user.id] = time.monotonic()
-    _audience.add(user.id)
-    _zaehlen(db, user.id)
-    return {"zuschauer": _viewers()}
+    saal = _saele[gid]
+    saal.presence[user.id] = time.monotonic()
+    saal.audience.add(user.id)
+    _zaehlen(db, gid, user.id)
+    return {"zuschauer": _viewers(gid)}
 
 
-def _zaehlen(db: DBSession, uid: int) -> None:
+def _zaehlen(db: DBSession, gid: int, uid: int) -> None:
     """Record a viewer after MIN_SCHAUEN, and the sender once two others watched that long."""
-    st = _state(db)
-    if st.gestartet is None or uid == _sender or uid in _gezaehlt:
+    saal = _saele[gid]
+    st = _state(db, gid)
+    if st.gestartet is None or uid == saal.sender or uid in saal.gezaehlt:
         return
-    start = _seit.setdefault(uid, time.monotonic())
+    start = saal.seit.setdefault(uid, time.monotonic())
     if time.monotonic() - start < MIN_SCHAUEN:
         return
     show = iso(st.gestartet)
-    _gezaehlt.add(uid)
+    saal.gezaehlt.add(uid)
     erfolge.protokoll(db, "kino_geschaut", uid, show)
-    if len(_gezaehlt) == 2:
-        erfolge.protokoll(db, "kino_gesendet", _sender, show)
+    if len(saal.gezaehlt) == 2:
+        erfolge.protokoll(db, "kino_gesendet", saal.sender, show)
     db.commit()
 
 
 @router.delete("/da")
-def leave(user: User = Depends(require_user)):
-    _presence.pop(user.id, None)
+def leave(user: User = Depends(require_user), gid: int = Depends(aktive_gruppe)):
+    _saele[gid].presence.pop(user.id, None)
     return {"ok": True}
 
 
-@router.get("/obs", dependencies=[Depends(require_admin)])
-def obs_settings(request: Request, db: DBSession = Depends(get_session)):
+@router.get("/obs", dependencies=[Depends(require_gruppen_admin)])
+def obs_settings(request: Request, gid: int = Depends(aktive_gruppe), db: DBSession = Depends(get_session)):
     _require_enabled()
     base = str(request.base_url).rstrip("/")
-    return {"server": f"{base}/api/kino/whip", "key": _state(db).obs_key}
+    # One URL for every group: the stream key says which Kino it is.
+    return {"server": f"{base}/api/kino/whip", "key": _state(db, gid).obs_key}
 
 
-@router.post("/obs/neu", dependencies=[Depends(require_admin)])
-def rotate_obs_key(db: DBSession = Depends(get_session)):
-    st = _state(db)
+@router.post("/obs/neu", dependencies=[Depends(require_gruppen_admin)])
+def rotate_obs_key(gid: int = Depends(aktive_gruppe), db: DBSession = Depends(get_session)):
+    st = _state(db, gid)
     st.obs_key = secrets.token_urlsafe(24)
     db.add(st)
     db.commit()
     return {"key": st.obs_key}
 
 
-@router.delete("", dependencies=[Depends(require_admin)])
-async def stop(db: DBSession = Depends(get_session)):
+@router.delete("", dependencies=[Depends(require_gruppen_admin)])
+async def stop(gid: int = Depends(aktive_gruppe)):
     """End the show, whoever is sending (also an OBS the admin can't reach)."""
     _require_enabled()
-    path = await _mtx_path()
+    path = await _mtx_path(gid)
     source = (path or {}).get("source") or {}
     if source.get("type") == "webRTCSession" and source.get("id"):
         async with httpx.AsyncClient(timeout=3) as c:
             await c.post(f"{settings.mediamtx_api_url}/v3/webrtcsessions/kick/{source['id']}")
-    _presence.clear()
+    _saele[gid].presence.clear()
     return {"ok": True}
 
 
@@ -184,10 +221,11 @@ async def mtx_auth(request: Request, db: DBSession = Depends(get_session)):
         req = await request.json()
     except ValueError:
         raise HTTPException(400) from None
-    st = _state(db)
+    m = PFAD.fullmatch(str(req.get("path") or ""))
+    st = db.get(KinoState, int(m.group(1))) if m else None
     ok = (
-        req.get("action") in ("publish", "read")
-        and req.get("path") == PATH
+        st is not None
+        and req.get("action") in ("publish", "read")
         and secrets.compare_digest(str(req.get("token") or req.get("password") or ""), st.secret)
     )
     if not ok:
@@ -196,9 +234,10 @@ async def mtx_auth(request: Request, db: DBSession = Depends(get_session)):
         st.gestartet = now()
         db.add(st)
         db.commit()
-        _audience.clear()
-        _seit.clear()
-        _gezaehlt.clear()
+        saal = _saele[st.id]
+        saal.audience.clear()
+        saal.seit.clear()
+        saal.gezaehlt.clear()
     return Response(status_code=200)
 
 
@@ -210,11 +249,16 @@ def _bearer(request: Request) -> str:
     return auth[7:].strip() if auth.lower().startswith("bearer ") else ""
 
 
-async def _may_publish(request: Request, db: DBSession, admin: bool) -> None:
+def _sender_gruppe(request: Request, db: DBSession, gid: int | None, user: User | None, admin: bool) -> int:
+    """Which group's Kino this publisher may send to: an admin's active group, or the OBS key's."""
+    if gid is not None and ist_gruppen_admin(db, gid, user, admin):
+        return gid
     key = _bearer(request)
-    if admin or (key and secrets.compare_digest(key, _state(db).obs_key)):
-        return
-    raise HTTPException(403, "Senden darf nur ein Admin (oder OBS mit dem Stream-Key).")
+    if key:
+        for st in db.exec(select(KinoState)).all():
+            if st.obs_key and secrets.compare_digest(key, st.obs_key):
+                return st.id
+    raise HTTPException(403, "Senden darf nur ein Admin der Gruppe (oder OBS mit dem Stream-Key).")
 
 
 def _without_tcp_candidates(sdp: bytes) -> bytes:
@@ -229,9 +273,11 @@ def _without_tcp_candidates(sdp: bytes) -> bytes:
     return b"\r\n".join(keep)
 
 
-async def _relay(method: str, upstream: str, request: Request, db: DBSession, *, udp_only: bool = False) -> Response:
+async def _relay(
+    method: str, upstream: str, request: Request, db: DBSession, gid: int, *, udp_only: bool = False
+) -> Response:
     _require_enabled()
-    headers = {"Authorization": f"Bearer {_state(db).secret}"}
+    headers = {"Authorization": f"Bearer {_state(db, gid).secret}"}
     for h in ("content-type", "if-match"):
         if h in request.headers:
             headers[h] = request.headers[h]
@@ -256,7 +302,7 @@ async def _relay(method: str, upstream: str, request: Request, db: DBSession, *,
     for link in r.headers.get_list("link"):
         out.headers.append("link", link)
     if loc := r.headers.get("location"):
-        # MediaMTX answers with /kino/whip/<id>; keep the session behind our proxy.
+        # MediaMTX answers with /kino-<gid>/whip/<id>; keep the session behind our proxy.
         kind, rid = loc.rstrip("/").split("/")[-2:]
         out.headers["location"] = f"/api/kino/sitzung/{kind}/{rid}"
     return out
@@ -266,21 +312,22 @@ async def _relay(method: str, upstream: str, request: Request, db: DBSession, *,
 async def whip(
     request: Request,
     db: DBSession = Depends(get_session),
-    admin: bool = Depends(is_admin),
+    gid: int | None = Depends(_gruppe_optional),
     user: User | None = Depends(current_user),
+    admin: bool = Depends(is_admin),
 ):
-    global _sender
-    await _may_publish(request, db, admin)
-    if admin and user:
-        _sender = user.id
+    ziel = _sender_gruppe(request, db, gid, user, admin)
+    browser = ziel == gid and user is not None and ist_gruppen_admin(db, gid, user, admin)
+    if browser:
+        _saele[ziel].sender = user.id
     # Browsers handle every candidate (and benefit from the TCP fallback); OBS-style
     # clients that authenticate with the stream key get UDP candidates only.
-    return await _relay("POST", f"{PATH}/whip", request, db, udp_only=not admin)
+    return await _relay("POST", f"{pfad(ziel)}/whip", request, db, ziel, udp_only=not browser)
 
 
-@router.post("/whep", dependencies=[Depends(require_user)])
-async def whep(request: Request, db: DBSession = Depends(get_session)):
-    return await _relay("POST", f"{PATH}/whep", request, db)
+@router.post("/whep")
+async def whep(request: Request, gid: int = Depends(aktive_gruppe), db: DBSession = Depends(get_session)):
+    return await _relay("POST", f"{pfad(gid)}/whep", request, db, gid)
 
 
 @router.api_route("/sitzung/{kind}/{rid}", methods=["PATCH", "DELETE"])
@@ -289,16 +336,20 @@ async def session_resource(
     rid: str,
     request: Request,
     db: DBSession = Depends(get_session),
+    gid: int | None = Depends(_gruppe_optional),
     user: User | None = Depends(current_user),
     admin: bool = Depends(is_admin),
 ):
     if kind == "whip":
-        await _may_publish(request, db, admin)
+        ziel = _sender_gruppe(request, db, gid, user, admin)
     elif kind == "whep":
         if user is None:
             raise HTTPException(401, "Bitte zuerst einen Namen wählen.")
+        if gid is None:
+            raise HTTPException(409, "Du bist noch in keiner Gruppe – ein Admin nimmt dich auf.")
+        ziel = gid
     else:
         raise HTTPException(404)
     if not rid.replace("-", "").isalnum():
         raise HTTPException(404)
-    return await _relay(request.method, f"{PATH}/{kind}/{rid}", request, db)
+    return await _relay(request.method, f"{pfad(ziel)}/{kind}/{rid}", request, db, ziel)

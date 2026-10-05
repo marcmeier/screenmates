@@ -345,9 +345,9 @@ def stand(db: DBSession) -> dict[int, Counter]:
             kino[e.user_id].add(e.bezug)
         elif e.typ == "treffer" and e.bezug:
             treffer[e.user_id].add(int(e.bezug))
-    abend = db.get(Abend, 1)
-    if abend and abend.termin and abend.gesetzt_von and abend.gesetzt_am and _aware(abend.gesetzt_am) < seit:
-        termine[abend.gesetzt_von].add(_tag(abend.termin))
+    for abend in db.exec(select(Abend)).all():  # one per group; before the launch only the current one is known
+        if abend.termin and abend.gesetzt_von and abend.gesetzt_am and _aware(abend.gesetzt_am) < seit:
+            termine[abend.gesetzt_von].add(_tag(abend.termin))
 
     abos = set(db.exec(select(Abo.user_id)).all())
 

@@ -13,9 +13,11 @@ from sqlmodel import col, func, select
 
 from .. import bilder, erfolge
 from ..db import get_session
-from ..models import Abo, User
+from ..gruppen import aktive_gruppe, gruppen_admin, mitgliedschaften
+from ..models import Abo, Gruppe, Mitglied, Session, User
 from ..serialize import user_dict
 from ..session import (
+    current_session,
     current_user,
     ensure_session,
     is_admin,
@@ -59,6 +61,13 @@ def clean_name(raw: str) -> str:
     return name
 
 
+def in_einzige_gruppe(db: DBSession, u: User, *, admin: bool = False) -> None:
+    """With exactly one group on the server, approved names join it right away (no commit)."""
+    gruppen = db.exec(select(Gruppe.id)).all()
+    if len(gruppen) == 1 and not db.exec(select(Mitglied).where(Mitglied.user_id == u.id)).first():
+        db.add(Mitglied(gruppe_id=gruppen[0], user_id=u.id, ist_admin=admin))
+
+
 def new_user(db: DBSession, name: str, *, freigegeben: bool, admin: bool = False) -> User:
     count = db.exec(select(func.count()).select_from(User)).one()
     u = User(name=name, color=PALETTE[count % len(PALETTE)], freigegeben=freigegeben, is_admin=admin)
@@ -69,6 +78,9 @@ def new_user(db: DBSession, name: str, *, freigegeben: bool, admin: bool = False
         db.rollback()
         raise HTTPException(409, f"„{name}“ gibt es schon.") from None
     db.refresh(u)
+    if freigegeben:
+        in_einzige_gruppe(db, u, admin=admin)
+        db.commit()
     return u
 
 
@@ -94,21 +106,39 @@ def list_users(
     db: DBSession = Depends(get_session),
     user: User | None = Depends(current_user),
     admin: bool = Depends(is_admin),
+    sess: Session | None = Depends(current_session),
 ):
+    """Everyone on the server (for names and avatars), and the caller's active group."""
     rows = db.exec(select(User).where(col(User.freigegeben)).order_by(User.created_at)).all()
     abos: dict[int, list[int]] = defaultdict(list)
     for uid, pid in db.exec(select(Abo.user_id, Abo.provider_id).order_by(Abo.provider_id)).all():
         abos[uid].append(pid)
     lv = erfolge.levels(db)
-    me = user_dict(user, abos[user.id], lv.get(user.id, 1)) if user else None
+    gruppe = None
+    dabei: set[int] = set()
+    if user:
+        ms = mitgliedschaften(db, user.id)
+        gid = sess.gruppe_id if sess and sess.gruppe_id in ms else (min(ms) if ms else None)
+        if gid is not None:
+            g = db.get(Gruppe, gid)
+            mit = db.exec(select(Mitglied).where(Mitglied.gruppe_id == gid)).all()
+            dabei = {m.user_id for m in mit if m.dabei}
+            gruppe = {
+                "id": gid,
+                "name": g.name if g else "",
+                "admin": admin or ms[gid].ist_admin,
+                "mitglieder": sorted(m.user_id for m in mit),
+            }
+    me = user_dict(user, abos[user.id], lv.get(user.id, 1), user.id in dabei) if user else None
     antraege = (
         db.exec(select(func.count()).select_from(User).where(col(User.freigegeben).is_(False))).one() if admin else 0
     )
     return {
-        "users": [user_dict(u, abos[u.id], lv.get(u.id, 1)) for u in rows],
+        "users": [user_dict(u, abos[u.id], lv.get(u.id, 1), u.id in dabei) for u in rows],
         "ich": me,
         "admin": admin,
         "antraege": antraege,
+        "gruppe": gruppe,
     }
 
 
@@ -117,7 +147,18 @@ def create_user(body: NameAnlegen, db: DBSession = Depends(get_session), admin: 
     """Create a name. The very first one becomes admin; afterwards it's a request an admin approves."""
     name = clean_name(body.name)
     if db.exec(select(func.count()).select_from(User)).one() == 0:
-        return user_dict(new_user(db, name, freigegeben=True, admin=True))
+        u = new_user(db, name, freigegeben=True, admin=True)
+        if not db.exec(select(Mitglied).where(Mitglied.user_id == u.id)).first():
+            # A fresh install: the first name runs the first group.
+            gid = db.exec(select(Gruppe.id).order_by(Gruppe.id)).first()
+            if gid is None:
+                g = Gruppe(name="Unsere Gruppe")
+                db.add(g)
+                db.flush()
+                gid = g.id
+            db.add(Mitglied(gruppe_id=gid, user_id=u.id, ist_admin=True))
+            db.commit()
+        return user_dict(u)
     if admin:
         return user_dict(new_user(db, name, freigegeben=True))
     offen = db.exec(select(func.count()).select_from(User).where(col(User.freigegeben).is_(False))).one()
@@ -206,17 +247,24 @@ def set_abos(body: AbosSetzen, user: User = Depends(require_user), db: DBSession
 
 
 @router.post("/dabei")
-def toggle_dabei(user: User = Depends(require_user), db: DBSession = Depends(get_session)):
-    user.dabei = not user.dabei
-    db.add(user)
+def toggle_dabei(
+    user: User = Depends(require_user), gid: int = Depends(aktive_gruppe), db: DBSession = Depends(get_session)
+):
+    m = db.exec(select(Mitglied).where(Mitglied.gruppe_id == gid, Mitglied.user_id == user.id)).one()
+    m.dabei = not m.dabei
+    db.add(m)
     db.commit()
-    return {"dabei": user.dabei}
+    return {"dabei": m.dabei}
 
 
-@router.delete("/dabei", dependencies=[Depends(require_admin)])
-def reset_dabei(db: DBSession = Depends(get_session)):
-    for u in db.exec(select(User).where(User.dabei)).all():
-        u.dabei = False
-        db.add(u)
+@router.delete("/dabei")
+def reset_dabei(
+    gid: int = Depends(aktive_gruppe), ok: bool = Depends(gruppen_admin), db: DBSession = Depends(get_session)
+):
+    if not ok:
+        raise HTTPException(403, "Das darf nur ein Admin dieser Gruppe.")
+    for m in db.exec(select(Mitglied).where(Mitglied.gruppe_id == gid, col(Mitglied.dabei))).all():
+        m.dabei = False
+        db.add(m)
     db.commit()
     return {"ok": True}

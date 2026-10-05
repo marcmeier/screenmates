@@ -18,6 +18,7 @@ from sqlmodel import col, or_, select
 from .. import tmdb
 from ..config import settings
 from ..db import get_session
+from ..gruppen import aktuelle_gruppe, mitglieder
 from ..models import Abo, Movie
 from ..serialize import movie_dict, with_flags
 from ..util import upsert_movie
@@ -47,6 +48,14 @@ def _seite(db: DBSession, treffer: list, page: int, limit: int) -> dict:
     }
 
 
+def _gruppen_abos(db: DBSession) -> list[tuple[int, int]]:
+    """(user, provider) of the active group's members: what "we" subscribe to."""
+    leute = mitglieder(db, aktuelle_gruppe())
+    if not leute:
+        return []
+    return list(db.exec(select(Abo.user_id, Abo.provider_id).where(col(Abo.user_id).in_(leute))).all())
+
+
 def _ids(csv: str) -> list[int]:
     return [int(x) for x in csv.split(",") if x.strip().isdigit()]
 
@@ -64,8 +73,9 @@ def list_movies(db: DBSession = Depends(get_session), limit: Limit = 60, offset:
 @router.get("/movies/{movie_id}")
 async def movie_detail(movie_id: int, db: DBSession = Depends(get_session)):
     m = db.get(Movie, movie_id)
-    # Rows that came from a list endpoint lack runtime & collection: complete them once.
-    if m is None or m.runtime is None:
+    # Complete a row once: list endpoints leave out runtime & collection, and the seed
+    # catalogue (used before a TMDB key existed) has no posters.
+    if m is None or m.runtime is None or (settings.tmdb_enabled and not m.poster_path):
         data = await tmdb.details(movie_id)
         if data is not None:
             m = upsert_movie(db, data)
@@ -179,7 +189,7 @@ async def discover(
     if anbieter:
         dienste = tmdb.abo_ids(_ids(anbieter))
     elif abos:
-        dienste = tmdb.abo_ids(list(set(db.exec(select(Abo.provider_id)).all())))
+        dienste = tmdb.abo_ids(list({pid for _, pid in _gruppen_abos(db)}))
         if not dienste:
             return {"results": [], "hinweis": "Noch niemand hat seine Abos eingetragen (Einstellungen)."}
     remote = await tmdb.discover(
@@ -231,7 +241,7 @@ async def where_to_watch(movie_id: int, db: DBSession = Depends(get_session)):
     if data is None:
         return {"verfuegbar": False}
     wer: dict[int, list[int]] = {}
-    for uid, pid in db.exec(select(Abo.user_id, Abo.provider_id)).all():
+    for uid, pid in _gruppen_abos(db):
         wer.setdefault(pid, []).append(uid)
     main = lambda pid: tmdb.ABO_VARIANTE.get(pid, pid)  # noqa: E731
     abo = [p | {"bei": sorted(wer.get(main(p["id"]), []))} for p in data["abo"]]
@@ -255,7 +265,7 @@ async def providers(
     alle = await tmdb.provider_list()
     if alle is None:
         return {"anbieter": [], "verfuegbar": False}
-    gewaehlt = set(db.exec(select(Abo.provider_id)).all())
+    gewaehlt = {pid for _, pid in _gruppen_abos(db)}
     # only real subscriptions: no rent/buy shops, no "with ads" duplicates
     abos = [p for p in alle if p["id"] not in tmdb.STORE_IDS and p["id"] not in tmdb.ABO_VARIANTE]
     if zum_stoebern:
@@ -333,7 +343,7 @@ async def stoebern(db: DBSession = Depends(get_session)):
                 lokal.append({"id": key, "titel": titel, "untertitel": unter, "filter": flt, "filme": res["results"]})
         return {"regale": lokal, "tmdb": False}
 
-    gewaehlt = set(db.exec(select(Abo.provider_id)).all())
+    gewaehlt = {pid for _, pid in _gruppen_abos(db)}
     alle = [p for p in await tmdb.provider_list() or [] if tmdb.regal_tauglich(p)]
     # Our own subscriptions first, then the most common services.
     dienste = [p for p in alle if p["id"] in gewaehlt] + [p for p in alle if p["id"] not in gewaehlt]

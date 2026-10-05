@@ -3,6 +3,14 @@
 ## Unveröffentlicht
 
 ### Neu
+- **Gruppen: mehrere unabhängige Freundeskreise auf einem Server.** Jede Gruppe hat ihren eigenen
+  Filmabend (wer dabei ist, Vorschläge, Veto, Kiste, Termin, Infos), ihre Chronik mit Bewertungen
+  und Gästebuch, ihre Merkliste, ihren Aktivitäts-Feed und **ihr eigenes Kino** – mehrere Gruppen
+  können gleichzeitig senden. Sichtbar ist das nur für Mitglieder. Namen, Admins, Profilbilder,
+  Level und Erfolge gelten weiter für den ganzen Server. Server-Admins legen Gruppen an und
+  ernennen Gruppen-Admins; die nehmen Leute auf und machen am Filmabend, was bisher Admins
+  vorbehalten war. Wer in mehreren Gruppen ist, wechselt in der Seitenleiste. Mit nur einer
+  Gruppe landen freigegebene Namen automatisch darin. Alles Bisherige steht in „Unsere Gruppe“.
 - **Erfolge** nach dem Vorbild von Xbox und Steam: 32 Erfolge in Bronze, Silber, Gold und
   Platin für Filmabende, Kritiken, Gästebuch, Termine, Kino und Profil, dazu sechs geheime.
   Punkte ergeben ein Level mit Titel, das als Abzeichen an jedem Avatar steht. Neue Erfolge
@@ -52,6 +60,11 @@
 - Host-Modus mit Host-Film und `Strg+Shift+H` (ersetzt durch Admins).
 
 ### Behoben
+- **Filme aus dem Start-Katalog bekamen nie ein Poster** (u. a. Scream, Hereditary, Shining,
+  Midsommar): Die Detailansicht vervollständigte nur Filme ohne Laufzeit, der Start-Katalog hat
+  aber eine. Jetzt holt sie mit TMDB-Key auch fehlende Poster einmal nach.
+- **Die Seitenleiste springt beim Ein- und Ausklappen nicht mehr:** Logo, Gruppe, Navigation und
+  Profil behalten ihre Höhe; eingeklappt zeigt die Gruppe ihr Kürzel.
 - E2E: Die Einladungskarte bekommt 15 statt 5 Sekunden zum Zeichnen – auf ausgelasteten Rechnern
   scheiterte der Test gelegentlich.
 - **Das Kino-Bild hat eine feste Größe:** höchstens 1280 px breit und immer so groß, dass es samt

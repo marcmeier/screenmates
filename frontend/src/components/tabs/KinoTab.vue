@@ -24,7 +24,7 @@ watch(
   (ids) => ids.some((id) => !app.userById(id)) && app.refreshUsers(),
 )
 
-const vorbei = computed(() => !kino.live && app.admin && kino.movie && kino.publikum.length > 0)
+const vorbei = computed(() => !kino.live && app.gruppenAdmin && kino.movie && kino.publikum.length > 0)
 
 async function alsGesehen() {
   const entry = await api.post('/api/watched', { movie_id: kino.movie.id })
@@ -51,7 +51,7 @@ async function alsGesehen() {
       Details stehen in der README unter „Kino“.
     </div>
 
-    <div v-else class="layout" :class="{ withDesk: app.admin }">
+    <div v-else class="layout" :class="{ withDesk: app.gruppenAdmin }">
       <section class="stage">
         <div v-if="kino.live" class="row onair">
           <span class="badge"><span class="dot"></span>LIVE</span>
@@ -79,7 +79,7 @@ async function alsGesehen() {
           <Icon name="kino" :size="44" />
           <p><strong>Gerade läuft nichts.</strong></p>
           <p class="muted">
-            {{ app.admin ? 'Starte rechts eine Übertragung.' : 'Sobald jemand sendet, erscheint das Bild hier von selbst.' }}
+            {{ app.gruppenAdmin ? 'Starte rechts eine Übertragung.' : 'Sobald jemand sendet, erscheint das Bild hier von selbst.' }}
           </p>
         </div>
 
@@ -91,7 +91,7 @@ async function alsGesehen() {
         </div>
       </section>
 
-      <KinoSenden v-if="app.admin" />
+      <KinoSenden v-if="app.gruppenAdmin" />
     </div>
   </div>
 </template>

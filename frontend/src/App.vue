@@ -42,6 +42,8 @@ const route = useRoute()
 const failed = ref(false)
 
 const current = computed(() => ALL.find((t) => t.id === route.value.tab) || PRIMARY[0])
+// Movie-night areas need a group; the rest of the app works without one.
+const ohneGruppe = computed(() => (!app.me || !app.gruppe) && ['abend', 'sammlung', 'kino'].includes(current.value.id))
 
 // Icon-only sidebar, remembered per device. Phones keep their own top bar.
 const LEISTE = 'screenmates.leiste'
@@ -65,6 +67,7 @@ const breit = ref(breitQuery.matches)
 breitQuery.addEventListener('change', (e) => (breit.value = e.matches))
 const eingeklappt = computed(() => schmal.value && breit.value)
 const reload = () => window.location.reload()
+const kuerzel = (name) => name.split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0]).join('').toUpperCase()
 
 // List counts in the navigation follow every change; achievements are checked after every write.
 const erfolge = useErfolge()
@@ -110,6 +113,16 @@ watch(
         <template v-if="eingeklappt">s<span>m</span></template>
         <template v-else>screen<span>mates</span></template>
       </a>
+
+      <div v-if="app.gruppe" class="gruppenwahl">
+        <button v-if="eingeklappt" class="kurz" :title="`Gruppe: ${app.gruppe.name}`" @click="schmal = false">
+          {{ kuerzel(app.gruppe.name) }}<span class="sr-only">Gruppe: {{ app.gruppe.name }}</span>
+        </button>
+        <select v-else-if="app.gruppen.length > 1" :value="app.gruppe.id" aria-label="Gruppe wechseln" @change="app.wechseln(Number($event.target.value))">
+          <option v-for="g in app.gruppen" :key="g.id" :value="g.id">{{ g.name }}</option>
+        </select>
+        <span v-else class="muted name">{{ app.gruppe.name }}</span>
+      </div>
 
       <nav class="primary-nav" aria-label="Hauptbereiche">
         <a
@@ -165,15 +178,28 @@ watch(
           <template v-else>Namen wählen</template>
         </button>
 
-        <p v-if="!eingeklappt" class="status">
-          {{ app.status.movie_count.toLocaleString('de-DE') }} Filme im Katalog
-          <span v-if="!app.status.tmdb" class="warn">Demo-Katalog · TMDB nicht verbunden</span>
+        <p class="status" :class="{ leer: eingeklappt }" :aria-hidden="eingeklappt">
+          <template v-if="!eingeklappt">
+            <span>{{ app.status.movie_count.toLocaleString('de-DE') }} Filme im Katalog</span>
+            <span v-if="!app.status.tmdb" class="warn">Demo-Katalog · TMDB nicht verbunden</span>
+          </template>
         </p>
       </div>
     </aside>
 
     <main class="main">
-      <KeepAlive :include="['FindenTab']">
+      <div v-if="ohneGruppe" class="empty keine-gruppe">
+        <template v-if="!app.me">
+          <strong>Erst Namen wählen</strong>
+          <p class="muted">Filmabend, Chronik und Kino gehören deiner Gruppe – wähl deinen Namen, dann geht’s los.</p>
+          <button class="primary" @click="ui.loginOpen = true">Namen wählen</button>
+        </template>
+        <template v-else>
+        <strong>Du bist noch in keiner Gruppe</strong>
+        <p class="muted">Filmabende, die Chronik und das Kino gehören einer Gruppe. Sobald dich ein Admin aufnimmt, geht’s hier los. Finden, Erfolge und Wünsche gehen schon jetzt.</p>
+        </template>
+      </div>
+      <KeepAlive v-else :include="['FindenTab']">
         <component :is="current.comp" :key="current.id" />
       </KeepAlive>
     </main>
@@ -187,7 +213,7 @@ watch(
 
 <style scoped>
 .splash { min-height: 100vh; display: grid; place-content: center; justify-items: center; gap: 1rem; color: var(--muted); }
-.brand { font-size: 1.55rem; font-weight: 800; letter-spacing: -0.03em; text-decoration: none; padding: 0 0.6rem; }
+.brand { font-size: 1.55rem; font-weight: 800; letter-spacing: -0.03em; text-decoration: none; padding: 0 0.6rem; line-height: 36px; height: 36px; white-space: nowrap; }
 .brand span { color: var(--accent); }
 .brand.big { font-size: 2.4rem; animation: pulse 1.6s ease-in-out infinite; }
 @keyframes pulse { 50% { opacity: 0.55; } }
@@ -201,7 +227,7 @@ watch(
 }
 nav { display: flex; flex-direction: column; gap: 4px; }
 .nav {
-  display: flex; align-items: center; gap: 0.85rem; padding: 0.7rem 0.8rem; border-radius: 9px;
+  display: flex; align-items: center; gap: 0.85rem; padding: 0 0.8rem; border-radius: 9px; height: 46px;
   color: var(--muted); text-decoration: none; font-size: 1rem; position: relative;
 }
 .nav:hover { background: var(--bg-soft); color: var(--text); }
@@ -219,26 +245,37 @@ nav { display: flex; flex-direction: column; gap: 4px; }
 
 /* Icon-only sidebar (desktop) */
 .shell.schmal { grid-template-columns: 72px minmax(0, 1fr); }
-.schmal .sidebar { padding: 1.4rem 0.6rem 1.2rem; align-items: stretch; }
-.schmal .brand { padding: 0; text-align: center; font-size: 1.35rem; }
-.schmal .nav { justify-content: center; padding: 0.75rem 0; gap: 0; }
-.schmal .nav.small { padding: 0.55rem 0; }
+/* Folding only changes widths: every row keeps its height, so nothing jumps. */
+.schmal .sidebar { padding: 1.6rem 0.6rem 1.2rem; align-items: stretch; }
+.schmal .brand { padding: 0; text-align: center; }
+.schmal .nav { justify-content: center; padding: 0; gap: 0; }
+.schmal .nav.small { padding: 0; }
 .schmal .live { position: absolute; top: 3px; right: 6px; margin: 0; padding: 0 5px; font-size: 0.62rem; }
 .schmal .live .dot { display: none; }
 .schmal .antraege { position: absolute; top: 0; right: 10px; }
-.schmal .me { justify-content: center; padding: 0.4rem 0; }
+.schmal .me { justify-content: center; padding: 0 0; }
 .schmal .me.admin :deep(.avatar) { box-shadow: 0 0 0 2px var(--bg-soft), 0 0 0 4px var(--accent); }
-.schmal .pick { padding: 0.55rem 0; }
-.nav.small { font-size: 0.85rem; padding: 0.45rem 0.8rem; gap: 0.7rem; }
+.schmal .pick { padding: 0; }
+.nav.small { font-size: 0.85rem; padding: 0 0.8rem; gap: 0.7rem; height: 34px; }
 .antraege { margin-left: auto; font-size: 0.68rem; font-weight: 700; color: #fff; background: var(--accent); border-radius: 999px; padding: 0 6px; }
 
 .bottom { margin-top: auto; display: flex; flex-direction: column; gap: 0.9rem; }
 .secondary-nav { gap: 0; padding-bottom: 0.9rem; border-bottom: 1px solid var(--line); }
-.me { justify-content: flex-start; width: 100%; padding: 0.5rem 0.7rem; background: var(--bg-soft); }
+.me { justify-content: flex-start; width: 100%; padding: 0 0.7rem; height: 44px; background: var(--bg-soft); }
 .me .name { font-weight: 600; flex: 1; text-align: left; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .admin-badge { font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--accent); border: 1px solid var(--accent); border-radius: 4px; padding: 1px 5px; }
-.pick { width: 100%; justify-content: center; }
-.status { margin: 0; padding: 0 0.6rem; font-size: 0.74rem; color: var(--muted); display: flex; flex-direction: column; gap: 2px; }
+.pick { width: 100%; justify-content: center; height: 44px; }
+.gruppenwahl { margin-top: -1.2rem; padding: 0 0.6rem; font-size: 0.82rem; height: 32px; display: flex; align-items: center; }
+.gruppenwahl select { width: 100%; height: 32px; padding: 0 0.5rem; font-size: 0.82rem; }
+.gruppenwahl .name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.schmal .gruppenwahl { padding: 0; justify-content: center; }
+.gruppenwahl .kurz {
+  height: 32px; min-width: 40px; padding: 0 6px; border-radius: 8px; font-size: 0.72rem; font-weight: 700;
+  letter-spacing: 0.04em; color: var(--muted); background: var(--bg-soft); border: 1px solid var(--line);
+}
+.keine-gruppe { max-width: 560px; }
+/* Fixed height: the folded bar keeps an empty block here, so the profile button doesn't move. */
+.status { margin: 0; padding: 0 0.6rem; font-size: 0.74rem; line-height: 1.35; color: var(--muted); display: flex; flex-direction: column; gap: 2px; height: 3.6rem; overflow: hidden; }
 .warn { color: var(--gold); }
 .main { padding: 2.2rem clamp(1rem, 3vw, 2.8rem) 4rem; min-width: 0; }
 
@@ -255,6 +292,9 @@ nav { display: flex; flex-direction: column; gap: 4px; }
   .brand { padding: 0; }
   .bottom { margin: 0; grid-column: 2; grid-row: 1; }
   .secondary-nav, .status, .collapse { display: none; }
+  /* Phones stack icon and label: their own heights. */
+  .nav, .me, .pick { height: auto; }
+  .gruppenwahl { grid-column: 1 / -1; margin: 0; padding: 0; }
   .me, .pick { width: auto; }
   .primary-nav { grid-column: 1 / -1; flex-direction: row; justify-content: space-around; }
   /* Bottom-tab style: icon above label, so four areas fit a phone. */

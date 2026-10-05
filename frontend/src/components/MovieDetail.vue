@@ -29,7 +29,10 @@ let ctrl = null
 // Ratings and guestbook belong where people look at a film, not only in "Gesehen".
 async function ladeAbende(id = film.value?.id) {
   if (!id) return
-  abende.value = (await api.get(`/api/watched?movie_id=${id}`, { quiet: true }).catch(() => ({ watched: [] }))).watched
+  // The group's evenings with this film (the catalogue is open to everyone, the chronicle isn't).
+  abende.value = app.gruppe
+    ? (await api.get(`/api/watched?movie_id=${id}`, { quiet: true }).catch(() => ({ watched: [] }))).watched
+    : []
 }
 watch(() => ui.changes, () => ladeAbende())
 

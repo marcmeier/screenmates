@@ -15,13 +15,13 @@ const sort = ref('datum')
 
 async function load() {
   try {
-    entries.value = (await api.get(`/api/watched?alle=${app.admin}`)).watched
+    entries.value = (await api.get(`/api/watched?alle=${app.gruppenAdmin}`)).watched
   } finally {
     loading.value = false
   }
 }
 onMounted(load)
-watch(() => [ui.changes, app.admin], load)
+watch(() => [ui.changes, app.gruppenAdmin], load)
 
 function replace(updated) {
   const i = entries.value.findIndex((e) => e.id === updated.id)
