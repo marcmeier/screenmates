@@ -70,7 +70,7 @@ Alles optional, über `backend/.env` oder Umgebungsvariablen:
 | Variable | Zweck |
 |---|---|
 | `TMDB_API_KEY` | Echter Filmkatalog, Poster, Personen ([Key holen](https://www.themoviedb.org/settings/api)). v3-Key oder v4-Token. |
-| `LLM_API_KEY` | Aktiviert die KI-Suche (Anthropic). `LLM_MODEL` wählt das Modell. |
+| `LLM_API_KEY` | Aktiviert die KI-Suche – ein Key von Anthropic oder [OpenRouter](https://openrouter.ai) (`sk-or-…`, wird erkannt). `LLM_MODEL` wählt das Modell (Standard bei OpenRouter: das günstige `deepseek/deepseek-v4.1-flash`), `LLM_PROVIDER` erzwingt den Anbieter, `LLM_BASE_URL` erlaubt jede OpenAI-kompatible API. |
 | `DATABASE_URL` | Standard: SQLite in `backend/screenmates.db`. |
 | `COOKIE_SECURE` | `true` hinter HTTPS. |
 | `CORS_ORIGINS` | Nur nötig, wenn Frontend und API auf verschiedenen Origins laufen. |

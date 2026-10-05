@@ -44,25 +44,70 @@ async def vorschlaege(beschreibung: str, anzahl: int, vermeiden: list[str]) -> l
     prompt += f"Schlage {anzahl} passende Filme vor."
     if vermeiden:
         prompt += " Diese kennen wir schon, bitte nicht vorschlagen: " + "; ".join(vermeiden[:150])
+    ask = _openrouter if settings.llm_backend == "openrouter" else _anthropic
     try:
         async with httpx.AsyncClient(timeout=60) as client:
-            r = await client.post(
-                f"{settings.llm_base_url}/messages",
-                headers={
-                    "x-api-key": settings.llm_api_key,
-                    "anthropic-version": "2023-06-01",
-                    "content-type": "application/json",
-                },
-                json={
-                    "model": settings.llm_model,
-                    "max_tokens": 2000,
-                    "system": SYSTEM,
-                    "messages": [{"role": "user", "content": prompt}],
-                },
-            )
+            text = await ask(client, prompt)
     except httpx.HTTPError as e:
         raise KIError("Die KI ist gerade nicht erreichbar.") from e
+    return _parse(text)
+
+
+async def _anthropic(client: httpx.AsyncClient, prompt: str) -> str:
+    r = await client.post(
+        f"{settings.llm_url}/messages",
+        headers={
+            "x-api-key": settings.llm_api_key,
+            "anthropic-version": "2023-06-01",
+            "content-type": "application/json",
+        },
+        json={
+            "model": settings.llm_model_name,
+            "max_tokens": 2000,
+            "system": SYSTEM,
+            "messages": [{"role": "user", "content": prompt}],
+        },
+    )
+    _check(r)
+    return "".join(block.get("text", "") for block in r.json().get("content", []) if block.get("type") == "text")
+
+
+async def _openrouter(client: httpx.AsyncClient, prompt: str) -> str:
+    """OpenAI-compatible chat completions, as spoken by OpenRouter."""
+    r = await client.post(
+        f"{settings.llm_url}/chat/completions",
+        headers={
+            "authorization": f"Bearer {settings.llm_api_key}",
+            "content-type": "application/json",
+            # Optional OpenRouter attribution: names the app in the usage overview.
+            "x-title": settings.app_name,
+        },
+        json={
+            "model": settings.llm_model_name,
+            "max_tokens": 2000,
+            "messages": [{"role": "system", "content": SYSTEM}, {"role": "user", "content": prompt}],
+            # Reasoning models would think first and often use up max_tokens before the
+            # list is written. A list of titles needs knowledge, not thought: off is faster
+            # and cheaper. Models that cannot switch it off ignore the setting.
+            "reasoning": {"enabled": False},
+        },
+    )
+    _check(r)
+    choice = (r.json().get("choices") or [{}])[0]
+    content = (choice.get("message") or {}).get("content") or ""
+    if isinstance(content, list):  # some models answer in content parts
+        content = "".join(part.get("text", "") for part in content if isinstance(part, dict))
+    if choice.get("finish_reason") == "length" and "]" not in content:
+        raise KIError("Die Antwort der KI war zu lang und wurde abgeschnitten – anderes Modell wählen (LLM_MODEL).")
+    return content
+
+
+def _check(r: httpx.Response) -> None:
+    if r.status_code in (401, 403):
+        raise KIError("Der API-Key der KI wurde abgelehnt.")
+    if r.status_code == 402:
+        raise KIError("Das Guthaben beim KI-Anbieter ist aufgebraucht.")
+    if r.status_code == 429:
+        raise KIError("Die KI ist gerade überlastet – bitte gleich noch einmal versuchen.")
     if r.status_code >= 400:
         raise KIError(f"Die KI antwortete mit Fehler {r.status_code}.")
-    text = "".join(block.get("text", "") for block in r.json().get("content", []) if block.get("type") == "text")
-    return _parse(text)

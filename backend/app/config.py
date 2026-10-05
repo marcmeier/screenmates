@@ -1,5 +1,6 @@
 from functools import lru_cache
 from pathlib import Path
+from typing import Literal
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -21,10 +22,15 @@ class Settings(BaseSettings):
     tmdb_image_base: str = "https://image.tmdb.org/t/p"
     tmdb_timeout: float = 10.0
 
-    # LLM for the "KI-Suche" feature — optional, Anthropic Messages API.
+    # LLM for the "KI-Suche" feature — optional. Two API styles:
+    #   anthropic  : Anthropic Messages API
+    #   openrouter : OpenAI-compatible chat completions (OpenRouter, or any such API via LLM_BASE_URL)
+    # Empty provider: guessed from the key (OpenRouter keys start with "sk-or-").
+    # Empty base URL / model: the provider's default in LLM_DEFAULTS.
+    llm_provider: Literal["", "anthropic", "openrouter"] = ""
     llm_api_key: str = ""
-    llm_base_url: str = "https://api.anthropic.com/v1"
-    llm_model: str = "claude-opus-5-5"
+    llm_base_url: str = ""
+    llm_model: str = ""
 
     # Kino (live screen sharing) via MediaMTX. Empty URL disables the feature.
     mediamtx_webrtc_url: str = ""  # e.g. http://127.0.0.1:8889
@@ -46,6 +52,29 @@ class Settings(BaseSettings):
     @property
     def llm_enabled(self) -> bool:
         return bool(self.llm_api_key)
+
+    @property
+    def llm_backend(self) -> str:
+        if self.llm_provider:
+            return self.llm_provider
+        return "openrouter" if self.llm_api_key.startswith("sk-or-") else "anthropic"
+
+    @property
+    def llm_url(self) -> str:
+        return (self.llm_base_url or LLM_DEFAULTS[self.llm_backend][0]).rstrip("/")
+
+    @property
+    def llm_model_name(self) -> str:
+        return self.llm_model or LLM_DEFAULTS[self.llm_backend][1]
+
+
+# Base URL and model per LLM provider, used when LLM_BASE_URL / LLM_MODEL are empty.
+# OpenRouter defaults to an inexpensive model: every proposed title is checked against
+# TMDB anyway, so the KI-Suche needs film knowledge, not a frontier model.
+LLM_DEFAULTS = {
+    "anthropic": ("https://api.anthropic.com/v1", "claude-opus-5-5"),
+    "openrouter": ("https://openrouter.ai/api/v1", "deepseek/deepseek-v4.1-flash"),
+}
 
 
 @lru_cache
