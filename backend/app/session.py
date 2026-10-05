@@ -1,7 +1,7 @@
 """Cookie sessions and the authorization dependencies built on them.
 
-There are no passwords: a browser first answers the group's access question
-(see `routers/zugang.py`), then picks a name (optionally guarded by a "film as
+There are no passwords: a browser comes in with an invitation link (see
+`routers/zugang.py`), then picks a name (optionally guarded by a "film as
 PIN"). Administration is a right of individual people (`User.is_admin`), not of
 a browser. Reads never create a session row; one is created only when a browser
 answers the access question or logs in.

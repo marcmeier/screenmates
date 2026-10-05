@@ -4,6 +4,7 @@ import { api } from '../api'
 import { useApp } from '../stores/app'
 import { useUi } from '../stores/ui'
 import Icon from './Icon.vue'
+import GruppenEinladungen from './GruppenEinladungen.vue'
 import UserAvatar from './UserAvatar.vue'
 
 // Groups: server admins create and delete them; group admins (and server admins) run
@@ -85,8 +86,9 @@ onMounted(laden)
   <section class="panel">
     <h2>Gruppen</h2>
     <p class="muted">
-      Jede Gruppe hat ihren eigenen Filmabend, ihre Chronik, Merkliste, Vorschläge, ihren Termin und ihr Kino – sichtbar nur
-      für ihre Mitglieder. Namen, Level und Erfolge gelten für den ganzen Server.
+      Jede Gruppe hat ihren eigenen Filmabend, ihre Chronik, Merkliste, Vorschläge, ihren Termin und ihr Kino – sichtbar
+      nur für ihre Mitglieder. Namen, Level und Erfolge gelten für den ganzen Server. Neue Leute kommen nur mit einem
+      <strong>Einladungslink</strong> herein – den erzeugt ein Admin der Gruppe hier.
     </p>
     <p v-if="ohneGruppe.length" class="notice warn">
       Noch in keiner Gruppe: {{ ohneGruppe.map((u) => u.name).join(', ') }}
@@ -118,6 +120,7 @@ onMounted(laden)
           </button>
         </li>
       </ul>
+      <GruppenEinladungen :gruppe="g" @changed="laden" />
       <form v-if="nichtDrin(g).length" class="row hinzu" @submit.prevent="aufnehmen(g)">
         <select v-model="hinzu[g.id]" :aria-label="`Mitglied für ${g.name} wählen`">
           <option value="">Mitglied hinzufügen …</option>
@@ -144,6 +147,7 @@ p { margin: 0 0 0.8rem; font-size: 0.9rem; }
 .mitglieder li { padding: 0.25rem 0; }
 .chip.admin { color: var(--accent); border-color: var(--accent); }
 .hinzu select { flex: 1; max-width: 18rem; }
+.hinzu { margin-top: 0.6rem; }
 .neu { margin-top: 0.8rem; }
 .neu input { flex: 1; }
 .rename { display: flex; gap: 0.4rem; }

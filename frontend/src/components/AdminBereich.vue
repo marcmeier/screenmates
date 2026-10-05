@@ -4,7 +4,6 @@ import { api } from '../api'
 import { useApp } from '../stores/app'
 import { useUi } from '../stores/ui'
 import { datum } from '../format'
-import FilmPicker from './FilmPicker.vue'
 import Icon from './Icon.vue'
 import UserAvatar from './UserAvatar.vue'
 
@@ -25,38 +24,6 @@ async function fertig(text) {
   await Promise.all([laden(), app.refreshUsers()])
   ui.changed()
   if (text) ui.toast(text, 'ok')
-}
-
-// --- access question ---
-const zugang = ref(null)
-const frage = ref('')
-const film = ref(null) // newly picked answer, not saved yet
-const filmWaehlen = ref(false)
-const zeigeFilm = ref(false)
-
-async function zugangLaden() {
-  zugang.value = await api.get('/api/admin/zugang')
-  frage.value = zugang.value.frage
-}
-async function zugangSpeichern() {
-  const movie = film.value || (zugang.value.movie_id ? { id: zugang.value.movie_id, title: zugang.value.titel } : null)
-  if (!movie) return
-  zugang.value = await api.put('/api/admin/zugang', { frage: frage.value, movie_id: movie.id, titel: movie.title })
-  film.value = null
-  filmWaehlen.value = false
-  await app.refreshZugang()
-  ui.toast('Zugangsfrage gespeichert', 'ok')
-}
-async function zugangAufheben() {
-  if (!confirm('Zugangsfrage aufheben? Dann kann jeder mit dem Link screenmates sehen.')) return
-  zugang.value = await api.put('/api/admin/zugang', { frage: '', movie_id: null })
-  frage.value = ''
-  await app.refreshZugang()
-  ui.toast('Zugangsfrage aufgehoben')
-}
-function filmGewaehlt(m) {
-  film.value = m
-  filmWaehlen.value = false
 }
 
 // --- people ---
@@ -105,50 +72,18 @@ async function bildWeg(u) {
   await fertig(`Profilbild von ${u.name} entfernt`)
 }
 async function abmelden(u) {
-  if (!confirm(`„${u.name}“ auf allen Geräten abmelden? Diese Geräte müssen danach auch die Zugangsfrage neu beantworten.`)) return
+  if (!confirm(`„${u.name}“ auf allen Geräten abmelden? Diese Geräte brauchen danach eine neue Einladung.`)) return
   const r = await api.post(`/api/admin/users/${u.id}/abmelden`)
   if (u.id === app.me?.id) return window.location.reload()
   await fertig(`${u.name}: ${r.beendet} ${r.beendet === 1 ? 'Gerät' : 'Geräte'} abgemeldet`)
 }
 
-onMounted(() => Promise.all([laden(), zugangLaden()]))
+onMounted(laden)
 // New requests arrive while the page is open: follow the count in the navigation.
 watch(() => app.antraege, laden)
 </script>
 
 <template>
-  <section class="panel">
-    <h2>Zugangsfrage</h2>
-    <p class="muted">
-      Wer screenmates öffnet, muss zuerst diese Frage beantworten, indem er den richtigen Film anklickt. Erst dann sieht er
-      etwas und kann einen Namen beantragen. Wer schon angemeldet ist, merkt davon nichts.
-    </p>
-    <p v-if="zugang && !zugang.movie_id" class="notice warn">
-      <Icon name="schloss" :size="14" /> Noch keine Zugangsfrage: Jeder mit dem Link sieht alles und kann Namen beantragen.
-    </p>
-    <label class="field">
-      Frage
-      <input v-model="frage" maxlength="200" placeholder="z. B. Welchen Film haben wir zuerst zusammen geschaut?" />
-    </label>
-    <div class="row answer">
-      <span class="muted">Antwort:</span>
-      <template v-if="film">
-        <strong>{{ film.title }}</strong> <span class="muted">(neu)</span>
-      </template>
-      <template v-else-if="zugang?.movie_id">
-        <strong v-if="zeigeFilm">{{ zugang.titel || `Film #${zugang.movie_id}` }}</strong>
-        <span v-else class="muted">verborgen</span>
-        <button class="ghost small" @click="zeigeFilm = !zeigeFilm">{{ zeigeFilm ? 'verbergen' : 'zeigen' }}</button>
-      </template>
-      <span v-else class="muted">noch keiner</span>
-      <button class="small" @click="filmWaehlen = !filmWaehlen">{{ zugang?.movie_id || film ? 'Film ändern' : 'Film wählen' }}</button>
-    </div>
-    <div v-if="filmWaehlen" class="picker"><FilmPicker placeholder="Antwort-Film suchen …" @pick="filmGewaehlt" /></div>
-    <div class="row actions">
-      <button class="primary" :disabled="!frage.trim() || !(film || zugang?.movie_id)" @click="zugangSpeichern">Speichern</button>
-      <button v-if="zugang?.movie_id" class="ghost small danger" @click="zugangAufheben">Zugangsfrage aufheben</button>
-    </div>
-  </section>
 
   <section v-if="antraege.length" class="panel">
     <h2>Anträge <span class="count">{{ antraege.length }}</span></h2>
@@ -204,10 +139,6 @@ watch(() => app.antraege, laden)
 <style scoped>
 section h2 { margin: 0 0 1rem; font-size: 1.1rem; display: flex; align-items: center; gap: 0.5rem; }
 section p { margin: 0 0 0.8rem; font-size: 0.9rem; }
-.notice.warn { display: flex; align-items: center; gap: 0.4rem; color: var(--gold); }
-.answer { margin: 0.8rem 0 0; font-size: 0.9rem; }
-.picker { margin-top: 0.9rem; }
-.actions { margin-top: 1rem; }
 .count { font-size: 0.75rem; background: var(--accent); color: #fff; border-radius: 999px; padding: 1px 8px; }
 .people { list-style: none; padding: 0; margin: 0 0 1rem; }
 .people > li { padding: 0.6rem 0; border-top: 1px solid var(--line); }

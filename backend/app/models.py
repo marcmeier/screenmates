@@ -61,6 +61,7 @@ class User(SQLModel, table=True):
     schutz_movie_id: int | None = None  # "film as PIN" — never sent to clients
     is_admin: bool = False
     freigegeben: bool = True  # False: a name request waiting for an admin
+    antrag_gruppe_id: int | None = Field(default=None, foreign_key="gruppe.id", ondelete="SET NULL")  # requested via
     bild: str = ""  # token of the profile picture file, "" = none (see bilder.py)
     vitrine: str = "[]"  # JSON: up to three achievement keys for the profile showcase
     created_at: datetime = Field(default_factory=now)
@@ -69,7 +70,8 @@ class User(SQLModel, table=True):
 class Session(SQLModel, table=True):
     sid: str = Field(primary_key=True)
     user_id: int | None = Field(default=None, foreign_key="user.id", ondelete="SET NULL")
-    zugang: bool = False  # answered the access question
+    zugang: bool = False  # came in with an invitation (or had a name)
+    einladung_id: int | None = Field(default=None, foreign_key="einladung.id", ondelete="SET NULL")  # with which
     gruppe_id: int | None = Field(default=None, foreign_key="gruppe.id", ondelete="SET NULL")  # active group
     created_at: datetime = Field(default_factory=now)
 
@@ -210,14 +212,32 @@ class FeatureNote(SQLModel, table=True):
     created_at: datetime = Field(default_factory=now)
 
 
-class Zugang(SQLModel, table=True):
-    """Singleton (id=1): the access question and its answer film. No film, no door."""
+class Einladung(SQLModel, table=True):
+    """An invitation link into a group (see routers/einladungen.py)."""
 
-    id: int | None = Field(default=1, primary_key=True)
-    frage: str = ""
-    movie_id: int | None = None  # the answer — never sent to non-admins
-    titel: str = ""  # the answer's title, for admins
-    geaendert: datetime | None = None
+    id: int | None = Field(default=None, primary_key=True)
+    token: str = Field(unique=True, index=True)
+    gruppe_id: int = Field(foreign_key="gruppe.id", index=True, ondelete="CASCADE")
+    erstellt_von: int | None = Field(default=None, foreign_key="user.id", ondelete="SET NULL")
+    erstellt_am: datetime = Field(default_factory=now)
+    gueltig_bis: datetime | None = None
+    max_nutzungen: int | None = None  # None: unlimited
+    nutzungen: int = 0
+    direkt: bool = False  # True: in right away; False: an admin of the group decides
+    widerrufen: bool = False
+    notiz: str = ""
+
+
+class Beitrittsanfrage(SQLModel, table=True):
+    """Someone with a name asks to join another group (via a link that needs approval)."""
+
+    __table_args__ = (UniqueConstraint("gruppe_id", "user_id"),)
+
+    id: int | None = Field(default=None, primary_key=True)
+    gruppe_id: int = Field(foreign_key="gruppe.id", index=True, ondelete="CASCADE")
+    user_id: int = Field(foreign_key="user.id", ondelete="CASCADE")
+    einladung_id: int | None = Field(default=None, foreign_key="einladung.id", ondelete="SET NULL")
+    am: datetime = Field(default_factory=now)
 
 
 class AppMeta(SQLModel, table=True):

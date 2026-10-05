@@ -24,7 +24,7 @@ from sqlmodel import Session as DBSession
 from sqlmodel import select
 
 from .db import engine, get_session
-from .models import Gruppe, Mitglied, Session, User
+from .models import Beitrittsanfrage, Gruppe, Mitglied, Session, User
 from .session import COOKIE, current_session, is_admin, require_user
 
 # The active group of the current request, for code that only *marks* things for
@@ -115,3 +115,13 @@ def gruppe_oder_404(db: DBSession, gid: int) -> Gruppe:
     if g is None:
         raise HTTPException(404, "Diese Gruppe gibt es nicht.")
     return g
+
+
+def aufnehmen(db: DBSession, gid: int, user_id: int) -> None:
+    """Make someone a member (no commit); drops a pending join request."""
+    if not db.exec(select(Mitglied).where(Mitglied.gruppe_id == gid, Mitglied.user_id == user_id)).first():
+        db.add(Mitglied(gruppe_id=gid, user_id=user_id))
+    for a in db.exec(
+        select(Beitrittsanfrage).where(Beitrittsanfrage.gruppe_id == gid, Beitrittsanfrage.user_id == user_id)
+    ).all():
+        db.delete(a)

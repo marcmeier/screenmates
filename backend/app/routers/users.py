@@ -13,7 +13,7 @@ from sqlmodel import col, func, select
 
 from .. import bilder, erfolge
 from ..db import get_session
-from ..gruppen import aktive_gruppe, gruppen_admin, mitgliedschaften
+from ..gruppen import aktive_gruppe, aufnehmen, gruppen_admin, mitgliedschaften
 from ..models import Abo, Gruppe, Mitglied, Session, User
 from ..serialize import user_dict
 from ..session import (
@@ -68,7 +68,7 @@ def in_einzige_gruppe(db: DBSession, u: User, *, admin: bool = False) -> None:
         db.add(Mitglied(gruppe_id=gruppen[0], user_id=u.id, ist_admin=admin))
 
 
-def new_user(db: DBSession, name: str, *, freigegeben: bool, admin: bool = False) -> User:
+def new_user(db: DBSession, name: str, *, freigegeben: bool, admin: bool = False, ohne_gruppe: bool = False) -> User:
     count = db.exec(select(func.count()).select_from(User)).one()
     u = User(name=name, color=PALETTE[count % len(PALETTE)], freigegeben=freigegeben, is_admin=admin)
     db.add(u)
@@ -78,7 +78,7 @@ def new_user(db: DBSession, name: str, *, freigegeben: bool, admin: bool = False
         db.rollback()
         raise HTTPException(409, f"„{name}“ gibt es schon.") from None
     db.refresh(u)
-    if freigegeben:
+    if freigegeben and not ohne_gruppe:
         in_einzige_gruppe(db, u, admin=admin)
         db.commit()
     return u
@@ -143,11 +143,24 @@ def list_users(
 
 
 @router.post("/users", status_code=201)
-def create_user(body: NameAnlegen, db: DBSession = Depends(get_session), admin: bool = Depends(is_admin)):
-    """Create a name. The very first one becomes admin; afterwards it's a request an admin approves."""
+def create_user(
+    body: NameAnlegen,
+    request: Request,
+    response: Response,
+    db: DBSession = Depends(get_session),
+    admin: bool = Depends(is_admin),
+    sess: Session | None = Depends(current_session),
+):
+    """Create a name. The very first one becomes admin; afterwards the invitation decides:
+    a "direkt" link lets you in, otherwise it's a request for an admin of the link's group."""
     name = clean_name(body.name)
     if db.exec(select(func.count()).select_from(User)).one() == 0:
         u = new_user(db, name, freigegeben=True, admin=True)
+        # The door closes with the first name: its browser stays inside.
+        eigene = ensure_session(request, response, db)
+        eigene.zugang = True
+        db.add(eigene)
+        db.commit()
         if not db.exec(select(Mitglied).where(Mitglied.user_id == u.id)).first():
             # A fresh install: the first name runs the first group.
             gid = db.exec(select(Gruppe.id).order_by(Gruppe.id)).first()
@@ -161,10 +174,27 @@ def create_user(body: NameAnlegen, db: DBSession = Depends(get_session), admin: 
         return user_dict(u)
     if admin:
         return user_dict(new_user(db, name, freigegeben=True))
+    from .zugang import einladung_der_sitzung
+
+    e = einladung_der_sitzung(db, sess)
+    if e is not None and e.direkt:
+        e.nutzungen += 1
+        db.add(e)
+        u = new_user(db, name, freigegeben=True, ohne_gruppe=True)
+        aufnehmen(db, e.gruppe_id, u.id)
+        db.commit()
+        return user_dict(u)
     offen = db.exec(select(func.count()).select_from(User).where(col(User.freigegeben).is_(False))).one()
     if offen >= MAX_ANTRAEGE:
         raise HTTPException(429, "Gerade warten schon viele Anträge – bitte später nochmal.")
-    return user_dict(new_user(db, name, freigegeben=False))
+    u = new_user(db, name, freigegeben=False)
+    if e is not None:
+        e.nutzungen += 1
+        u.antrag_gruppe_id = e.gruppe_id
+        db.add_all([e, u])
+        db.commit()
+        db.refresh(u)
+    return user_dict(u)
 
 
 @router.post("/users/waehlen")

@@ -4,7 +4,7 @@ Alle Endpunkte liegen unter `/api`. Die interaktive Doku gibt es unter `/docs`, 
 
 **Recht:** – jeder · **N** gewählter Name · **E** Ersteller oder Admin · **A** Admin
 
-**Zugangsfrage:** Ist eine gesetzt, antwortet die ganze API Browsern ohne Zugang mit `423` – außer `/health`, `/zugang…`, `/kino/mtx-auth` und dem Senden per OBS-Key (`/kino/whip`, `/kino/sitzung/whip/…`). „jeder“ heißt dann: jeder mit Zugang.
+**Nur mit Einladung:** Sobald es einen Namen gibt, antwortet die ganze API Browsern ohne Zugang mit `423` – außer `/health`, `/zugang`, `/kino/mtx-auth` und dem Senden per OBS-Key (`/kino/whip`, `/kino/sitzung/whip/…`). Zugang gibt eine Einladung (`POST /zugang`) oder ein Name. „jeder“ heißt dann: jeder mit Zugang.
 
 ## Katalog
 
@@ -40,7 +40,7 @@ Jeder Film trägt die Gruppen-Flags `gesehen`, `gemerkt` und `vorgeschlagen_von`
 | Methode | Pfad | Recht | Zweck |
 |---|---|:-:|---|
 | GET | `/users` | – | Freigegebene Namen, `ich`, `admin`, `antraege` (offene Anträge, nur für Admins) |
-| POST | `/users` | – | Namen beantragen (`freigegeben: false`). Der erste Name einer leeren Datenbank wird Admin, Admins legen direkt freigegebene Namen an. Höchstens 20 offene Anträge |
+| POST | `/users` | – | Namen anlegen: Der erste Name einer leeren Datenbank wird Admin; mit einer „direkt“-Einladung ist man sofort in deren Gruppe, sonst ist es ein Antrag (`freigegeben: false`) an die Admins der Gruppe der Einladung. Admins legen direkt freigegebene Namen an. Höchstens 20 offene Anträge |
 | POST | `/users/waehlen` | – | Anmelden (`user_id`, ggf. `movie_id` als Film-PIN) bzw. Abmelden (`user_id: null`). Gedrosselt |
 | DELETE | `/users/{id}` | A | Nutzer löschen bzw. Antrag ablehnen (Ratings und Votes weg, Kommentare anonym). Nicht den letzten Admin |
 | PUT/DELETE | `/users/{id}/bild` | E | Profilbild hochladen (Bild als Request-Body, max. 5 MB; JPG/PNG/WebP/GIF, wird zu 256×256 WebP ohne Metadaten) bzw. entfernen. E = die Person selbst oder ein Admin |
@@ -84,10 +84,13 @@ Admin *dieser Gruppe* oder Server-Admin. Der Katalog bleibt für alle offen; sei
 
 | Methode | Pfad | Recht | Zweck |
 |---|---|:-:|---|
-| GET | `/zugang` | – | `gesperrt` (Frage gesetzt), `offen` (dieser Browser hat Zugang), `frage` |
-| POST | `/zugang` | – | Zugangsfrage beantworten (`movie_id`). Gedrosselt: 5 Fehlversuche pro IP, 60 insgesamt je 15 min |
-| GET | `/zugang/suche` | – | Filmsuche für die Zugangsfrage – ohne Gruppen-Markierungen (gesehen, gemerkt …) |
-| GET/PUT | `/admin/zugang` | A | Frage und Antwort-Film anzeigen bzw. setzen; `movie_id: null` hebt die Frage auf |
+| GET | `/zugang` | – | `gesperrt` (es gibt Namen), `offen` (dieser Browser hat Zugang), `einladung` (Gruppe und Modus der Einladung dieses Browsers) |
+| POST | `/zugang` | – | Mit Einladung hereinkommen (`token`). Gedrosselt: 10 Fehlversuche pro IP, 100 insgesamt je 15 min |
+| GET/POST | `/admin/gruppen/{id}/einladungen` | Gruppen-/Server-Admin | Gültige Links der Gruppe bzw. neuen Link: `direkt`, `tage` (oder `null`), `max_nutzungen` (oder `null`), `notiz` |
+| DELETE | `/admin/einladungen/{id}` | Gruppen-/Server-Admin | Link widerrufen (wer damit drin ist, bleibt) |
+| POST | `/einladungen/annehmen` | N | Mit bestehendem Namen per Link einer Gruppe beitreten (`direkt`) oder anfragen |
+| GET | `/admin/gruppen/{id}/anfragen` | Gruppen-/Server-Admin | Neue Namen, die mit einem Link der Gruppe kamen, und Beitrittsanfragen |
+| POST | `/admin/gruppen/{id}/anfragen/{user}` | Gruppen-/Server-Admin | Annehmen (`annehmen: true`) oder ablehnen |
 | GET/POST | `/admin/users` | A | Alle Namen inkl. Anträge und Anzahl angemeldeter Geräte bzw. direkt einen freigegebenen Namen anlegen |
 | PATCH | `/admin/users/{id}` | A | `name`, `color` (`#rrggbb`), `admin`, `freigegeben` (Antrag freigeben). Es bleibt immer ein Admin |
 | POST | `/admin/users/{id}/abmelden` | A | Alle Sitzungen der Person beenden; diese Browser verlieren auch den Zugang |

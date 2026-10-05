@@ -2,7 +2,7 @@ import { execFileSync, spawn } from 'node:child_process'
 import { existsSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { chromium, expect, test } from '@playwright/test'
-import { KINO } from '../playwright.config.js'
+import { ADMIN_SITZUNG, KINO } from '../playwright.config.js'
 
 // A host shares "their screen", two friends watch live, the host ends the show
 // and logs the film as seen with everyone who watched.
@@ -75,36 +75,26 @@ function ffmpegWithWhip() {
 
 let host, viewer, boss
 
-// The story's admin (Marc, from filmabend.spec.js) – or, when this file runs on
-// its own against a fresh database, Kim: the first name there becomes admin.
+// The story's admin (Marc, whose session filmabend.spec.js saved) – or, when this file
+// runs on its own against a fresh database, Kim: the first name there becomes admin.
 async function admin(browser) {
   if (boss) return boss
   if (host && (await host.locator('.admin-badge').count())) return (boss = host)
-  boss = await (await browser.newContext()).newPage()
+  if (!existsSync(ADMIN_SITZUNG)) throw new Error('Keine Admin-Sitzung: erst filmabend.spec.js laufen lassen')
+  boss = await (await browser.newContext({ storageState: ADMIN_SITZUNG })).newPage()
   await boss.goto('/#/abend')
-  await door(boss)
-  await expect(boss.getByRole('dialog', { name: 'Namen wählen' })).toBeVisible()
-  const marc = boss.locator('.users .user', { hasText: 'Marc' })
-  if (await marc.count()) {
-    await marc.click()
-    const schutz = boss.getByRole('heading', { name: 'Film-Passwort für Marc' })
-    await expect(schutz.or(boss.locator('.me'))).toBeVisible()
-    if (await schutz.count()) {
-      await boss.getByLabel('Film suchen').fill('midsommar')
-      await boss.locator('.results button', { hasText: 'Midsommar' }).click()
-    }
-  }
   await expect(boss.locator('.admin-badge')).toBeVisible()
   return boss
 }
 
-// Answer the access question when filmabend.spec.js has set one.
-async function door(page) {
+// screenmates is invite-only once someone exists: the admin sends a link.
+async function door(browser, page) {
   await expect(page.locator('.door, .shell').first()).toBeVisible()
   if (await page.locator('.door').count()) {
-    await page.getByLabel('Film suchen').fill('halloween')
-    await page.locator('.results button', { hasText: 'Halloween' }).first().click()
-    await expect(page.locator('.door')).toHaveCount(0)
+    const b = await admin(browser)
+    const r = await b.request.post('/api/admin/gruppen/1/einladungen', { data: { direkt: true, notiz: 'Kino' } })
+    await page.goto(`/#/einladung/${(await r.json()).token}`)
+    await expect(page.getByRole('dialog', { name: 'Namen wählen' })).toBeVisible()
   }
 }
 
@@ -121,7 +111,7 @@ async function join(browser, name, ctx = null, { asAdmin = false } = {}) {
     if (r.status() >= 400 && !(path === '/api/kino/whep' && r.status() === 404)) page.errors.push(`${r.status()} ${path}`)
   })
   await page.goto('/#/abend')
-  await door(page)
+  await door(browser || ctx.browser(), page)
   await page.getByPlaceholder('Neuer Name').fill(name)
   await page.getByRole('button', { name: /Anlegen|Beantragen/ }).click()
   const antrag = page.getByRole('heading', { name: 'Antrag gestellt' })
@@ -140,6 +130,15 @@ async function join(browser, name, ctx = null, { asAdmin = false } = {}) {
     await page.locator('.users .user', { hasText: name }).click()
   }
   await expect(page.getByRole('dialog')).toBeHidden()
+  if (asAdmin && !(await page.locator('.admin-badge').count())) {
+    // Kim sends in the Kino: an admin makes her admin.
+    const b = await admin(browser || ctx.browser())
+    const { users } = await (await b.request.get('/api/admin/users')).json()
+    const id = users.find((u) => u.name === name).id
+    expect((await b.request.patch(`/api/admin/users/${id}`, { data: { admin: true } })).ok()).toBeTruthy()
+    await page.reload()
+    await expect(page.locator('.admin-badge')).toBeVisible()
+  }
   return page
 }
 

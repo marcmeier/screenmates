@@ -19,7 +19,7 @@ from app import erfolge, tmdb  # noqa: E402
 from app.config import settings  # noqa: E402
 from app.db import engine  # noqa: E402
 from app.main import app  # noqa: E402
-from app.models import Mitglied, User  # noqa: E402
+from app.models import Einladung, Mitglied, User  # noqa: E402
 from app.routers import kino, users, zugang  # noqa: E402
 
 
@@ -83,12 +83,27 @@ def _mitglied(name: str, gruppe: int = 1, admin: bool = False) -> None:
         s.commit()
 
 
+def rein(c: TestClient, gruppe: int = 1, *, direkt: bool = False) -> str:
+    """Let this browser in with a fresh invitation (as if someone sent it a link)."""
+    import secrets
+
+    token = secrets.token_urlsafe(18)
+    with Session(engine) as s:
+        s.add(Einladung(token=token, gruppe_id=gruppe, direkt=direkt))
+        s.commit()
+    r = c.post("/api/zugang", json={"token": token})
+    assert r.status_code == 200, r.text
+    return token
+
+
 def login(c: TestClient, name: str, *, admin: bool = False) -> dict:
     """Create (or reuse) an approved name in the first group and use it in this browser.
 
     The first name of a fresh database becomes admin (and group admin) by itself;
     tests say explicitly who is admin instead (`admin=True` or `become_admin`).
     """
+    if not c.get("/api/zugang").json()["offen"]:  # invite-only once someone exists: come in like a friend would
+        rein(c)
     r = c.post("/api/users", json={"name": name})
     assert r.status_code in (201, 409), r.text
     if r.status_code == 201:
@@ -107,9 +122,3 @@ def become_admin(c: TestClient) -> None:
     assert me is not None, "become_admin needs a logged-in browser"
     _set(me["name"], is_admin=True)
     assert c.get("/api/users").json()["admin"] is True
-
-
-def set_door(c: TestClient, film: int = 948, frage: str = "Unser erster Film?") -> None:
-    """Set the access question (c must be an admin)."""
-    r = c.put("/api/admin/zugang", json={"frage": frage, "movie_id": film, "titel": "x"})
-    assert r.status_code == 200, r.text

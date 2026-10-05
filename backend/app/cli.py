@@ -2,20 +2,22 @@
 
     python -m app.cli namen                 # all names with their state
     python -m app.cli admin "<Name>"        # make someone admin (and approve the name)
-    python -m app.cli zugang-aus            # open the door again (drop the access question)
+    python -m app.cli einladung [<gruppe>]  # a one-time link that lets you straight in (24 h)
 
 The way in when nobody can administrate any more: an existing database that
-predates admins, or the last admin who forgot their film.
+predates admins, the last admin who forgot their film, or no valid invitation left.
 """
 
 from __future__ import annotations
 
+import secrets
 import sys
+from datetime import UTC, datetime, timedelta
 
 from sqlmodel import Session, select
 
 from .db import engine, init_db
-from .models import User, Zugang
+from .models import Einladung, Gruppe, User
 
 
 def namen(db: Session) -> int:
@@ -39,13 +41,22 @@ def admin(db: Session, name: str) -> int:
     return 0
 
 
-def zugang_aus(db: Session) -> int:
-    z = db.get(Zugang, 1)
-    if z is not None:
-        z.movie_id = None
-        db.add(z)
-        db.commit()
-    print("Zugangsfrage aufgehoben – screenmates ist wieder offen.")
+def einladung(db: Session, gruppe: int | None) -> int:
+    g = db.get(Gruppe, gruppe) if gruppe else db.exec(select(Gruppe).order_by(Gruppe.id)).first()
+    if g is None:
+        print("Keine solche Gruppe.", file=sys.stderr)
+        return 1
+    e = Einladung(
+        token=secrets.token_urlsafe(18),
+        gruppe_id=g.id,
+        direkt=True,
+        max_nutzungen=1,
+        gueltig_bis=datetime.now(UTC) + timedelta(days=1),
+        notiz="Kommandozeile",
+    )
+    db.add(e)
+    db.commit()
+    print(f"Einladung in „{g.name}“ (einmal, 24 h): <Adresse>/#/einladung/{e.token}")
     return 0
 
 
@@ -56,8 +67,8 @@ def main(argv: list[str]) -> int:
             return namen(db)
         if argv[:1] == ["admin"] and len(argv) == 2:
             return admin(db, argv[1])
-        if argv[:1] == ["zugang-aus"]:
-            return zugang_aus(db)
+        if argv[:1] == ["einladung"] and len(argv) <= 2:
+            return einladung(db, int(argv[1]) if len(argv) == 2 else None)
     print(__doc__, file=sys.stderr)
     return 2
 
