@@ -72,7 +72,7 @@ def with_flags(db: DBSession, movies: list[dict[str, Any]]) -> list[dict[str, An
     return movies
 
 
-def user_dict(u: User, abos: list[int] | None = None) -> dict[str, Any]:
+def user_dict(u: User, abos: list[int] | None = None, level: int | None = None) -> dict[str, Any]:
     return {
         "id": u.id,
         "name": u.name,
@@ -84,4 +84,5 @@ def user_dict(u: User, abos: list[int] | None = None) -> dict[str, Any]:
         "bild": f"/api/users/{u.id}/bild?v={u.bild}" if u.bild else None,
         "created_at": iso(u.created_at),
         "abos": abos or [],  # TMDB provider ids
+        "level": level,  # achievement level, where the caller knows it
     }

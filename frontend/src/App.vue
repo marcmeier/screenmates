@@ -10,6 +10,10 @@ import NamensWahl from './components/NamensWahl.vue'
 import Toasts from './components/Toasts.vue'
 import UserAvatar from './components/UserAvatar.vue'
 import Zugang from './components/Zugang.vue'
+import ErfolgPopup from './components/ErfolgPopup.vue'
+import { useErfolge } from './stores/erfolge'
+import { debounce } from './format'
+import { beiAenderung } from './api'
 import AbendTab from './components/tabs/AbendTab.vue'
 import FindenTab from './components/tabs/FindenTab.vue'
 
@@ -23,6 +27,7 @@ const PRIMARY = [
   { id: 'kino', label: 'Kino', icon: 'kino', comp: lazy(() => import('./components/tabs/KinoTab.vue')) },
 ]
 const SECONDARY = [
+  { id: 'erfolge', label: 'Erfolge', icon: 'pokal', comp: lazy(() => import('./components/tabs/ErfolgeTab.vue')) },
   { id: 'wuensche', label: 'Wünsche & Ideen', icon: 'wuensche', comp: lazy(() => import('./components/tabs/WuenscheTab.vue')) },
   { id: 'einstellungen', label: 'Einstellungen', icon: 'verwaltung', comp: lazy(() => import('./components/tabs/EinstellungenTab.vue')) },
 ]
@@ -61,8 +66,12 @@ breitQuery.addEventListener('change', (e) => (breit.value = e.matches))
 const eingeklappt = computed(() => schmal.value && breit.value)
 const reload = () => window.location.reload()
 
-// List counts in the navigation follow every change.
+// List counts in the navigation follow every change; achievements are checked after every write.
+const erfolge = useErfolge()
+const erfolgeCheck = debounce(() => erfolge.pruefen(), 1200)
+beiAenderung(erfolgeCheck)
 watch(() => ui.changes, () => app.refreshStatus())
+watch(() => app.me?.id, (id) => id && erfolgeCheck())
 
 async function start() {
   try {
@@ -171,6 +180,7 @@ watch(
   </div>
 
   <NamensWahl v-if="ui.loginOpen && !app.draussen" />
+  <ErfolgPopup v-if="!app.draussen" />
   <MovieDetail v-if="ui.detail" />
   <Toasts />
 </template>

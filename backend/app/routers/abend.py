@@ -12,7 +12,7 @@ from pydantic import BaseModel, Field
 from sqlmodel import Session as DBSession
 from sqlmodel import col, select
 
-from .. import tmdb
+from .. import erfolge, tmdb
 from ..config import settings
 from ..db import get_session
 from ..models import Abend, Movie, User, Watched, WatchedRating, now
@@ -134,6 +134,7 @@ def set_termin(body: TerminSetzen, user: User = Depends(require_user), db: DBSes
     a = _abend(db)
     a.termin, a.notiz, a.gesetzt_von, a.gesetzt_am = termin.astimezone(UTC), body.notiz.strip(), user.id, now()
     db.add(a)
+    erfolge.protokoll(db, "termin", user.id, termin.astimezone(BERLIN).date().isoformat())
     db.commit()
     return _termin_dict(a)
 

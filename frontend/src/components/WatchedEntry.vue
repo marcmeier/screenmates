@@ -97,7 +97,7 @@ async function remove() {
               {{ datum(entry.watched_at) }}
             </button>
             <span class="avatars">
-              <UserAvatar v-for="id in entry.participants" :key="id" :user-id="id" />
+              <UserAvatar v-for="id in entry.participants" :key="id" :user-id="id" link />
             </span>
           </div>
         </div>

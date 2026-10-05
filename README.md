@@ -34,6 +34,10 @@ zuerst), **„Wem gefällt's?"** (geschätzte Sterne pro Person aus den eigenen 
 und **Film als Passwort** – keine Accounts: Man wählt seinen Namen und schützt ihn optional
 mit einem Film, den man beim Anmelden anklicken muss.
 
+**Erfolge** wie bei Xbox und Steam: Filmabende, Kritiken, Gästebuch, Termine und Kino schalten
+Erfolge frei, Punkte ergeben ein Level am Avatar, jede Person hat ein Profil mit Vitrine – so
+gebaut, dass sich Spammen nicht lohnt ([`docs/ERFOLGE.md`](docs/ERFOLGE.md)).
+
 **Nur für eure Gruppe:** Admins legen eine **Zugangsfrage** fest („Welchen Film haben wir zuerst
 zusammen geschaut?“). Wer screenmates öffnet, muss erst den richtigen Film anklicken und sieht
 vorher nichts. Neue Leute **beantragen** dann einen Namen, ein Admin schaltet ihn frei. Admins

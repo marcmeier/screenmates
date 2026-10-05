@@ -10,12 +10,13 @@ from pydantic import BaseModel, Field
 from sqlmodel import Session as DBSession
 from sqlmodel import col, func, select
 
-from .. import ki, tmdb
+from .. import erfolge, ki, tmdb
 from ..config import settings
 from ..db import get_session
 from ..models import (
     Abend,
     AppMeta,
+    Erfolg,
     Feature,
     Info,
     Movie,
@@ -167,6 +168,26 @@ def events(limit: int = 30, db: DBSession = Depends(get_session)):
         )
     for f in db.exec(select(Feature).order_by(col(Feature.created_at).desc()).limit(limit)):
         feed.append({"typ": "wunsch", "at": f.created_at, "wer": names.get(f.user_id), "text": f.text[:120]})
+    for e in db.exec(
+        select(Erfolg)
+        .where(col(Erfolg.entzogen).is_(False), col(Erfolg.rueckwirkend).is_(False))
+        .order_by(col(Erfolg.am).desc())
+        .limit(limit)
+    ):
+        d = erfolge.NACH_KEY.get(e.schluessel)
+        if d:
+            feed.append(
+                {
+                    "typ": "erfolg",
+                    "at": e.am,
+                    "wer": names.get(e.user_id),
+                    "user_id": e.user_id,
+                    "key": d.key,
+                    "name": "einen geheimen Erfolg" if d.geheim else f"„{d.name}“",
+                    "emoji": d.emoji,
+                    "stufe": d.stufe,
+                }
+            )
     feed.sort(key=lambda e: iso(e["at"]), reverse=True)
     return {"events": [e | {"at": iso(e["at"])} for e in feed[:limit]]}
 

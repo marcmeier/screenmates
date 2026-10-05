@@ -11,7 +11,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlmodel import Session as DBSession
 from sqlmodel import col, func, select
 
-from .. import bilder
+from .. import bilder, erfolge
 from ..db import get_session
 from ..models import Abo, User
 from ..serialize import user_dict
@@ -99,11 +99,17 @@ def list_users(
     abos: dict[int, list[int]] = defaultdict(list)
     for uid, pid in db.exec(select(Abo.user_id, Abo.provider_id).order_by(Abo.provider_id)).all():
         abos[uid].append(pid)
-    me = user_dict(user, abos[user.id]) if user else None
+    lv = erfolge.levels(db)
+    me = user_dict(user, abos[user.id], lv.get(user.id, 1)) if user else None
     antraege = (
         db.exec(select(func.count()).select_from(User).where(col(User.freigegeben).is_(False))).one() if admin else 0
     )
-    return {"users": [user_dict(u, abos[u.id]) for u in rows], "ich": me, "admin": admin, "antraege": antraege}
+    return {
+        "users": [user_dict(u, abos[u.id], lv.get(u.id, 1)) for u in rows],
+        "ich": me,
+        "admin": admin,
+        "antraege": antraege,
+    }
 
 
 @router.post("/users", status_code=201)

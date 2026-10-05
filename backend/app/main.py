@@ -5,11 +5,13 @@ from fastapi import Depends, FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
+from sqlmodel import Session
 
-from . import tmdb
+from . import erfolge, tmdb
 from .config import settings
-from .db import init_db
+from .db import engine, init_db
 from .routers import abend, admin, catalog, features, kino, lists, misc, profilbild, users, watched, zugang
+from .routers import erfolge as erfolge_api
 from .seed import seed_if_empty
 
 __version__ = "0.5.0"
@@ -19,6 +21,9 @@ __version__ = "0.5.0"
 async def lifespan(app: FastAPI):
     init_db()
     seed_if_empty()
+    # Achievements: the first check right away, so only history counts as retroactive.
+    with Session(engine) as db:
+        erfolge.pruefen(db, sofort=True)
     await tmdb.startup()
     yield
     await tmdb.shutdown()
@@ -58,6 +63,7 @@ for r in (
     zugang.router,
     admin.router,
     profilbild.router,
+    erfolge_api.router,
 ):
     app.include_router(r)
 
