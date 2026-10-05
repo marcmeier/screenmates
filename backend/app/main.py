@@ -18,6 +18,7 @@ from .routers import (
     catalog,
     einladungen,
     features,
+    gastgeber,
     gruppen,
     kino,
     kiste,
@@ -34,7 +35,7 @@ from .routers import (
 from .routers import erfolge as erfolge_api
 from .seed import seed_if_empty
 
-__version__ = "0.7.0"
+__version__ = "0.8.0"
 
 
 @asynccontextmanager
@@ -94,6 +95,7 @@ for r in (
     gruppen.router,
     einladungen.router,
     kiste.router,
+    gastgeber.router,
     live.router,
     statistik.router,
     ueber.router,

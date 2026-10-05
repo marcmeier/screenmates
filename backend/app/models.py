@@ -59,6 +59,7 @@ class User(SQLModel, table=True):
     name: str = Field(unique=True, index=True)
     color: str = ""
     design: str = ""  # JSON {"theme", "schrift"}: how screenmates looks for this person
+    obs_key: str = ""  # personal OBS stream key; only works while holding the host's baton
     schutz_movie_id: int | None = None  # "film as PIN" — never sent to clients
     is_admin: bool = False
     freigegeben: bool = True  # False: a name request waiting for an admin
@@ -276,6 +277,8 @@ class Abend(SQLModel, table=True):
     notiz: str = ""  # where, e.g. "bei Marc" or "online im Kino"
     gesetzt_von: int | None = Field(default=None, foreign_key="user.id", ondelete="SET NULL")
     gesetzt_am: datetime | None = None
+    # Holds the host's baton: runs the evening (case for everyone, Kino). See routers/gastgeber.py.
+    gastgeber_id: int | None = Field(default=None, foreign_key="user.id", ondelete="SET NULL")
 
 
 class Info(SQLModel, table=True):
@@ -351,3 +354,17 @@ class Seitentext(SQLModel, table=True):
     key: str = Field(primary_key=True)
     text: str = ""
     geaendert_am: datetime = Field(default_factory=now)
+
+
+class Stabwechsel(SQLModel, table=True):
+    """The host's baton changing hands: a handover, a takeover or a vote."""
+
+    id: int | None = Field(default=None, primary_key=True)
+    gruppe_id: int = Field(foreign_key="gruppe.id", index=True, ondelete="CASCADE")
+    art: str  # uebergabe | uebernahme | abstimmung
+    von_id: int | None = Field(default=None, foreign_key="user.id", ondelete="SET NULL")  # who started it
+    an_id: int | None = Field(default=None, foreign_key="user.id", ondelete="SET NULL")  # who gets the baton
+    frist: datetime  # open until then
+    stimmen: str = "{}"  # votes: JSON {user id: yes?}
+    status: str = "offen"  # offen | angenommen | abgelehnt | abgelaufen | zurueckgezogen
+    erledigt_am: datetime | None = None

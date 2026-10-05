@@ -34,6 +34,7 @@ from ..models import (
 from ..serialize import iso, movie_dict, with_flags
 from ..session import current_user, require_admin
 from ..util import upsert_movie
+from . import gastgeber
 
 router = APIRouter(prefix="/api", tags=["misc"])
 
@@ -210,6 +211,7 @@ def events(limit: int = 30, gid: int = Depends(aktive_gruppe), db: DBSession = D
                     "movie_id": k.movie_id,
                 }
             )
+    feed.extend(gastgeber.feed(db, gid, limit, names))
     for e in db.exec(
         select(Erfolg)
         .where(col(Erfolg.entzogen).is_(False), col(Erfolg.rueckwirkend).is_(False))

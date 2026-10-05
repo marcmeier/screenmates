@@ -54,7 +54,7 @@ async function probe() {
     </template>
     <template v-else>
       <button class="oeffnen" :disabled="busy || laeuft" @click="probe"><Icon name="kiste" :size="18" /> Probedrehen</button>
-      <p class="muted hinweis">Für alle öffnet der Gastgeber des Abends – du siehst es dann live mit.</p>
+      <p class="muted hinweis">Für alle öffnet der Gastgeber – du siehst es live mit. Oben kannst du den Stab übernehmen.</p>
     </template>
   </div>
 </template>

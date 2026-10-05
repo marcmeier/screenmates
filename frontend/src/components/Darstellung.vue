@@ -1,5 +1,5 @@
 <script setup>
-import { computed } from 'vue'
+import { computed, onMounted } from 'vue'
 import { api } from '../api'
 import { useApp } from '../stores/app'
 import { SCHRIFTEN, THEMES, anwenden } from '../design'
@@ -7,6 +7,9 @@ import { SCHRIFTEN, THEMES, anwenden } from '../design'
 // Your screenmates: colour theme and font. Stays dark; saved with your profile.
 const app = useApp()
 const design = computed(() => ({ theme: 'kino', schrift: 'inter', ...(app.me?.design || {}) }))
+
+// Every font button shows itself in its font.
+onMounted(() => Object.values(SCHRIFTEN).forEach((s) => s.laden?.()))
 
 async function setzen(aenderung) {
   const neu = { ...design.value, ...aenderung }
@@ -44,8 +47,6 @@ async function setzen(aenderung) {
         :aria-checked="design.schrift === key"
         :class="{ aktiv: design.schrift === key }"
         :style="{ fontFamily: s.familie || 'system-ui' }"
-        @mouseenter="s.laden?.()"
-        @focus="s.laden?.()"
         @click="setzen({ schrift: key })"
       >
         {{ s.name }}

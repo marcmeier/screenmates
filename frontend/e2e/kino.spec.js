@@ -258,6 +258,43 @@ test('the host ends the show and logs who watched', async () => {
   expect(entry.participants).toHaveLength(3) // Kim, Lu and the strict-network viewer
 })
 
+test('the host baton: a friend asks, the host hands it over, the friend runs the Kino', async () => {
+  await kinoLink(host).click()
+  await kinoLink(viewer).click()
+  const leiste = (page) => page.locator('.stableiste')
+  // An admin takes the baton without asking (if they don't hold it already).
+  const nehmen = leiste(host).getByRole('button', { name: 'Stab übernehmen' })
+  if (await nehmen.count()) await nehmen.click()
+  await expect(leiste(host)).toContainText('Du bist Gastgeber')
+  await expect(viewer.getByRole('heading', { name: 'Senden' })).toBeHidden()
+
+  // The host is around, so taking over means asking: everyone present sees the vote.
+  await expect(leiste(viewer)).toContainText('gerade da', { timeout: 10_000 })
+  await leiste(viewer).getByRole('button', { name: 'Übernehmen? Abstimmen lassen' }).click()
+  await expect(viewer.locator('.stabwechsel')).toContainText('Abstimmung: Du als Gastgeber?')
+  const karte = host.locator('.stabwechsel')
+  await expect(karte).toContainText('möchte den Gastgeber-Stab übernehmen', { timeout: 10_000 })
+  await expect(karte).toContainText('deine Stimme zählt doppelt')
+  await karte.getByRole('button', { name: 'Stab übergeben' }).click()
+
+  await expect(leiste(viewer)).toContainText('Du bist Gastgeber', { timeout: 10_000 })
+  await expect(viewer.getByRole('heading', { name: 'Senden' })).toBeVisible()
+  await expect(viewer.locator('.toast', { hasText: 'Du hast jetzt den Gastgeber-Stab' })).toBeVisible()
+  // The new host's own OBS key, valid only with the baton.
+  const obs = await viewer.evaluate(() => fetch('/api/kino/obs').then((r) => r.json()))
+  expect(obs.persoenlich).toBe(true)
+
+  // And back: an offer the host accepts.
+  await leiste(viewer).getByRole('button', { name: 'Stab weitergeben' }).click()
+  const hostName = (await host.locator('.me .name').textContent()).trim()
+  await leiste(viewer).getByLabel('Stab weitergeben an').selectOption({ label: hostName })
+  await leiste(viewer).getByRole('button', { name: 'Anbieten' }).click()
+  await expect(karte).toContainText('reicht dir den Gastgeber-Stab', { timeout: 10_000 })
+  await karte.getByRole('button', { name: 'Annehmen' }).click()
+  await expect(leiste(host)).toContainText('Du bist Gastgeber', { timeout: 10_000 })
+  await expect(viewer.getByRole('heading', { name: 'Senden' })).toBeHidden({ timeout: 10_000 })
+})
+
 test('an OBS-style client sends with the stream key and ends cleanly', async () => {
   test.skip(!ffmpegWithWhip(), 'FFmpeg mit WHIP fehlt – `./scripts/ffmpeg-whip.sh` aktiviert diesen OBS-Ersatz')
   const { server, key } = await host.evaluate(() => fetch('/api/kino/obs').then((r) => r.json()))

@@ -162,6 +162,9 @@ async function beenden() {
           Mit OBS (ab Version 30) bekommst du Szenen, Spielaufnahme, Filmdateien und vollen Ton.
           In OBS unter <strong>Einstellungen → Stream</strong>:
         </p>
+        <p v-if="obs?.persoenlich" class="notice klein">
+          Das ist dein persönlicher Schlüssel: Er funktioniert nur, solange du den Gastgeber-Stab hast.
+        </p>
         <ol v-if="obs" class="steps">
           <li>Dienst: <code>WHIP</code></li>
           <li>

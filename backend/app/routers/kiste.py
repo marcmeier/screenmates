@@ -7,8 +7,8 @@ very same strip from the seed, so the whole group sees the same posters race
 past and stop on the same film. Who arrives late joins mid-way or sees the
 result. The winner stays up as "Film des Abends" until it's watched.
 
-May open: the evening's host (whoever set the current date) and the group's
-admins. Everyone can still spin on their own (`POST /api/spin`), as practice.
+May open: the evening's host (who holds the baton, see gastgeber.py) and the
+group's admins. Everyone can still spin on their own (`POST /api/spin`), as practice.
 """
 
 from __future__ import annotations
@@ -24,9 +24,10 @@ from sqlmodel import col, select
 
 from ..db import get_session
 from ..gruppen import aktive_gruppe, gruppen_admin
-from ..models import Abend, Kistenoeffnung, Movie, User
+from ..models import Kistenoeffnung, Movie, User
 from ..serialize import iso, movie_dict
 from ..session import require_user
+from . import gastgeber
 from .misc import _pool
 
 router = APIRouter(prefix="/api/kiste", tags=["kiste"])
@@ -49,13 +50,8 @@ def _aktuell(db: DBSession, gid: int) -> Kistenoeffnung | None:
 
 
 def darf_oeffnen(db: DBSession, gid: int, user: User, admin: bool) -> bool:
-    if admin:
-        return True
-    a = db.get(Abend, gid)
-    termin = a.termin if a and a.termin else None
-    if termin is not None and termin.tzinfo is None:
-        termin = termin.replace(tzinfo=UTC)
-    return bool(a and a.gesetzt_von == user.id and termin and termin > datetime.now(UTC) - timedelta(hours=12))
+    """The host (whoever holds the baton) and the group's admins."""
+    return gastgeber.darf_moderieren(db, gid, user, admin)
 
 
 def _dict(db: DBSession, k: Kistenoeffnung) -> dict:

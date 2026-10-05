@@ -10,8 +10,8 @@ def test_statistics_are_totals_only(client, browser):
     login(client, "marc")
     client.post("/api/watched", json={"movie_id": 694})
     fakten = {f["text"]: f["wert"] for f in client.get("/api/statistik").json()["fakten"]}
-    assert fakten["Filme gemeinsam geschaut"] == "1"
-    assert fakten["Leute dabei"] == "1"
+    assert fakten["Film gemeinsam geschaut"] == "1"  # singular for one
+    assert fakten["Person dabei"] == "1"
     assert "Herzen verteilt" not in fakten  # zeros are left out
     assert not any("marc" in str(v).lower() for v in fakten.items())
 
