@@ -32,8 +32,6 @@ def test_requests_are_counted_with_tokens_and_cost(client, browser, monkeypatch)
     lena.post("/api/ki-suche", json={"beschreibung": "Weltraum", "mit_sammlung": True})
     lena.post("/api/ki-suche", json={"beschreibung": "Noch mal", "mit_sammlung": True})
     assert json.loads(route.calls.last.request.content)["usage"] == {"include": True}  # OpenRouter reports the cost
-        b'":true', b'": true'
-    )
     route.mock(return_value=httpx.Response(429))
     assert lena.post("/api/ki-suche", json={"beschreibung": "x"}).status_code == 502
 

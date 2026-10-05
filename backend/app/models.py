@@ -58,6 +58,7 @@ class User(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
     name: str = Field(unique=True, index=True)
     color: str = ""
+    design: str = ""  # JSON {"theme", "schrift"}: how screenmates looks for this person
     schutz_movie_id: int | None = None  # "film as PIN" — never sent to clients
     is_admin: bool = False
     freigegeben: bool = True  # False: a name request waiting for an admin
@@ -335,3 +336,18 @@ class KiAnfrage(SQLModel, table=True):
     kosten: float | None = None  # USD as reported by OpenRouter; None when the provider doesn't say
     ok: bool = True
     fehler: str = ""
+
+
+class Zaehler(SQLModel, table=True):
+    """Running totals that can't be counted from other tables (e.g. the Kino's traffic)."""
+
+    key: str = Field(primary_key=True)
+    wert: int = 0
+
+
+class Seitentext(SQLModel, table=True):
+    """Admin-maintained texts of the about page: impressum, datenschutz, spenden (Markdown)."""
+
+    key: str = Field(primary_key=True)
+    text: str = ""
+    geaendert_am: datetime = Field(default_factory=now)

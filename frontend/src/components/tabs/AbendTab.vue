@@ -242,7 +242,7 @@ const EVENT_TEXT = {
 .termin { border-top: 1px solid var(--line); padding-top: 0.6rem; font-size: 0.9rem; }
 .onair {
   display: flex; align-items: center; gap: 0.8rem; margin-bottom: 1rem; padding: 0.8rem 1rem; text-decoration: none;
-  border-radius: var(--radius); background: linear-gradient(90deg, rgba(229, 9, 20, 0.22), rgba(229, 9, 20, 0.06)); border: 1px solid rgba(229, 9, 20, 0.45);
+  border-radius: var(--radius); background: linear-gradient(90deg, color-mix(in srgb, var(--accent) 22%, transparent), color-mix(in srgb, var(--accent) 6%, transparent)); border: 1px solid rgba(229, 9, 20, 0.45);
 }
 .onair:hover { border-color: var(--accent); }
 .onair .badge { display: inline-flex; align-items: center; gap: 6px; background: var(--accent); color: #fff; font-size: 0.72rem; font-weight: 800; letter-spacing: 0.08em; padding: 3px 8px; border-radius: 5px; }

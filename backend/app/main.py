@@ -1,3 +1,4 @@
+import asyncio
 from contextlib import asynccontextmanager
 from pathlib import Path
 
@@ -24,6 +25,8 @@ from .routers import (
     live,
     misc,
     profilbild,
+    statistik,
+    ueber,
     users,
     watched,
     zugang,
@@ -31,7 +34,7 @@ from .routers import (
 from .routers import erfolge as erfolge_api
 from .seed import seed_if_empty
 
-__version__ = "0.6.0"
+__version__ = "0.7.0"
 
 
 @asynccontextmanager
@@ -42,7 +45,11 @@ async def lifespan(app: FastAPI):
     with Session(engine) as db:
         erfolge.pruefen(db, sofort=True)
     await tmdb.startup()
+    # The Kino's traffic for the statistics: MediaMTX forgets sessions, so count along.
+    zaehlen = asyncio.create_task(statistik.kino_mitzaehlen()) if settings.kino_enabled else None
     yield
+    if zaehlen:
+        zaehlen.cancel()
     await tmdb.shutdown()
 
 
@@ -88,6 +95,8 @@ for r in (
     einladungen.router,
     kiste.router,
     live.router,
+    statistik.router,
+    ueber.router,
 ):
     app.include_router(r)
 

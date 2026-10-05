@@ -1,8 +1,42 @@
 # Changelog
 
-## Unveröffentlicht
+## 0.7.0 – 2026-10-06
+
+**Gemeinsam statt nebeneinander:** Der Gastgeber öffnet die Filmabend-Kiste und alle sehen live
+zu, Änderungen von Freunden erscheinen ohne Neuladen, und reingekommen wird nur noch mit
+Einladungslink. Dazu ein Profil mit Erfolgen und eigenem Farbschema, eine aufgeräumte Verwaltung
+mit KI-Kosten, Statistiken in der Seitenleiste und eine Über-Seite mit Impressum.
 
 ### Neu
+- **Die Kiste für alle öffnen.** Der Gastgeber des Abends (wer den Termin gesetzt hat) oder ein
+  Admin der Gruppe öffnet die Filmabend-Kiste für alle: Wer screenmates gerade offen hat – egal
+  auf welcher Seite –, bekommt nach einem kurzen Countdown dieselbe Öffnung zu sehen, mit
+  demselben Band und demselben Gewinner, zur selben Zeit. Wer später kommt, steigt mittendrin
+  ein. Der Gewinner bleibt als **„Film des Abends“** stehen, bis er geschaut ist (oder der
+  Gastgeber ihn zurücknimmt), und steht im Aktivitäts-Feed. Den Gewinner zieht der Server.
+  Alle anderen können weiter **probedrehen** – deutlich als Probe markiert, zählt nicht.
+- **Live-Updates.** Bewertet, kommentiert, merkt oder schlägt jemand etwas vor, sehen die anderen
+  es sofort – ohne die Seite neu zu laden. Im Hintergrund-Tab fragt screenmates seltener nach.
+- **Kommentare mit Antworten bleiben als Platzhalter.** Wer einen Kommentar löscht, auf den schon
+  jemand geantwortet hat, hinterlässt „Vom Ersteller gelöscht“ (bzw. „Von einem Admin entfernt“) –
+  die Antworten bleiben im Zusammenhang. Ohne Antworten verschwindet er wie bisher; fällt die
+  letzte Antwort weg, geht auch der leere Platzhalter.
+- **Profil & Erfolge an einem Ort.** Der Profil-Knopf führt zu deinem Profil mit Level, Erfolgen
+  und Vitrine; dort liegen auch deine Einstellungen. Alte Links (`#/erfolge`, `#/einstellungen`)
+  funktionieren weiter.
+- **Darstellung: Farbschema und Schrift.** Sieben dunkle Farbschemata (Kino, Nacht, Neon, Wald,
+  Bernstein, Violett, Schwarz) und sieben Schriften, darunter eine besonders gut lesbare. Gilt
+  nur für dich, auf allen deinen Geräten.
+- **Verwaltung als eigener Bereich**, nur für Admins sichtbar: Gruppen und Einladungen, Anträge,
+  Benutzer, Katalog – getrennt vom eigenen Profil.
+- **KI-Nutzung in der Verwaltung:** Anfragen, Fehlschläge, Tokens und Kosten (OpenRouter meldet
+  sie in US-Dollar) – heute, 7 und 30 Tage, gesamt, pro Person und die letzten Anfragen.
+- **Statistiken in der Seitenleiste** statt der Katalog-Zahl: abwechselnd z. B. wie viele Filme
+  gemeinsam geschaut, Herzen verteilt, Kisten geöffnet, wie viel im Kino gestreamt wurde und wie
+  viele Pakete dabei verloren gingen. Nur Summen, nie etwas über einzelne Personen.
+- **Über screenmates** mit Version, Quellcode-Link und den Abschnitten **Unterstützen**,
+  **Impressum** und **Datenschutz**, die Admins direkt auf der Seite schreiben (Markdown). Die
+  Seite ist auch ohne Einladung erreichbar; leere Abschnitte werden nicht gezeigt.
 - **Einladungslinks statt Zugangsfrage.** Eine gemeinsame Filmfrage passt nicht, wenn auf einem
   Server mehrere Gruppen ohne gemeinsame Erinnerung sind. Jetzt gilt: nur mit Einladung. Admins
   einer Gruppe erzeugen Links für ihre Gruppe – „direkt aufnehmen“ oder „mit Freigabe“, mit Ablauf
@@ -10,17 +44,28 @@
   bei der Namenswahl für diese Gruppe; wer schon einen Namen hat, tritt mit dem Link bei (oder
   fragt an). Anträge und Beitrittsanfragen entscheiden die Admins der Gruppe – kein Server-Admin
   nötig. Notausgang: `python -m app.cli einladung`.
-- **Handy: Profil-Menü.** Der Profil-Knopf oben rechts öffnet ein Menü mit Erfolgen (samt Level),
-  Wünschen & Ideen, Einstellungen und Abmelden – auf dem Handy waren Erfolge und Wünsche vorher
-  gar nicht erreichbar.
+- **Handy: Profil-Menü.** Der Profil-Knopf oben rechts öffnet ein Menü mit Profil & Erfolgen
+  (samt Level), Einstellungen, Wünschen & Ideen, Verwaltung, Über und Abmelden – auf dem Handy
+  waren Erfolge und Wünsche vorher gar nicht erreichbar.
+
+### Behoben
+- Die Kisten-Animation misst die Breite jetzt in jedem Bild – vorher konnte die Markierung neben
+  dem Gewinner landen, wenn die Bühne beim Start noch nicht fertig aufgebaut war.
 
 ### Entfernt
 - Die Zugangsfrage (ersetzt durch Einladungen). Wer drin ist, bleibt drin.
 
 ### Betrieb
 - Migration `0007`: Tabellen `einladung`, `beitrittsanfrage`; `session.einladung_id`,
-  `user.antrag_gruppe_id`; Tabelle `zugang` entfällt. Danach in Einstellungen → Gruppen
+  `user.antrag_gruppe_id`; Tabelle `zugang` entfällt. Danach in Verwaltung → Gruppen
   Einladungslinks erzeugen und verschicken.
+- Migration `0008`: Tabellen `kistenoeffnung`, `kianfrage`, `zaehler`, `seitentext`;
+  `watchednote.geloescht`, `user.design`.
+- Live-Updates: jede offene App fragt alle 1,5 s `GET /api/live` (im Hintergrund alle 15 s) –
+  eine kleine Antwort, kein WebSocket nötig, läuft durch jeden Proxy.
+- Mit Kino zählt ein Hintergrund-Task alle 15 s Traffic und verlorene Pakete der
+  MediaMTX-Sitzungen mit (`/v3/webrtcsessions/list`). Was vor dem Update lief, ist nicht erfasst.
+- Impressum und Datenschutz in Über → Bearbeiten eintragen, falls nötig.
 
 ## 0.6.0 – 2026-10-05
 

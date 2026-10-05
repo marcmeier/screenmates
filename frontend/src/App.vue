@@ -12,6 +12,8 @@ import UserAvatar from './components/UserAvatar.vue'
 import Zugang from './components/Zugang.vue'
 import ErfolgPopup from './components/ErfolgPopup.vue'
 import GemeinsameKiste from './components/GemeinsameKiste.vue'
+import Statistiken from './components/Statistiken.vue'
+import { anwenden } from './design'
 import { useLive } from './stores/live'
 import { useErfolge } from './stores/erfolge'
 import { debounce } from './format'
@@ -34,9 +36,13 @@ const SECONDARY = [
   // Only for (group) admins: kept apart from everyone's own profile.
   { id: 'verwaltung', label: 'Verwaltung', icon: 'verwaltung', comp: lazy(() => import('./components/tabs/VerwaltungTab.vue')) },
 ]
-const ALL = [...PRIMARY, ...SECONDARY]
+// Not in the navigation: linked from the sidebar's footer and the profile menu.
+const VERSTECKT = [{ id: 'ueber', label: 'Über', icon: 'info', comp: lazy(() => import('./components/tabs/UeberTab.vue')) }]
+const ALL = [...PRIMARY, ...SECONDARY, ...VERSTECKT]
 
 const app = useApp()
+// Your theme and font follow you from device to device.
+watch(() => app.me?.design, (d) => d && anwenden(d), { deep: true })
 const kino = useKino()
 // The Kino entry only exists once a media server is configured.
 const primary = computed(() => PRIMARY.filter((t) => t.id !== 'kino' || kino.enabled))
@@ -229,6 +235,7 @@ watch(
             <Icon name="verwaltung" :size="18" /> Verwaltung
             <span v-if="app.antraege" class="antraege">{{ app.antraege }}</span>
           </a>
+          <a href="#/ueber" role="menuitem" class="eintrag"><Icon name="info" :size="18" /> Über · Impressum</a>
           <button role="menuitem" class="eintrag ghost" @click="app.logout()"><Icon name="logout" :size="18" /> Abmelden</button>
         </div>
         <button v-if="!app.me" class="primary pick" :title="eingeklappt ? 'Namen wählen' : undefined" @click="ui.loginOpen = true">
@@ -236,12 +243,9 @@ watch(
           <template v-else>Namen wählen</template>
         </button>
 
-        <p class="status" :class="{ leer: eingeklappt }" :aria-hidden="eingeklappt">
-          <template v-if="!eingeklappt">
-            <span>{{ app.status.movie_count.toLocaleString('de-DE') }} Filme im Katalog</span>
-            <span v-if="!app.status.tmdb" class="warn">Demo-Katalog · TMDB nicht verbunden</span>
-          </template>
-        </p>
+        <div class="status" :class="{ leer: eingeklappt }" :aria-hidden="eingeklappt">
+          <Statistiken v-if="!eingeklappt" />
+        </div>
       </div>
     </aside>
 
@@ -335,7 +339,7 @@ nav { display: flex; flex-direction: column; gap: 4px; }
 .keine-gruppe { max-width: 560px; }
 .menue { display: none; }
 /* Fixed height: the folded bar keeps an empty block here, so the profile button doesn't move. */
-.status { margin: 0; padding: 0 0.6rem; font-size: 0.74rem; line-height: 1.35; color: var(--muted); display: flex; flex-direction: column; gap: 2px; height: 3.6rem; overflow: hidden; }
+.status { margin: 0; padding: 0 0.6rem; font-size: 0.74rem; line-height: 1.35; color: var(--muted); display: flex; flex-direction: column; gap: 2px; height: 4.6rem; overflow: hidden; }
 .warn { color: var(--gold); }
 .main { padding: 2.2rem clamp(1rem, 3vw, 2.8rem) 4rem; min-width: 0; }
 

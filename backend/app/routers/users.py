@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import time
 from collections import defaultdict, deque
 
@@ -130,6 +131,8 @@ def list_users(
                 "mitglieder": sorted(m.user_id for m in mit),
             }
     me = user_dict(user, abos[user.id], lv.get(user.id, 1), user.id in dabei) if user else None
+    if me is not None and user is not None:
+        me["design"] = json.loads(user.design) if user.design else {}
     antraege = (
         db.exec(select(func.count()).select_from(User).where(col(User.freigegeben).is_(False))).one() if admin else 0
     )
@@ -298,3 +301,23 @@ def reset_dabei(
         db.add(m)
     db.commit()
     return {"ok": True}
+
+
+THEMES = ("kino", "nacht", "neon", "wald", "bernstein", "violett", "oled")
+SCHRIFTEN = ("inter", "grotesk", "lesbar", "serif", "mono", "rund", "system")
+
+
+class Design(BaseModel):
+    theme: str = "kino"
+    schrift: str = "inter"
+
+
+@router.put("/users/me/design")
+def set_design(body: Design, user: User = Depends(require_user), db: DBSession = Depends(get_session)):
+    """How screenmates looks for you: colour theme and font (stays dark either way)."""
+    if body.theme not in THEMES or body.schrift not in SCHRIFTEN:
+        raise HTTPException(422, "Unbekanntes Farbschema oder Schrift.")
+    user.design = json.dumps({"theme": body.theme, "schrift": body.schrift})
+    db.add(user)
+    db.commit()
+    return {"design": json.loads(user.design)}

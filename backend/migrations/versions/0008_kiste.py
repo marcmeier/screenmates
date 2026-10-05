@@ -3,6 +3,9 @@
 - kistenoeffnung: Gewinner, Startwert fürs Band, Startzeit, pro Gruppe
 - watchednote.geloescht: gelöscht, obwohl jemand geantwortet hat ("ersteller" | "admin")
 - kianfrage: jede KI-Suche mit Modell, Tokens und Kosten, für die Verwaltung
+- zaehler: laufende Summen (Kino-Traffic, verlorene Pakete) für die Statistik
+- seitentext: Impressum, Datenschutz und Spenden der Über-Seite
+- user.design: Farbschema und Schrift pro Person
 
 Revision ID: 0008
 Revises: 0007
@@ -67,9 +70,28 @@ def upgrade() -> None:
     )
     with op.batch_alter_table("kianfrage", schema=None) as b:
         b.create_index(b.f("ix_kianfrage_at"), ["at"], unique=False)
+    op.create_table(
+        "zaehler",
+        sa.Column("key", sqlmodel.sql.sqltypes.AutoString(), nullable=False),
+        sa.Column("wert", sa.Integer(), nullable=False),
+        sa.PrimaryKeyConstraint("key", name=op.f("pk_zaehler")),
+    )
+    op.create_table(
+        "seitentext",
+        sa.Column("key", sqlmodel.sql.sqltypes.AutoString(), nullable=False),
+        sa.Column("text", sqlmodel.sql.sqltypes.AutoString(), nullable=False),
+        sa.Column("geaendert_am", sqlmodel.sql.sqltypes.UTCDateTime(), nullable=False),
+        sa.PrimaryKeyConstraint("key", name=op.f("pk_seitentext")),
+    )
+    with op.batch_alter_table("user", schema=None) as b:
+        b.add_column(sa.Column("design", sqlmodel.sql.sqltypes.AutoString(), nullable=False, server_default=""))
 
 
 def downgrade() -> None:
+    with op.batch_alter_table("user", schema=None) as b:
+        b.drop_column("design")
+    op.drop_table("seitentext")
+    op.drop_table("zaehler")
     with op.batch_alter_table("kianfrage", schema=None) as b:
         b.drop_index(b.f("ix_kianfrage_at"))
     op.drop_table("kianfrage")

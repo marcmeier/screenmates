@@ -5,6 +5,10 @@ import '@fontsource-variable/inter'
 import './style.css'
 import App from './App.vue'
 import { ApiError } from './api'
+import { anwenden, gemerkt } from './design'
+
+// This device's last theme and font right away – no flash of the default look.
+anwenden(gemerkt())
 
 // API errors are already shown as toasts; don't let un-awaited ones spam the console.
 window.addEventListener('unhandledrejection', (e) => {

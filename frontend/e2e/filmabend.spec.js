@@ -370,6 +370,21 @@ test('own name gets film protection', async () => {
   await expect(page.locator('.chip.ok', { hasText: 'geschützt' })).toBeVisible()
 })
 
+test('a theme and a font of your own, kept with the profile', async () => {
+  const akzent = () => page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue('--accent').trim())
+  expect(await akzent()).toBe('#e50914')
+  await page.getByRole('radio', { name: 'Nacht' }).click()
+  await page.getByRole('radio', { name: 'Space Grotesk' }).click()
+  await expect.poll(akzent).toBe('#3b82f6')
+  await expect.poll(() => page.evaluate(() => getComputedStyle(document.body).fontFamily)).toContain('Space Grotesk')
+  await page.reload()
+  await expect.poll(akzent).toBe('#3b82f6')
+  await expect(page.getByRole('radio', { name: 'Nacht' })).toHaveAttribute('aria-checked', 'true')
+  await page.getByRole('radio', { name: 'Kino' }).click()
+  await page.getByRole('radio', { name: 'Inter' }).click()
+  await expect.poll(akzent).toBe('#e50914')
+})
+
 test('a profile picture replaces the initials everywhere', async () => {
   // A 1600×1200 "photo", drawn in the browser – the app shrinks it before uploading.
   const png = await page.evaluate(() => {
@@ -405,6 +420,23 @@ test('achievements: the unlock pops up, and the showcase shows it', async () => 
   await page.getByRole('button', { name: 'Gesicht zeigen in die Vitrine' }).click()
   await expect(page.locator('.vitrine')).toContainText('Gesicht zeigen')
   await nav('Filmabend')
+})
+
+test('the sidebar shows facts about screenmates, the about page takes an imprint', async () => {
+  await expect(page.locator('.statistik .fakt')).toContainText(/\d/)
+  await page.getByRole('link', { name: 'Über · Impressum' }).click()
+  await expect(page.getByRole('heading', { name: 'Über screenmates' })).toBeVisible()
+  const impressum = page.locator('section#impressum')
+  await impressum.getByRole('button', { name: 'Bearbeiten' }).click()
+  await page.getByLabel('Impressum (Markdown)').fill('Marc Muster\n\nkontakt@example.org')
+  await page.getByRole('button', { name: 'Speichern' }).click()
+  await expect(impressum).toContainText('kontakt@example.org')
+  // Without an invitation the app stays closed, the imprint doesn't.
+  const fremd = await page.context().browser().newPage()
+  await fremd.goto('/#/ueber')
+  await expect(fremd.getByText('Nur mit Einladung')).toBeVisible()
+  await expect(fremd.locator('section#impressum')).toContainText('kontakt@example.org')
+  await fremd.close()
 })
 
 test('info card on the evening page renders sanitised markdown', async () => {
