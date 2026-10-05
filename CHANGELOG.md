@@ -1,6 +1,11 @@
 # Changelog
 
-## Unveröffentlicht
+## 0.6.0 – 2026-10-05
+
+**Für eure Gruppe – oder mehrere:** screenmates lässt sich hinter eine Zugangsfrage legen, neue
+Leute beantragen ihren Namen, Admins verwalten Profile, und ein Server trägt mehrere unabhängige
+Freundeskreise mit eigenem Filmabend und eigenem Kino. Dazu Erfolge mit Levels und Vitrine,
+Profilbilder, alle Genres statt nur Horror und eine KI-Suche, die mit OpenRouter günstig läuft.
 
 ### Neu
 - **Gruppen: mehrere unabhängige Freundeskreise auf einem Server.** Jede Gruppe hat ihren eigenen
@@ -65,8 +70,6 @@
   aber eine. Jetzt holt sie mit TMDB-Key auch fehlende Poster einmal nach.
 - **Die Seitenleiste springt beim Ein- und Ausklappen nicht mehr:** Logo, Gruppe, Navigation und
   Profil behalten ihre Höhe; eingeklappt zeigt die Gruppe ihr Kürzel.
-- E2E: Die Einladungskarte bekommt 15 statt 5 Sekunden zum Zeichnen – auf ausgelasteten Rechnern
-  scheiterte der Test gelegentlich.
 - **Das Kino-Bild hat eine feste Größe:** höchstens 1280 px breit und immer so groß, dass es samt
   Titelzeile ins Fenster passt – auf großen Monitoren musste man vorher scrollen. Auf dem Handy
   volle Breite, im Vollbild wie gehabt bildschirmfüllend.
@@ -77,6 +80,27 @@
 ### Verbessert
 - Raster laden beim Scrollen von selbst nach („Mehr laden" bleibt als Knopf), und „Alle Filme"
   zeigt die Gesamtzahl („320 Filme").
+
+### Betrieb
+- **Sechs Migrationen** (`0003`–`0006`) laufen beim Start automatisch: Zugangsfrage und Admins pro
+  Person, Profilbilder, Erfolge, Gruppen. Alles Bisherige landet in „Unsere Gruppe“; wer vorher
+  angemeldet war, bleibt es.
+- **Erster Admin** einer bestehenden Installation: `python -m app.cli admin "<Name>"` (im
+  Container). `python -m app.cli namen` listet alle Namen, `zugang-aus` hebt die Zugangsfrage auf.
+- **Hinter einem Reverse Proxy** `FORWARDED_ALLOW_IPS` setzen (Proxy-IP, ggf. Cloudflare-Netze),
+  damit die Drossel der Zugangsfrage die echte Client-IP sieht.
+- **Profilbilder** liegen unter `MEDIA_DIR` (Docker: `/data/media`, im selben Volume wie die
+  Datenbank – beim Backup mitnehmen). Neue Abhängigkeit: Pillow.
+- **MediaMTX:** ein Pfad pro Gruppe (`kino-<id>`, Regex in `deploy/mediamtx.yml`) – den
+  Medienserver nach dem Update mit der neuen Konfiguration neu starten.
+
+### Tests
+- 183 Backend-Tests, 40 Browser-Tests (auch gegen den Docker-Stack). Neu u. a.: alle
+  Schutzregeln der Erfolge gegen Ausnutzen, Zugangsfrage samt Drossel, Rechte pro Person und
+  Gruppe, Profilbild-Verarbeitung (EXIF/GPS weg, Bomben-Schutz), Kino pro Gruppe, Migrationen
+  ab einem echten Ausgangsstand.
+- Die Einladungskarte bekommt im Browser-Test 15 statt 5 Sekunden zum Zeichnen (gelegentlicher
+  Zeit-Ausreißer auf ausgelasteten Rechnern).
 
 ## 0.5.0 – 2026-10-03
 

@@ -15,7 +15,7 @@ from .routers import abend, admin, catalog, features, gruppen, kino, lists, misc
 from .routers import erfolge as erfolge_api
 from .seed import seed_if_empty
 
-__version__ = "0.5.0"
+__version__ = "0.6.0"
 
 
 @asynccontextmanager
