@@ -23,7 +23,7 @@ Drei Bereiche für die drei Dinge, für die man herkommt:
   macht aus „langsamer Folk-Horror, aber nicht zu brutal“ passende, real existierende Filme.
 - **Unsere Filme** – Merkliste und die Chronik des Gesehenen: Sterne und Kommentare pro Person,
   Teilnehmende, Gästebuch mit Antworten und Herzen.
-- **Kino** – gemeinsam schauen, auch wenn alle in verschiedenen Wohnzimmern sitzen: Der Host
+- **Kino** – gemeinsam schauen, auch wenn alle in verschiedenen Wohnzimmern sitzen: Ein Admin
   teilt seinen Bildschirm oder sendet aus OBS (eigene Filme, Spiele …), alle sehen live dasselbe
   Bild mit unter einer Sekunde Verzögerung. Läuft etwas, leuchtet der Menüpunkt mit der Zahl der
   Zuschauenden. Danach trägt ein Klick den Film als gesehen ein, mit allen, die dabei waren.
@@ -32,8 +32,13 @@ Dazu: eine Detailansicht mit Trailer, **„Wo läuft's?“** (Abo, leihen, kaufe
 zuerst), **„Wem gefällt's?"** (geschätzte Sterne pro Person aus den eigenen Bewertungen, siehe
 [`docs/PROGNOSE.md`](docs/PROGNOSE.md)), Besetzung, ähnlichen Filmen und euren Bewertungen; **Wünsche & Ideen** mit Voting
 und **Film als Passwort** – keine Accounts: Man wählt seinen Namen und schützt ihn optional
-mit einem Film, den man beim Anmelden anklicken muss. Wer den Host-Film kennt, wird Host
-(`Strg+Shift+H`) und verwaltet Katalog und Gruppe.
+mit einem Film, den man beim Anmelden anklicken muss.
+
+**Nur für eure Gruppe:** Admins legen eine **Zugangsfrage** fest („Welchen Film haben wir zuerst
+zusammen geschaut?“). Wer screenmates öffnet, muss erst den richtigen Film anklicken und sieht
+vorher nichts. Neue Leute **beantragen** dann einen Namen, ein Admin schaltet ihn frei. Admins
+verwalten außerdem alle Profile: umbenennen, Farbe, Admin-Recht, Film-Passwort zurücksetzen,
+überall abmelden, löschen. Der erste Name einer neuen Installation wird Admin.
 
 Mit TMDB-Key ist der ganze TMDB-Katalog verfügbar, ohne Key gibt es einen Demo-Katalog.
 
@@ -52,7 +57,7 @@ make dev       # Backend :8000 + Vite :5173 → http://localhost:5173
 
 Ohne Konfiguration läuft screenmates sofort mit einem kleinen Demo-Katalog
 (Horror-Klassiker). Für den echten Katalog `backend/.env.example` nach `backend/.env`
-kopieren, `TMDB_API_KEY` eintragen und als Host in der Verwaltung
+kopieren, `TMDB_API_KEY` eintragen und als Admin in den Einstellungen
 „Mit TMDB abgleichen“ klicken.
 
 `make help` listet alle Befehle.
@@ -74,13 +79,27 @@ Alles optional, über `backend/.env` oder Umgebungsvariablen:
 | `DATABASE_URL` | Standard: SQLite in `backend/screenmates.db`. |
 | `COOKIE_SECURE` | `true` hinter HTTPS. |
 | `CORS_ORIGINS` | Nur nötig, wenn Frontend und API auf verschiedenen Origins laufen. |
+| `FORWARDED_ALLOW_IPS` | Hinter einem Reverse Proxy dessen IP (bzw. Netze, kommagetrennt), damit uvicorn die echte Client-IP aus `X-Forwarded-For` übernimmt. Die Fehlversuche an der Zugangsfrage werden pro IP gezählt. |
+
+### Admin-Werkzeug
+
+Für den Betreiber, im Container bzw. in `backend/` (`.venv/bin/python -m app.cli …`):
+
+```bash
+docker compose exec screenmates python -m app.cli namen            # alle Namen mit Stand
+docker compose exec screenmates python -m app.cli admin "Marc"     # jemanden zum Admin machen
+docker compose exec screenmates python -m app.cli zugang-aus       # Zugangsfrage aufheben
+```
+
+So kommt eine bestehende Installation zu ihrem ersten Admin, und so hilft man sich, wenn sich alle
+Admins ausgesperrt haben.
 
 ## Kino
 
 Das Kino überträgt per WebRTC über den Medienserver [MediaMTX](https://github.com/bluenviron/mediamtx):
-Der Host sendet **einmal** dorthin, MediaMTX verteilt an alle. screenmates leitet nur die
+Gesendet wird **einmal** dorthin, MediaMTX verteilt an alle. screenmates leitet nur die
 Verbindungsaushandlung (WHIP zum Senden, WHEP zum Schauen) weiter und prüft dabei die Rechte –
-senden darf nur der Host, schauen jeder mit Namen. MediaMTX fragt bei jeder Aktion bei
+senden darf nur ein Admin, schauen jeder mit Namen. MediaMTX fragt bei jeder Aktion bei
 screenmates nach (`/api/kino/mtx-auth`); seine eigenen HTTP-Ports bleiben intern.
 
 **Einrichten**
@@ -100,7 +119,7 @@ Mit Docker ist MediaMTX in `compose.yaml` schon dabei.
   die Zuschauenden eine erreichbare Adresse bekommen,
 - hinter HTTPS `COOKIE_SECURE=true` setzen.
 
-Bandbreite: Der Server braucht je nach Qualitätsstufe 2–8 Mbit/s Upload **pro Zuschauer**, der Host sendet nur einmal.
+Bandbreite: Der Server braucht je nach Qualitätsstufe 2–8 Mbit/s Upload **pro Zuschauer**, gesendet wird nur einmal.
 
 **Senden**
 
@@ -141,8 +160,10 @@ backend/   FastAPI + SQLModel/SQLite ─┘  Produktion: FastAPI liefert API + g
   die App beim Start selbst anwendet. Datenbanken aus 0.2/0.3 werden ohne Datenverlust
   übernommen. Neue Migration nach einer Modelländerung: `make migration name="…"`; ein Test
   schlägt fehl, wenn sie fehlt.
-- **Rechte:** Lesen darf jeder. Schreiben braucht einen gewählten Namen. Eigene Kommentare,
-  Wünsche und Ratings verwaltet man selbst, alles Übergreifende macht der Host.
+- **Rechte:** Ist eine Zugangsfrage gesetzt, kommt nur durch, wer sie beantwortet hat (oder
+  angemeldet ist) – geprüft zentral als App-weite Dependency in `routers/zugang.py`. Dahinter
+  darf jeder lesen, Schreiben braucht einen freigegebenen Namen. Eigene Kommentare, Wünsche und
+  Ratings verwaltet man selbst, alles Übergreifende machen Admins (`User.is_admin`).
 
 Die vollständige Endpunkt-Übersicht steht in [`docs/api-map.md`](docs/api-map.md), die interaktive
 Doku unter `/docs`, wenn das Backend läuft.

@@ -1,5 +1,5 @@
 <script setup>
-import { computed, defineAsyncComponent, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { computed, defineAsyncComponent, onMounted, ref, watch } from 'vue'
 import { useApp } from './stores/app'
 import { useKino } from './stores/kino'
 import { useUi } from './stores/ui'
@@ -9,6 +9,7 @@ import MovieDetail from './components/MovieDetail.vue'
 import NamensWahl from './components/NamensWahl.vue'
 import Toasts from './components/Toasts.vue'
 import UserAvatar from './components/UserAvatar.vue'
+import Zugang from './components/Zugang.vue'
 import AbendTab from './components/tabs/AbendTab.vue'
 import FindenTab from './components/tabs/FindenTab.vue'
 
@@ -63,25 +64,22 @@ const reload = () => window.location.reload()
 // List counts in the navigation follow every change.
 watch(() => ui.changes, () => app.refreshStatus())
 
-// Ctrl+Shift+H: straight to host mode, like the original's secret key combo.
-function onKey(e) {
-  if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === 'h') {
-    e.preventDefault()
-    navigate('einstellungen')
-  }
-}
-
-onMounted(async () => {
-  window.addEventListener('keydown', onKey)
+async function start() {
   try {
     await app.bootstrap()
+    if (app.draussen) return
     if (!app.me) ui.loginOpen = true
     kino.startPolling()
   } catch {
     failed.value = true
   }
-})
-onBeforeUnmount(() => window.removeEventListener('keydown', onKey))
+}
+onMounted(start)
+// Through the door: now the app itself starts.
+watch(
+  () => app.draussen,
+  (draussen, vorher) => vorher && !draussen && start(),
+)
 </script>
 
 <template>
@@ -94,6 +92,8 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey))
   <div v-else-if="!app.ready" class="splash" aria-busy="true">
     <div class="brand big">screen<span>mates</span></div>
   </div>
+
+  <Zugang v-else-if="app.draussen" />
 
   <div v-else class="shell" :class="{ schmal: eingeklappt }">
     <aside class="sidebar">
@@ -133,6 +133,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey))
           >
             <Icon :name="t.icon" :size="16" />
             <span :class="{ 'sr-only': eingeklappt }">{{ t.label }}</span>
+            <span v-if="t.id === 'einstellungen' && app.antraege" class="antraege" aria-hidden="true" :title="`${app.antraege} offene Anträge`">{{ app.antraege }}</span>
           </a>
           <button
             class="nav small collapse"
@@ -145,10 +146,10 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey))
           </button>
         </nav>
 
-        <button v-if="app.me" class="me" :class="{ host: app.host }" :title="eingeklappt ? `${app.me.name}${app.host ? ' (Host)' : ''} – Einstellungen` : 'Profil & Einstellungen'" @click="navigate('einstellungen')">
+        <button v-if="app.me" class="me" :class="{ admin: app.admin }" :title="eingeklappt ? `${app.me.name}${app.admin ? ' (Admin)' : ''} – Einstellungen` : 'Profil & Einstellungen'" @click="navigate('einstellungen')">
           <UserAvatar :user="app.me" />
           <span class="name" :class="{ 'sr-only': eingeklappt }">{{ app.me.name }}</span>
-          <span v-if="app.host && !eingeklappt" class="host-badge">Host</span>
+          <span v-if="app.admin && !eingeklappt" class="admin-badge">Admin</span>
         </button>
         <button v-else class="primary pick" :title="eingeklappt ? 'Namen wählen' : undefined" @click="ui.loginOpen = true">
           <template v-if="eingeklappt"><Icon name="plus" :size="16" /><span class="sr-only">Namen wählen</span></template>
@@ -169,7 +170,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey))
     </main>
   </div>
 
-  <NamensWahl v-if="ui.loginOpen" />
+  <NamensWahl v-if="ui.loginOpen && !app.draussen" />
   <MovieDetail v-if="ui.detail" />
   <Toasts />
 </template>
@@ -214,16 +215,18 @@ nav { display: flex; flex-direction: column; gap: 4px; }
 .schmal .nav.small { padding: 0.55rem 0; }
 .schmal .live { position: absolute; top: 3px; right: 6px; margin: 0; padding: 0 5px; font-size: 0.62rem; }
 .schmal .live .dot { display: none; }
+.schmal .antraege { position: absolute; top: 0; right: 10px; }
 .schmal .me { justify-content: center; padding: 0.4rem 0; }
-.schmal .me.host :deep(.avatar) { box-shadow: 0 0 0 2px var(--bg-soft), 0 0 0 4px var(--accent); }
+.schmal .me.admin :deep(.avatar) { box-shadow: 0 0 0 2px var(--bg-soft), 0 0 0 4px var(--accent); }
 .schmal .pick { padding: 0.55rem 0; }
 .nav.small { font-size: 0.85rem; padding: 0.45rem 0.8rem; gap: 0.7rem; }
+.antraege { margin-left: auto; font-size: 0.68rem; font-weight: 700; color: #fff; background: var(--accent); border-radius: 999px; padding: 0 6px; }
 
 .bottom { margin-top: auto; display: flex; flex-direction: column; gap: 0.9rem; }
 .secondary-nav { gap: 0; padding-bottom: 0.9rem; border-bottom: 1px solid var(--line); }
 .me { justify-content: flex-start; width: 100%; padding: 0.5rem 0.7rem; background: var(--bg-soft); }
 .me .name { font-weight: 600; flex: 1; text-align: left; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.host-badge { font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--accent); border: 1px solid var(--accent); border-radius: 4px; padding: 1px 5px; }
+.admin-badge { font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--accent); border: 1px solid var(--accent); border-radius: 4px; padding: 1px 5px; }
 .pick { width: 100%; justify-content: center; }
 .status { margin: 0; padding: 0 0.6rem; font-size: 0.74rem; color: var(--muted); display: flex; flex-direction: column; gap: 2px; }
 .warn { color: var(--gold); }

@@ -3,6 +3,19 @@
 ## Unveröffentlicht
 
 ### Neu
+- **Zugangsfrage: screenmates nur für eure Gruppe.** Admins legen eine Frage fest, z. B. „Welchen
+  Film haben wir zuerst zusammen geschaut?“. Wer die App öffnet, muss erst den richtigen Film
+  anklicken – vorher ist nichts zu sehen, auch nicht über die API. Fehlversuche werden pro IP
+  gedrosselt. Wer schon angemeldet ist, merkt davon nichts.
+- **Namen beantragen, Admins geben frei.** Neue Leute stellen hinter der Zugangsfrage einen Antrag;
+  Admins sehen offene Anträge als Zahl in der Navigation und geben frei oder lehnen ab.
+- **Admins statt Host-Film.** Admin ist jetzt ein Recht einer Person, nicht mehr ein geteilter
+  Film, den jeder kennen kann. Admins ernennen weitere Admins; den letzten kann man weder
+  löschen noch herabstufen. Der erste Name einer neuen Installation wird Admin, bestehende
+  Installationen bekommen ihren ersten Admin mit `python -m app.cli admin "<Name>"`.
+- **Benutzerverwaltung** in den Einstellungen: umbenennen, Farbe ändern, Admin-Recht vergeben
+  oder entziehen, Film-Passwort zurücksetzen, auf allen Geräten abmelden, löschen – mit Anzeige,
+  auf wie vielen Geräten jemand angemeldet ist.
 - **KI-Suche über OpenRouter.** Statt eines Anthropic-Keys geht auch ein OpenRouter-Key (`sk-or-…`,
   wird automatisch erkannt) – und damit jedes Modell dort. Standard ist das günstige
   `deepseek/deepseek-v4.1-flash` (rund 0,12 Cent pro Suche); jeder Vorschlag wird ohnehin gegen TMDB geprüft.
@@ -19,6 +32,9 @@
 - „Geheimtipps" an echten Daten neu eingestellt: über alle Genres hinweg verdrängten Filme mit
   kleiner, begeisterter Fan-Basis alles andere. Jetzt mindestens zwei Jahre alt und in verbreiteten
   Originalsprachen (u. a. *Harakiri*, *Die sieben Samurai*, *Cinema Paradiso*).
+
+### Entfernt
+- Host-Modus mit Host-Film und `Strg+Shift+H` (ersetzt durch Admins).
 
 ### Behoben
 - **Mit TMDB endeten Raster und Suche nach 20 Filmen**, obwohl es z. B. 320 Horrorfilme bei

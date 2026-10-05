@@ -1,8 +1,8 @@
-"""Who may do what: anonymous reads, user writes, host-only administration."""
+"""Who may do what: anonymous reads, user writes, admin-only administration."""
 
 import pytest
 
-from .conftest import become_host, login
+from .conftest import become_admin, login
 
 
 def test_reads_do_not_create_sessions(client, db):
@@ -24,7 +24,6 @@ def test_reads_do_not_create_sessions(client, db):
         ("post", "/api/suggestions", {"movie_id": 694}),
         ("post", "/api/features", {"text": "x"}),
         ("post", "/api/dabei", None),
-        ("post", "/api/host", {"an": True, "movie_id": 694}),
     ],
 )
 def test_writes_require_a_name(client, method, path, body):
@@ -38,11 +37,14 @@ def test_writes_require_a_name(client, method, path, body):
         ("put", "/api/info", {"text": "hi"}),
         ("delete", "/api/suggestions/alle", None),
         ("delete", "/api/dabei", None),
-        ("get", "/api/host/film", None),
+        ("get", "/api/admin/users", None),
+        ("get", "/api/admin/zugang", None),
+        ("put", "/api/admin/zugang", {"frage": "x", "movie_id": 1}),
+        ("post", "/api/admin/users", {"name": "neu"}),
         ("post", "/api/sync", None),
     ],
 )
-def test_admin_requires_host(client, method, path, body):
+def test_admin_requires_admin(client, method, path, body):
     login(client, "marc")
     r = client.request(method.upper(), path, json=body)
     assert r.status_code == 403
@@ -96,40 +98,16 @@ def test_cannot_change_someone_elses_schutz(client, browser):
     other = browser()
     login(other, "lena")
     assert other.post(f"/api/users/{marc['id']}/schutz", json={"movie_id": 1}).status_code == 403
-    become_host(other)
+    become_admin(other)
     assert other.post(f"/api/users/{marc['id']}/schutz", json={"movie_id": None}).status_code == 200
 
 
-def test_host_mode_setup_and_unlock(client, browser):
-    login(client, "marc")
-    assert client.get("/api/host").json() == {"host": False, "eingerichtet": False}
-    become_host(client, film=694)  # first host picks the film
-    assert client.get("/api/host/film").json()["movie"]["id"] == 694
-
-    lena = browser()
-    login(lena, "lena")
-    assert lena.post("/api/host", json={"an": True, "movie_id": 348}).status_code == 403
-    assert lena.get("/api/host").json() == {"host": False, "eingerichtet": True}
-    become_host(lena, film=694)
-
-    # Logging out (or switching name) drops host rights.
-    lena.post("/api/users/waehlen", json={"user_id": None})
-    assert lena.get("/api/host").json()["host"] is False
-
-
-def test_switching_name_drops_host(client):
-    login(client, "marc")
-    become_host(client)
-    login(client, "lena")
-    assert client.get("/api/host").json()["host"] is False
-
-
-def test_delete_user_is_host_only(client, browser):
+def test_delete_user_is_admin_only(client, browser):
     marc = login(client, "marc")
     other = browser()
     login(other, "lena")
     assert other.delete(f"/api/users/{marc['id']}").status_code == 403
-    become_host(other)
+    become_admin(other)
     assert other.delete(f"/api/users/{marc['id']}").status_code == 200
     assert [u["name"] for u in other.get("/api/users").json()["users"]] == ["lena"]
     # marc's session survives, but is no longer bound to a user.

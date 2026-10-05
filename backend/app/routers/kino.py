@@ -1,10 +1,10 @@
-"""Kino: the host shares a screen (browser) or an OBS output, everyone watches live.
+"""Kino: an admin shares a screen (browser) or an OBS output, everyone watches live.
 
 Media flows over WebRTC through MediaMTX, which fans one upload out to all
 viewers. screenmates only relays the WHIP (publish) and WHEP (watch) signalling
 and decides who may do what:
 
-- publishing: a host session (browser) or the OBS stream key,
+- publishing: an admin's session (browser) or the OBS stream key,
 - watching: anyone who picked a name.
 
 Every relayed request carries a server-side secret; MediaMTX asks
@@ -25,7 +25,7 @@ from ..config import settings
 from ..db import get_session
 from ..models import KinoState, Movie, User, now
 from ..serialize import iso, movie_dict
-from ..session import current_user, is_host, require_host, require_user
+from ..session import current_user, is_admin, require_admin, require_user
 
 router = APIRouter(prefix="/api/kino", tags=["kino"])
 
@@ -75,7 +75,7 @@ def _viewers() -> list[int]:
 
 
 @router.get("")
-async def status(db: DBSession = Depends(get_session), host: bool = Depends(is_host)):
+async def status(db: DBSession = Depends(get_session)):
     if not settings.kino_enabled:
         return {"enabled": False, "live": False}
     st = _state(db)
@@ -94,7 +94,7 @@ async def status(db: DBSession = Depends(get_session), host: bool = Depends(is_h
     }
 
 
-@router.post("/programm", dependencies=[Depends(require_host)])
+@router.post("/programm", dependencies=[Depends(require_admin)])
 def set_programm(body: Programm, db: DBSession = Depends(get_session)):
     st = _state(db)
     if body.movie_id is not None and db.get(Movie, body.movie_id) is None:
@@ -119,14 +119,14 @@ def leave(user: User = Depends(require_user)):
     return {"ok": True}
 
 
-@router.get("/obs", dependencies=[Depends(require_host)])
+@router.get("/obs", dependencies=[Depends(require_admin)])
 def obs_settings(request: Request, db: DBSession = Depends(get_session)):
     _require_enabled()
     base = str(request.base_url).rstrip("/")
     return {"server": f"{base}/api/kino/whip", "key": _state(db).obs_key}
 
 
-@router.post("/obs/neu", dependencies=[Depends(require_host)])
+@router.post("/obs/neu", dependencies=[Depends(require_admin)])
 def rotate_obs_key(db: DBSession = Depends(get_session)):
     st = _state(db)
     st.obs_key = secrets.token_urlsafe(24)
@@ -135,9 +135,9 @@ def rotate_obs_key(db: DBSession = Depends(get_session)):
     return {"key": st.obs_key}
 
 
-@router.delete("", dependencies=[Depends(require_host)])
+@router.delete("", dependencies=[Depends(require_admin)])
 async def stop(db: DBSession = Depends(get_session)):
-    """End the show, whoever is sending (also an OBS the host can't reach)."""
+    """End the show, whoever is sending (also an OBS the admin can't reach)."""
     _require_enabled()
     path = await _mtx_path()
     source = (path or {}).get("source") or {}
@@ -182,11 +182,11 @@ def _bearer(request: Request) -> str:
     return auth[7:].strip() if auth.lower().startswith("bearer ") else ""
 
 
-async def _may_publish(request: Request, db: DBSession, host: bool) -> None:
+async def _may_publish(request: Request, db: DBSession, admin: bool) -> None:
     key = _bearer(request)
-    if host or (key and secrets.compare_digest(key, _state(db).obs_key)):
+    if admin or (key and secrets.compare_digest(key, _state(db).obs_key)):
         return
-    raise HTTPException(403, "Senden darf nur der Host (oder OBS mit dem Stream-Key).")
+    raise HTTPException(403, "Senden darf nur ein Admin (oder OBS mit dem Stream-Key).")
 
 
 def _without_tcp_candidates(sdp: bytes) -> bytes:
@@ -235,11 +235,11 @@ async def _relay(method: str, upstream: str, request: Request, db: DBSession, *,
 
 
 @router.post("/whip")
-async def whip(request: Request, db: DBSession = Depends(get_session), host: bool = Depends(is_host)):
-    await _may_publish(request, db, host)
+async def whip(request: Request, db: DBSession = Depends(get_session), admin: bool = Depends(is_admin)):
+    await _may_publish(request, db, admin)
     # Browsers handle every candidate (and benefit from the TCP fallback); OBS-style
     # clients that authenticate with the stream key get UDP candidates only.
-    return await _relay("POST", f"{PATH}/whip", request, db, udp_only=not host)
+    return await _relay("POST", f"{PATH}/whip", request, db, udp_only=not admin)
 
 
 @router.post("/whep", dependencies=[Depends(require_user)])
@@ -254,10 +254,10 @@ async def session_resource(
     request: Request,
     db: DBSession = Depends(get_session),
     user: User | None = Depends(current_user),
-    host: bool = Depends(is_host),
+    admin: bool = Depends(is_admin),
 ):
     if kind == "whip":
-        await _may_publish(request, db, host)
+        await _may_publish(request, db, admin)
     elif kind == "whep":
         if user is None:
             raise HTTPException(401, "Bitte zuerst einen Namen wählen.")

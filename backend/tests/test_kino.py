@@ -6,7 +6,7 @@ import respx
 from app.models import KinoState
 from app.routers import kino
 
-from .conftest import become_host, login
+from .conftest import become_admin, login
 
 MTX = "http://mtx:8889"
 API = "http://mtx:9997"
@@ -86,7 +86,7 @@ def test_publishing_is_host_or_obs_key_only(client, browser, kino_on):
     )
     login(client, "marc")
     assert client.post("/api/kino/whip", content=SDP).status_code == 403
-    become_host(client)
+    become_admin(client)
     assert client.post("/api/kino/whip", content=SDP).status_code == 201
 
     key = client.get("/api/kino/obs").json()["key"]
@@ -98,7 +98,7 @@ def test_publishing_is_host_or_obs_key_only(client, browser, kino_on):
 def test_obs_key_is_host_only_and_rotates(client, browser, kino_on):
     login(client, "marc")
     assert client.get("/api/kino/obs").status_code == 403
-    become_host(client)
+    become_admin(client)
     first = client.get("/api/kino/obs").json()
     assert first["server"].endswith("/api/kino/whip")
     second = client.post("/api/kino/obs/neu").json()["key"]
@@ -146,7 +146,7 @@ def test_presence_shows_viewers_while_live(client, browser, kino_on):
 def test_programm_is_host_only_and_links_catalogue_films(client, kino_on):
     login(client, "marc")
     assert client.post("/api/kino/programm", json={"titel": "x"}).status_code == 403
-    become_host(client)
+    become_admin(client)
     assert client.post("/api/kino/programm", json={"titel": "Shining", "movie_id": 999999}).status_code == 422
     assert client.post("/api/kino/programm", json={"titel": " Shining ", "movie_id": 694}).status_code == 200
     with respx.mock:
@@ -161,7 +161,7 @@ def test_host_can_end_any_show(client, kino_on):
     kick = respx.post(f"{API}/v3/webrtcsessions/kick/obs-session").mock(return_value=httpx.Response(200))
     login(client, "marc")
     assert client.delete("/api/kino").status_code == 403
-    become_host(client)
+    become_admin(client)
     assert client.delete("/api/kino").status_code == 200
     assert kick.called
 
@@ -213,7 +213,7 @@ def test_obs_clients_get_udp_candidates_only_browsers_get_all(client, browser, k
         return_value=httpx.Response(201, content=ANSWER.encode(), headers={"location": "/kino/whip/x1"})
     )
     login(client, "marc")
-    become_host(client)
+    become_admin(client)
     from_browser = client.post("/api/kino/whip", content=SDP).text
     assert " tcp " in from_browser and " udp " in from_browser
 

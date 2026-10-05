@@ -42,6 +42,8 @@ async function req(method, path, body, { signal, quiet = false } = {}) {
     const err = new ApiError(res.status, describe(res.status, data))
     const ui = useUi()
     if (res.status === 401) ui.loginOpen = true
+    // 423: this browser lost its access (e.g. logged out everywhere) – back to the door.
+    if (res.status === 423) window.location.reload()
     if (!quiet) ui.toast(err.message, 'error')
     throw err
   }

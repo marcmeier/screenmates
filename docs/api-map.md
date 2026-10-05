@@ -2,7 +2,9 @@
 
 Alle Endpunkte liegen unter `/api`. Die interaktive Doku gibt es unter `/docs`, wenn das Backend läuft.
 
-**Recht:** – jeder · **N** gewählter Name · **E** Ersteller oder Host · **H** Host
+**Recht:** – jeder · **N** gewählter Name · **E** Ersteller oder Admin · **A** Admin
+
+**Zugangsfrage:** Ist eine gesetzt, antwortet die ganze API Browsern ohne Zugang mit `423` – außer `/health`, `/zugang…`, `/kino/mtx-auth` und dem Senden per OBS-Key (`/kino/whip`, `/kino/sitzung/whip/…`). „jeder“ heißt dann: jeder mit Zugang.
 
 ## Katalog
 
@@ -18,7 +20,7 @@ Alle Endpunkte liegen unter `/api`. Die interaktive Doku gibt es unter `/docs`, 
 | GET | `/genres` | – | Genre-IDs und Namen |
 | GET | `/personen?q=` | – | Personensuche (TMDB), nach Bekanntheit |
 | GET | `/personen/{id}/filme` | – | Filmografie (optional `genre`), bekannteste zuerst, ohne reine Auftritte |
-| POST | `/sync` | H | Beliebteste und bestbewertete Filme aus TMDB übernehmen |
+| POST | `/sync` | A | Beliebteste und bestbewertete Filme aus TMDB übernehmen |
 | POST | `/ki-suche` | – | Freitext → Filmvorschläge (braucht `LLM_API_KEY`) |
 | GET | `/movies/{id}/anbieter` | – | „Wo läuft's?": Abo/kostenlos/leihen/kaufen in DE (JustWatch über TMDB), Abos der Gruppe zuerst mit `bei` |
 | GET | `/movies/{id}/trailer` | – | Bester YouTube-Trailer (deutsch vor englisch) oder `null` |
@@ -37,17 +39,26 @@ Jeder Film trägt die Gruppen-Flags `gesehen`, `gemerkt` und `vorgeschlagen_von`
 
 | Methode | Pfad | Recht | Zweck |
 |---|---|:-:|---|
-| GET | `/users` | – | Alle Namen, `ich`, `host` |
-| POST | `/users` | – | Namen anlegen |
+| GET | `/users` | – | Freigegebene Namen, `ich`, `admin`, `antraege` (offene Anträge, nur für Admins) |
+| POST | `/users` | – | Namen beantragen (`freigegeben: false`). Der erste Name einer leeren Datenbank wird Admin, Admins legen direkt freigegebene Namen an. Höchstens 20 offene Anträge |
 | POST | `/users/waehlen` | – | Anmelden (`user_id`, ggf. `movie_id` als Film-PIN) bzw. Abmelden (`user_id: null`). Gedrosselt |
-| DELETE | `/users/{id}` | H | Nutzer löschen (Ratings und Votes weg, Kommentare anonym) |
+| DELETE | `/users/{id}` | A | Nutzer löschen bzw. Antrag ablehnen (Ratings und Votes weg, Kommentare anonym). Nicht den letzten Admin |
 | GET/POST | `/users/{id}/schutz` | –/E | Schutz abfragen (nur `hat_schutz`) bzw. setzen oder entfernen |
 | POST | `/abos` | N | Eigene Streaming-Abos setzen (Provider-IDs) |
 | POST | `/dabei` | N | Eigene Teilnahme am nächsten Abend umschalten |
-| DELETE | `/dabei` | H | Teilnahme aller zurücksetzen |
-| GET | `/host` | – | `host` (diese Session) und `eingerichtet` |
-| POST | `/host` | N | Host werden (`movie_id` = Host-Film, gedrosselt). Der erste legt den Film fest |
-| GET/POST | `/host/film` | H | Host-Film anzeigen bzw. ändern |
+| DELETE | `/dabei` | A | Teilnahme aller zurücksetzen |
+
+## Zugang & Verwaltung
+
+| Methode | Pfad | Recht | Zweck |
+|---|---|:-:|---|
+| GET | `/zugang` | – | `gesperrt` (Frage gesetzt), `offen` (dieser Browser hat Zugang), `frage` |
+| POST | `/zugang` | – | Zugangsfrage beantworten (`movie_id`). Gedrosselt: 5 Fehlversuche pro IP, 60 insgesamt je 15 min |
+| GET | `/zugang/suche` | – | Filmsuche für die Zugangsfrage – ohne Gruppen-Markierungen (gesehen, gemerkt …) |
+| GET/PUT | `/admin/zugang` | A | Frage und Antwort-Film anzeigen bzw. setzen; `movie_id: null` hebt die Frage auf |
+| GET/POST | `/admin/users` | A | Alle Namen inkl. Anträge und Anzahl angemeldeter Geräte bzw. direkt einen freigegebenen Namen anlegen |
+| PATCH | `/admin/users/{id}` | A | `name`, `color` (`#rrggbb`), `admin`, `freigegeben` (Antrag freigeben). Es bleibt immer ein Admin |
+| POST | `/admin/users/{id}/abmelden` | A | Alle Sitzungen der Person beenden; diese Browser verlieren auch den Zugang |
 
 ## Filmabend
 
@@ -57,7 +68,7 @@ Jeder Film trägt die Gruppen-Flags `gesehen`, `gemerkt` und `vorgeschlagen_von`
 | POST | `/suggestions` | N | Film vorschlagen (idempotent) |
 | DELETE | `/suggestions/{movie_id}` | N | Eigenen Vorschlag zurückziehen |
 | DELETE | `/suggestions` | N | Alle eigenen Vorschläge zurückziehen |
-| DELETE | `/suggestions/alle` | H | Alle Vorschläge löschen |
+| DELETE | `/suggestions/alle` | A | Alle Vorschläge löschen |
 | POST/DELETE | `/veto` | N | Eigenes Veto gegen einen Vorschlag setzen bzw. zurücknehmen (eins pro Person) |
 | GET/POST | `/spin` | – | Pool mit `gewicht` (ohne Filme mit Veto), bzw. gewichtete Ziehung |
 | GET | `/termin` | – | Nächster Termin mit `notiz` (vergangene Termine: `null`) |
@@ -73,7 +84,7 @@ Jeder Film trägt die Gruppen-Flags `gesehen`, `gemerkt` und `vorgeschlagen_von`
 | GET | `/watched` | – | Chronik (`alle=true` inklusive ausgeblendeter) |
 | POST | `/watched` | N | Als gesehen eintragen. Entfernt den Film aus Merkliste und Vorschlägen |
 | PATCH | `/watched/{id}` | N | Datum ändern, ausblenden |
-| DELETE | `/watched/{id}` | H | Eintrag samt Ratings und Kommentaren löschen |
+| DELETE | `/watched/{id}` | A | Eintrag samt Ratings und Kommentaren löschen |
 | POST | `/watched/{id}/rating` | N | 1–5 Sterne (überschreibt die eigene Wertung) |
 | DELETE | `/watched/rating/{id}` | E | Wertung löschen |
 | POST | `/watched/{id}/notes` | N | Gästebuch, mit `parent_id` als Antwort |
@@ -87,7 +98,7 @@ Jeder Film trägt die Gruppen-Flags `gesehen`, `gemerkt` und `vorgeschlagen_von`
 |---|---|:-:|---|
 | GET/POST | `/features` | –/N | Wünsche (offen nach Stimmen, dann erledigt) |
 | PATCH/DELETE | `/features/{id}` | E | Text ändern bzw. löschen |
-| PATCH | `/features/{id}/done` | H | Erledigt markieren |
+| PATCH | `/features/{id}/done` | A | Erledigt markieren |
 | POST | `/features/{id}/vote` | N | Stimme umschalten |
 | POST | `/features/{id}/notes` | N | Anmerkung |
 | DELETE | `/feature-notes/{id}` | E | Anmerkung löschen |
@@ -98,13 +109,13 @@ Jeder Film trägt die Gruppen-Flags `gesehen`, `gemerkt` und `vorgeschlagen_von`
 | Methode | Pfad | Recht | Zweck |
 |---|---|:-:|---|
 | GET | `/kino` | – | Live-Status, Titel, verknüpfter Film, Zuschauende, Publikum der Vorstellung |
-| POST | `/kino/programm` | H | Titel setzen, Film verknüpfen |
+| POST | `/kino/programm` | A | Titel setzen, Film verknüpfen |
 | POST/DELETE | `/kino/da` | N | Herzschlag beim Zuschauen bzw. Abmelden |
-| POST | `/kino/whip` | H oder OBS-Key | Senden (WHIP-Proxy zu MediaMTX) |
+| POST | `/kino/whip` | A oder OBS-Key | Senden (WHIP-Proxy zu MediaMTX) |
 | POST | `/kino/whep` | N | Zuschauen (WHEP-Proxy) |
 | PATCH/DELETE | `/kino/sitzung/{whip,whep}/{id}` | wie oben | WebRTC-Sitzung nachverhandeln bzw. beenden |
-| GET | `/kino/obs` · POST `/kino/obs/neu` | H | Server-URL und Stream-Key für OBS, Key erneuern |
-| DELETE | `/kino` | H | Übertragung für alle beenden (auch OBS) |
+| GET | `/kino/obs` · POST `/kino/obs/neu` | A | Server-URL und Stream-Key für OBS, Key erneuern |
+| DELETE | `/kino` | A | Übertragung für alle beenden (auch OBS) |
 | POST | `/kino/mtx-auth` | intern | Rechteprüfung, die MediaMTX bei jeder Aktion aufruft |
 
 ## Noch nicht umgesetzt (aus dem Original)

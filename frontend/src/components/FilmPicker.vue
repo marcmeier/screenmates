@@ -5,11 +5,15 @@ import { debounce } from '../format'
 import Poster from './Poster.vue'
 
 // Search-and-click a film. Used wherever a film serves as a password
-// (name protection, host mode), so nothing secret is ever typed or shown.
-defineProps({ placeholder: { type: String, default: 'Film suchen …' }, busy: Boolean })
+// (access question, name protection), so nothing secret is ever typed or shown.
+const props = defineProps({
+  placeholder: { type: String, default: 'Film suchen …' },
+  busy: Boolean,
+  endpoint: { type: String, default: '/api/search' },
+})
 const emit = defineEmits(['pick'])
 const q = ref('')
-const { items, loading, load, reset } = useMovieList('/api/search', 8)
+const { items, loading, load, reset } = useMovieList(props.endpoint, 8)
 
 const run = debounce((v) => (v.trim() ? load({ q: v.trim() }) : reset()), 250)
 watch(q, run)

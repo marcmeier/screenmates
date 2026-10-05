@@ -1,11 +1,9 @@
-"""Status, info panel, host mode, spin wheel, activity feed, KI search, sync."""
+"""Status, info panel, spin wheel, activity feed, KI search, sync."""
 
 from __future__ import annotations
 
 import asyncio
 import random
-import time
-from collections import defaultdict, deque
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
@@ -19,10 +17,8 @@ from ..models import (
     Abend,
     AppMeta,
     Feature,
-    HostState,
     Info,
     Movie,
-    Session,
     Suggestion,
     User,
     Veto,
@@ -32,7 +28,7 @@ from ..models import (
     now,
 )
 from ..serialize import iso, movie_dict, with_flags
-from ..session import current_session, is_host, require_host, require_user
+from ..session import require_admin
 from ..util import upsert_movie
 
 router = APIRouter(prefix="/api", tags=["misc"])
@@ -40,21 +36,9 @@ router = APIRouter(prefix="/api", tags=["misc"])
 SYNC_PAGES = 10  # 20 films per page
 _sync_lock = asyncio.Lock()
 
-MAX_TRIES, WINDOW = 8, 600
-_host_fails: dict[str, deque[float]] = defaultdict(deque)
-
 
 class InfoSetzen(BaseModel):
     text: str = Field(max_length=20_000)
-
-
-class HostModus(BaseModel):
-    an: bool
-    movie_id: int | None = None
-
-
-class HostFilm(BaseModel):
-    movie_id: int
 
 
 class KiSuche(BaseModel):
@@ -70,10 +54,6 @@ class KiSuche(BaseModel):
 
 def _meta(db: DBSession) -> AppMeta:
     return db.get(AppMeta, 1) or AppMeta(id=1)
-
-
-def _host_state(db: DBSession) -> HostState:
-    return db.get(HostState, 1) or HostState(id=1)
 
 
 @router.get("/health")
@@ -103,72 +83,13 @@ def get_info(db: DBSession = Depends(get_session)):
     return {"text": info.text, "updated_at": iso(info.updated_at) if info.text else None}
 
 
-@router.put("/info", dependencies=[Depends(require_host)])
+@router.put("/info", dependencies=[Depends(require_admin)])
 def put_info(body: InfoSetzen, db: DBSession = Depends(get_session)):
     info = db.get(Info, 1) or Info(id=1)
     info.text, info.updated_at = body.text, now()
     db.add(info)
     db.commit()
     return {"text": info.text, "updated_at": iso(info.updated_at)}
-
-
-# --- Host mode ---------------------------------------------------------------
-# The host film is a shared secret. The first person to enable host mode picks
-# it; afterwards anyone who clicks the same film becomes host for their session.
-
-
-@router.get("/host")
-def get_host(db: DBSession = Depends(get_session), host: bool = Depends(is_host)):
-    return {"host": host, "eingerichtet": _host_state(db).movie_id is not None}
-
-
-@router.post("/host")
-def set_host(
-    body: HostModus,
-    _: User = Depends(require_user),
-    sess: Session | None = Depends(current_session),
-    db: DBSession = Depends(get_session),
-):
-    # require_user guarantees a logged-in session exists.
-    if not body.an:
-        sess.is_host = False
-    else:
-        state = _host_state(db)
-        if body.movie_id is None:
-            raise HTTPException(422, "Bitte den Host-Film anklicken.")
-        if state.movie_id is None:
-            state.movie_id = body.movie_id
-            db.add(state)
-        else:
-            fails = _host_fails[sess.sid]
-            while fails and fails[0] < time.monotonic() - WINDOW:
-                fails.popleft()
-            if len(fails) >= MAX_TRIES:
-                raise HTTPException(429, "Zu viele Fehlversuche – bitte später nochmal.")
-            if body.movie_id != state.movie_id:
-                fails.append(time.monotonic())
-                raise HTTPException(403, "Das ist nicht der Host-Film.")
-            _host_fails.pop(sess.sid, None)
-        sess.is_host = True
-    db.add(sess)
-    db.commit()
-    return {"host": sess.is_host, "eingerichtet": True}
-
-
-@router.get("/host/film", dependencies=[Depends(require_host)])
-def get_host_film(db: DBSession = Depends(get_session)):
-    state = _host_state(db)
-    m = db.get(Movie, state.movie_id) if state.movie_id else None
-    return {"movie": movie_dict(m) if m else None}
-
-
-@router.post("/host/film", dependencies=[Depends(require_host)])
-def set_host_film(body: HostFilm, db: DBSession = Depends(get_session)):
-    state = _host_state(db)
-    state.movie_id = body.movie_id
-    db.add(state)
-    db.commit()
-    return {"ok": True}
 
 
 # --- Spin wheel ---------------------------------------------------------------
@@ -312,7 +233,7 @@ def _passes(m: dict, f: KiSuche) -> bool:
 # --- TMDB sync ----------------------------------------------------------------
 
 
-@router.post("/sync", dependencies=[Depends(require_host)])
+@router.post("/sync", dependencies=[Depends(require_admin)])
 async def sync(db: DBSession = Depends(get_session)):
     """Pull the most popular and the best-rated films into the catalogue as canon."""
     if not settings.tmdb_enabled:

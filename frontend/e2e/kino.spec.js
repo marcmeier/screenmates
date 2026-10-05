@@ -73,9 +73,42 @@ function ffmpegWithWhip() {
   }
 }
 
-let host, viewer
+let host, viewer, boss
 
-async function join(browser, name, ctx = null) {
+// The story's admin (Marc, from filmabend.spec.js) – or, when this file runs on
+// its own against a fresh database, Kim: the first name there becomes admin.
+async function admin(browser) {
+  if (boss) return boss
+  if (host && (await host.locator('.admin-badge').count())) return (boss = host)
+  boss = await (await browser.newContext()).newPage()
+  await boss.goto('/#/abend')
+  await door(boss)
+  await expect(boss.getByRole('dialog', { name: 'Namen wählen' })).toBeVisible()
+  const marc = boss.locator('.users .user', { hasText: 'Marc' })
+  if (await marc.count()) {
+    await marc.click()
+    const schutz = boss.getByRole('heading', { name: 'Film-Passwort für Marc' })
+    await expect(schutz.or(boss.locator('.me'))).toBeVisible()
+    if (await schutz.count()) {
+      await boss.getByLabel('Film suchen').fill('midsommar')
+      await boss.locator('.results button', { hasText: 'Midsommar' }).click()
+    }
+  }
+  await expect(boss.locator('.admin-badge')).toBeVisible()
+  return boss
+}
+
+// Answer the access question when filmabend.spec.js has set one.
+async function door(page) {
+  await expect(page.locator('.door, .shell').first()).toBeVisible()
+  if (await page.locator('.door').count()) {
+    await page.getByLabel('Film suchen').fill('halloween')
+    await page.locator('.results button', { hasText: 'Halloween' }).first().click()
+    await expect(page.locator('.door')).toHaveCount(0)
+  }
+}
+
+async function join(browser, name, ctx = null, { asAdmin = false } = {}) {
   ctx ??= await browser.newContext()
   await ctx.addInitScript(fakeScreen)
   await ctx.addInitScript(trackPeerConnections)
@@ -88,8 +121,21 @@ async function join(browser, name, ctx = null) {
     if (r.status() >= 400 && !(path === '/api/kino/whep' && r.status() === 404)) page.errors.push(`${r.status()} ${path}`)
   })
   await page.goto('/#/abend')
+  await door(page)
   await page.getByPlaceholder('Neuer Name').fill(name)
-  await page.getByRole('button', { name: 'Anlegen' }).click()
+  await page.getByRole('button', { name: /Anlegen|Beantragen/ }).click()
+  const antrag = page.getByRole('heading', { name: 'Antrag gestellt' })
+  await expect(antrag.or(page.locator('.me'))).toBeVisible()
+  if (await antrag.count()) {
+    await page.getByRole('button', { name: 'Alles klar' }).click()
+    const b = await admin(browser || ctx.browser())
+    const { users } = await (await b.request.get('/api/admin/users')).json()
+    const id = users.find((u) => u.name === name).id
+    const r = await b.request.patch(`/api/admin/users/${id}`, { data: { freigegeben: true, admin: asAdmin } })
+    expect(r.ok()).toBeTruthy()
+    await page.reload()
+    await page.locator('.users .user', { hasText: name }).click()
+  }
   await expect(page.getByRole('dialog')).toBeHidden()
   return page
 }
@@ -124,7 +170,7 @@ function stereoLevels(page) {
 const videoTime = (page) => page.evaluate(() => document.querySelector('.screen video')?.currentTime ?? 0)
 
 test.beforeAll(async ({ browser }) => {
-  host = await join(browser, 'Kim')
+  host = await join(browser, 'Kim', null, { asAdmin: true })
   viewer = await join(browser, 'Lu')
 })
 
@@ -136,14 +182,14 @@ test.afterAll(() => {
 test('the Kino shows up in the navigation, empty at first', async () => {
   await kinoLink(host).click()
   await expect(host.getByText('Gerade läuft nichts.')).toBeVisible()
-  await expect(host.getByRole('heading', { name: 'Senden' })).toBeHidden() // not host yet
+  await kinoLink(viewer).click()
+  await expect(viewer.getByText('Gerade läuft nichts.')).toBeVisible()
+  await expect(viewer.getByRole('heading', { name: 'Senden' })).toBeHidden() // only admins send
+  await viewer.getByRole('link', { name: 'Filmabend', exact: true }).click()
 })
 
 test('the host links a film and goes live', async () => {
-  await host.keyboard.press('Control+Shift+H')
-  await host.getByPlaceholder('Host-Film suchen').fill('alien')
-  await host.locator('.picker .results button', { hasText: 'Alien' }).first().click()
-  await expect(host.locator('.host-badge')).toBeVisible()
+  await expect(host.locator('.admin-badge')).toBeVisible()
   await kinoLink(host).click()
 
   await host.getByRole('button', { name: /Mit Film aus dem Katalog/ }).click()
