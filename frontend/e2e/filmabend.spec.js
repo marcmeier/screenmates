@@ -23,6 +23,11 @@ test.afterAll(async () => {
 })
 
 const nav = (name) => page.getByRole('link', { name, exact: true }).click()
+// The same person on a second device (its own browser, same session).
+const zweitesGeraet = async () => {
+  const ctx = await page.context().browser().newContext({ storageState: await page.context().storageState() })
+  return ctx.newPage()
+}
 
 test('first visit asks for a name', async () => {
   await expect(page.getByRole('dialog', { name: 'Namen wählen' })).toBeVisible()
@@ -151,10 +156,12 @@ test('the case shows each film with its odds', async () => {
   await expect(inhalt.getByRole('listitem')).toHaveText([/Alien.*50 %/, /Shining.*50 %/])
 })
 
-test('opening the case: Escape skips the animation, the reveal names the winner', async () => {
-  await page.getByRole('button', { name: 'Kiste öffnen' }).click()
+test('a practice spin: Escape skips the animation, the reveal names the winner, nothing counts', async () => {
+  await page.getByRole('button', { name: 'Probedrehen (nur für mich)' }).click()
   const buehne = page.getByRole('dialog', { name: 'Kiste öffnen' })
+  await expect(buehne).toContainText('Probe – zählt nicht')
   await expect(buehne.locator('.item')).toHaveCount(64)
+  await expect(buehne.locator('.countdown')).toHaveCount(0, { timeout: 3000 })
   await page.keyboard.press('Escape') // skip
   await expect(buehne.locator('.enthuellung')).toContainText(/Standard · 50 %(Alien|Shining)/)
   const gezogen = (await buehne.locator('.enthuellung strong').textContent()).trim()
@@ -165,17 +172,32 @@ test('opening the case: Escape skips the animation, the reveal names the winner'
   await expect(buehne.locator('.item.sieger')).toContainText(gezogen)
   await buehne.getByRole('button', { name: 'Weiter' }).click()
   await expect(buehne).toBeHidden()
-  await expect(page.locator('.winner strong')).toHaveText(gezogen)
+  await expect(page.locator('.winner')).toHaveCount(0) // practice: no film of the evening
 })
 
-test('the full opening runs by itself and the winner can be marked as watched', async () => {
-  await page.getByRole('button', { name: 'Kiste öffnen' }).click()
-  const weiter = page.getByRole('dialog', { name: 'Kiste öffnen' }).getByRole('button', { name: 'Weiter' })
-  await expect(weiter).toBeVisible({ timeout: 12000 })
-  await weiter.click()
+test('the host opens the case for everyone: another tab plays the same opening, wherever it is', async () => {
+  const zweit = await zweitesGeraet()
+  await zweit.goto('/#/finden')
+  await page.getByRole('button', { name: 'Für alle öffnen' }).click()
+  const hier = page.getByRole('dialog', { name: 'Kiste öffnen' })
+  const dort = zweit.getByRole('dialog', { name: 'Kiste öffnen' })
+  await expect(dort).toContainText('Marc öffnet die Kiste für alle', { timeout: 5000 })
+  await expect(hier.locator('.countdown')).toBeVisible() // everyone starts together
+  const weiterHier = hier.getByRole('button', { name: 'Weiter' })
+  const weiterDort = dort.getByRole('button', { name: 'Weiter' })
+  await expect(weiterHier).toBeVisible({ timeout: 20_000 })
+  await expect(weiterDort).toBeVisible({ timeout: 5000 })
+  const gezogen = (await hier.locator('.enthuellung strong').textContent()).trim()
+  await expect(dort.locator('.enthuellung strong')).toHaveText(gezogen)
+  await expect(hier.locator('.item.sieger .name')).toHaveText(gezogen)
+  await expect(dort.locator('.item.sieger .name')).toHaveText(gezogen)
+  await weiterDort.click()
+  await zweit.context().close()
+  await weiterHier.click()
   const winner = page.locator('.winner strong')
-  await expect(winner).toHaveText(/Alien|Shining/)
-  page.winner = await winner.textContent()
+  await expect(winner).toHaveText(gezogen)
+  await expect(page.locator('.winner')).toContainText('Film des Abends')
+  page.winner = gezogen
   await page.locator('.winner').getByRole('button', { name: 'Geschaut' }).click()
   await expect(page.locator('.sugg')).toHaveCount(1)
 })
@@ -223,6 +245,23 @@ test('guestbook threads replies', async () => {
   await page.getByLabel('Antwort').fill('Absolut')
   await page.locator('.reply').getByRole('button', { name: 'Senden' }).click()
   await expect(page.locator('.note.nested')).toContainText('Absolut')
+})
+
+test('a comment with replies leaves a placeholder; the thread stays', async () => {
+  page.once('dialog', (d) => d.accept())
+  await page.getByRole('button', { name: 'Kommentar löschen' }).first().click()
+  await expect(page.locator('.platzhalter')).toHaveText('Vom Ersteller gelöscht')
+  await expect(page.locator('.note.nested')).toContainText('Absolut')
+})
+
+test('changes show up in other open tabs without reloading', async () => {
+  const zweit = await zweitesGeraet()
+  await zweit.goto(page.url())
+  await expect(zweit.locator('.note.nested')).toContainText('Absolut')
+  await page.getByRole('textbox', { name: 'Kommentar' }).fill('Live dabei')
+  await page.locator('form.add').getByRole('button', { name: 'Senden' }).click()
+  await expect(zweit.locator('.note', { hasText: 'Live dabei' })).toBeVisible({ timeout: 6000 })
+  await zweit.context().close()
 })
 
 test('a watched film can be rated and discussed right in its detail sheet', async () => {
@@ -312,7 +351,7 @@ test('wishes can be voted on', async () => {
 })
 
 test('the admin creates an invitation link for the group', async () => {
-  await nav('Einstellungen')
+  await nav('Verwaltung')
   const gruppe = page.locator('.gruppe', { hasText: 'Unsere Gruppe' })
   await gruppe.getByRole('button', { name: 'Neuer Link' }).click()
   await gruppe.getByPlaceholder('z. B. Gruppenchat').fill('Gruppenchat')
@@ -323,10 +362,27 @@ test('the admin creates an invitation link for the group', async () => {
 })
 
 test('own name gets film protection', async () => {
+  await nav('Profil & Erfolge')
+  await nav('Einstellungen')
   await page.getByRole('button', { name: 'Schutz einrichten' }).click()
   await page.getByPlaceholder('Deinen Passwort-Film').fill('midsommar')
   await page.locator('.picker .results button', { hasText: 'Midsommar' }).click()
   await expect(page.locator('.chip.ok', { hasText: 'geschützt' })).toBeVisible()
+})
+
+test('a theme and a font of your own, kept with the profile', async () => {
+  const akzent = () => page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue('--accent').trim())
+  expect(await akzent()).toBe('#e50914')
+  await page.getByRole('radio', { name: 'Nacht' }).click()
+  await page.getByRole('radio', { name: 'Space Grotesk' }).click()
+  await expect.poll(akzent).toBe('#3b82f6')
+  await expect.poll(() => page.evaluate(() => getComputedStyle(document.body).fontFamily)).toContain('Space Grotesk')
+  await page.reload()
+  await expect.poll(akzent).toBe('#3b82f6')
+  await expect(page.getByRole('radio', { name: 'Nacht' })).toHaveAttribute('aria-checked', 'true')
+  await page.getByRole('radio', { name: 'Kino' }).click()
+  await page.getByRole('radio', { name: 'Inter' }).click()
+  await expect.poll(akzent).toBe('#e50914')
 })
 
 test('a profile picture replaces the initials everywhere', async () => {
@@ -355,14 +411,32 @@ test('a profile picture replaces the initials everywhere', async () => {
 test('achievements: the unlock pops up, and the showcase shows it', async () => {
   // Unlocks are shown one after another; the picture's may queue behind the film protection's.
   await expect(page.locator('.popup', { hasText: 'Gesicht zeigen' })).toBeVisible({ timeout: 15_000 })
-  await nav('Erfolge')
+  await nav('Profil & Erfolge')
+  await expect(page.getByRole('heading', { name: 'Marc', exact: true })).toBeVisible()
   await expect(page.locator('.stand')).toContainText('Level 1')
   await expect(page.locator('.kachel', { hasText: 'Sicher ist sicher' })).toHaveClass(/offen/)
   await expect(page.locator('.kachel', { hasText: '???' }).first()).toBeVisible() // secret ones stay hidden
-  await page.getByRole('button', { name: 'Mein Profil & Vitrine' }).click()
+  await page.getByRole('button', { name: 'Meine Vitrine' }).click()
   await page.getByRole('button', { name: 'Gesicht zeigen in die Vitrine' }).click()
   await expect(page.locator('.vitrine')).toContainText('Gesicht zeigen')
   await nav('Filmabend')
+})
+
+test('the sidebar shows facts about screenmates, the about page takes an imprint', async () => {
+  await expect(page.locator('.statistik .fakt')).toContainText(/\d/)
+  await page.getByRole('link', { name: 'Über · Impressum' }).click()
+  await expect(page.getByRole('heading', { name: 'Über screenmates' })).toBeVisible()
+  const impressum = page.locator('section#impressum')
+  await impressum.getByRole('button', { name: 'Bearbeiten' }).click()
+  await page.getByLabel('Impressum (Markdown)').fill('Marc Muster\n\nkontakt@example.org')
+  await page.getByRole('button', { name: 'Speichern' }).click()
+  await expect(impressum).toContainText('kontakt@example.org')
+  // Without an invitation the app stays closed, the imprint doesn't.
+  const fremd = await page.context().browser().newPage()
+  await fremd.goto('/#/ueber')
+  await expect(fremd.getByText('Nur mit Einladung')).toBeVisible()
+  await expect(fremd.locator('section#impressum')).toContainText('kontakt@example.org')
+  await fremd.close()
 })
 
 test('info card on the evening page renders sanitised markdown', async () => {
@@ -423,8 +497,8 @@ test('a second device must know the film to use the name', async ({ browser }) =
   await expect(phone.locator('.me')).toContainText('Marc')
   // On the phone the profile button opens a menu – the way to the achievements.
   await phone.locator('.me').click()
-  await phone.getByRole('menuitem', { name: /Erfolge/ }).click()
-  await expect(phone.getByRole('heading', { name: 'Erfolge', exact: true })).toBeVisible()
+  await phone.getByRole('menuitem', { name: /Profil & Erfolge/ }).click()
+  await expect(phone.locator('.stand')).toContainText('Level')
   await phone.close()
 })
 
@@ -439,7 +513,7 @@ test('a newcomer requests a name and an admin approves it', async ({ browser }) 
   // The admin sees the request in the navigation and approves it.
   await page.reload()
   await expect(page.locator('.antraege')).toHaveText('1')
-  await nav('Einstellungen')
+  await nav('Verwaltung')
   const antrag = page.locator('.panel', { has: page.getByRole('heading', { name: /Anträge/ }) })
   await expect(antrag).toContainText('Lena')
   await antrag.getByRole('button', { name: 'Freigeben' }).click()
@@ -473,7 +547,7 @@ test('admins rename someone and log them out everywhere', async () => {
 })
 
 test('a second group has its own movie night', async () => {
-  await nav('Einstellungen')
+  await nav('Verwaltung')
   await page.getByLabel('Neue Gruppe').fill('Horror-Crew')
   await page.getByRole('button', { name: 'Gruppe anlegen' }).click()
   const crew = page.locator('.gruppe', { hasText: 'Horror-Crew' })

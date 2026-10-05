@@ -20,7 +20,7 @@ onBeforeUnmount(() => clearTimeout(timer))
 
 function oeffnen() {
   erfolge.weiter()
-  navigate('erfolge')
+  navigate('profil')
 }
 </script>
 

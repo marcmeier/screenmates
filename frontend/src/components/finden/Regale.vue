@@ -48,7 +48,7 @@ const hatUns = () => regale.value?.some((r) => r.id === 'bei-uns')
   <div class="regale">
     <p v-if="regale && app.status.tmdb && !hatUns()" class="notice tipp">
       Tragt eure Streaming-Abos ein, dann zeigt screenmates hier zuerst, was bei euch ohne Aufpreis läuft.
-      <a href="#/einstellungen">Zu den Einstellungen</a>
+      <a href="#/profil/einstellungen">Zu den Einstellungen</a>
     </p>
 
     <template v-if="!regale && !fehler">

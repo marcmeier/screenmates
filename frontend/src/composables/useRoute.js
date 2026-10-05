@@ -12,7 +12,8 @@ const ALIASES = {
   merkliste: ['sammlung', 'merkliste'],
   gesehen: ['sammlung', 'gesehen'],
   info: ['abend'],
-  verwaltung: ['einstellungen'],
+  erfolge: ['profil'],
+  einstellungen: ['profil', 'einstellungen'],
 }
 
 function parse() {

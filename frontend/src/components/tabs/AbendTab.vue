@@ -12,6 +12,7 @@ import Erinnerungen from '../Erinnerungen.vue'
 import Icon from '../Icon.vue'
 import Poster from '../Poster.vue'
 import KistenOeffnung from '../KistenOeffnung.vue'
+import { useKiste } from '../../stores/kiste'
 import UserAvatar from '../UserAvatar.vue'
 
 // Markdown rendering is only needed once there is info text; load it on demand.
@@ -22,13 +23,15 @@ const TerminDialog = defineAsyncComponent(() => import('../TerminDialog.vue'))
 const app = useApp()
 const kino = useKino()
 const ui = useUi()
+const kiste = useKiste()
 const { alsGesehen } = useMovieActions()
 
 const vorschlaege = ref([])
 const pool = ref([])
 const events = ref([])
 const loading = ref(true)
-const gewinner = ref(null)
+// The film of the evening: the winner of the case opened for everyone.
+const gewinner = computed(() => kiste.aktuell?.gewinner ?? null)
 const termin = ref(null)
 const erinnerungen = ref([])
 const terminOffen = ref(false)
@@ -87,7 +90,7 @@ async function allesLeeren() {
 
 async function gewinnerGesehen() {
   await alsGesehen(gewinner.value)
-  gewinner.value = null
+  kiste.aktuell = null
 }
 
 const poolQuelle = computed(() => (vorschlaege.value.length ? 'Vorschlägen' : 'der Merkliste'))
@@ -98,6 +101,7 @@ const EVENT_TEXT = {
   wunsch: (e) => `${e.wer ?? 'Jemand'} wünscht sich: ${e.text}`,
   veto: (e) => `${e.wer ?? 'Jemand'} legt ein Veto gegen „${e.film}“ ein`,
   erfolg: (e) => `${e.emoji} ${e.wer ?? 'Jemand'} hat ${e.name} freigeschaltet`,
+  kiste: (e) => `${e.wer ?? 'Jemand'} öffnet die Kiste: „${e.film}“`,
   termin: (e) => {
     const t = terminText({ termin: e.termin })
     return `${e.wer ?? 'Jemand'} legt den Termin fest: ${t.tag}, ${t.zeit}`
@@ -211,17 +215,18 @@ const EVENT_TEXT = {
           <h2 class="section-title" style="margin-top: 0">Filmabend-Kiste</h2>
           <template v-if="pool.length">
             <p class="muted small-text">{{ pool.length }} {{ pool.length === 1 ? 'Film' : 'Filme' }} aus {{ poolQuelle }}. Je mehr Stimmen, desto größer die Chance – je seltener die Farbe, desto unwahrscheinlicher.</p>
-            <KistenOeffnung :pool="pool" @result="gewinner = $event" />
+            <KistenOeffnung :pool="pool" />
           </template>
           <p v-else-if="vorschlaege.length" class="muted">Gegen alle Vorschläge gibt es ein Veto – schlagt noch etwas vor.</p>
           <p v-else class="muted">Sobald es Vorschläge (oder Filme auf der Merkliste) gibt, kann die Kiste geöffnet werden.</p>
 
-          <div v-if="gewinner" class="winner" role="status">
-            <span class="muted small-text">Heute läuft</span>
+          <div v-if="gewinner && !kiste.buehne" class="winner" role="status">
+            <span class="muted small-text">Film des Abends<template v-if="app.userById(kiste.aktuell.von)"> · aus der Kiste von {{ app.userById(kiste.aktuell.von).name }}</template></span>
             <strong>{{ gewinner.title }}</strong>
             <div class="row">
               <button class="small" @click="ui.open(gewinner)">Details</button>
               <button v-if="app.me" class="small primary" @click="gewinnerGesehen"><Icon name="gesehen" :size="14" /> Geschaut</button>
+              <button v-if="kiste.darfOeffnen" class="ghost small" @click="kiste.zuruecknehmen()">Zurücknehmen</button>
             </div>
           </div>
         </div>
@@ -237,7 +242,7 @@ const EVENT_TEXT = {
 .termin { border-top: 1px solid var(--line); padding-top: 0.6rem; font-size: 0.9rem; }
 .onair {
   display: flex; align-items: center; gap: 0.8rem; margin-bottom: 1rem; padding: 0.8rem 1rem; text-decoration: none;
-  border-radius: var(--radius); background: linear-gradient(90deg, rgba(229, 9, 20, 0.22), rgba(229, 9, 20, 0.06)); border: 1px solid rgba(229, 9, 20, 0.45);
+  border-radius: var(--radius); background: linear-gradient(90deg, color-mix(in srgb, var(--accent) 22%, transparent), color-mix(in srgb, var(--accent) 6%, transparent)); border: 1px solid rgba(229, 9, 20, 0.45);
 }
 .onair:hover { border-color: var(--accent); }
 .onair .badge { display: inline-flex; align-items: center; gap: 6px; background: var(--accent); color: #fff; font-size: 0.72rem; font-weight: 800; letter-spacing: 0.08em; padding: 3px 8px; border-radius: 5px; }

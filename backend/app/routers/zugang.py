@@ -30,7 +30,7 @@ router = APIRouter(prefix="/api", tags=["zugang"])
 # Paths that stay reachable without access: the door itself, the health check,
 # and the Kino endpoints that authenticate on their own (MediaMTX callback,
 # OBS publishing with its stream key).
-OFFEN = ("/api/health", "/api/zugang", "/api/kino/mtx-auth", "/api/kino/whip", "/api/kino/sitzung/whip/")
+OFFEN = ("/api/health", "/api/zugang", "/api/ueber", "/api/kino/mtx-auth", "/api/kino/whip", "/api/kino/sitzung/whip/")
 
 # Wrong codes: per client IP, plus a cap for everyone together. Tokens can't be
 # guessed anyway; this keeps the door quiet.

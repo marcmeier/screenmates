@@ -8,6 +8,8 @@
   --muted: #8b8b99;
   --accent: #e50914;
   --accent-soft: rgba(229, 9, 20, 0.14);
+  --accent-hover: #f6121e;
+  --on-accent: #fff; /* text on accent-coloured buttons */
   --gold: #f5a623;
   --ok: #3ecf8e;
   --sidebar: 250px;
@@ -23,7 +25,7 @@ body {
   margin: 0;
   background: var(--bg);
   color: var(--text);
-  font-family: 'Inter Variable', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  font-family: var(--schrift, 'Inter Variable', system-ui, -apple-system, 'Segoe UI', sans-serif);
   font-optical-sizing: auto;
   font-size: 15px;
   line-height: 1.45;
@@ -53,11 +55,11 @@ a.button {
   transition: border-color 0.15s, background 0.15s, color 0.15s, transform 0.1s;
 }
 button:hover:not(:disabled),
-a.button:hover { border-color: #3a3a46; background: var(--bg-raised); }
+a.button:hover { border-color: color-mix(in srgb, var(--line) 60%, #fff 12%); background: var(--bg-raised); }
 button:active:not(:disabled) { transform: translateY(1px); }
 button:disabled { opacity: 0.45; cursor: not-allowed; }
-button.primary { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; }
-button.primary:hover:not(:disabled) { background: #f6121e; border-color: #f6121e; }
+button.primary { background: var(--accent); border-color: var(--accent); color: var(--on-accent); font-weight: 600; }
+button.primary:hover:not(:disabled) { background: var(--accent-hover); border-color: var(--accent-hover); }
 button.ghost { background: transparent; border-color: transparent; color: var(--muted); }
 button.ghost:hover:not(:disabled) { color: var(--text); background: var(--bg-soft); border-color: transparent; }
 button.small { padding: 0.3rem 0.6rem; font-size: 0.8rem; }

@@ -25,14 +25,20 @@ function send() {
 
 <template>
   <div class="note" :class="{ nested: depth > 0 }">
-    <UserAvatar :user-id="note.user_id" link />
+    <span v-if="note.geloescht" class="avatar leer" aria-hidden="true"></span>
+    <UserAvatar v-else :user-id="note.user_id" link />
     <div class="content">
-      <div class="head">
-        <strong>{{ app.userById(note.user_id)?.name || 'Gelöscht' }}</strong>
-        <time class="muted" :datetime="note.created_at">{{ vorWann(note.created_at) }}</time>
-      </div>
-      <p>{{ note.text }}</p>
-      <div class="tools">
+      <p v-if="note.geloescht" class="platzhalter">
+        {{ note.geloescht === 'admin' ? 'Von einem Admin entfernt' : 'Vom Ersteller gelöscht' }}
+      </p>
+      <template v-else>
+        <div class="head">
+          <strong>{{ app.userById(note.user_id)?.name || 'Gelöscht' }}</strong>
+          <time class="muted" :datetime="note.created_at">{{ vorWann(note.created_at) }}</time>
+        </div>
+        <p>{{ note.text }}</p>
+      </template>
+      <div v-if="!note.geloescht" class="tools">
         <button class="ghost small" :class="{ hearted: hearted() }" :disabled="!app.me" :aria-pressed="hearted()" @click="emit('heart', note.id)">
           <Icon name="herz" :size="14" /> {{ note.hearts.length || '' }}
         </button>
@@ -58,6 +64,8 @@ function send() {
 
 <style scoped>
 .note { display: flex; gap: 0.6rem; margin-top: 0.7rem; }
+.platzhalter { font-style: italic; color: var(--muted); font-size: 0.85rem; margin: 0.3rem 0; }
+.avatar.leer { background: var(--bg-raised); border: 1px dashed var(--line); }
 .note.nested { margin-top: 0.5rem; }
 .content { flex: 1; min-width: 0; }
 .head { display: flex; gap: 0.5rem; align-items: baseline; font-size: 0.85rem; }

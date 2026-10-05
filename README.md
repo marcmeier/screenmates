@@ -13,7 +13,8 @@ Drei Bereiche für die drei Dinge, für die man herkommt:
 - **Filmabend** – wer ist dabei, **Termin und Einladungskarte** für den Gruppenchat, gerankte
   Vorschläge der Gruppe, ein **Veto** pro Person,
   die **Filmabend-Kiste**, die wie eine CS2-Kiste aufgeht (Seltenheitsfarben nach den echten
-  Chancen, Stimmen erhöhen sie), Hausregeln & Infos und ein
+  Chancen, Stimmen erhöhen sie) – der Gastgeber öffnet sie **für alle gleichzeitig**, alle sehen
+  live dasselbe Band und denselben Gewinner –, Hausregeln & Infos und ein
   Aktivitäts-Feed. Dazu **„Heute vor einem Jahr"**: was ihr um dieses Datum früher geschaut habt.
 - **Finden** – zum **Stöbern** Regale wie bei einem Streamingdienst: was bei euch im Abo läuft,
   das Angebot von Netflix, Prime Video, Disney+ & Co., Genre-Regale (Horror, Komödie, Thriller …),
@@ -39,6 +40,9 @@ Filmabend, ihre Chronik, Merkliste und ihr eigenes Kino, sichtbar nur für ihre 
 Level und Erfolge gelten serverweit. Server-Admins legen Gruppen an, Gruppen-Admins nehmen Leute
 auf ([`docs/GRUPPEN.md`](docs/GRUPPEN.md)).
 
+**Live:** Was Freunde bewerten, kommentieren, merken oder vorschlagen, erscheint bei allen ohne
+Neuladen. Jede Person stellt sich ihr **Farbschema und ihre Schrift** ein (bleibt dunkel).
+
 **Erfolge** wie bei Xbox und Steam: Filmabende, Kritiken, Gästebuch, Termine und Kino schalten
 Erfolge frei, Punkte ergeben ein Level am Avatar, jede Person hat ein Profil mit Vitrine – so
 gebaut, dass sich Spammen nicht lohnt ([`docs/ERFOLGE.md`](docs/ERFOLGE.md)).
@@ -48,7 +52,9 @@ Gruppe erzeugen Links für ihre Gruppe – wahlweise „direkt aufnehmen“ (per
 „mit Freigabe“ (z. B. im Gruppenchat), mit Ablauf und Nutzungslimit, jederzeit widerrufbar. Wer schon
 einen Namen hat, tritt mit einem Link einer weiteren Gruppe bei. Admins verwalten außerdem alle
 Profile: umbenennen, Farbe, Admin-Recht, Film-Passwort zurücksetzen, überall abmelden, löschen. Der
-erste Name einer neuen Installation wird Admin.
+erste Name einer neuen Installation wird Admin. In der **Verwaltung** sehen Admins außerdem,
+wie oft die KI-Suche genutzt wurde und was sie gekostet hat. Eine **Über-Seite** nimmt Impressum,
+Datenschutzhinweise und Spendenlinks auf – erreichbar auch ohne Einladung.
 
 Mit TMDB-Key ist der ganze TMDB-Katalog verfügbar, ohne Key gibt es einen Demo-Katalog.
 
@@ -201,4 +207,3 @@ werden nicht übernommen.
 - Kino: Chat und Reaktionen während der Vorstellung
 - Video-Clips (Szenen ausschneiden und teilen) wie im Original
 - Serien (braucht einen Schlüssel `media_type` + `id`)
-- Live-Updates per Server-Sent Events statt Neuladen

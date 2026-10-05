@@ -51,7 +51,8 @@ async function heart(noteId) {
 }
 
 async function removeNote(noteId) {
-  if (!confirm('Kommentar löschen?')) return
+  // With replies the thread stays and a placeholder remains – say so.
+  if (!confirm('Kommentar löschen? Hat schon jemand geantwortet, bleibt an seiner Stelle „gelöscht“ stehen.')) return
   await api.del(`/api/watched-notes/${noteId}`)
   ui.changed()
 }

@@ -2,6 +2,7 @@
 import { ref } from 'vue'
 import { useApp } from '../stores/app'
 import Icon from './Icon.vue'
+import UeberInhalt from './UeberInhalt.vue'
 
 // The front door: screenmates is invite-only. A link (#/einladung/<code>) opens it
 // by itself; here you can also paste the link or code you got.
@@ -29,6 +30,8 @@ async function rein() {
     busy.value = false
   }
 }
+// Imprint and privacy notice: for everyone, also without an invitation.
+const ueber = ref(location.hash.startsWith('#/ueber'))
 </script>
 
 <template>
@@ -44,11 +47,15 @@ async function rein() {
       </form>
       <p v-if="app.einladungFehler || error" class="error" role="alert">{{ error || app.einladungFehler }}</p>
     </div>
+    <button class="ghost small rechtliches" :aria-expanded="ueber" @click="ueber = !ueber">Über · Impressum · Datenschutz</button>
+    <UeberInhalt v-if="ueber" class="ueber" />
   </main>
 </template>
 
 <style scoped>
-.door { min-height: 100vh; display: grid; place-items: center; padding: 1.5rem; }
+.door { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1rem; padding: 1.5rem; }
+.rechtliches { color: var(--muted); }
+.ueber { width: min(760px, 100%); text-align: left; }
 .card { width: min(480px, 100%); padding: 2rem; text-align: center; }
 .brand { font-weight: 800; font-size: 1.6rem; letter-spacing: -0.03em; }
 .brand span { color: var(--accent); }

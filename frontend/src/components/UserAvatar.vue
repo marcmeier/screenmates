@@ -23,7 +23,7 @@ const titel = computed(() => (u.value ? `${u.value.name}${level.value > 1 ? ` ·
   <component
     :is="link && u ? 'a' : 'span'"
     class="avatar"
-    :href="link && u ? `#/erfolge/person/${u.id}` : undefined"
+    :href="link && u ? `#/profil/person/${u.id}` : undefined"
     :style="{ background: u?.color || '#555' }"
     :title="titel"
   >

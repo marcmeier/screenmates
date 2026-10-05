@@ -86,6 +86,7 @@ def _payload(db: DBSession, entries: list[Watched]) -> list[dict]:
             "id": n.id,
             "user_id": n.user_id,
             "text": n.text,
+            "geloescht": n.geloescht,
             "created_at": iso(n.created_at),
             "hearts": hearts[n.id],
             "replies": [],
@@ -162,6 +163,10 @@ async def add_watched(
     # Whoever suggested it hit the mark (counts once the evening is confirmed).
     for s in db.exec(select(Suggestion).where(Suggestion.movie_id == body.movie_id, Suggestion.gruppe_id == gid)).all():
         erfolge.protokoll(db, "treffer", s.user_id, str(w.id))
+    # Watching the film of the evening closes it.
+    from .kiste import gesehen
+
+    gesehen(db, gid, body.movie_id)
     # Seeing a film fulfils it: drop it from the wishlist, the open suggestions and any veto.
     for stale in [
         *db.exec(select(Wishlist).where(Wishlist.movie_id == body.movie_id, Wishlist.gruppe_id == gid)).all(),
@@ -268,9 +273,32 @@ def delete_note(
         raise HTTPException(404)
     _get(db, n.watched_id, gid)
     require_owner_or_gruppen_admin(n.user_id, user, admin)
+    if _antworten(db, n.id):
+        # Someone replied: keep the thread, leave a placeholder instead of the comment.
+        n.text = ""
+        n.geloescht = "ersteller" if user is not None and n.user_id == user.id else "admin"
+        for h in db.exec(select(NoteHeart).where(NoteHeart.note_id == n.id)).all():
+            db.delete(h)
+        db.add(n)
+        db.commit()
+        return {"ok": True, "platzhalter": True}
+    eltern = n.parent_id
     db.delete(n)
+    db.flush()
+    # A placeholder whose last reply just went has nothing left to hold together.
+    while eltern is not None:
+        p = db.get(WatchedNote, eltern)
+        if p is None or not p.geloescht or _antworten(db, p.id):
+            break
+        eltern = p.parent_id
+        db.delete(p)
+        db.flush()
     db.commit()
-    return {"ok": True}
+    return {"ok": True, "platzhalter": False}
+
+
+def _antworten(db: DBSession, note_id: int) -> bool:
+    return db.exec(select(WatchedNote.id).where(WatchedNote.parent_id == note_id).limit(1)).first() is not None
 
 
 @router.post("/watched/hearts")
@@ -284,6 +312,8 @@ def heart(
     if n is None:
         raise HTTPException(404)
     _get(db, n.watched_id, gid)
+    if n.geloescht:
+        raise HTTPException(409, "Dieser Kommentar wurde gelöscht.")
     existing = db.exec(select(NoteHeart).where(NoteHeart.note_id == body.note_id, NoteHeart.user_id == user.id)).first()
     if existing:
         db.delete(existing)

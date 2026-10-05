@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import json
 import re
+from dataclasses import dataclass
 from typing import Any
 
 import httpx
@@ -28,6 +29,16 @@ class KIError(Exception):
     pass
 
 
+@dataclass
+class Nutzung:
+    """What one request used, as the provider reports it (for the admins' overview)."""
+
+    modell: str = ""
+    tokens_ein: int = 0
+    tokens_aus: int = 0
+    kosten: float | None = None  # USD; only OpenRouter reports it
+
+
 def _parse(text: str) -> list[dict[str, Any]]:
     match = re.search(r"\[.*\]", text, re.DOTALL)
     if not match:
@@ -39,21 +50,25 @@ def _parse(text: str) -> list[dict[str, Any]]:
     return [i for i in items if isinstance(i, dict) and isinstance(i.get("titel") or i.get("originaltitel"), str)]
 
 
-async def vorschlaege(beschreibung: str, anzahl: int, vermeiden: list[str]) -> list[dict[str, Any]]:
+async def vorschlaege(
+    beschreibung: str, anzahl: int, vermeiden: list[str], nutzung: Nutzung | None = None
+) -> list[dict[str, Any]]:
     prompt = f"Beschreibung: {beschreibung.strip() or 'Überrasch uns mit einem guten Film.'}\n"
     prompt += f"Schlage {anzahl} passende Filme vor."
     if vermeiden:
         prompt += " Diese kennen wir schon, bitte nicht vorschlagen: " + "; ".join(vermeiden[:150])
     ask = _openrouter if settings.llm_backend == "openrouter" else _anthropic
+    nutzung = nutzung if nutzung is not None else Nutzung()
+    nutzung.modell = settings.llm_model_name
     try:
         async with httpx.AsyncClient(timeout=60) as client:
-            text = await ask(client, prompt)
+            text = await ask(client, prompt, nutzung)
     except httpx.HTTPError as e:
         raise KIError("Die KI ist gerade nicht erreichbar.") from e
     return _parse(text)
 
 
-async def _anthropic(client: httpx.AsyncClient, prompt: str) -> str:
+async def _anthropic(client: httpx.AsyncClient, prompt: str, nutzung: Nutzung) -> str:
     r = await client.post(
         f"{settings.llm_url}/messages",
         headers={
@@ -69,10 +84,13 @@ async def _anthropic(client: httpx.AsyncClient, prompt: str) -> str:
         },
     )
     _check(r)
+    usage = r.json().get("usage") or {}
+    nutzung.tokens_ein = int(usage.get("input_tokens") or 0)
+    nutzung.tokens_aus = int(usage.get("output_tokens") or 0)
     return "".join(block.get("text", "") for block in r.json().get("content", []) if block.get("type") == "text")
 
 
-async def _openrouter(client: httpx.AsyncClient, prompt: str) -> str:
+async def _openrouter(client: httpx.AsyncClient, prompt: str, nutzung: Nutzung) -> str:
     """OpenAI-compatible chat completions, as spoken by OpenRouter."""
     r = await client.post(
         f"{settings.llm_url}/chat/completions",
@@ -90,9 +108,16 @@ async def _openrouter(client: httpx.AsyncClient, prompt: str) -> str:
             # list is written. A list of titles needs knowledge, not thought: off is faster
             # and cheaper. Models that cannot switch it off ignore the setting.
             "reasoning": {"enabled": False},
+            # OpenRouter then reports the cost of the request (in USD) along with the tokens.
+            "usage": {"include": True},
         },
     )
     _check(r)
+    usage = r.json().get("usage") or {}
+    nutzung.tokens_ein = int(usage.get("prompt_tokens") or 0)
+    nutzung.tokens_aus = int(usage.get("completion_tokens") or 0)
+    if isinstance(usage.get("cost"), int | float):
+        nutzung.kosten = float(usage["cost"])
     choice = (r.json().get("choices") or [{}])[0]
     content = (choice.get("message") or {}).get("content") or ""
     if isinstance(content, list):  # some models answer in content parts
