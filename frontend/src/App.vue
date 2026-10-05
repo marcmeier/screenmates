@@ -11,6 +11,8 @@ import Toasts from './components/Toasts.vue'
 import UserAvatar from './components/UserAvatar.vue'
 import Zugang from './components/Zugang.vue'
 import ErfolgPopup from './components/ErfolgPopup.vue'
+import GemeinsameKiste from './components/GemeinsameKiste.vue'
+import { useLive } from './stores/live'
 import { useErfolge } from './stores/erfolge'
 import { debounce } from './format'
 import { beiAenderung } from './api'
@@ -27,9 +29,10 @@ const PRIMARY = [
   { id: 'kino', label: 'Kino', icon: 'kino', comp: lazy(() => import('./components/tabs/KinoTab.vue')) },
 ]
 const SECONDARY = [
-  { id: 'erfolge', label: 'Erfolge', icon: 'pokal', comp: lazy(() => import('./components/tabs/ErfolgeTab.vue')) },
+  { id: 'profil', label: 'Profil & Erfolge', icon: 'profil', comp: lazy(() => import('./components/tabs/ProfilTab.vue')) },
   { id: 'wuensche', label: 'Wünsche & Ideen', icon: 'wuensche', comp: lazy(() => import('./components/tabs/WuenscheTab.vue')) },
-  { id: 'einstellungen', label: 'Einstellungen', icon: 'verwaltung', comp: lazy(() => import('./components/tabs/EinstellungenTab.vue')) },
+  // Only for (group) admins: kept apart from everyone's own profile.
+  { id: 'verwaltung', label: 'Verwaltung', icon: 'verwaltung', comp: lazy(() => import('./components/tabs/VerwaltungTab.vue')) },
 ]
 const ALL = [...PRIMARY, ...SECONDARY]
 
@@ -37,6 +40,7 @@ const app = useApp()
 const kino = useKino()
 // The Kino entry only exists once a media server is configured.
 const primary = computed(() => PRIMARY.filter((t) => t.id !== 'kino' || kino.enabled))
+const secondary = computed(() => SECONDARY.filter((t) => t.id !== 'verwaltung' || app.verwaltetGruppen))
 const ui = useUi()
 const route = useRoute()
 const failed = ref(false)
@@ -70,7 +74,7 @@ const reload = () => window.location.reload()
 // Phones hide the secondary navigation: there the profile button opens a menu instead.
 const menue = ref(false)
 function profilKlick() {
-  if (breit.value) navigate('einstellungen')
+  if (breit.value) navigate('profil')
   else menue.value = !menue.value
 }
 watch(() => route.value.tab, () => (menue.value = false))
@@ -113,6 +117,7 @@ async function start() {
     if (app.draussen) return
     if (!app.me) ui.loginOpen = true
     kino.startPolling()
+    useLive().starten()
   } catch {
     failed.value = true
   }
@@ -186,7 +191,7 @@ watch(
       <div class="bottom">
         <nav class="secondary-nav" aria-label="Weiteres">
           <a
-            v-for="t in SECONDARY"
+            v-for="t in secondary"
             :key="t.id"
             :href="`#/${t.id}`"
             class="nav small"
@@ -196,7 +201,7 @@ watch(
           >
             <Icon :name="t.icon" :size="16" />
             <span :class="{ 'sr-only': eingeklappt }">{{ t.label }}</span>
-            <span v-if="t.id === 'einstellungen' && app.antraege" class="antraege" aria-hidden="true" :title="`${app.antraege} offene Anträge`">{{ app.antraege }}</span>
+            <span v-if="t.id === 'verwaltung' && app.antraege" class="antraege" aria-hidden="true" :title="`${app.antraege} offene Anträge`">{{ app.antraege }}</span>
           </a>
           <button
             class="nav small collapse"
@@ -209,18 +214,19 @@ watch(
           </button>
         </nav>
 
-        <button v-if="app.me" class="me" :class="{ admin: app.admin }" :aria-expanded="breit ? undefined : menue" :title="eingeklappt ? `${app.me.name}${app.admin ? ' (Admin)' : ''} – Einstellungen` : 'Profil & Einstellungen'" @click="profilKlick">
+        <button v-if="app.me" class="me" :class="{ admin: app.admin }" :aria-expanded="breit ? undefined : menue" :title="eingeklappt ? `${app.me.name}${app.admin ? ' (Admin)' : ''} – Profil` : 'Profil & Erfolge'" @click="profilKlick">
           <UserAvatar :user="app.me" />
           <span class="name" :class="{ 'sr-only': eingeklappt }">{{ app.me.name }}</span>
           <span v-if="app.admin && !eingeklappt" class="admin-badge">Admin</span>
         </button>
         <div v-if="menue && !breit" class="menue panel" role="menu" @click="menue = false">
-          <a href="#/erfolge" role="menuitem" class="eintrag">
-            <Icon name="pokal" :size="18" /> Erfolge <span v-if="app.me?.level" class="muted">Level {{ app.me.level }}</span>
+          <a href="#/profil" role="menuitem" class="eintrag">
+            <Icon name="pokal" :size="18" /> Profil & Erfolge <span v-if="app.me?.level" class="muted">Level {{ app.me.level }}</span>
           </a>
+          <a href="#/profil/einstellungen" role="menuitem" class="eintrag"><Icon name="profil" :size="18" /> Einstellungen</a>
           <a href="#/wuensche" role="menuitem" class="eintrag"><Icon name="wuensche" :size="18" /> Wünsche & Ideen</a>
-          <a href="#/einstellungen" role="menuitem" class="eintrag">
-            <Icon name="verwaltung" :size="18" /> Einstellungen
+          <a v-if="app.verwaltetGruppen" href="#/verwaltung" role="menuitem" class="eintrag">
+            <Icon name="verwaltung" :size="18" /> Verwaltung
             <span v-if="app.antraege" class="antraege">{{ app.antraege }}</span>
           </a>
           <button role="menuitem" class="eintrag ghost" @click="app.logout()"><Icon name="logout" :size="18" /> Abmelden</button>
@@ -259,6 +265,7 @@ watch(
 
   <NamensWahl v-if="ui.loginOpen && !app.draussen" />
   <ErfolgPopup v-if="!app.draussen" />
+  <GemeinsameKiste v-if="!app.draussen" />
   <MovieDetail v-if="ui.detail" />
   <Toasts />
 </template>

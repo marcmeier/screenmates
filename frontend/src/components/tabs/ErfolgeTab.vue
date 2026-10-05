@@ -9,7 +9,7 @@ import ErfolgKachel from '../ErfolgKachel.vue'
 import UserAvatar from '../UserAvatar.vue'
 
 // Achievements: everyone's level and showcase (no ranking), the latest unlocks,
-// your own progress – and a profile page per person (#/erfolge/person/<id>).
+// your own progress – and a profile page per person (#/profil/person/<id>).
 const app = useApp()
 const ui = useUi()
 const route = useRoute()
@@ -65,7 +65,7 @@ const name = (id) => app.userById(id)?.name || 'Jemand'
   <div class="page">
     <!-- profile of one person -->
     <template v-if="personId != null">
-      <a href="#/erfolge" class="back muted">← Alle Erfolge</a>
+      <a :href="eigenes ? '#/profil' : '#/profil'" class="back muted">← {{ eigenes ? 'Mein Profil' : 'Zu meinem Profil' }}</a>
       <section v-if="profil" class="panel kopf">
         <UserAvatar :user-id="personId" class="gross" />
         <div>
@@ -108,7 +108,7 @@ const name = (id) => app.userById(id)?.name || 'Jemand'
 
     <!-- overview -->
     <template v-else>
-      <header class="page-head">
+      <header v-if="!eingebettet" class="page-head">
         <h1>Erfolge</h1>
         <p>Für Filmabende, Kritiken, Kino und alles, was die Gruppe zusammenbringt. Punkte gibt es nur für Erfolge – Masse allein bringt nichts.</p>
       </header>
@@ -127,13 +127,13 @@ const name = (id) => app.userById(id)?.name || 'Jemand'
           </div>
           <small class="muted">Noch {{ ich.naechstes_ab - ich.punkte }} P bis Level {{ ich.level + 1 }}</small>
         </div>
-        <button class="small" @click="navigate('erfolge', 'person', app.me.id)">Mein Profil & Vitrine</button>
+        <button class="small" @click="navigate('profil', 'person', app.me.id)">Meine Vitrine</button>
       </section>
 
       <section v-if="daten" class="panel">
         <h2>Die Gruppe</h2>
         <div class="gruppe">
-          <a v-for="g in daten.gruppe" :key="g.user_id" :href="`#/erfolge/person/${g.user_id}`" class="mitglied">
+          <a v-for="g in daten.gruppe" :key="g.user_id" :href="`#/profil/person/${g.user_id}`" class="mitglied">
             <UserAvatar :user-id="g.user_id" />
             <span class="wer">
               <strong>{{ name(g.user_id) }}</strong>
@@ -152,7 +152,7 @@ const name = (id) => app.userById(id)?.name || 'Jemand'
           <li v-for="(n, i) in daten.neueste" :key="i">
             <UserAvatar :user-id="n.user_id" />
             <span class="was">
-              <a :href="`#/erfolge/person/${n.user_id}`">{{ name(n.user_id) }}</a>:
+              <a :href="`#/profil/person/${n.user_id}`">{{ name(n.user_id) }}</a>:
               {{ katalog[n.key]?.emoji }} {{ katalog[n.key]?.name }}
             </span>
             <time class="muted" :datetime="n.am">{{ vorWann(n.am) }}</time>

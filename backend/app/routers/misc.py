@@ -20,6 +20,8 @@ from ..models import (
     Erfolg,
     Feature,
     Info,
+    KiAnfrage,
+    Kistenoeffnung,
     Movie,
     Suggestion,
     User,
@@ -30,7 +32,7 @@ from ..models import (
     now,
 )
 from ..serialize import iso, movie_dict, with_flags
-from ..session import require_admin
+from ..session import current_user, require_admin
 from ..util import upsert_movie
 
 router = APIRouter(prefix="/api", tags=["misc"])
@@ -169,7 +171,7 @@ def events(limit: int = 30, gid: int = Depends(aktive_gruppe), db: DBSession = D
     for n in db.exec(
         select(WatchedNote)
         .join(Watched)
-        .where(Watched.gruppe_id == gid)
+        .where(Watched.gruppe_id == gid, WatchedNote.geloescht == "")
         .order_by(col(WatchedNote.created_at).desc())
         .limit(limit)
     ):
@@ -191,6 +193,23 @@ def events(limit: int = 30, gid: int = Depends(aktive_gruppe), db: DBSession = D
         )
     for f in db.exec(select(Feature).order_by(col(Feature.created_at).desc()).limit(limit)):
         feed.append({"typ": "wunsch", "at": f.created_at, "wer": names.get(f.user_id), "text": f.text[:120]})
+    for k in db.exec(
+        select(Kistenoeffnung)
+        .where(Kistenoeffnung.gruppe_id == gid)
+        .order_by(col(Kistenoeffnung.start).desc())
+        .limit(limit)
+    ):
+        start = k.start if k.start.tzinfo else k.start.replace(tzinfo=now().tzinfo)
+        if start <= now():  # not before the countdown is over: no spoilers in the feed
+            feed.append(
+                {
+                    "typ": "kiste",
+                    "at": k.start,
+                    "wer": names.get(k.user_id),
+                    "film": titles.get(k.movie_id),
+                    "movie_id": k.movie_id,
+                }
+            )
     for e in db.exec(
         select(Erfolg)
         .where(col(Erfolg.entzogen).is_(False), col(Erfolg.rueckwirkend).is_(False))
@@ -219,17 +238,35 @@ def events(limit: int = 30, gid: int = Depends(aktive_gruppe), db: DBSession = D
 
 
 @router.post("/ki-suche")
-async def ki_suche(body: KiSuche, db: DBSession = Depends(get_session)):
+async def ki_suche(body: KiSuche, db: DBSession = Depends(get_session), user: User | None = Depends(current_user)):
     if not settings.llm_enabled:
         raise HTTPException(503, "Die KI-Suche ist nicht eingerichtet (LLM_API_KEY fehlt).")
     gesehen_ids = set(db.exec(select(Watched.movie_id)).all())
     vermeiden = (
         list(db.exec(select(Movie.title).where(col(Movie.id).in_(gesehen_ids))).all()) if body.ohne_gesehene else []
     )
+    nutzung = ki.Nutzung()
+    fehler = ""
     try:
-        ideen = await ki.vorschlaege(body.beschreibung, body.limit + 4, vermeiden)
+        ideen = await ki.vorschlaege(body.beschreibung, body.limit + 4, vermeiden, nutzung)
     except ki.KIError as e:
-        raise HTTPException(502, str(e)) from e
+        fehler = str(e)
+        raise HTTPException(502, fehler) from e
+    finally:
+        # Every request is logged for the admins' overview, the failed ones too (they may cost as well).
+        db.add(
+            KiAnfrage(
+                user_id=user.id if user else None,
+                gruppe_id=aktuelle_gruppe(),
+                modell=nutzung.modell,
+                tokens_ein=nutzung.tokens_ein,
+                tokens_aus=nutzung.tokens_aus,
+                kosten=nutzung.kosten,
+                ok=not fehler,
+                fehler=fehler[:200],
+            )
+        )
+        db.commit()
 
     results: list[dict] = []
     seen: set[int] = set()

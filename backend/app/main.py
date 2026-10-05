@@ -19,7 +19,9 @@ from .routers import (
     features,
     gruppen,
     kino,
+    kiste,
     lists,
+    live,
     misc,
     profilbild,
     users,
@@ -52,6 +54,9 @@ app = FastAPI(
     dependencies=[Depends(zugang.zugang_pruefen), Depends(kontext)],
 )
 
+# Live updates: successful writes bump counters every open app polls (routers/live.py).
+app.middleware("http")(live.mitzaehlen)
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[o.strip() for o in settings.cors_origins.split(",") if o.strip()],
@@ -81,6 +86,8 @@ for r in (
     erfolge_api.router,
     gruppen.router,
     einladungen.router,
+    kiste.router,
+    live.router,
 ):
     app.include_router(r)
 

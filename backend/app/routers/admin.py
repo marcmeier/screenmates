@@ -8,7 +8,8 @@ calls; invitations are in `einladungen.py`.
 from __future__ import annotations
 
 import re
-from collections import Counter
+from collections import Counter, defaultdict
+from datetime import UTC, datetime, timedelta
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
@@ -16,9 +17,10 @@ from sqlalchemy.exc import IntegrityError
 from sqlmodel import Session as DBSession
 from sqlmodel import col, select
 
+from ..config import settings
 from ..db import get_session
 from ..gruppen import aufnehmen
-from ..models import Session, User
+from ..models import KiAnfrage, Session, User
 from ..serialize import iso, user_dict
 from ..session import require_admin
 from .users import clean_name, ensure_not_last_admin, in_einzige_gruppe, new_user
@@ -104,3 +106,60 @@ def logout_everywhere(user_id: int, db: DBSession = Depends(get_session)):
         db.delete(s)
     db.commit()
     return {"beendet": len(rows)}
+
+
+# --- KI usage ------------------------------------------------------------------
+
+
+@router.get("/ki-nutzung")
+def ki_nutzung(db: DBSession = Depends(get_session)):
+    """How much the KI search is used, and what it cost (as far as the provider says)."""
+    anfragen = db.exec(select(KiAnfrage).order_by(col(KiAnfrage.id).desc())).all()
+    jetzt = datetime.now(UTC)
+    heute = jetzt.replace(hour=0, minute=0, second=0, microsecond=0)
+
+    def at(a: KiAnfrage) -> datetime:
+        return a.at if a.at.tzinfo else a.at.replace(tzinfo=UTC)
+
+    def summe(auswahl: list[KiAnfrage]) -> dict:
+        kosten = [a.kosten for a in auswahl if a.kosten is not None]
+        return {
+            "anfragen": len(auswahl),
+            "fehler": sum(not a.ok for a in auswahl),
+            "tokens_ein": sum(a.tokens_ein for a in auswahl),
+            "tokens_aus": sum(a.tokens_aus for a in auswahl),
+            "kosten": round(sum(kosten), 6) if kosten else None,
+            "ohne_kosten": len(auswahl) - len(kosten),  # requests the provider didn't price
+        }
+
+    zeitraeume = {
+        "heute": [a for a in anfragen if at(a) >= heute],
+        "7_tage": [a for a in anfragen if at(a) >= jetzt - timedelta(days=7)],
+        "30_tage": [a for a in anfragen if at(a) >= jetzt - timedelta(days=30)],
+        "gesamt": list(anfragen),
+    }
+    pro_person: dict[int | None, list[KiAnfrage]] = defaultdict(list)
+    for a in anfragen:
+        pro_person[a.user_id].append(a)
+    return {
+        "aktiv": settings.llm_enabled,
+        "modell": settings.llm_model_name if settings.llm_enabled else None,
+        "anbieter": settings.llm_backend if settings.llm_enabled else None,
+        "summen": {k: summe(v) for k, v in zeitraeume.items()},
+        "pro_person": sorted(
+            ({"user_id": uid} | summe(v) for uid, v in pro_person.items()), key=lambda p: -p["anfragen"]
+        ),
+        "letzte": [
+            {
+                "at": iso(a.at),
+                "user_id": a.user_id,
+                "modell": a.modell,
+                "tokens_ein": a.tokens_ein,
+                "tokens_aus": a.tokens_aus,
+                "kosten": a.kosten,
+                "ok": a.ok,
+                "fehler": a.fehler,
+            }
+            for a in anfragen[:20]
+        ],
+    }

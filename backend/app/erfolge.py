@@ -287,7 +287,7 @@ def stand(db: DBSession) -> dict[int, Counter]:
     bewertet: dict[int, dict[int, int]] = defaultdict(dict)
     for wid, uid, stars in db.exec(select(WatchedRating.watched_id, WatchedRating.user_id, WatchedRating.stars)).all():
         bewertet[wid][uid] = stars
-    notizen = db.exec(select(WatchedNote)).all()
+    notizen = db.exec(select(WatchedNote).where(WatchedNote.geloescht == "")).all()  # placeholders don't count
     kommentiert: dict[int, set[int]] = defaultdict(set)
     for n in notizen:
         if n.user_id is not None:

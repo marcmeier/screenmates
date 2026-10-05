@@ -122,6 +122,8 @@ class WatchedNote(SQLModel, table=True):
     text: str = ""
     parent_id: int | None = Field(default=None, foreign_key="watchednote.id", ondelete="CASCADE")
     created_at: datetime = Field(default_factory=now)
+    # Deleted although someone replied: the thread stays, the comment becomes a placeholder.
+    geloescht: str = ""  # "" | "ersteller" | "admin"
 
 
 class NoteHeart(SQLModel, table=True):
@@ -305,3 +307,31 @@ class Ereignis(SQLModel, table=True):
     user_id: int | None = Field(default=None, foreign_key="user.id", index=True, ondelete="CASCADE")
     bezug: str = ""  # termin: date; kino: show start; treffer: watched id
     am: datetime = Field(default_factory=now)
+
+
+class Kistenoeffnung(SQLModel, table=True):
+    """The case opened for everyone (see routers/kiste.py); the winner is the film of the evening."""
+
+    id: int | None = Field(default=None, primary_key=True)
+    gruppe_id: int = Field(foreign_key="gruppe.id", index=True, ondelete="CASCADE")
+    user_id: int | None = Field(default=None, foreign_key="user.id", ondelete="SET NULL")  # who opened it
+    movie_id: int = Field(foreign_key="movie.id", ondelete="CASCADE")  # the winner
+    seed: int  # every browser builds the same strip from it
+    pool: str  # JSON [{"id", "gewicht"}]: the case as it was
+    start: datetime  # when the strip starts moving, everywhere
+    erledigt: bool = False  # watched, replaced or taken down
+
+
+class KiAnfrage(SQLModel, table=True):
+    """One KI search: who asked, which model, tokens and cost (shown to admins)."""
+
+    id: int | None = Field(default=None, primary_key=True)
+    at: datetime = Field(default_factory=now, index=True)
+    user_id: int | None = Field(default=None, foreign_key="user.id", ondelete="SET NULL")
+    gruppe_id: int | None = Field(default=None, foreign_key="gruppe.id", ondelete="SET NULL")
+    modell: str = ""
+    tokens_ein: int = 0
+    tokens_aus: int = 0
+    kosten: float | None = None  # USD as reported by OpenRouter; None when the provider doesn't say
+    ok: bool = True
+    fehler: str = ""

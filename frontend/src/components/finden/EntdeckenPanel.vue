@@ -198,7 +198,7 @@ const sichtbar = computed(() => (f.ohneGesehene ? items.value.filter((m) => !m.g
 
       <p v-if="gesamt && !hinweis" class="muted gesamt">{{ gesamtText }}</p>
       <p v-if="hinweis" class="notice hinweis">
-        {{ hinweis }} <a v-if="hinweis.includes('Abos')" href="#/einstellungen">Zu den Einstellungen</a>
+        {{ hinweis }} <a v-if="hinweis.includes('Abos')" href="#/profil/einstellungen">Zu den Einstellungen</a>
       </p>
       <MovieGrid
         v-else
