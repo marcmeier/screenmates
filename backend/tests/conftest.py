@@ -15,7 +15,7 @@ import pytest  # noqa: E402
 from fastapi.testclient import TestClient  # noqa: E402
 from sqlmodel import Session, select  # noqa: E402
 
-from app import tmdb  # noqa: E402
+from app import erfolge, tmdb  # noqa: E402
 from app.config import settings  # noqa: E402
 from app.db import engine  # noqa: E402
 from app.main import app  # noqa: E402
@@ -37,6 +37,10 @@ def client():
     kino._presence.clear()
     tmdb._cache.clear()
     kino._audience.clear()
+    kino._seit.clear()
+    kino._gezaehlt.clear()
+    kino._sender = None
+    erfolge._zuletzt = 0.0
     with TestClient(app) as c:
         yield c
 

@@ -10,6 +10,7 @@ from pydantic import BaseModel, Field
 from sqlmodel import Session as DBSession
 from sqlmodel import col, select
 
+from .. import erfolge
 from ..db import get_session
 from ..models import (
     Movie,
@@ -147,6 +148,9 @@ async def add_watched(body: AlsGesehen, user: User = Depends(require_user), db: 
     db.add(w)
     db.flush()
     db.add(WatchedParticipant(watched_id=w.id, user_id=user.id))
+    # Whoever suggested it hit the mark (counts once the evening is confirmed).
+    for s in db.exec(select(Suggestion).where(Suggestion.movie_id == body.movie_id)).all():
+        erfolge.protokoll(db, "treffer", s.user_id, str(w.id))
     # Seeing a film fulfils it: drop it from the wishlist, the open suggestions and any veto.
     for stale in [
         *db.exec(select(Wishlist).where(Wishlist.movie_id == body.movie_id)).all(),

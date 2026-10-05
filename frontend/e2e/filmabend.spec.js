@@ -198,7 +198,8 @@ test('a date for the evening and an invitation card for the group chat', async (
   await expect(einladung.locator('.text')).toContainText('Dabei: Marc')
   await expect(einladung.locator('.text')).toContainText('#/abend')
   const karte = einladung.getByRole('img', { name: 'Einladungskarte' })
-  await expect(karte).toBeVisible()
+  // Drawing the card (fonts, posters, canvas) can take a few seconds on a busy machine.
+  await expect(karte).toBeVisible({ timeout: 15_000 })
   expect(await karte.evaluate((img) => [img.naturalWidth, img.naturalHeight])).toEqual([1080, 1350])
   await expect(einladung.getByRole('link', { name: 'Bild speichern' })).toHaveAttribute('download', 'filmabend.png')
   await page.keyboard.press('Escape')
@@ -348,6 +349,19 @@ test('a profile picture replaces the initials everywhere', async () => {
   await expect(avatar).toBeVisible()
   await expect.poll(() => avatar.evaluate((img) => img.naturalWidth)).toBe(256)
   await expect(page.getByRole('button', { name: 'Bild ändern' })).toBeVisible()
+})
+
+test('achievements: the unlock pops up, and the showcase shows it', async () => {
+  // Unlocks are shown one after another; the picture's may queue behind the film protection's.
+  await expect(page.locator('.popup', { hasText: 'Gesicht zeigen' })).toBeVisible({ timeout: 15_000 })
+  await nav('Erfolge')
+  await expect(page.locator('.stand')).toContainText('Level 1')
+  await expect(page.locator('.kachel', { hasText: 'Sicher ist sicher' })).toHaveClass(/offen/)
+  await expect(page.locator('.kachel', { hasText: '???' }).first()).toBeVisible() // secret ones stay hidden
+  await page.getByRole('button', { name: 'Mein Profil & Vitrine' }).click()
+  await page.getByRole('button', { name: 'Gesicht zeigen in die Vitrine' }).click()
+  await expect(page.locator('.vitrine')).toContainText('Gesicht zeigen')
+  await nav('Filmabend')
 })
 
 test('info card on the evening page renders sanitised markdown', async () => {

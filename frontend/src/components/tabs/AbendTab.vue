@@ -97,6 +97,7 @@ const EVENT_TEXT = {
   kommentar: (e) => `${e.wer ?? 'Jemand'}: „${e.text}“`,
   wunsch: (e) => `${e.wer ?? 'Jemand'} wünscht sich: ${e.text}`,
   veto: (e) => `${e.wer ?? 'Jemand'} legt ein Veto gegen „${e.film}“ ein`,
+  erfolg: (e) => `${e.emoji} ${e.wer ?? 'Jemand'} hat ${e.name} freigeschaltet`,
   termin: (e) => {
     const t = terminText({ termin: e.termin })
     return `${e.wer ?? 'Jemand'} legt den Termin fest: ${t.tag}, ${t.zeit}`
@@ -124,7 +125,7 @@ const EVENT_TEXT = {
       <div class="row">
         <span class="muted">Dabei:</span>
         <template v-if="app.dabei.length">
-          <span v-for="u in app.dabei" :key="u.id" class="chip who"><UserAvatar :user="u" /> {{ u.name }}</span>
+          <span v-for="u in app.dabei" :key="u.id" class="chip who"><UserAvatar :user="u" link /> {{ u.name }}</span>
         </template>
         <span v-else class="muted">noch niemand</span>
         <span class="spacer"></span>

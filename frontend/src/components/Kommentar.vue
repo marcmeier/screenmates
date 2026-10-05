@@ -25,7 +25,7 @@ function send() {
 
 <template>
   <div class="note" :class="{ nested: depth > 0 }">
-    <UserAvatar :user-id="note.user_id" />
+    <UserAvatar :user-id="note.user_id" link />
     <div class="content">
       <div class="head">
         <strong>{{ app.userById(note.user_id)?.name || 'Gelöscht' }}</strong>

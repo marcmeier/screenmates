@@ -50,6 +50,16 @@ Jeder Film trägt die Gruppen-Flags `gesehen`, `gemerkt` und `vorgeschlagen_von`
 | POST | `/dabei` | N | Eigene Teilnahme am nächsten Abend umschalten |
 | DELETE | `/dabei` | A | Teilnahme aller zurücksetzen |
 
+## Erfolge
+
+| Methode | Pfad | Recht | Zweck |
+|---|---|:-:|---|
+| GET | `/erfolge` | – | Katalog (geheime als „???“, Seltenheit in %), Level/Titel/Vitrine aller, neueste Freischaltungen, eigener Stand mit Punkten und Fortschritt |
+| GET | `/erfolge/{id}` | – | Profil: Level, Titel, Vitrine, freigeschaltete Erfolge |
+| POST | `/erfolge/neu` | N | Prüfen und eigene noch nicht gezeigte Freischaltungen holen (für das Pop-up) |
+| PUT | `/erfolge/vitrine` | N | Bis zu drei eigene, freigeschaltete Erfolge ausstellen |
+| PATCH | `/admin/erfolge/{id}/{key}` | A | Erfolg entziehen (`entzogen: true`, bleibt entzogen) bzw. zurückgeben |
+
 ## Zugang & Verwaltung
 
 | Methode | Pfad | Recht | Zweck |

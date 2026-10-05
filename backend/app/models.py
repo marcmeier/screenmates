@@ -63,6 +63,7 @@ class User(SQLModel, table=True):
     is_admin: bool = False
     freigegeben: bool = True  # False: a name request waiting for an admin
     bild: str = ""  # token of the profile picture file, "" = none (see bilder.py)
+    vitrine: str = "[]"  # JSON: up to three achievement keys for the profile showcase
     created_at: datetime = Field(default_factory=now)
 
 
@@ -197,6 +198,8 @@ class AppMeta(SQLModel, table=True):
 
     id: int | None = Field(default=1, primary_key=True)
     last_sync: datetime | None = None
+    erfolge_seit: datetime | None = None  # achievements: data from before this counts as it is
+    erfolge_geprueft: bool = False  # the first check ran (its unlocks are marked retroactive)
 
 
 class KinoState(SQLModel, table=True):
@@ -231,3 +234,27 @@ class Info(SQLModel, table=True):
     id: int | None = Field(default=1, primary_key=True)
     text: str = ""
     updated_at: datetime = Field(default_factory=now)
+
+
+class Erfolg(SQLModel, table=True):
+    """An unlocked achievement (see erfolge.py). Permanent; admins can withdraw it."""
+
+    __table_args__ = (UniqueConstraint("user_id", "schluessel"),)
+
+    id: int | None = Field(default=None, primary_key=True)
+    user_id: int = Field(foreign_key="user.id", index=True, ondelete="CASCADE")
+    schluessel: str
+    am: datetime = Field(default_factory=now)
+    gesehen: bool = False  # the unlock pop-up has been shown
+    rueckwirkend: bool = False  # unlocked by the first check, for what happened before
+    entzogen: bool = False
+
+
+class Ereignis(SQLModel, table=True):
+    """Things achievements need that can't be read from the data afterwards."""
+
+    id: int | None = Field(default=None, primary_key=True)
+    typ: str = Field(index=True)  # termin | kino_gesendet | kino_geschaut | treffer
+    user_id: int | None = Field(default=None, foreign_key="user.id", index=True, ondelete="CASCADE")
+    bezug: str = ""  # termin: date; kino: show start; treffer: watched id
+    am: datetime = Field(default_factory=now)

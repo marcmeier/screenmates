@@ -19,6 +19,14 @@ function describe(status, body) {
   return `Anfrage fehlgeschlagen (${status}).`
 }
 
+// Called after every successful write (achievements check whether something unlocked).
+// Not for the Kino heartbeat, the door, or the achievements' own calls.
+const nachSchreiben = new Set()
+export function beiAenderung(fn) {
+  nachSchreiben.add(fn)
+}
+const STILL = ['/api/kino/da', '/api/erfolge', '/api/zugang']
+
 async function req(method, path, body, { signal, quiet = false } = {}) {
   const opts = { method, credentials: 'same-origin', headers: {}, signal }
   if (body instanceof Blob) {
@@ -50,6 +58,7 @@ async function req(method, path, body, { signal, quiet = false } = {}) {
     if (!quiet) ui.toast(err.message, 'error')
     throw err
   }
+  if (method !== 'GET' && !STILL.some((p) => path.startsWith(p))) nachSchreiben.forEach((fn) => fn())
   return data
 }
 

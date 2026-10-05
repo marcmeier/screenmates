@@ -109,9 +109,16 @@ button.chip.on { border-color: var(--accent); background: var(--accent-soft); co
 
 .avatar {
   width: 26px; height: 26px; border-radius: 50%; display: inline-grid; place-items: center;
-  font-size: 0.68rem; font-weight: 700; color: #0a0a0c; flex: none; overflow: hidden;
+  font-size: 0.68rem; font-weight: 700; color: #0a0a0c; flex: none; position: relative; text-decoration: none;
 }
-.avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.avatar img { width: 100%; height: 100%; object-fit: cover; display: block; border-radius: 50%; }
+/* Level badge: scales with the avatar's font size. */
+.avatar .lvl {
+  position: absolute; right: -0.45em; bottom: -0.35em; min-width: 1.55em; height: 1.55em; padding: 0 0.3em;
+  border-radius: 999px; display: grid; place-items: center; font-size: 0.78em; font-weight: 800; line-height: 1;
+  color: #0a0a0c; background: var(--gold); box-shadow: 0 0 0 2px var(--bg);
+}
+a.avatar:hover { box-shadow: 0 0 0 2px var(--accent); }
 .avatars { display: inline-flex; }
 .avatars .avatar + .avatar { margin-left: -6px; box-shadow: 0 0 0 2px var(--bg-soft); }
 

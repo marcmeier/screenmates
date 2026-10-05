@@ -56,7 +56,11 @@ def test_database_from_before_migrations_is_adopted_with_its_data(tmp_path):
     """0.2/0.3 created tables with create_all; abo/veto/abend and movie.keywords came later."""
     u = url(tmp_path)
     engine = create_engine(u)
-    old = [t for name, t in SQLModel.metadata.tables.items() if name not in ("abo", "veto", "abend", "zugang")]
+    old = [
+        t
+        for name, t in SQLModel.metadata.tables.items()
+        if name not in ("abo", "veto", "abend", "zugang", "erfolg", "ereignis")
+    ]
     SQLModel.metadata.create_all(engine, tables=old)
     engine.dispose()
     con = sqlite3.connect(tmp_path / "db.sqlite")
@@ -65,6 +69,9 @@ def test_database_from_before_migrations_is_adopted_with_its_data(tmp_path):
     con.execute("alter table user drop column is_admin")
     con.execute("alter table user drop column freigegeben")
     con.execute("alter table user drop column bild")  # 0.6 too
+    con.execute("alter table user drop column vitrine")
+    con.execute("alter table appmeta drop column erfolge_seit")
+    con.execute("alter table appmeta drop column erfolge_geprueft")
     con.execute("alter table session drop column zugang")
     con.execute("alter table session add column is_host boolean not null default 0")
     con.execute("create table hoststate (id integer primary key, movie_id integer)")

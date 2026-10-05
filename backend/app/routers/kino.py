@@ -21,6 +21,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request, Response
 from pydantic import BaseModel, Field
 from sqlmodel import Session as DBSession
 
+from .. import erfolge
 from ..config import settings
 from ..db import get_session
 from ..models import KinoState, Movie, User, now
@@ -34,6 +35,12 @@ PRESENCE_TTL = 25  # seconds without a heartbeat until a viewer counts as gone
 
 _presence: dict[int, float] = {}
 _audience: set[int] = set()  # everyone who watched during the current show
+
+# Achievements: who sent the current show, and who watched it for long enough.
+MIN_SCHAUEN = 300  # seconds of watching until a show counts
+_sender: int | None = None  # admin whose browser sends, or who set the programme (OBS)
+_seit: dict[int, float] = {}  # viewer -> first heartbeat of this show
+_gezaehlt: set[int] = set()  # viewers of this show already recorded
 
 
 class Programm(BaseModel):
@@ -95,7 +102,9 @@ async def status(db: DBSession = Depends(get_session)):
 
 
 @router.post("/programm", dependencies=[Depends(require_admin)])
-def set_programm(body: Programm, db: DBSession = Depends(get_session)):
+def set_programm(body: Programm, db: DBSession = Depends(get_session), user: User | None = Depends(current_user)):
+    global _sender
+    _sender = user.id if user else _sender  # OBS sends without a session: credit whoever set the programme
     st = _state(db)
     if body.movie_id is not None and db.get(Movie, body.movie_id) is None:
         raise HTTPException(422, "Film nicht im Katalog.")
@@ -106,11 +115,28 @@ def set_programm(body: Programm, db: DBSession = Depends(get_session)):
 
 
 @router.post("/da")
-def heartbeat(user: User = Depends(require_user)):
+def heartbeat(user: User = Depends(require_user), db: DBSession = Depends(get_session)):
     """Viewers ping while the player is open; that's the live audience."""
     _presence[user.id] = time.monotonic()
     _audience.add(user.id)
+    _zaehlen(db, user.id)
     return {"zuschauer": _viewers()}
+
+
+def _zaehlen(db: DBSession, uid: int) -> None:
+    """Record a viewer after MIN_SCHAUEN, and the sender once two others watched that long."""
+    st = _state(db)
+    if st.gestartet is None or uid == _sender or uid in _gezaehlt:
+        return
+    start = _seit.setdefault(uid, time.monotonic())
+    if time.monotonic() - start < MIN_SCHAUEN:
+        return
+    show = iso(st.gestartet)
+    _gezaehlt.add(uid)
+    erfolge.protokoll(db, "kino_geschaut", uid, show)
+    if len(_gezaehlt) == 2:
+        erfolge.protokoll(db, "kino_gesendet", _sender, show)
+    db.commit()
 
 
 @router.delete("/da")
@@ -171,6 +197,8 @@ async def mtx_auth(request: Request, db: DBSession = Depends(get_session)):
         db.add(st)
         db.commit()
         _audience.clear()
+        _seit.clear()
+        _gezaehlt.clear()
     return Response(status_code=200)
 
 
@@ -235,8 +263,16 @@ async def _relay(method: str, upstream: str, request: Request, db: DBSession, *,
 
 
 @router.post("/whip")
-async def whip(request: Request, db: DBSession = Depends(get_session), admin: bool = Depends(is_admin)):
+async def whip(
+    request: Request,
+    db: DBSession = Depends(get_session),
+    admin: bool = Depends(is_admin),
+    user: User | None = Depends(current_user),
+):
+    global _sender
     await _may_publish(request, db, admin)
+    if admin and user:
+        _sender = user.id
     # Browsers handle every candidate (and benefit from the TCP fallback); OBS-style
     # clients that authenticate with the stream key get UDP candidates only.
     return await _relay("POST", f"{PATH}/whip", request, db, udp_only=not admin)

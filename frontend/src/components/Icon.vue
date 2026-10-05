@@ -37,6 +37,7 @@ const PATHS = {
   extern: 'M14 4h6v6M20 4l-9 9M18 14v6H4V6h6',
   logout: 'M15 4h4v16h-4M10 8l-4 4 4 4M6 12h10',
   kiste: 'M3 8l9-5 9 5v8l-9 5-9-5zM3 8l9 5 9-5M12 13v8',
+  pokal: 'M8 4h8v5a4 4 0 0 1-8 0zM8 6H5a3 3 0 0 0 3 4M16 6h3a3 3 0 0 1-3 4M12 13v4M8 20h8M10 17h4',
   kalender: 'M4 6h16v14H4zM4 10h16M8 3v5M16 3v5',
   teilen: 'M18 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM6 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm12 7a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM8.6 13.5l6.8 4M15.4 6.5l-6.8 4',
   download: 'M12 4v11M7 10l5 5 5-5M5 20h14',

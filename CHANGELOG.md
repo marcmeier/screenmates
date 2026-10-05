@@ -3,6 +3,15 @@
 ## Unveröffentlicht
 
 ### Neu
+- **Erfolge** nach dem Vorbild von Xbox und Steam: 32 Erfolge in Bronze, Silber, Gold und
+  Platin für Filmabende, Kritiken, Gästebuch, Termine, Kino und Profil, dazu sechs geheime.
+  Punkte ergeben ein Level mit Titel, das als Abzeichen an jedem Avatar steht. Neue Erfolge
+  erscheinen als Pop-up und im Aktivitäts-Feed; jede Person hat ein Profil mit Vitrine für bis
+  zu drei Erfolge. Seltenheit und Fortschritt wie bei Steam, aber keine Rangliste.
+  **Ausnutzen lohnt sich nicht:** Punkte gibt es nur für Erfolge, Liken und Abstimmen wird nie
+  belohnt (nur Herzen *von verschiedenen anderen*), ein Filmabend zählt erst, wenn ihn eine andere
+  Person, die dabei war, bestätigt, rückdatierte Einträge zählen nicht. Was es vor dem Start schon
+  gab, zählt rückwirkend. Alle Regeln: [`docs/ERFOLGE.md`](docs/ERFOLGE.md).
 - **Profilbilder.** In den Einstellungen lädt man ein eigenes Bild hoch; es ersetzt überall die
   Initialen. Der Browser verkleinert Handyfotos vor dem Hochladen, der Server schneidet sie
   quadratisch zu (256 px, WebP) und kodiert sie neu – Ortsangaben und andere Metadaten der Fotos
@@ -43,6 +52,8 @@
 - Host-Modus mit Host-Film und `Strg+Shift+H` (ersetzt durch Admins).
 
 ### Behoben
+- E2E: Die Einladungskarte bekommt 15 statt 5 Sekunden zum Zeichnen – auf ausgelasteten Rechnern
+  scheiterte der Test gelegentlich.
 - **Das Kino-Bild hat eine feste Größe:** höchstens 1280 px breit und immer so groß, dass es samt
   Titelzeile ins Fenster passt – auf großen Monitoren musste man vorher scrollen. Auf dem Handy
   volle Breite, im Vollbild wie gehabt bildschirmfüllend.
