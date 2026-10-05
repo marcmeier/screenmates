@@ -10,7 +10,8 @@ RUN npm run build
 FROM python:3.13-slim
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
-    DATABASE_URL=sqlite:////data/screenmates.db
+    DATABASE_URL=sqlite:////data/screenmates.db \
+    MEDIA_DIR=/data/media
 WORKDIR /app/backend
 COPY backend/requirements.txt ./
 RUN pip install --no-cache-dir -r requirements.txt

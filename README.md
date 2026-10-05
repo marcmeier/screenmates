@@ -79,6 +79,7 @@ Alles optional, über `backend/.env` oder Umgebungsvariablen:
 | `DATABASE_URL` | Standard: SQLite in `backend/screenmates.db`. |
 | `COOKIE_SECURE` | `true` hinter HTTPS. |
 | `CORS_ORIGINS` | Nur nötig, wenn Frontend und API auf verschiedenen Origins laufen. |
+| `MEDIA_DIR` | Ablage für Profilbilder. Standard `backend/media`, im Docker-Image `/data/media` (im selben Volume wie die Datenbank – beim Backup mitnehmen). |
 | `FORWARDED_ALLOW_IPS` | Hinter einem Reverse Proxy dessen IP (bzw. Netze, kommagetrennt), damit uvicorn die echte Client-IP aus `X-Forwarded-For` übernimmt. Die Fehlversuche an der Zugangsfrage werden pro IP gezählt. |
 
 ### Admin-Werkzeug

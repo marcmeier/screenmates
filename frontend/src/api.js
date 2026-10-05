@@ -21,7 +21,10 @@ function describe(status, body) {
 
 async function req(method, path, body, { signal, quiet = false } = {}) {
   const opts = { method, credentials: 'same-origin', headers: {}, signal }
-  if (body !== undefined) {
+  if (body instanceof Blob) {
+    opts.headers['Content-Type'] = body.type || 'application/octet-stream'
+    opts.body = body
+  } else if (body !== undefined) {
     opts.headers['Content-Type'] = 'application/json'
     opts.body = JSON.stringify(body)
   }

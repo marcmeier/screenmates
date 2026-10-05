@@ -1,4 +1,5 @@
 import os
+import shutil
 import tempfile
 from pathlib import Path
 
@@ -6,6 +7,7 @@ from pathlib import Path
 # (and its cached settings) is imported. Real env vars beat backend/.env.
 _tmp = tempfile.mkdtemp(prefix="screenmates-test-")
 os.environ["DATABASE_URL"] = f"sqlite:///{_tmp}/test.db"
+os.environ["MEDIA_DIR"] = f"{_tmp}/media"
 os.environ["TMDB_API_KEY"] = ""
 os.environ["LLM_API_KEY"] = ""
 
@@ -28,6 +30,7 @@ def client():
     engine.dispose()
     for suffix in ("", "-wal", "-shm"):
         Path(f"{_tmp}/test.db{suffix}").unlink(missing_ok=True)
+    shutil.rmtree(f"{_tmp}/media", ignore_errors=True)
     users._fails.clear()
     zugang._fehl_ip.clear()
     zugang._fehl_alle.clear()

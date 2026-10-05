@@ -62,6 +62,7 @@ class User(SQLModel, table=True):
     dabei: bool = False  # in for the next movie night
     is_admin: bool = False
     freigegeben: bool = True  # False: a name request waiting for an admin
+    bild: str = ""  # token of the profile picture file, "" = none (see bilder.py)
     created_at: datetime = Field(default_factory=now)
 
 

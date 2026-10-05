@@ -81,6 +81,7 @@ def user_dict(u: User, abos: list[int] | None = None) -> dict[str, Any]:
         "hat_schutz": u.schutz_movie_id is not None,
         "admin": u.is_admin,
         "freigegeben": u.freigegeben,
+        "bild": f"/api/users/{u.id}/bild?v={u.bild}" if u.bild else None,
         "created_at": iso(u.created_at),
         "abos": abos or [],  # TMDB provider ids
     }
