@@ -43,6 +43,8 @@ Jeder Film trägt die Gruppen-Flags `gesehen`, `gemerkt` und `vorgeschlagen_von`
 | POST | `/users` | – | Namen beantragen (`freigegeben: false`). Der erste Name einer leeren Datenbank wird Admin, Admins legen direkt freigegebene Namen an. Höchstens 20 offene Anträge |
 | POST | `/users/waehlen` | – | Anmelden (`user_id`, ggf. `movie_id` als Film-PIN) bzw. Abmelden (`user_id: null`). Gedrosselt |
 | DELETE | `/users/{id}` | A | Nutzer löschen bzw. Antrag ablehnen (Ratings und Votes weg, Kommentare anonym). Nicht den letzten Admin |
+| PUT/DELETE | `/users/{id}/bild` | E | Profilbild hochladen (Bild als Request-Body, max. 5 MB; JPG/PNG/WebP/GIF, wird zu 256×256 WebP ohne Metadaten) bzw. entfernen. E = die Person selbst oder ein Admin |
+| GET | `/users/{id}/bild` | – | Profilbild (URL mit `?v=…` aus `users[].bild`, lange gecacht) |
 | GET/POST | `/users/{id}/schutz` | –/E | Schutz abfragen (nur `hat_schutz`) bzw. setzen oder entfernen |
 | POST | `/abos` | N | Eigene Streaming-Abos setzen (Provider-IDs) |
 | POST | `/dabei` | N | Eigene Teilnahme am nächsten Abend umschalten |

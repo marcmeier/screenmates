@@ -99,6 +99,11 @@ async function schutzWeg(u) {
   await api.post(`/api/users/${u.id}/schutz`, { movie_id: null })
   await fertig(`Film-Passwort von ${u.name} zurückgesetzt`)
 }
+async function bildWeg(u) {
+  if (!confirm(`Profilbild von „${u.name}“ entfernen?`)) return
+  await api.del(`/api/users/${u.id}/bild`)
+  await fertig(`Profilbild von ${u.name} entfernt`)
+}
 async function abmelden(u) {
   if (!confirm(`„${u.name}“ auf allen Geräten abmelden? Diese Geräte müssen danach auch die Zugangsfrage neu beantworten.`)) return
   const r = await api.post(`/api/admin/users/${u.id}/abmelden`)
@@ -183,6 +188,7 @@ watch(() => app.antraege, laden)
             {{ u.admin ? 'Admin entziehen' : 'Zum Admin machen' }}
           </button>
           <button v-if="u.hat_schutz" class="ghost small" @click="schutzWeg(u)">Film-Passwort zurücksetzen</button>
+          <button v-if="u.bild" class="ghost small" @click="bildWeg(u)">Bild entfernen</button>
           <button v-if="u.sitzungen" class="ghost small" @click="abmelden(u)"><Icon name="logout" :size="13" /> Überall abmelden</button>
           <button v-if="u.id !== app.me?.id" class="ghost small danger" :aria-label="`${u.name} löschen`" @click="loeschen(u)"><Icon name="muell" :size="14" /></button>
         </div>

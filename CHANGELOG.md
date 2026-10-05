@@ -3,6 +3,10 @@
 ## Unveröffentlicht
 
 ### Neu
+- **Profilbilder.** In den Einstellungen lädt man ein eigenes Bild hoch; es ersetzt überall die
+  Initialen. Der Browser verkleinert Handyfotos vor dem Hochladen, der Server schneidet sie
+  quadratisch zu (256 px, WebP) und kodiert sie neu – Ortsangaben und andere Metadaten der Fotos
+  bleiben dabei nicht erhalten. Admins können Bilder anderer entfernen.
 - **Zugangsfrage: screenmates nur für eure Gruppe.** Admins legen eine Frage fest, z. B. „Welchen
   Film haben wir zuerst zusammen geschaut?“. Wer die App öffnet, muss erst den richtigen Film
   anklicken – vorher ist nichts zu sehen, auch nicht über die API. Fehlversuche werden pro IP

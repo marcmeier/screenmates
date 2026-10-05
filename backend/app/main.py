@@ -9,7 +9,7 @@ from fastapi.staticfiles import StaticFiles
 from . import tmdb
 from .config import settings
 from .db import init_db
-from .routers import abend, admin, catalog, features, kino, lists, misc, users, watched, zugang
+from .routers import abend, admin, catalog, features, kino, lists, misc, profilbild, users, watched, zugang
 from .seed import seed_if_empty
 
 __version__ = "0.5.0"
@@ -57,6 +57,7 @@ for r in (
     abend.router,
     zugang.router,
     admin.router,
+    profilbild.router,
 ):
     app.include_router(r)
 

@@ -327,6 +327,29 @@ test('own name gets film protection', async () => {
   await expect(page.locator('.chip.ok', { hasText: 'geschützt' })).toBeVisible()
 })
 
+test('a profile picture replaces the initials everywhere', async () => {
+  // A 1600×1200 "photo", drawn in the browser – the app shrinks it before uploading.
+  const png = await page.evaluate(() => {
+    const c = document.createElement('canvas')
+    c.width = 1600
+    c.height = 1200
+    const x = c.getContext('2d')
+    x.fillStyle = '#4a90e2'
+    x.fillRect(0, 0, 1600, 1200)
+    x.fillStyle = '#ffffff'
+    x.beginPath()
+    x.arc(800, 500, 300, 0, Math.PI * 2)
+    x.fill()
+    return c.toDataURL('image/png').split(',')[1]
+  })
+  await page.getByLabel('Profilbild auswählen').setInputFiles({ name: 'ich.png', mimeType: 'image/png', buffer: Buffer.from(png, 'base64') })
+  await expect(page.locator('.toast', { hasText: 'Profilbild gespeichert' })).toBeVisible()
+  const avatar = page.locator('.me .avatar img')
+  await expect(avatar).toBeVisible()
+  await expect.poll(() => avatar.evaluate((img) => img.naturalWidth)).toBe(256)
+  await expect(page.getByRole('button', { name: 'Bild ändern' })).toBeVisible()
+})
+
 test('info card on the evening page renders sanitised markdown', async () => {
   await nav('Filmabend')
   await page.getByRole('button', { name: 'Infos hinzufügen' }).click()

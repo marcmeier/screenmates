@@ -11,6 +11,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlmodel import Session as DBSession
 from sqlmodel import col, func, select
 
+from .. import bilder
 from ..db import get_session
 from ..models import Abo, User
 from ..serialize import user_dict
@@ -153,8 +154,10 @@ def delete_user(user_id: int, db: DBSession = Depends(get_session)):
     if u is None:
         raise HTTPException(404)
     ensure_not_last_admin(db, u)
+    bild = u.bild
     db.delete(u)
     db.commit()
+    bilder.loeschen(user_id, bild)
     return {"ok": True}
 
 

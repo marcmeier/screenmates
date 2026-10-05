@@ -36,10 +36,17 @@ class Settings(BaseSettings):
     mediamtx_webrtc_url: str = ""  # e.g. http://127.0.0.1:8889
     mediamtx_api_url: str = "http://127.0.0.1:9997"
 
+    # Uploaded files (profile pictures). Empty: backend/media. Docker: /data/media.
+    media_dir: str = ""
+
     session_cookie: str = "screenmates_sid"
     # Set to true when served over HTTPS so the session cookie is never sent in clear.
     cookie_secure: bool = False
     cors_origins: str = "http://localhost:5173"
+
+    @property
+    def media_path(self) -> Path:
+        return Path(self.media_dir) if self.media_dir else BASE_DIR / "media"
 
     @property
     def tmdb_enabled(self) -> bool:
