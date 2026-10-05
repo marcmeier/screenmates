@@ -1,7 +1,7 @@
 from contextlib import asynccontextmanager
 from pathlib import Path
 
-from fastapi import FastAPI, Request
+from fastapi import Depends, FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
@@ -9,7 +9,7 @@ from fastapi.staticfiles import StaticFiles
 from . import tmdb
 from .config import settings
 from .db import init_db
-from .routers import abend, catalog, features, kino, lists, misc, users, watched
+from .routers import abend, admin, catalog, features, kino, lists, misc, users, watched, zugang
 from .seed import seed_if_empty
 
 __version__ = "0.5.0"
@@ -24,7 +24,13 @@ async def lifespan(app: FastAPI):
     await tmdb.shutdown()
 
 
-app = FastAPI(title=settings.app_name, version=__version__, lifespan=lifespan)
+# The access question closes the whole API to browsers that haven't answered it.
+app = FastAPI(
+    title=settings.app_name,
+    version=__version__,
+    lifespan=lifespan,
+    dependencies=[Depends(zugang.zugang_pruefen)],
+)
 
 app.add_middleware(
     CORSMiddleware,
@@ -49,6 +55,8 @@ for r in (
     misc.router,
     kino.router,
     abend.router,
+    zugang.router,
+    admin.router,
 ):
     app.include_router(r)
 

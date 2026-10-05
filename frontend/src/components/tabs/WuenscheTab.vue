@@ -121,7 +121,7 @@ const erledigt = computed(() => features.value.filter((f) => f.done))
               <div v-for="n in f.notes" :key="n.id" class="note">
                 <UserAvatar :user-id="n.user_id" />
                 <span>{{ n.text }}</span>
-                <button v-if="mine(n) || app.host" class="ghost small" aria-label="Anmerkung löschen" @click="removeNote(f, n)">
+                <button v-if="mine(n) || app.admin" class="ghost small" aria-label="Anmerkung löschen" @click="removeNote(f, n)">
                   <Icon name="x" :size="12" />
                 </button>
               </div>
@@ -133,11 +133,11 @@ const erledigt = computed(() => features.value.filter((f) => f.done))
           </div>
 
           <div class="actions">
-            <button v-if="app.host" class="ghost small" :title="f.done ? 'Wieder öffnen' : 'Als erledigt markieren'" @click="done(f)">
+            <button v-if="app.admin" class="ghost small" :title="f.done ? 'Wieder öffnen' : 'Als erledigt markieren'" @click="done(f)">
               <Icon :name="f.done ? 'antwort' : 'gesehen'" :size="15" />
             </button>
-            <button v-if="mine(f) || app.host" class="ghost small" aria-label="Bearbeiten" @click="editing = f.id"><Icon name="stift" :size="15" /></button>
-            <button v-if="mine(f) || app.host" class="ghost small danger" aria-label="Löschen" @click="remove(f)"><Icon name="muell" :size="15" /></button>
+            <button v-if="mine(f) || app.admin" class="ghost small" aria-label="Bearbeiten" @click="editing = f.id"><Icon name="stift" :size="15" /></button>
+            <button v-if="mine(f) || app.admin" class="ghost small danger" aria-label="Löschen" @click="remove(f)"><Icon name="muell" :size="15" /></button>
           </div>
         </li>
       </ul>

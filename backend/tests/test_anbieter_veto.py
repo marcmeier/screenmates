@@ -3,7 +3,7 @@
 import httpx
 import respx
 
-from .conftest import become_host, login
+from .conftest import become_admin, login
 
 TMDB = "https://api.themoviedb.org/3"
 
@@ -70,7 +70,7 @@ def test_vetoes_expire_with_the_film(client, browser):
 
 def test_clearing_suggestions_clears_vetoes(client):
     login(client, "marc")
-    become_host(client)
+    become_admin(client)
     client.post("/api/suggestions", json={"movie_id": 694})
     client.post("/api/veto", json={"movie_id": 694})
     client.delete("/api/suggestions/alle")

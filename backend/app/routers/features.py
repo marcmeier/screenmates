@@ -12,7 +12,7 @@ from sqlmodel import col, select
 from ..db import get_session
 from ..models import Feature, FeatureNote, FeatureVote, User
 from ..serialize import iso
-from ..session import current_user, is_host, require_host, require_owner_or_host, require_user
+from ..session import current_user, is_admin, require_admin, require_owner_or_admin, require_user
 
 router = APIRouter(prefix="/api", tags=["features"])
 
@@ -86,10 +86,10 @@ def edit_feature(
     body: WunschText,
     db: DBSession = Depends(get_session),
     user: User | None = Depends(current_user),
-    host: bool = Depends(is_host),
+    admin: bool = Depends(is_admin),
 ):
     f = _get(db, feature_id)
-    require_owner_or_host(f.user_id, user, host)
+    require_owner_or_admin(f.user_id, user, admin)
     f.text = body.text.strip()
     db.add(f)
     db.commit()
@@ -101,16 +101,16 @@ def delete_feature(
     feature_id: int,
     db: DBSession = Depends(get_session),
     user: User | None = Depends(current_user),
-    host: bool = Depends(is_host),
+    admin: bool = Depends(is_admin),
 ):
     f = _get(db, feature_id)
-    require_owner_or_host(f.user_id, user, host)
+    require_owner_or_admin(f.user_id, user, admin)
     db.delete(f)
     db.commit()
     return {"ok": True}
 
 
-@router.patch("/features/{feature_id}/done", dependencies=[Depends(require_host)])
+@router.patch("/features/{feature_id}/done", dependencies=[Depends(require_admin)])
 def mark_done(
     feature_id: int,
     body: WunschErledigen,
@@ -153,12 +153,12 @@ def delete_note(
     note_id: int,
     db: DBSession = Depends(get_session),
     user: User | None = Depends(current_user),
-    host: bool = Depends(is_host),
+    admin: bool = Depends(is_admin),
 ):
     n = db.get(FeatureNote, note_id)
     if n is None:
         raise HTTPException(404)
-    require_owner_or_host(n.user_id, user, host)
+    require_owner_or_admin(n.user_id, user, admin)
     db.delete(n)
     db.commit()
     return {"ok": True}

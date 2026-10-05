@@ -9,7 +9,7 @@ from sqlmodel import select
 
 from app.models import NoteHeart, WatchedNote, WatchedParticipant, WatchedRating
 
-from .conftest import become_host, login
+from .conftest import become_admin, login
 
 
 def test_watching_fulfils_wishlist_and_suggestions(client):
@@ -68,7 +68,7 @@ def test_hearts_toggle(client):
 
 def test_deleting_watched_cascades(client, db):
     login(client, "marc")
-    become_host(client)
+    become_admin(client)
     wid = client.post("/api/watched", json={"movie_id": 694}).json()["id"]
     client.post(f"/api/watched/{wid}/rating", json={"stars": 5})
     nid = client.post(f"/api/watched/{wid}/notes", json={"text": "a"}).json()["notes"][0]["id"]
@@ -88,7 +88,7 @@ def test_deleting_user_keeps_their_notes_but_drops_ratings(client, browser, db):
 
     host = browser()
     login(host, "lena")
-    become_host(host)
+    become_admin(host)
     host.delete(f"/api/users/{marc['id']}")
 
     entry = host.get("/api/watched").json()["watched"][0]
@@ -141,7 +141,7 @@ def test_dabei_toggle_and_reset(client):
     login(client, "marc")
     assert client.post("/api/dabei").json() == {"dabei": True}
     assert client.get("/api/users").json()["ich"]["dabei"] is True
-    become_host(client)
+    become_admin(client)
     client.delete("/api/dabei")
     assert client.get("/api/users").json()["ich"]["dabei"] is False
 
@@ -161,7 +161,7 @@ def test_feature_permissions(client, browser):
 
 def test_info_markdown_roundtrip(client):
     login(client, "marc")
-    become_host(client)
+    become_admin(client)
     client.put("/api/info", json={"text": "# Hallo"})
     assert client.get("/api/info").json()["text"] == "# Hallo"
 
@@ -257,7 +257,7 @@ def test_ki_truncated_answer_is_explained(client, monkeypatch):
 @respx.mock
 def test_sync_upserts_canon(client, tmdb_on):
     login(client, "marc")
-    become_host(client)
+    become_admin(client)
     page = {"results": [{"id": 9000 + i, "title": f"Film {i}", "genre_ids": [27]} for i in range(3)]}
     respx.get("https://api.themoviedb.org/3/discover/movie").mock(return_value=httpx.Response(200, json=page))
     r = client.post("/api/sync").json()

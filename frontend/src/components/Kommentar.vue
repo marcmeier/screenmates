@@ -37,7 +37,7 @@ function send() {
           <Icon name="herz" :size="14" /> {{ note.hearts.length || '' }}
         </button>
         <button v-if="app.me && depth < 3" class="ghost small" @click="replying = !replying"><Icon name="antwort" :size="14" /> Antworten</button>
-        <button v-if="mine() || app.host" class="ghost small" aria-label="Kommentar löschen" @click="emit('remove', note.id)"><Icon name="muell" :size="14" /></button>
+        <button v-if="mine() || app.admin" class="ghost small" aria-label="Kommentar löschen" @click="emit('remove', note.id)"><Icon name="muell" :size="14" /></button>
       </div>
       <form v-if="replying" class="reply" @submit.prevent="send">
         <input v-model="text" maxlength="2000" placeholder="Antwort …" autofocus aria-label="Antwort" />

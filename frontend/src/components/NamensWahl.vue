@@ -14,6 +14,8 @@ const error = ref('')
 const busy = ref(false)
 // Film-as-PIN: a guarded name is unlocked by clicking the right film.
 const guarded = ref(null)
+// A requested name waits for an admin.
+const beantragt = ref(null)
 
 function close() {
   ui.loginOpen = false
@@ -45,9 +47,26 @@ function pick(u) {
 
 const unlock = (movie) => attempt(() => app.choose(guarded.value.id, movie.id))
 
-function create() {
+async function create() {
   const name = newName.value.trim()
-  if (name) attempt(() => app.createUser(name))
+  if (!name) return
+  error.value = ''
+  busy.value = true
+  try {
+    const u = await app.createUser(name)
+    if (u.freigegeben) {
+      ui.toast(`Hallo ${u.name}!`, 'ok')
+      ui.changed()
+      close()
+    } else {
+      beantragt.value = u
+      newName.value = ''
+    }
+  } catch (e) {
+    error.value = e.message
+  } finally {
+    busy.value = false
+  }
 }
 </script>
 
@@ -56,7 +75,16 @@ function create() {
     <div class="wrap">
       <div class="brand">screen<span>mates</span></div>
 
-      <template v-if="!guarded">
+      <template v-if="beantragt">
+        <h2>Antrag gestellt</h2>
+        <p class="muted center">
+          „{{ beantragt.name }}“ wartet jetzt auf die Freigabe durch einen Admin. Danach findest du deinen Namen hier in der
+          Liste und kannst ihn mit einem Klick wählen.
+        </p>
+        <div class="center"><button @click="close">Alles klar</button></div>
+      </template>
+
+      <template v-else-if="!guarded">
         <h2>Wer schaut mit?</h2>
         <div v-if="app.users.length" class="users">
           <button v-for="u in app.users" :key="u.id" class="user" :disabled="busy" @click="pick(u)">
@@ -65,11 +93,14 @@ function create() {
             <Icon v-if="u.hat_schutz" name="schloss" :size="14" class="lock" />
           </button>
         </div>
-        <p v-else class="muted center">Noch niemand da – leg den ersten Namen an.</p>
+        <p v-else class="muted center">Noch niemand da – leg den ersten Namen an. Er wird Admin.</p>
 
+        <p v-if="app.users.length" class="muted center hint">Neu hier? Beantrag deinen Namen, ein Admin schaltet ihn frei.</p>
         <form class="create" @submit.prevent="create">
           <input v-model="newName" maxlength="30" placeholder="Neuer Name …" aria-label="Neuer Name" />
-          <button class="primary" :disabled="busy || !newName.trim()"><Icon name="plus" :size="16" /> Anlegen</button>
+          <button class="primary" :disabled="busy || !newName.trim()">
+            <Icon name="plus" :size="16" /> {{ app.users.length ? 'Beantragen' : 'Anlegen' }}
+          </button>
         </form>
       </template>
 
@@ -91,6 +122,7 @@ function create() {
 .brand span { color: var(--accent); }
 h2 { text-align: center; font-weight: 600; font-size: 1.25rem; margin: 0.6rem 0 1.4rem; }
 .center { text-align: center; }
+.hint { font-size: 0.85rem; margin: 0 0 0.6rem; }
 .users { display: flex; flex-wrap: wrap; gap: 0.6rem; justify-content: center; margin-bottom: 1.6rem; }
 .user { padding: 0.45rem 0.9rem 0.45rem 0.45rem; border-radius: 999px; }
 .lock { color: var(--muted); }

@@ -1,7 +1,7 @@
 """SQLModel tables for screenmates.
 
 A movie catalogue synced from TMDB plus the social layer on top (users,
-watched log, wishlist, suggestions, feature wishes, host mode).
+watched log, wishlist, suggestions, feature wishes, admins, access question).
 
 Children reference their parents with ON DELETE CASCADE, so deleting a user,
 a watched entry or a feature never leaves orphans behind. Authorship links
@@ -60,13 +60,15 @@ class User(SQLModel, table=True):
     color: str = ""
     schutz_movie_id: int | None = None  # "film as PIN" — never sent to clients
     dabei: bool = False  # in for the next movie night
+    is_admin: bool = False
+    freigegeben: bool = True  # False: a name request waiting for an admin
     created_at: datetime = Field(default_factory=now)
 
 
 class Session(SQLModel, table=True):
     sid: str = Field(primary_key=True)
     user_id: int | None = Field(default=None, foreign_key="user.id", ondelete="SET NULL")
-    is_host: bool = False
+    zugang: bool = False  # answered the access question
     created_at: datetime = Field(default_factory=now)
 
 
@@ -179,11 +181,14 @@ class FeatureNote(SQLModel, table=True):
     created_at: datetime = Field(default_factory=now)
 
 
-class HostState(SQLModel, table=True):
-    """Singleton (id=1) holding the host password film."""
+class Zugang(SQLModel, table=True):
+    """Singleton (id=1): the access question and its answer film. No film, no door."""
 
     id: int | None = Field(default=1, primary_key=True)
-    movie_id: int | None = None
+    frage: str = ""
+    movie_id: int | None = None  # the answer — never sent to non-admins
+    titel: str = ""  # the answer's title, for admins
+    geaendert: datetime | None = None
 
 
 class AppMeta(SQLModel, table=True):
@@ -197,8 +202,8 @@ class KinoState(SQLModel, table=True):
     """Singleton (id=1) for the live "Kino": what's on air and the secrets for MediaMTX.
 
     `secret` authenticates the backend's own WHIP/WHEP requests to MediaMTX;
-    `obs_key` is the stream key the host pastes into OBS. Both never leave the
-    server except the OBS key, which only the host can see.
+    `obs_key` is the stream key an admin pastes into OBS. Both never leave the
+    server except the OBS key, which only admins can see.
     """
 
     id: int | None = Field(default=1, primary_key=True)

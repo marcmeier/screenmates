@@ -24,7 +24,7 @@ from ..models import (
     Wishlist,
 )
 from ..serialize import iso, movie_dict
-from ..session import current_user, is_host, require_host, require_owner_or_host, require_user
+from ..session import current_user, is_admin, require_admin, require_owner_or_admin, require_user
 from ..util import ensure_movie
 
 router = APIRouter(prefix="/api", tags=["watched"])
@@ -170,7 +170,7 @@ def edit_watched(watched_id: int, body: GesehenAendern, db: DBSession = Depends(
     return _one(db, w)
 
 
-@router.delete("/watched/{watched_id}", dependencies=[Depends(require_host)])
+@router.delete("/watched/{watched_id}", dependencies=[Depends(require_admin)])
 def delete_watched(watched_id: int, db: DBSession = Depends(get_session)):
     db.delete(_get(db, watched_id))
     db.commit()
@@ -194,12 +194,12 @@ def delete_rating(
     rating_id: int,
     db: DBSession = Depends(get_session),
     user: User | None = Depends(current_user),
-    host: bool = Depends(is_host),
+    admin: bool = Depends(is_admin),
 ):
     r = db.get(WatchedRating, rating_id)
     if r is None:
         raise HTTPException(404)
-    require_owner_or_host(r.user_id, user, host)
+    require_owner_or_admin(r.user_id, user, admin)
     db.delete(r)
     db.commit()
     return {"ok": True}
@@ -224,12 +224,12 @@ def delete_note(
     note_id: int,
     db: DBSession = Depends(get_session),
     user: User | None = Depends(current_user),
-    host: bool = Depends(is_host),
+    admin: bool = Depends(is_admin),
 ):
     n = db.get(WatchedNote, note_id)
     if n is None:
         raise HTTPException(404)
-    require_owner_or_host(n.user_id, user, host)
+    require_owner_or_admin(n.user_id, user, admin)
     db.delete(n)
     db.commit()
     return {"ok": True}
