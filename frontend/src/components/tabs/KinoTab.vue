@@ -110,7 +110,7 @@ async function alsGesehen() {
 .since { font-size: 0.85rem; }
 .viewers { display: inline-flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; color: var(--muted); }
 .avatars .avatar { width: 24px; height: 24px; font-size: 0.6rem; }
-.screen { aspect-ratio: 16 / 9; width: 100%; border-radius: var(--radius); border: 1px solid var(--line); }
+.screen { aspect-ratio: 16 / 9; width: var(--kino-breite); border-radius: var(--radius); border: 1px solid var(--line); }
 .empty-screen {
   display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.3rem; text-align: center;
   background: radial-gradient(80% 80% at 50% 40%, #16161c, #08080a); color: var(--muted); padding: 1rem;

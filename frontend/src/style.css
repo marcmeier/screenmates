@@ -1,4 +1,5 @@
 :root {
+  --kino-breite: min(100%, 1280px, max(20rem, calc((100svh - 14rem) * 16 / 9)));
   --bg: #0a0a0c;
   --bg-soft: #141419;
   --bg-raised: #1b1b22;

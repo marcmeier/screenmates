@@ -105,10 +105,10 @@ function vollbild() {
 
 <style scoped>
 .screen {
-  position: relative; aspect-ratio: 16 / 9; width: 100%; background: #000;
+  position: relative; aspect-ratio: 16 / 9; width: var(--kino-breite); background: #000;
   border-radius: var(--radius); overflow: hidden; border: 1px solid var(--line);
 }
-.screen:fullscreen { border-radius: 0; border: none; }
+.screen:fullscreen { width: 100%; border-radius: 0; border: none; }
 video { width: 100%; height: 100%; object-fit: contain; display: block; background: #000; }
 .overlay {
   position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; gap: 0.8rem;
