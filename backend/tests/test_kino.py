@@ -16,15 +16,15 @@ SDP = "v=0\r\no=- 0 0 IN IP4 127.0.0.1\r\n"
 def secret(db) -> str:
     """The relay secret, creating the Kino state on first use."""
     db.expire_all()
-    return kino._state(db).secret
+    return kino._state(db, 1).secret
 
 
 def offline():
-    respx.get(f"{API}/v3/paths/get/kino").mock(return_value=httpx.Response(404))
+    respx.get(f"{API}/v3/paths/get/kino-1").mock(return_value=httpx.Response(404))
 
 
 def live(source_id="s1"):
-    respx.get(f"{API}/v3/paths/get/kino").mock(
+    respx.get(f"{API}/v3/paths/get/kino-1").mock(
         return_value=httpx.Response(
             200,
             json={
@@ -43,7 +43,11 @@ def test_disabled_without_mediamtx(client):
 
 
 @respx.mock
-def test_status_offline_and_live(client, kino_on):
+def test_status_offline_and_live(client, browser, kino_on):
+    live()
+    # Without a name (or group) the Kino shows nothing, but answers: it's polled.
+    assert browser().get("/api/kino").json()["live"] is False
+    login(client, "marc")
     offline()
     assert client.get("/api/kino").json()["live"] is False
     live()
@@ -54,13 +58,13 @@ def test_status_offline_and_live(client, kino_on):
 
 @respx.mock
 def test_watching_needs_a_name_and_is_relayed_with_the_secret(client, kino_on, db):
-    route = respx.post(f"{MTX}/kino/whep").mock(
+    route = respx.post(f"{MTX}/kino-1/whep").mock(
         return_value=httpx.Response(
             201,
             content=b"answer",
             headers={
                 "content-type": "application/sdp",
-                "location": "/kino/whep/abc-123",
+                "location": "/kino-1/whep/abc-123",
                 "etag": "*",
                 "link": '<stun:stun.l.google.com:19302>; rel="ice-server"',
             },
@@ -81,8 +85,8 @@ def test_watching_needs_a_name_and_is_relayed_with_the_secret(client, kino_on, d
 
 @respx.mock
 def test_publishing_is_host_or_obs_key_only(client, browser, kino_on):
-    respx.post(f"{MTX}/kino/whip").mock(
-        return_value=httpx.Response(201, content=b"a", headers={"location": "/kino/whip/x1"})
+    respx.post(f"{MTX}/kino-1/whip").mock(
+        return_value=httpx.Response(201, content=b"a", headers={"location": "/kino-1/whip/x1"})
     )
     login(client, "marc")
     assert client.post("/api/kino/whip", content=SDP).status_code == 403
@@ -108,7 +112,7 @@ def test_obs_key_is_host_only_and_rotates(client, browser, kino_on):
 
 def test_mtx_auth_accepts_only_our_secret(client, db, kino_on):
     good = secret(db)
-    ok = {"action": "read", "path": "kino", "token": good, "protocol": "webrtc"}
+    ok = {"action": "read", "path": "kino-1", "token": good, "protocol": "webrtc"}
     assert client.post("/api/kino/mtx-auth", json=ok).status_code == 200
     assert client.post("/api/kino/mtx-auth", json=ok | {"token": "nope"}).status_code == 401
     assert client.post("/api/kino/mtx-auth", json=ok | {"path": "other"}).status_code == 401
@@ -119,10 +123,10 @@ def test_mtx_auth_accepts_only_our_secret(client, db, kino_on):
 def test_publish_starts_a_new_show(client, db, kino_on):
     login(client, "marc")
     client.post("/api/kino/da")
-    assert kino._audience == {1}
-    r = client.post("/api/kino/mtx-auth", json={"action": "publish", "path": "kino", "token": secret(db)})
+    assert kino._saele[1].audience == {1}
+    r = client.post("/api/kino/mtx-auth", json={"action": "publish", "path": "kino-1", "token": secret(db)})
     assert r.status_code == 200
-    assert kino._audience == set()
+    assert kino._saele[1].audience == set()
     db.expire_all()
     assert db.get(KinoState, 1).gestartet is not None
 
@@ -168,7 +172,7 @@ def test_host_can_end_any_show(client, kino_on):
 
 @respx.mock
 def test_session_resources(client, kino_on):
-    route = respx.delete(f"{MTX}/kino/whep/abc-123").mock(return_value=httpx.Response(200))
+    route = respx.delete(f"{MTX}/kino-1/whep/abc-123").mock(return_value=httpx.Response(200))
     assert client.delete("/api/kino/sitzung/whep/abc-123").status_code == 401
     login(client, "marc")
     assert client.delete("/api/kino/sitzung/whep/abc-123").status_code == 200
@@ -183,15 +187,15 @@ def test_session_resources(client, kino_on):
 
 @respx.mock
 def test_mediamtx_down_is_503(client, kino_on):
-    respx.post(f"{MTX}/kino/whep").mock(side_effect=httpx.ConnectError("down"))
+    respx.post(f"{MTX}/kino-1/whep").mock(side_effect=httpx.ConnectError("down"))
     login(client, "marc")
     assert client.post("/api/kino/whep", content=SDP).status_code == 503
 
 
 @respx.mock
 def test_ending_twice_and_watching_nothing_are_handled(client, kino_on):
-    respx.delete(f"{MTX}/kino/whep/gone-1").mock(return_value=httpx.Response(404))
-    respx.post(f"{MTX}/kino/whep").mock(return_value=httpx.Response(404, json={"error": "no stream is available"}))
+    respx.delete(f"{MTX}/kino-1/whep/gone-1").mock(return_value=httpx.Response(404))
+    respx.post(f"{MTX}/kino-1/whep").mock(return_value=httpx.Response(404, json={"error": "no stream is available"}))
     login(client, "marc")
     assert client.delete("/api/kino/sitzung/whep/gone-1").status_code == 200
     r = client.post("/api/kino/whep", content=SDP)
@@ -209,8 +213,8 @@ ANSWER = (
 
 @respx.mock
 def test_obs_clients_get_udp_candidates_only_browsers_get_all(client, browser, kino_on):
-    respx.post(f"{MTX}/kino/whip").mock(
-        return_value=httpx.Response(201, content=ANSWER.encode(), headers={"location": "/kino/whip/x1"})
+    respx.post(f"{MTX}/kino-1/whip").mock(
+        return_value=httpx.Response(201, content=ANSWER.encode(), headers={"location": "/kino-1/whip/x1"})
     )
     login(client, "marc")
     become_admin(client)

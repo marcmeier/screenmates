@@ -8,6 +8,8 @@ export const useApp = defineStore('app', {
     users: [],
     admin: false,
     antraege: 0, // open name requests (admins only)
+    gruppe: null, // the active group: { id, name, admin, mitglieder: [user ids] }
+    gruppen: [], // all my groups
     // The access question: closed until this browser has answered it.
     zugang: { gesperrt: false, offen: true, frage: '' },
     status: { movie_count: 0, canon_count: 0, tmdb: false, ki: false, syncing: false, last_sync: null },
@@ -15,12 +17,20 @@ export const useApp = defineStore('app', {
   getters: {
     userById: (s) => (id) => s.users.find((u) => u.id === id),
     dabei: (s) => s.users.filter((u) => u.dabei),
+    // Members of the active group (the server has more people than any one group).
+    mitglieder: (s) => (s.gruppe ? s.users.filter((u) => s.gruppe.mitglieder.includes(u.id)) : []),
+    // Movie-night admin rights: group admin, or server admin.
+    gruppenAdmin: (s) => s.admin || !!s.gruppe?.admin,
+    verwaltetGruppen: (s) => s.admin || s.gruppen.some((g) => g.admin),
     draussen: (s) => s.zugang.gesperrt && !s.zugang.offen,
   },
   actions: {
     async bootstrap() {
       await this.refreshZugang()
-      if (!this.draussen) await Promise.all([this.refreshUsers(), this.refreshStatus()])
+      if (!this.draussen) {
+        await Promise.all([this.refreshUsers(), this.refreshStatus()])
+        await this.refreshGruppen()
+      }
       this.ready = true
     },
     async refreshZugang() {
@@ -32,6 +42,15 @@ export const useApp = defineStore('app', {
       this.me = r.ich
       this.admin = r.admin
       this.antraege = r.antraege
+      this.gruppe = r.gruppe
+    },
+    async refreshGruppen() {
+      this.gruppen = this.me ? (await api.get('/api/gruppen')).gruppen : []
+    },
+    /** Switch the active group; everything on screen belongs to the old one, so start afresh. */
+    async wechseln(gruppeId) {
+      await api.post('/api/gruppen/aktiv', { gruppe_id: gruppeId })
+      window.location.reload()
     },
     async refreshStatus() {
       this.status = await api.get('/api/status')
@@ -45,6 +64,7 @@ export const useApp = defineStore('app', {
       this.me = r.ich
       this.admin = r.admin
       await this.refreshUsers()
+      await this.refreshGruppen()
     },
     /** Create a name. Returns it; `freigegeben: false` means it now waits for an admin. */
     async createUser(name) {
@@ -57,6 +77,8 @@ export const useApp = defineStore('app', {
       this.me = null
       this.admin = false
       this.antraege = 0
+      this.gruppe = null
+      this.gruppen = []
     },
     async toggleDabei() {
       const r = await api.post('/api/dabei')

@@ -43,11 +43,11 @@ async function save() {
 </script>
 
 <template>
-  <section v-if="loaded && (text || app.admin)" class="panel info">
+  <section v-if="loaded && (text || app.gruppenAdmin)" class="panel info">
     <div class="row head">
       <h2 class="section-title">Hausregeln & Infos</h2>
       <span class="spacer"></span>
-      <button v-if="app.admin && !editing" class="ghost small" :aria-label="text ? 'Infos bearbeiten' : 'Infos hinzufügen'" @click="edit">
+      <button v-if="app.gruppenAdmin && !editing" class="ghost small" :aria-label="text ? 'Infos bearbeiten' : 'Infos hinzufügen'" @click="edit">
         <Icon :name="text ? 'stift' : 'plus'" :size="14" /> {{ text ? '' : 'Hinzufügen' }}
       </button>
     </div>

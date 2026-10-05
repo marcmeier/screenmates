@@ -10,7 +10,8 @@ from sqlmodel import Session
 from . import erfolge, tmdb
 from .config import settings
 from .db import engine, init_db
-from .routers import abend, admin, catalog, features, kino, lists, misc, profilbild, users, watched, zugang
+from .gruppen import kontext
+from .routers import abend, admin, catalog, features, gruppen, kino, lists, misc, profilbild, users, watched, zugang
 from .routers import erfolge as erfolge_api
 from .seed import seed_if_empty
 
@@ -34,7 +35,7 @@ app = FastAPI(
     title=settings.app_name,
     version=__version__,
     lifespan=lifespan,
-    dependencies=[Depends(zugang.zugang_pruefen)],
+    dependencies=[Depends(zugang.zugang_pruefen), Depends(kontext)],
 )
 
 app.add_middleware(
@@ -64,6 +65,7 @@ for r in (
     admin.router,
     profilbild.router,
     erfolge_api.router,
+    gruppen.router,
 ):
     app.include_router(r)
 

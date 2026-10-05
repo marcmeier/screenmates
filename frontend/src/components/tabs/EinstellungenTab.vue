@@ -6,6 +6,7 @@ import { useUi } from '../../stores/ui'
 import { vorWann } from '../../format'
 import AdminBereich from '../AdminBereich.vue'
 import FilmPicker from '../FilmPicker.vue'
+import GruppenVerwaltung from '../GruppenVerwaltung.vue'
 import Icon from '../Icon.vue'
 import MeineAbos from '../MeineAbos.vue'
 import ProfilBild from '../ProfilBild.vue'
@@ -85,6 +86,13 @@ async function resetDabei() {
 
       <MeineAbos v-if="app.status.tmdb" />
 
+      <GruppenVerwaltung v-if="app.verwaltetGruppen" />
+      <section v-if="app.gruppenAdmin && app.gruppe" class="panel">
+        <h2>Nächster Abend{{ app.gruppe ? ` – ${app.gruppe.name}` : '' }}</h2>
+        <div class="row">
+          <button class="small" @click="resetDabei">Teilnahme für den nächsten Abend zurücksetzen</button>
+        </div>
+      </section>
       <template v-if="app.admin">
         <AdminBereich />
 
@@ -100,12 +108,6 @@ async function resetDabei() {
           <p v-else class="notice">Ohne <code>TMDB_API_KEY</code> läuft screenmates auf dem mitgelieferten Seed-Katalog.</p>
         </section>
 
-        <section class="panel">
-          <h2>Nächster Abend</h2>
-          <div class="row">
-            <button class="small" @click="resetDabei">Teilnahme für den nächsten Abend zurücksetzen</button>
-          </div>
-        </section>
       </template>
     </template>
   </div>

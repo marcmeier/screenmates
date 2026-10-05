@@ -138,13 +138,16 @@ def test_missing_keywords_are_fetched_once(client, db, tmdb_on):
 
 def test_termin_set_read_clear(client, browser):
     anonym = browser()
-    assert client.get("/api/termin").json()["termin"] is None
     morgen = (datetime.now(UTC) + timedelta(days=1)).replace(microsecond=0)
     assert anonym.put("/api/termin", json={"termin": morgen.isoformat()}).status_code == 401
+    assert anonym.get("/api/termin").status_code == 401  # only the group sees its date
     marc = login(client, "marc")
+    assert client.get("/api/termin").json()["termin"] is None
+    lena = browser()
+    login(lena, "lena")
     r = client.put("/api/termin", json={"termin": morgen.isoformat(), "notiz": " bei Marc "}).json()
     assert r == {"termin": morgen.isoformat().replace("+00:00", "Z"), "notiz": "bei Marc", "gesetzt_von": marc["id"]}
-    assert anonym.get("/api/termin").json()["notiz"] == "bei Marc"
+    assert lena.get("/api/termin").json()["notiz"] == "bei Marc"
     events = client.get("/api/events").json()["events"]
     assert events[0]["typ"] == "termin" and events[0]["wer"] == "marc"
     client.delete("/api/termin")
@@ -171,6 +174,7 @@ def test_a_past_termin_is_no_longer_shown(client, db):
 
     db.add(Abend(id=1, termin=datetime.now(UTC) - timedelta(hours=7), notiz="alt"))
     db.commit()
+    login(client, "marc")
     assert client.get("/api/termin").json() == {"termin": None, "notiz": "", "gesetzt_von": None}
 
 

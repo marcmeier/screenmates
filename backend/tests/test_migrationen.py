@@ -54,27 +54,14 @@ def test_upgrade_is_idempotent(tmp_path):
 
 def test_database_from_before_migrations_is_adopted_with_its_data(tmp_path):
     """0.2/0.3 created tables with create_all; abo/veto/abend and movie.keywords came later."""
+    from alembic import command
+
     u = url(tmp_path)
-    engine = create_engine(u)
-    old = [
-        t
-        for name, t in SQLModel.metadata.tables.items()
-        if name not in ("abo", "veto", "abend", "zugang", "erfolg", "ereignis")
-    ]
-    SQLModel.metadata.create_all(engine, tables=old)
-    engine.dispose()
+    command.upgrade(migrate.alembic_config(u), "0001")  # the baseline is what 0.2/0.3 had …
     con = sqlite3.connect(tmp_path / "db.sqlite")
-    con.execute("alter table movie drop column keywords")  # added in 0.5
-    # Admins and the access question came in 0.6; before, a host film did the job.
-    con.execute("alter table user drop column is_admin")
-    con.execute("alter table user drop column freigegeben")
-    con.execute("alter table user drop column bild")  # 0.6 too
-    con.execute("alter table user drop column vitrine")
-    con.execute("alter table appmeta drop column erfolge_seit")
-    con.execute("alter table appmeta drop column erfolge_geprueft")
-    con.execute("alter table session drop column zugang")
-    con.execute("alter table session add column is_host boolean not null default 0")
-    con.execute("create table hoststate (id integer primary key, movie_id integer)")
+    con.execute("drop table alembic_version")  # … without Alembic,
+    con.execute("drop table abo")  # and without what came in 0.4
+    con.execute("drop table veto")
     con.execute("PRAGMA user_version = 2")
     con.execute("insert into user (id, name, color, dabei, created_at) values (1, 'Marc', '#e50914', 0, '2026-10-03')")
     con.execute(
@@ -87,12 +74,13 @@ def test_database_from_before_migrations_is_adopted_with_its_data(tmp_path):
 
     migrate.upgrade(u)
 
-    assert {"abo", "veto", "abend", "alembic_version"} <= tables(u)
+    assert {"abo", "veto", "abend", "gruppe", "alembic_version"} <= tables(u)
     assert migrate.current_revision(u) == migrate.head_revision()
     con = sqlite3.connect(tmp_path / "db.sqlite")
     assert con.execute("select name from user").fetchall() == [("Marc",)]
     assert con.execute("select title, keywords from movie").fetchall() == [("Shining", "")]
-    con.close()
+    # Everyone lands in the first group.
+    assert con.execute("select gruppe_id, user_id from mitglied").fetchall() == [(1, 1)]
 
 
 def test_database_from_0_1_is_refused(tmp_path):

@@ -120,7 +120,7 @@ async function remove() {
         <summary class="muted">Wer war dabei?</summary>
         <div class="row">
           <button
-            v-for="u in app.users"
+            v-for="u in app.mitglieder"
             :key="u.id"
             class="chip"
             :class="{ on: entry.participants.includes(u.id) }"
@@ -145,7 +145,7 @@ async function remove() {
         </form>
       </div>
 
-      <footer v-if="app.admin" class="row host">
+      <footer v-if="app.gruppenAdmin" class="row host">
         <button class="ghost small" @click="hide">{{ entry.hidden ? 'Wieder anzeigen' : 'Ausblenden' }}</button>
         <button class="ghost small danger" @click="remove"><Icon name="muell" :size="14" /> Löschen</button>
       </footer>

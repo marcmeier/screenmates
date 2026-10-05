@@ -133,6 +133,9 @@ async function join(browser, name, ctx = null, { asAdmin = false } = {}) {
     const id = users.find((u) => u.name === name).id
     const r = await b.request.patch(`/api/admin/users/${id}`, { data: { freigegeben: true, admin: asAdmin } })
     expect(r.ok()).toBeTruthy()
+    // With several groups (filmabend.spec.js adds one), an admin decides who's in: the Kino is the first group's.
+    const m = await b.request.put(`/api/admin/gruppen/1/mitglieder/${id}`, { data: { admin: asAdmin } })
+    expect(m.ok()).toBeTruthy()
     await page.reload()
     await page.locator('.users .user', { hasText: name }).click()
   }

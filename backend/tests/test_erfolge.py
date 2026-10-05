@@ -248,7 +248,7 @@ def test_kino_counts_viewers_after_a_while_and_the_sender_after_two(client, lena
     st.gestartet = datetime.now(UTC)
     db.add(st)
     db.commit()
-    kino._sender = me_id(client)
+    kino._saele[1].sender = me_id(client)
     monkeypatch.setattr(kino, "MIN_SCHAUEN", 1000)
     lena.post("/api/kino/da")
     assert erfolge.stand(client_db())[lena.me["id"]]["kino"] == 0  # not long enough

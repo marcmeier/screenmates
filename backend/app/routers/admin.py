@@ -20,7 +20,7 @@ from ..db import get_session
 from ..models import Session, User
 from ..serialize import iso, user_dict
 from ..session import require_admin
-from .users import clean_name, ensure_not_last_admin, new_user
+from .users import clean_name, ensure_not_last_admin, in_einzige_gruppe, new_user
 
 router = APIRouter(prefix="/api/admin", tags=["admin"], dependencies=[Depends(require_admin)])
 
@@ -73,6 +73,8 @@ def change(user_id: int, body: Aendern, db: DBSession = Depends(get_session)):
             raise HTTPException(422, "Farbe bitte als #rrggbb.")
         u.color = body.color.lower()
     if body.freigegeben is not None:
+        if body.freigegeben and not u.freigegeben:
+            in_einzige_gruppe(db, u)
         u.freigegeben = body.freigegeben
     if body.admin is not None:
         if body.admin and not u.freigegeben:

@@ -50,6 +50,26 @@ Jeder Film trägt die Gruppen-Flags `gesehen`, `gemerkt` und `vorgeschlagen_von`
 | POST | `/dabei` | N | Eigene Teilnahme am nächsten Abend umschalten |
 | DELETE | `/dabei` | A | Teilnahme aller zurücksetzen |
 
+## Gruppen
+
+Alles zu Filmabend, Chronik, Merkliste, Vorschlägen, Veto, Kiste, Termin, Infos, Feed und Kino
+bezieht sich auf die **aktive Gruppe** der Sitzung und verlangt einen Namen, der Mitglied ist
+(`401` ohne Namen, `409` ohne Gruppe, `404` für Einträge anderer Gruppen). „A“ heißt dort:
+Admin *dieser Gruppe* oder Server-Admin. Der Katalog bleibt für alle offen; seine Markierungen
+(gesehen, gemerkt, vorgeschlagen, „bei uns im Abo“) gelten für die aktive Gruppe.
+
+| Methode | Pfad | Recht | Zweck |
+|---|---|:-:|---|
+| GET | `/gruppen` | N | Meine Gruppen und die aktive |
+| POST | `/gruppen/aktiv` | N | Aktive Gruppe wechseln (`gruppe_id`, nur eigene) |
+| GET | `/admin/gruppen` | Gruppen-/Server-Admin | Verwaltbare Gruppen mit Mitgliedern |
+| POST | `/admin/gruppen` | Server-Admin | Gruppe anlegen |
+| PATCH | `/admin/gruppen/{id}` | Gruppen-/Server-Admin | Umbenennen |
+| DELETE | `/admin/gruppen/{id}` | Server-Admin | Gruppe mit allem darin löschen (Mitglieder und Erfolge bleiben) |
+| PUT/DELETE | `/admin/gruppen/{id}/mitglieder/{user}` | Gruppen-/Server-Admin | Aufnehmen bzw. Gruppen-Admin-Recht setzen (`admin`) / entfernen |
+
+`/users` liefert zusätzlich `gruppe` (aktive Gruppe: `id`, `name`, `admin`, `mitglieder`); `dabei` gilt für die aktive Gruppe.
+
 ## Erfolge
 
 | Methode | Pfad | Recht | Zweck |

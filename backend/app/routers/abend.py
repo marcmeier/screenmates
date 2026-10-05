@@ -15,6 +15,7 @@ from sqlmodel import col, select
 from .. import erfolge, tmdb
 from ..config import settings
 from ..db import get_session
+from ..gruppen import aktive_gruppe
 from ..models import Abend, Movie, User, Watched, WatchedRating, now
 from ..prognose import MIN_BEWERTUNGEN, Film, vorhersage
 from ..serialize import iso
@@ -108,8 +109,8 @@ class TerminSetzen(BaseModel):
     notiz: str = Field("", max_length=80)
 
 
-def _abend(db: DBSession) -> Abend:
-    return db.get(Abend, 1) or Abend(id=1)
+def _abend(db: DBSession, gid: int) -> Abend:
+    return db.get(Abend, gid) or Abend(id=gid)
 
 
 def _termin_dict(a: Abend) -> dict:
@@ -121,17 +122,22 @@ def _termin_dict(a: Abend) -> dict:
 
 
 @router.get("/termin")
-def get_termin(db: DBSession = Depends(get_session)):
-    return _termin_dict(_abend(db))
+def get_termin(gid: int = Depends(aktive_gruppe), db: DBSession = Depends(get_session)):
+    return _termin_dict(_abend(db, gid))
 
 
 @router.put("/termin")
-def set_termin(body: TerminSetzen, user: User = Depends(require_user), db: DBSession = Depends(get_session)):
+def set_termin(
+    body: TerminSetzen,
+    user: User = Depends(require_user),
+    gid: int = Depends(aktive_gruppe),
+    db: DBSession = Depends(get_session),
+):
     termin = body.termin if body.termin.tzinfo else body.termin.replace(tzinfo=BERLIN)
     jetzt = datetime.now(UTC)
     if not jetzt - timedelta(hours=6) <= termin <= jetzt + timedelta(days=366):
         raise HTTPException(422, "Der Termin muss in der Zukunft liegen (höchstens ein Jahr).")
-    a = _abend(db)
+    a = _abend(db, gid)
     a.termin, a.notiz, a.gesetzt_von, a.gesetzt_am = termin.astimezone(UTC), body.notiz.strip(), user.id, now()
     db.add(a)
     erfolge.protokoll(db, "termin", user.id, termin.astimezone(BERLIN).date().isoformat())
@@ -139,9 +145,9 @@ def set_termin(body: TerminSetzen, user: User = Depends(require_user), db: DBSes
     return _termin_dict(a)
 
 
-@router.delete("/termin", dependencies=[Depends(require_user)])
-def clear_termin(db: DBSession = Depends(get_session)):
-    a = _abend(db)
+@router.delete("/termin")
+def clear_termin(gid: int = Depends(aktive_gruppe), db: DBSession = Depends(get_session)):
+    a = _abend(db, gid)
     a.termin, a.notiz, a.gesetzt_am = None, "", None
     db.add(a)
     db.commit()
@@ -161,11 +167,13 @@ def _gleicher_tag(d: date, jahr: int) -> date:
 
 
 @router.get("/erinnerungen")
-def erinnerungen(heute: date | None = Query(None), db: DBSession = Depends(get_session)):
+def erinnerungen(
+    heute: date | None = Query(None), gid: int = Depends(aktive_gruppe), db: DBSession = Depends(get_session)
+):
     """Films watched around today's date in earlier years (±3 days)."""
     heute = heute or datetime.now(BERLIN).date()
     treffer = []
-    for w in db.exec(select(Watched).where(col(Watched.hidden).is_(False))).all():
+    for w in db.exec(select(Watched).where(col(Watched.hidden).is_(False), Watched.gruppe_id == gid)).all():
         tag = _utc(w.watched_at).astimezone(BERLIN).date()
         jahre = heute.year - tag.year
         if jahre < 1:

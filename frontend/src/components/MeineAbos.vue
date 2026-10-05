@@ -35,7 +35,7 @@ function umschalten(id) {
 // Everyone's subscriptions combined: what the group can watch without paying extra.
 const gruppe = computed(() => {
   const bei = new Map()
-  for (const u of app.users) for (const id of u.abos ?? []) bei.set(id, [...(bei.get(id) ?? []), u.name])
+  for (const u of app.mitglieder) for (const id of u.abos ?? []) bei.set(id, [...(bei.get(id) ?? []), u.name])
   return [...bei.entries()].map(([id, namen]) => ({ p: alle.value.find((a) => a.id === id), namen })).filter((x) => x.p)
 })
 </script>
