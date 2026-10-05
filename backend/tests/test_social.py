@@ -206,8 +206,9 @@ def test_ki_via_openrouter(client, monkeypatch, provider):
     sent = route.calls.last.request
     assert sent.headers["authorization"] == "Bearer sk-or-v1-test"
     body = json.loads(sent.content)
-    assert body["model"] == "deepseek/deepseek-v3.2"
+    assert body["model"] == "deepseek/deepseek-v4.1-flash"
     assert body["messages"][0]["role"] == "system"
+    assert body["reasoning"] == {"enabled": False}
 
 
 @respx.mock
@@ -238,6 +239,19 @@ def test_ki_errors_are_explained(client, monkeypatch, status, meldung):
     r = client.post("/api/ki-suche", json={"beschreibung": "x"})
     assert r.status_code == 502
     assert meldung in r.json()["detail"]
+
+
+@respx.mock
+def test_ki_truncated_answer_is_explained(client, monkeypatch):
+    from app.config import settings
+
+    monkeypatch.setattr(settings, "llm_api_key", "sk-or-v1-test")
+    login(client, "marc")
+    cut = {"choices": [{"finish_reason": "length", "message": {"content": '[{"titel": "Al'}}]}
+    respx.post("https://openrouter.ai/api/v1/chat/completions").mock(return_value=httpx.Response(200, json=cut))
+    r = client.post("/api/ki-suche", json={"beschreibung": "x"})
+    assert r.status_code == 502
+    assert "abgeschnitten" in r.json()["detail"]
 
 
 @respx.mock

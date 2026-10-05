@@ -5,8 +5,10 @@
 ### Neu
 - **KI-Suche über OpenRouter.** Statt eines Anthropic-Keys geht auch ein OpenRouter-Key (`sk-or-…`,
   wird automatisch erkannt) – und damit jedes Modell dort. Standard ist das günstige
-  `deepseek/deepseek-v3.2` (rund 0,07 Cent pro Suche); jeder Vorschlag wird ohnehin gegen TMDB geprüft.
-  Fehler der KI werden verständlich gemeldet (Key abgelehnt, Guthaben leer, überlastet).
+  `deepseek/deepseek-v4.1-flash` (rund 0,12 Cent pro Suche); jeder Vorschlag wird ohnehin gegen TMDB geprüft.
+  Das „Nachdenken“ (Reasoning) wird dabei abgeschaltet: Bei Reasoning-Modellen verbrauchte es das
+  ganze Antwort-Budget, bevor die Liste kam – ohne ist die Suche schneller, billiger und zuverlässig.
+  Fehler der KI werden verständlich gemeldet (Key abgelehnt, Guthaben leer, überlastet, abgeschnitten).
 - **Alle Genres statt nur Horror.** Finden, Stöbern, Suche, Personen und KI-Suche umfassen jetzt
   jeden Film. Horror ist ein Genre unter vielen und hat sein eigenes Regal – ganz vorn.
 - **Genre-Regale** beim Stöbern: Horror, Komödie, Thriller, Action, Science-Fiction, Drama,

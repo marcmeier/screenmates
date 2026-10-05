@@ -86,13 +86,19 @@ async def _openrouter(client: httpx.AsyncClient, prompt: str) -> str:
             "model": settings.llm_model_name,
             "max_tokens": 2000,
             "messages": [{"role": "system", "content": SYSTEM}, {"role": "user", "content": prompt}],
+            # Reasoning models would think first and often use up max_tokens before the
+            # list is written. A list of titles needs knowledge, not thought: off is faster
+            # and cheaper. Models that cannot switch it off ignore the setting.
+            "reasoning": {"enabled": False},
         },
     )
     _check(r)
-    choices = r.json().get("choices") or [{}]
-    content = (choices[0].get("message") or {}).get("content") or ""
+    choice = (r.json().get("choices") or [{}])[0]
+    content = (choice.get("message") or {}).get("content") or ""
     if isinstance(content, list):  # some models answer in content parts
         content = "".join(part.get("text", "") for part in content if isinstance(part, dict))
+    if choice.get("finish_reason") == "length" and "]" not in content:
+        raise KIError("Die Antwort der KI war zu lang und wurde abgeschnitten – anderes Modell wählen (LLM_MODEL).")
     return content
 
 
