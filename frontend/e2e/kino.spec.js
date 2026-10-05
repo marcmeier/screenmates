@@ -224,6 +224,14 @@ test('friends see it everywhere and watch in sync', async () => {
   await expect(host.locator('.viewers')).toContainText('2 schauen', { timeout: 15_000 })
 })
 
+test('the audience chats, and reactions fly across the picture', async () => {
+  await viewer.getByLabel('Nachricht an alle').fill('Gänsehaut!')
+  await viewer.getByLabel('Nachricht an alle').press('Enter')
+  await expect(host.locator('.kinochat')).toContainText('Gänsehaut!', { timeout: 8000 })
+  await host.locator('.kinochat').getByRole('button', { name: 'Reaktion 😱' }).click()
+  await expect(viewer.locator('.screen .flug span', { hasText: '😱' })).toBeVisible({ timeout: 8000 })
+})
+
 test('the show keeps running while the host browses', async () => {
   await host.getByRole('link', { name: 'Finden' }).click()
   const before = await videoTime(viewer)

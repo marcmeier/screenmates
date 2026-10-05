@@ -28,9 +28,17 @@ from ..session import current_session, ensure_session
 router = APIRouter(prefix="/api", tags=["zugang"])
 
 # Paths that stay reachable without access: the door itself, the health check,
-# and the Kino endpoints that authenticate on their own (MediaMTX callback,
-# OBS publishing with its stream key).
-OFFEN = ("/api/health", "/api/zugang", "/api/ueber", "/api/kino/mtx-auth", "/api/kino/whip", "/api/kino/sitzung/whip/")
+# and what authenticates on its own: the Kino's MediaMTX callback and OBS with
+# its stream key, and the calendar feed with its personal token.
+OFFEN = (
+    "/api/health",
+    "/api/zugang",
+    "/api/ueber",
+    "/api/kino/mtx-auth",
+    "/api/kino/whip",
+    "/api/kino/sitzung/whip/",
+    "/api/kalender/",
+)
 
 # Wrong codes: per client IP, plus a cap for everyone together. Tokens can't be
 # guessed anyway; this keeps the door quiet.

@@ -12,7 +12,7 @@ from pydantic import BaseModel, Field
 from sqlmodel import Session as DBSession
 from sqlmodel import col, select
 
-from .. import erfolge, tmdb
+from .. import erfolge, push, tmdb
 from ..config import settings
 from ..db import get_session
 from ..gruppen import aktive_gruppe
@@ -20,7 +20,7 @@ from ..models import Abend, Movie, User, Watched, WatchedRating, now
 from ..prognose import MIN_BEWERTUNGEN, Film, vorhersage
 from ..serialize import iso
 from ..session import require_user
-from ..util import ensure_movie, upsert_movie
+from ..util import ensure_movie, termin_text, upsert_movie
 from . import gastgeber
 from .watched import _payload
 
@@ -127,6 +127,40 @@ def get_termin(gid: int = Depends(aktive_gruppe), db: DBSession = Depends(get_se
     return _termin_dict(_abend(db, gid))
 
 
+def pruefe_termin(termin: datetime, *, vergangenes: timedelta = timedelta(hours=6)) -> datetime:
+    """A date without zone is German time; it must lie ahead (a little in the past is fine), within a year."""
+    termin = termin if termin.tzinfo else termin.replace(tzinfo=BERLIN)
+    jetzt = datetime.now(UTC)
+    if not jetzt - vergangenes <= termin <= jetzt + timedelta(days=366):
+        raise HTTPException(422, "Der Termin muss in der Zukunft liegen (höchstens ein Jahr).")
+    return termin.astimezone(UTC)
+
+
+def termin_setzen(db: DBSession, gid: int, user: User, termin: datetime, notiz: str) -> Abend:
+    """Set the group's date (commits) and tell the others."""
+    termin = pruefe_termin(termin)
+    a = _abend(db, gid)
+    vorher = _utc(a.termin)
+    gastgeber.termin_gesetzt(db, a, user, a.termin)
+    a.termin, a.notiz, a.gesetzt_von, a.gesetzt_am = termin, notiz.strip(), user.id, now()
+    # A date this close needs no reminder on top of the news.
+    a.erinnert = termin if termin - datetime.now(UTC) <= push.ERINNERUNG else None
+    db.add(a)
+    erfolge.protokoll(db, "termin", user.id, termin.astimezone(BERLIN).date().isoformat())
+    db.commit()
+    if vorher != termin:
+        verschoben = vorher is not None and vorher > datetime.now(UTC) - timedelta(hours=6)
+        push.an(
+            db,
+            push.mitglieder(db, gid, ausser=user.id),
+            "termin",
+            f"📅 Filmabend {'verschoben' if verschoben else 'steht'} – {push.gruppenname(db, gid)}",
+            f"{user.name}: {termin_text(termin)}{f' · {a.notiz}' if a.notiz else ''}",
+            tag=f"termin-{gid}",
+        )
+    return a
+
+
 @router.put("/termin")
 def set_termin(
     body: TerminSetzen,
@@ -134,17 +168,7 @@ def set_termin(
     gid: int = Depends(aktive_gruppe),
     db: DBSession = Depends(get_session),
 ):
-    termin = body.termin if body.termin.tzinfo else body.termin.replace(tzinfo=BERLIN)
-    jetzt = datetime.now(UTC)
-    if not jetzt - timedelta(hours=6) <= termin <= jetzt + timedelta(days=366):
-        raise HTTPException(422, "Der Termin muss in der Zukunft liegen (höchstens ein Jahr).")
-    a = _abend(db, gid)
-    gastgeber.termin_gesetzt(db, a, user, a.termin)
-    a.termin, a.notiz, a.gesetzt_von, a.gesetzt_am = termin.astimezone(UTC), body.notiz.strip(), user.id, now()
-    db.add(a)
-    erfolge.protokoll(db, "termin", user.id, termin.astimezone(BERLIN).date().isoformat())
-    db.commit()
-    return _termin_dict(a)
+    return _termin_dict(termin_setzen(db, gid, user, body.termin, body.notiz))
 
 
 @router.delete("/termin")

@@ -28,6 +28,7 @@ from pydantic import BaseModel
 from sqlmodel import Session as DBSession
 from sqlmodel import col, select
 
+from .. import push
 from ..db import get_session
 from ..gruppen import aktive_gruppe, gruppen_admin, mitglieder
 from ..models import Abend, Stabwechsel, User, now
@@ -219,6 +220,16 @@ def hand_over(
         raise HTTPException(409, "Gerade läuft schon ein Wechsel.")
     db.add(Stabwechsel(gruppe_id=gid, art="uebergabe", von_id=user.id, an_id=body.an, frist=now() + UEBERGABE_FRIST))
     db.commit()
+    push.an(
+        db,
+        push.abwesend(gid, [body.an]),
+        "stab",
+        "🎬 Der Gastgeber-Stab für dich",
+        f"{user.name} möchte dir den Stab für den Filmabend geben. Annehmen?",
+        tag=f"stab-{gid}",
+        ttl=int(UEBERGABE_FRIST.total_seconds()),
+        dringend=True,
+    )
     return zustand(db, gid, user, admin)
 
 

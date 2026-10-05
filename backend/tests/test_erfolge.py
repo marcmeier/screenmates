@@ -7,6 +7,7 @@ from sqlmodel import select
 
 from app import erfolge
 from app.models import AppMeta, Erfolg
+from app.util import BERLIN
 
 from .conftest import login
 
@@ -20,11 +21,16 @@ def meine(c):
     return set(c.get("/api/erfolge").json()["ich"]["freigeschaltet"])
 
 
+def abends(dt: datetime) -> datetime:
+    """Move a time from the small hours to the evening before: run at night, the tests
+    would otherwise unlock the secret "Nachteule" (after midnight) on the side."""
+    stunde = dt.astimezone(BERLIN).hour
+    return dt - timedelta(hours=stunde + 1) if stunde < 5 else dt
+
+
 def abend(c, film=694, mit=(), tage=0, angelegt_spaeter=False):
     """A watched entry by c with the given other participants, `tage` days ago."""
-    body = {"movie_id": film}
-    if tage:
-        body["watched_at"] = (datetime.now(UTC) - timedelta(days=tage)).isoformat()
+    body = {"movie_id": film, "watched_at": abends(datetime.now(UTC) - timedelta(days=tage)).isoformat()}
     w = c.post("/api/watched", json=body).json()
     me = c.get("/api/users").json()["ich"]["id"]
     if mit:

@@ -125,6 +125,12 @@ def fakten(db: DBSession) -> list[dict]:
     liste = [{"wert": _de(n), "text": eins if n == 1 else viele} for n, eins, viele in eintraege if n]
     if sterne:
         liste.append({"wert": f"{_de(sterne, 1)} ★", "text": "Durchschnitt aller Bewertungen"})
+    for key, eins, viele in (
+        ("kino_chat", "Nachricht im Kino-Chat", "Nachrichten im Kino-Chat"),
+        ("kino_reaktionen", "Reaktion im Kino", "Reaktionen im Kino"),
+    ):
+        if n := zaehler(db, key):
+            liste.append({"wert": _de(n), "text": eins if n == 1 else viele})
     if kino_bytes:
         liste.append({"wert": _bytes(kino_bytes), "text": "im Kino gestreamt"})
     if pakete:

@@ -25,7 +25,7 @@ const nachSchreiben = new Set()
 export function beiAenderung(fn) {
   nachSchreiben.add(fn)
 }
-const STILL = ['/api/kino/da', '/api/erfolge', '/api/zugang']
+const STILL = ['/api/kino/da', '/api/kino/chat', '/api/kino/reaktion', '/api/erfolge', '/api/zugang', '/api/push', '/api/kalender']
 
 async function req(method, path, body, { signal, quiet = false } = {}) {
   const opts = { method, credentials: 'same-origin', headers: {}, signal }

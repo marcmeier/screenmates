@@ -1,14 +1,44 @@
-"""Catalogue helpers shared by several routers."""
+"""Catalogue and date helpers shared by several modules."""
 
 from __future__ import annotations
 
+from datetime import UTC, datetime
 from typing import Any
+from zoneinfo import ZoneInfo
 
 from fastapi import HTTPException
 from sqlmodel import Session as DBSession
 
 from . import tmdb
 from .models import Movie
+
+BERLIN = ZoneInfo("Europe/Berlin")
+WOCHENTAGE = ("Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag", "Sonntag")
+MONATE = (
+    "Januar",
+    "Februar",
+    "März",
+    "April",
+    "Mai",
+    "Juni",
+    "Juli",
+    "August",
+    "September",
+    "Oktober",
+    "November",
+    "Dezember",
+)
+
+
+def utc(dt: datetime) -> datetime:
+    """SQLite hands back naive datetimes; they are UTC by contract."""
+    return dt.replace(tzinfo=UTC) if dt.tzinfo is None else dt.astimezone(UTC)
+
+
+def termin_text(dt: datetime) -> str:
+    """'Freitag, 9. Oktober, 20:00 Uhr' in German time (no locale needed on the server)."""
+    d = utc(dt).astimezone(BERLIN)
+    return f"{WOCHENTAGE[d.weekday()]}, {d.day}. {MONATE[d.month - 1]}, {d:%H:%M} Uhr"
 
 
 def upsert_movie(db: DBSession, data: dict[str, Any], *, is_canon: bool = False) -> Movie:

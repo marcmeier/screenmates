@@ -1,18 +1,20 @@
 <script setup>
-import { computed } from 'vue'
+import { computed, defineAsyncComponent } from 'vue'
 import { useApp } from '../../stores/app'
 import { useRoute } from '../../composables/useRoute'
 import GesehenView from '../sammlung/GesehenView.vue'
 import MerklisteView from '../sammlung/MerklisteView.vue'
 
-// The group's two lists on one page: what we want to see, and what we've seen.
+// The group's lists on one page: what we want to see, what we've seen, and the year in review.
+const RueckblickView = defineAsyncComponent(() => import('../sammlung/RueckblickView.vue'))
 const app = useApp()
 const route = useRoute()
 const VIEWS = [
   { id: 'merkliste', label: 'Merkliste', count: () => app.status.wishlist_count },
   { id: 'gesehen', label: 'Gesehen', count: () => app.status.watched_count },
+  { id: 'rueckblick', label: 'Rückblick', count: () => null },
 ]
-const current = computed(() => (route.value.sub === 'gesehen' ? 'gesehen' : 'merkliste'))
+const current = computed(() => (['gesehen', 'rueckblick'].includes(route.value.sub) ? route.value.sub : 'merkliste'))
 </script>
 
 <template>
@@ -37,7 +39,8 @@ const current = computed(() => (route.value.sub === 'gesehen' ? 'gesehen' : 'mer
     </nav>
 
     <MerklisteView v-if="current === 'merkliste'" />
-    <GesehenView v-else />
+    <GesehenView v-else-if="current === 'gesehen'" />
+    <RueckblickView v-else />
   </div>
 </template>
 

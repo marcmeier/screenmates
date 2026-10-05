@@ -10,7 +10,10 @@ Gästebuch nachdiskutieren.
 
 Drei Bereiche für die drei Dinge, für die man herkommt:
 
-- **Filmabend** – wer ist dabei, **Termin und Einladungskarte** für den Gruppenchat, gerankte
+- **Filmabend** – wer ist dabei (**dabei, vielleicht oder kann nicht**), **Termin und
+  Einladungskarte** für den Gruppenchat, eine **Terminumfrage**, wenn der Tag noch offen ist
+  (alle stimmen mit Ja, Vielleicht oder Nein ab, festlegen übernimmt die Antworten als Zusagen),
+  der Termin **im Kalender** (als Datei oder als Abo für alle Gruppen), gerankte
   Vorschläge der Gruppe, ein **Veto** pro Person,
   die **Filmabend-Kiste**, die wie eine CS2-Kiste aufgeht (Seltenheitsfarben nach den echten
   Chancen, Stimmen erhöhen sie) – der Gastgeber öffnet sie **für alle gleichzeitig**, alle sehen
@@ -26,8 +29,9 @@ Drei Bereiche für die drei Dinge, für die man herkommt:
   Teilnehmende, Gästebuch mit Antworten und Herzen.
 - **Kino** – gemeinsam schauen, auch wenn alle in verschiedenen Wohnzimmern sitzen: Der Gastgeber (oder ein Admin)
   teilt seinen Bildschirm oder sendet aus OBS (eigene Filme, Spiele …), alle sehen live dasselbe
-  Bild mit unter einer Sekunde Verzögerung. Läuft etwas, leuchtet der Menüpunkt mit der Zahl der
-  Zuschauenden. Danach trägt ein Klick den Film als gesehen ein, mit allen, die dabei waren.
+  Bild mit unter einer Sekunde Verzögerung. Daneben ein **Chat**, und **Reaktionen** (😱 🍿 😂 …)
+  fliegen für alle übers Bild – auch im Vollbild. Läuft etwas, leuchtet der Menüpunkt mit der Zahl
+  der Zuschauenden. Danach trägt ein Klick den Film als gesehen ein, mit allen, die dabei waren.
 
 Dazu: eine Detailansicht mit Trailer, **„Wo läuft's?“** (Abo, leihen, kaufen; Abos der Gruppe
 zuerst), **„Wem gefällt's?"** (geschätzte Sterne pro Person aus den eigenen Bewertungen, siehe
@@ -46,6 +50,17 @@ Anwesenden stimmen ab (die Stimme des Gastgebers zählt doppelt).
 
 **Live:** Was Freunde bewerten, kommentieren, merken oder vorschlagen, erscheint bei allen ohne
 Neuladen. Jede Person stellt sich ihr **Farbschema und ihre Schrift** ein (bleibt dunkel).
+
+**Benachrichtigungen:** Auch bei geschlossener App meldet sich screenmates aufs Handy oder den
+Rechner (Web Push) – wenn ein Termin steht oder verschoben wird, eine Terminumfrage startet, am
+Tag des Filmabends, wenn die Kiste aufgeht, das Kino live geht, dir der Gastgeber-Stab angeboten
+wird oder jemand auf deinen Kommentar antwortet. Jede Person wählt, worüber; was gerade live
+passiert, kommt nur bei denen an, die die App nicht offen haben. Auf dem iPhone geht das in der
+App auf dem Home-Bildschirm.
+
+**Rückblick:** Unter „Unsere Filme“ euer Filmjahr in Zahlen – Filme, Abende, Stunden, Genres, der
+beste und der umstrittenste Film, Rekorde und Auszeichnungen wie „Stammgast“ oder „Strengste
+Kritik“. Und als **Story** zum Durchtippen, im Dezember und Januar mit Hinweis auf der Startseite.
 
 **Erfolge** wie bei Xbox und Steam: Filmabende, Kritiken, Gästebuch, Termine und Kino schalten
 Erfolge frei, Punkte ergeben ein Level am Avatar, jede Person hat ein Profil mit Vitrine – so
@@ -69,6 +84,10 @@ Mit TMDB-Key ist der ganze TMDB-Katalog verfügbar, ohne Key gibt es einen Demo-
 | Kiste für alle | Gastgeber-Stab | Darstellung |
 |---|---|---|
 | ![](docs/screenshots/kiste.png) | ![](docs/screenshots/stab.png) | ![](docs/screenshots/darstellung.png) |
+
+| Terminumfrage | Rückblick | Rückblick als Story |
+|---|---|---|
+| ![](docs/screenshots/umfrage.png) | ![](docs/screenshots/rueckblick.png) | ![](docs/screenshots/rueckblick-story.png) |
 
 ## Schnellstart
 
@@ -105,6 +124,7 @@ Alles optional, über `backend/.env` oder Umgebungsvariablen:
 | `CORS_ORIGINS` | Nur nötig, wenn Frontend und API auf verschiedenen Origins laufen. |
 | `MEDIA_DIR` | Ablage für Profilbilder. Standard `backend/media`, im Docker-Image `/data/media` (im selben Volume wie die Datenbank – beim Backup mitnehmen). |
 | `FORWARDED_ALLOW_IPS` | Hinter einem Reverse Proxy dessen IP (bzw. Netze, kommagetrennt), damit uvicorn die echte Client-IP aus `X-Forwarded-For` übernimmt. Fehlversuche an der Tür werden pro IP gezählt. |
+| `PUSH_KONTAKT` | Kontakt für die Push-Dienste der Browser (`mailto:…` oder eine `https:`-Adresse). Die Schlüssel für Web Push erzeugt screenmates beim ersten Mal selbst und speichert sie in der Datenbank. Push braucht HTTPS (lokal geht `localhost`). |
 
 ### Admin-Werkzeug
 
@@ -197,8 +217,8 @@ Doku unter `/docs`, wenn das Backend läuft.
 
 ```bash
 make lint        # ruff + eslint
-make test        # 113 Backend-Tests + 35 Playwright-E2E-Schritte gegen das echte Backend
-                 # (die 5 Kino-Schritte mit echtem MediaMTX, falls installiert)
+make test        # 257 Backend-Tests + 51 Playwright-E2E-Schritte gegen das echte Backend
+                 # (die 9 Kino-Schritte mit echtem MediaMTX, falls installiert)
 ```
 
 GitHub Actions führt Lint, Unit- und E2E-Tests bei jedem Push aus. Was beim Review
@@ -212,6 +232,5 @@ werden nicht übernommen.
 
 ## Roadmap
 
-- Kino: Chat und Reaktionen während der Vorstellung
 - Video-Clips (Szenen ausschneiden und teilen) wie im Original
 - Serien (braucht einen Schlüssel `media_type` + `id`)

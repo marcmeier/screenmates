@@ -13,6 +13,7 @@ import Icon from '../Icon.vue'
 import Poster from '../Poster.vue'
 import KistenOeffnung from '../KistenOeffnung.vue'
 import GastgeberLeiste from '../GastgeberLeiste.vue'
+import TerminUmfrage from '../TerminUmfrage.vue'
 import { useKiste } from '../../stores/kiste'
 import UserAvatar from '../UserAvatar.vue'
 
@@ -35,23 +36,55 @@ const loading = ref(true)
 const gewinner = computed(() => kiste.aktuell?.gewinner ?? null)
 const termin = ref(null)
 const erinnerungen = ref([])
-const terminOffen = ref(false)
+const terminOffen = ref(null) // null | 'fest' | 'umfrage'
 const einladungOffen = ref(false)
+const umfrage = ref(null)
+// December and January: the year in review is ready (see RueckblickView.vue).
+const rueckblickJahr = ref(null)
 
 async function load() {
-  const [s, p, e, t, er] = await Promise.all([
+  const [s, p, e, t, er, u] = await Promise.all([
     api.get('/api/suggestions'),
     api.get('/api/spin'),
     api.get('/api/events?limit=15'),
     api.get('/api/termin'),
     api.get('/api/erinnerungen'),
+    api.get('/api/termin/umfrage'),
   ])
   vorschlaege.value = s.suggestions
   pool.value = p.pool
   events.value = e.events
   termin.value = t
   erinnerungen.value = er.erinnerungen
+  umfrage.value = u
   loading.value = false
+}
+async function rueckblickPruefen() {
+  const monat = new Date().getMonth() // 0 = January
+  if (monat !== 11 && monat !== 0) return
+  const jahr = new Date().getFullYear() - (monat === 0 ? 1 : 0)
+  const r = await api.get('/api/rueckblick', { quiet: true }).catch(() => null)
+  if (r?.jahre.includes(jahr)) rueckblickJahr.value = jahr
+}
+onMounted(rueckblickPruefen)
+function umfrageGestartet(u) {
+  umfrage.value = u
+  terminOffen.value = null
+}
+function festgelegt(r) {
+  termin.value = r.termin
+  umfrage.value = r.umfrage
+}
+
+const ANTWORTEN = [
+  { key: 'vielleicht', label: 'Vielleicht', icon: 'fragezeichen' },
+  { key: 'nein', label: 'Kann nicht', icon: 'x' },
+]
+function antworten(key) {
+  app.antworten(app.me.rueckmeldung === key ? null : key)
+}
+function kalender() {
+  window.location.href = '/api/termin.ics'
 }
 const terminAnzeige = computed(() => terminText(termin.value))
 // The invitation shows what's really up for the vote: no vetoed films.
@@ -113,6 +146,10 @@ const EVENT_TEXT = {
     const t = terminText({ termin: e.termin })
     return `${e.wer ?? 'Jemand'} legt den Termin fest: ${t.tag}, ${t.zeit}`
   },
+  umfrage: (e) => {
+    const t = terminText({ termin: e.termin })
+    return `${e.wer ?? 'Jemand'} schlägt einen Termin zur Abstimmung vor: ${t.tag}, ${t.zeit}`
+  },
 }
 </script>
 
@@ -132,6 +169,13 @@ const EVENT_TEXT = {
       <span class="go">Zuschauen <Icon name="kino" :size="16" /></span>
     </a>
 
+    <a v-if="rueckblickJahr" :href="`#/sammlung/rueckblick/${rueckblickJahr}`" class="rueckblick-teaser">
+      <Icon name="funken" :size="20" />
+      <span><strong>Euer Filmjahr {{ rueckblickJahr }} ist da</strong> – die besten Filme, die strengste Kritik, eure Rekorde.</span>
+      <span class="spacer"></span>
+      <span class="go">Rückblick ansehen</span>
+    </a>
+
     <section class="panel crew">
       <div class="row">
         <span class="muted">Dabei:</span>
@@ -140,22 +184,60 @@ const EVENT_TEXT = {
         </template>
         <span v-else class="muted">noch niemand</span>
         <span class="spacer"></span>
-        <button v-if="app.me" :class="app.me.dabei ? 'on' : 'primary'" @click="app.toggleDabei()">
-          <Icon :name="app.me.dabei ? 'gesehen' : 'plus'" :size="16" />
-          {{ app.me.dabei ? 'Ich bin dabei' : 'Ich bin dabei!' }}
-        </button>
+        <div v-if="app.me" class="rsvp" role="group" aria-label="Bist du dabei?">
+          <button :class="app.me.dabei ? 'on' : 'primary'" :aria-pressed="app.me.dabei" @click="app.toggleDabei()">
+            <Icon :name="app.me.dabei ? 'gesehen' : 'plus'" :size="16" />
+            {{ app.me.dabei ? 'Ich bin dabei' : 'Ich bin dabei!' }}
+          </button>
+          <button
+            v-for="a in ANTWORTEN"
+            :key="a.key"
+            class="ghost"
+            :class="[a.key, { on: app.me.rueckmeldung === a.key }]"
+            :aria-pressed="app.me.rueckmeldung === a.key"
+            @click="antworten(a.key)"
+          >
+            <Icon :name="a.icon" :size="15" /> {{ a.label }}
+          </button>
+        </div>
+      </div>
+      <div v-if="app.vielleicht.length || app.absagen.length" class="row andere muted">
+        <template v-if="app.vielleicht.length">
+          <span>Vielleicht:</span>
+          <span class="avatars" :title="app.vielleicht.map((u) => u.name).join(', ')"><UserAvatar v-for="u in app.vielleicht" :key="u.id" :user="u" link /></span>
+          <span class="namen">{{ app.vielleicht.map((u) => u.name).join(', ') }}</span>
+        </template>
+        <template v-if="app.absagen.length">
+          <span>Kann nicht:</span>
+          <span class="namen">{{ app.absagen.map((u) => u.name).join(', ') }}</span>
+        </template>
       </div>
       <div class="row termin">
         <Icon name="kalender" :size="16" class="muted" />
         <span v-if="terminAnzeige"><strong>{{ terminAnzeige.tag }}</strong>, {{ terminAnzeige.zeit }}<span v-if="terminAnzeige.notiz" class="muted"> · {{ terminAnzeige.notiz }}</span></span>
+        <span v-else-if="umfrage?.vorschlaege.length" class="muted">Termin wird abgestimmt</span>
         <span v-else class="muted">Noch kein Termin</span>
-        <button v-if="app.me" class="small ghost" @click="terminOffen = true">{{ terminAnzeige ? 'Ändern' : 'Termin festlegen' }}</button>
+        <button v-if="app.me" class="small ghost" @click="terminOffen = 'fest'">{{ terminAnzeige ? 'Ändern' : 'Termin festlegen' }}</button>
+        <button v-if="app.me && !umfrage?.vorschlaege.length" class="small ghost" @click="terminOffen = 'umfrage'">
+          <Icon name="umfrage" :size="14" /> Abstimmen
+        </button>
+        <button v-if="terminAnzeige" class="small ghost" title="Als Kalender-Eintrag herunterladen" @click="kalender">
+          <Icon name="download" :size="14" /> Kalender
+        </button>
         <span class="spacer"></span>
         <button class="small" @click="einladungOffen = true"><Icon name="teilen" :size="14" /> Einladen</button>
       </div>
+      <TerminUmfrage v-if="app.me && umfrage?.vorschlaege.length" :umfrage="umfrage" @update="(u) => (umfrage = u)" @festgelegt="festgelegt" />
       <GastgeberLeiste />
     </section>
-    <TerminDialog v-if="terminOffen" :termin="termin" @close="terminOffen = false" @saved="(t) => ((termin = t), (terminOffen = false))" />
+    <TerminDialog
+      v-if="terminOffen"
+      :termin="termin"
+      :modus="terminOffen"
+      @close="terminOffen = null"
+      @saved="(t) => ((termin = t), (terminOffen = null))"
+      @umfrage="umfrageGestartet"
+    />
     <Einladung v-if="einladungOffen" :termin="termin" :filme="zurWahl" :dabei="app.dabei" @close="einladungOffen = false" />
 
     <div class="layout">
@@ -247,6 +329,26 @@ const EVENT_TEXT = {
 
 <style scoped>
 .crew { margin-bottom: 0.5rem; display: flex; flex-direction: column; gap: 0.6rem; }
+.rsvp { display: flex; gap: 0.3rem; flex-wrap: wrap; }
+.rsvp .ghost { font-size: 0.85rem; }
+.rsvp .vielleicht.on { color: var(--text); border-color: var(--gold); background: color-mix(in srgb, var(--gold) 14%, transparent); }
+.rsvp .nein.on { color: var(--text); border-color: var(--accent); background: var(--accent-soft); }
+.andere { font-size: 0.82rem; gap: 0.45rem; margin-top: -0.2rem; }
+.andere .avatars .avatar { width: 20px; height: 20px; font-size: 0.55rem; }
+.andere .namen { margin-right: 0.8rem; }
+.rueckblick-teaser {
+  display: flex; align-items: center; gap: 0.8rem; margin-bottom: 1rem; padding: 0.85rem 1rem; text-decoration: none;
+  border-radius: var(--radius); border: 1px solid color-mix(in srgb, var(--gold) 45%, transparent);
+  background: linear-gradient(100deg, color-mix(in srgb, var(--gold) 20%, transparent), color-mix(in srgb, var(--accent) 12%, transparent));
+}
+.rueckblick-teaser svg { color: var(--gold); flex: none; }
+.rueckblick-teaser .go { font-weight: 600; white-space: nowrap; }
+.rueckblick-teaser:hover { border-color: var(--gold); }
+@media (max-width: 600px) {
+  .rsvp { width: 100%; }
+  .rsvp button { flex: 1; justify-content: center; }
+  .rueckblick-teaser .go { display: none; }
+}
 .termin { border-top: 1px solid var(--line); padding-top: 0.6rem; font-size: 0.9rem; }
 .onair {
   display: flex; align-items: center; gap: 0.8rem; margin-bottom: 1rem; padding: 0.8rem 1rem; text-decoration: none;

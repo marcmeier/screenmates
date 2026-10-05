@@ -230,6 +230,46 @@ test('a date for the evening and an invitation card for the group chat', async (
   await page.unroute(/image\.tmdb\.org.*[?&]karte/)
 })
 
+test('the date goes into the calendar as a file', async () => {
+  const [datei] = await Promise.all([page.waitForEvent('download'), page.getByRole('button', { name: 'Kalender' }).click()])
+  expect(datei.suggestedFilename()).toBe('filmabend.ics')
+  const text = await (await datei.createReadStream()).toArray().then((teile) => Buffer.concat(teile).toString())
+  expect(text).toContain('BEGIN:VEVENT')
+  expect(text).toContain('LOCATION:bei Marc')
+})
+
+test('the group votes on a date; picking one carries the answers over', async () => {
+  await page.getByRole('button', { name: 'Abstimmen' }).click()
+  const dialog = page.getByRole('dialog', { name: 'Termin für den Filmabend' })
+  await expect(dialog.getByRole('radio', { name: 'Abstimmen lassen' })).toHaveAttribute('aria-checked', 'true')
+  await dialog.getByRole('button', { name: 'Umfrage starten' }).click()
+  await expect(dialog).toBeHidden()
+  const optionen = page.locator('.umfrage .option')
+  await expect(optionen).toHaveCount(2)
+  await expect(optionen.first().getByRole('button', { name: /^Ja/ })).toHaveAttribute('aria-pressed', 'true') // proposed = yes
+  const samstag = optionen.filter({ hasText: 'Samstag' })
+  await samstag.getByRole('button', { name: /^Vielleicht/ }).click()
+  await expect(samstag.getByRole('button', { name: /^Vielleicht/ })).toHaveAttribute('aria-pressed', 'true')
+  await expect(page.locator('.feed')).toContainText('Marc schlägt einen Termin zur Abstimmung vor: Samstag')
+  await optionen.filter({ hasText: 'Freitag' }).getByRole('button', { name: 'Festlegen' }).click()
+  await expect(page.locator('.umfrage')).toBeHidden()
+  await expect(page.locator('.crew .termin')).toContainText(/Freitag, \d+\. \w+, 20:00 Uhr · bei Marc/)
+  await expect(page.getByRole('button', { name: 'Ich bin dabei', exact: true })).toHaveAttribute('aria-pressed', 'true')
+})
+
+test('yes, maybe or no for the evening', async () => {
+  const rsvp = page.getByRole('group', { name: 'Bist du dabei?' })
+  await rsvp.getByRole('button', { name: 'Vielleicht' }).click()
+  await expect(page.locator('.crew .andere')).toContainText('Vielleicht:')
+  await expect(page.locator('.crew .andere')).toContainText('Marc')
+  await expect(rsvp.getByRole('button', { name: 'Ich bin dabei!' })).toBeVisible()
+  await rsvp.getByRole('button', { name: 'Kann nicht' }).click()
+  await expect(page.locator('.crew .andere')).toContainText('Kann nicht:')
+  await rsvp.getByRole('button', { name: 'Ich bin dabei!' }).click()
+  await expect(page.locator('.crew .andere')).toBeHidden()
+  await expect(page.locator('.crew .who')).toContainText('Marc')
+})
+
 test('rating: the n-th star gives n stars', async () => {
   await nav('Unsere Filme')
   await page.getByRole('navigation', { name: 'Liste' }).getByRole('link', { name: /Gesehen/ }).click()
@@ -370,6 +410,28 @@ test('own name gets film protection', async () => {
   await expect(page.locator('.chip.ok', { hasText: 'geschützt' })).toBeVisible()
 })
 
+test('settings: notifications by kind, and a calendar feed that works without login', async () => {
+  await page.goto('/#/profil/einstellungen')
+  await expect(page.getByRole('heading', { name: 'Benachrichtigungen' })).toBeVisible()
+  const kino = page.getByRole('checkbox', { name: 'Das Kino geht live' })
+  await expect(kino).toBeChecked()
+  await kino.uncheck()
+  await page.reload()
+  await expect(page.getByRole('checkbox', { name: 'Das Kino geht live' })).not.toBeChecked()
+  await page.getByRole('checkbox', { name: 'Das Kino geht live' }).check()
+
+  await page.getByRole('button', { name: 'Kalender-Link erstellen' }).click()
+  const link = await page.getByLabel('Kalender-Link').inputValue()
+  expect(link).toMatch(/\/api\/kalender\/[\w-]{20,}\.ics$/)
+  await expect(page.getByRole('link', { name: 'Im Kalender öffnen' })).toHaveAttribute('href', /^webcal:/)
+  // A calendar app has no cookie: the token in the link is enough.
+  const app = await page.context().browser().newContext()
+  const feed = await app.request.get(link)
+  expect(feed.ok()).toBeTruthy()
+  expect(await feed.text()).toContain('SUMMARY:🎬 Filmabend')
+  await app.close()
+})
+
 test('a theme and a font of your own, kept with the profile', async () => {
   const akzent = () => page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue('--accent').trim())
   expect(await akzent()).toBe('#e50914')
@@ -465,6 +527,23 @@ test('a film watched a year ago comes back as a memory', async () => {
   // CI clocks run on UTC; near midnight the German date may already differ by a day.
   await expect(erinnerung.getByRole('heading', { name: /^(Heute|Diese Woche) vor einem Jahr$/ })).toBeVisible()
   await expect(erinnerung).toContainText('Halloween')
+})
+
+test('the year in review sums up the group’s films, also as a story to tap through', async () => {
+  await nav('Unsere Filme')
+  await page.getByRole('navigation', { name: 'Liste' }).getByRole('link', { name: /Rückblick/ }).click()
+  const jahr = new Date().getFullYear()
+  await expect(page.getByRole('heading', { name: `Euer Filmjahr ${jahr}` })).toBeVisible()
+  await expect(page.locator('.kachel').first()).toContainText(/\d+\s*Filme?/)
+  await expect(page.locator('.film').first()).toBeVisible()
+  await page.getByRole('button', { name: 'Als Story ansehen' }).click()
+  const story = page.getByRole('dialog', { name: `Euer Filmjahr ${jahr}` })
+  await expect(story).toContainText('Euer Filmjahr.')
+  await page.keyboard.press('ArrowRight')
+  await expect(story).toContainText('Ihr habt')
+  await page.keyboard.press('Escape')
+  await expect(story).toBeHidden()
+  await nav('Filmabend') // the story goes on there
 })
 
 test('who will like a film: an honest hint until there are enough ratings', async () => {

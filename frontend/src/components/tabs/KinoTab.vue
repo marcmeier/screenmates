@@ -9,8 +9,10 @@ import { useUi } from '../../stores/ui'
 import { vorWann } from '../../format'
 import Icon from '../Icon.vue'
 import UserAvatar from '../UserAvatar.vue'
+import KinoChat from '../kino/KinoChat.vue'
 import KinoPlayer from '../kino/KinoPlayer.vue'
 import KinoSenden from '../kino/KinoSenden.vue'
+import { useKinoChat } from '../../stores/kinochat'
 
 const app = useApp()
 // Sending is for whoever holds the host's baton (and the group's admins).
@@ -19,8 +21,16 @@ const kino = useKino()
 const ui = useUi()
 
 // Poll faster while the Kino is open, so going live shows up within seconds.
-onMounted(() => kino.startPolling(3000))
-onBeforeUnmount(() => kino.startPolling())
+// The chat runs only while this page is open.
+const chat = useKinoChat()
+onMounted(() => {
+  kino.startPolling(3000)
+  if (app.me && app.gruppe) chat.starten()
+})
+onBeforeUnmount(() => {
+  kino.startPolling()
+  chat.stoppen()
+})
 
 // Someone who joined after this page loaded the user list: fetch names once.
 watch(
@@ -56,7 +66,7 @@ async function alsGesehen() {
       Details stehen in der README unter „Kino“.
     </div>
 
-    <div v-else class="layout" :class="{ withDesk: gast.darfModerieren }">
+    <div v-else class="layout" :class="{ withDesk: gast.darfModerieren, mitChat: app.me }">
       <section class="stage">
         <div v-if="kino.live" class="row onair">
           <span class="badge"><span class="dot"></span>LIVE</span>
@@ -96,7 +106,10 @@ async function alsGesehen() {
         </div>
       </section>
 
-      <KinoSenden v-if="gast.darfModerieren" />
+      <div v-if="gast.darfModerieren || app.me" class="seite">
+        <KinoSenden v-if="gast.darfModerieren" />
+        <KinoChat v-if="app.me" />
+      </div>
     </div>
   </div>
 </template>
@@ -104,7 +117,8 @@ async function alsGesehen() {
 <style scoped>
 .stableiste { margin-bottom: 1rem; padding: 0.6rem 0.9rem; }
 .layout { display: grid; gap: 1.6rem; align-items: start; }
-.layout.withDesk { grid-template-columns: minmax(0, 1fr) 360px; }
+.layout.withDesk, .layout.mitChat { grid-template-columns: minmax(0, 1fr) 360px; }
+.seite { display: flex; flex-direction: column; gap: 1.2rem; min-width: 0; position: sticky; top: 1rem; }
 .stage { display: flex; flex-direction: column; gap: 0.8rem; min-width: 0; }
 .onair h2 { margin: 0; font-size: 1.2rem; }
 .badge {
@@ -125,5 +139,8 @@ async function alsGesehen() {
 .empty-screen strong { color: var(--text); font-size: 1.1rem; }
 .movie { align-self: flex-start; }
 .done { display: flex; align-items: center; gap: 0.8rem; flex-wrap: wrap; }
-@media (max-width: 1100px) { .layout.withDesk { grid-template-columns: 1fr; } }
+@media (max-width: 1100px) {
+  .layout.withDesk, .layout.mitChat { grid-template-columns: 1fr; }
+  .seite { position: static; }
+}
 </style>

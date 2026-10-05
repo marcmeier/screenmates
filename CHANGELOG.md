@@ -1,6 +1,59 @@
 # Changelog
 
-## 0.8.0 – 2026-10-06
+## 0.9.0 – 2026-10-06
+
+**Gemeinsam planen, gemeinsam erinnern:** Den Termin findet die Gruppe per Umfrage, jede Person
+sagt zu, vielleicht oder ab, und der Abend landet im Kalender. screenmates meldet sich jetzt auch bei
+geschlossener App, im Kino wird gequatscht und gekreischt, und am Ende des Jahres gibt es den
+Rückblick. Das letzte Feature-Release vor 1.0.
+
+### Neu
+- **Terminumfrage.** Statt eines festen Termins schlägt man mehrere vor („Abstimmen“ beim Termin);
+  alle antworten pro Termin mit Ja, Vielleicht oder Nein, der Favorit ist markiert. Wer festlegt,
+  setzt den Termin, und die Antworten werden zu Rückmeldungen für den Abend. Festlegen darf, wer
+  die Umfrage gestartet hat, der Gastgeber oder ein Admin – oder jeder, solange niemand den Stab hält.
+  Vorschläge stehen im Aktivitäts-Feed.
+- **Dabei, vielleicht, kann nicht.** Neben „Ich bin dabei!“ gibt es „Vielleicht“ und „Kann nicht“;
+  wer wie geantwortet hat, steht unter den Dabei-Chips.
+- **Kalender.** „Kalender“ beim Termin lädt den Abend als `.ics`-Datei (mit Ort, Filmen zur Wahl
+  und Erinnerung zwei Stunden vorher). In den Einstellungen gibt es ein **Kalender-Abo** mit den
+  nächsten Terminen aller eigenen Gruppen; verschiebt sich ein Termin, zieht der Kalender nach. Der
+  Link ist persönlich und lässt sich erneuern oder abschalten.
+- **Benachrichtigungen (Web Push)** aufs Handy und den Rechner, auch bei geschlossener App: neuer
+  oder verschobener Termin, neue Terminumfrage, Erinnerung am Tag des Filmabends (drei Stunden
+  vorher, nicht für wer abgesagt hat), die Kiste geht auf, das Kino ist live, der Gastgeber-Stab
+  wird dir angeboten, jemand antwortet auf deinen Kommentar. Einschalten pro Gerät, auswählen pro
+  Person, Testnachricht inklusive. Was gerade live passiert, bekommt nur, wer die App nicht offen
+  hat. Auf iPhone und iPad in der App auf dem Home-Bildschirm.
+- **Kino-Chat und Reaktionen.** Neben dem Bild ein Chat für alle, die gerade im Kino sind, und
+  Reaktionen (😂 😱 ❤️ 👏 🍿 🔥 😴 🤯), die für alle übers Bild fliegen. Im Vollbild erscheinen neue
+  Nachrichten direkt im Bild, Reaktionen gehen über die Steuerleiste.
+- **Rückblick** unter „Unsere Filme“: das Filmjahr der Gruppe – Filme, Abende, Stunden, Genres,
+  bester, umstrittenster und einstimmigster Film, Rekorde (Wochen am Stück, Lieblingstag) und
+  Auszeichnungen wie „Stammgast“, „Strengste Kritik“ oder „Herzensbrecher“. Dazu eine **Story**
+  zum Durchtippen. Im Dezember und Januar weist die Startseite darauf hin.
+- **Neue Erfolge:** 🤞 „Wort gehalten“ (zugesagt und gekommen, drei Stufen), 🗓️ „Terminfinder“
+  (dein Umfrage-Termin wurde gewählt und der Abend fand statt) und ein geheimer.
+- Statistiken in der Seitenleiste zählen jetzt auch Kino-Chat-Nachrichten und Reaktionen.
+- Neue Screenshots in der README.
+
+### Behoben
+- Im Changelog standen 0.7.0 und 0.8.0 mit dem falschen Datum.
+- Zwei Erfolgs-Tests schlugen fehl, wenn sie nach Mitternacht liefen (die Test-Abende schalteten
+  nebenbei „Nachteule“ frei).
+
+### Betrieb
+- Migration `0010`: Tabellen `terminvorschlag`, `terminstimme`, `pushabo`; `mitglied.rueckmeldung`,
+  `user.kalender`, `user.push`, `abend.erinnert`, `appmeta.vapid`.
+- Neue Abhängigkeit `pywebpush`. Die VAPID-Schlüssel erzeugt screenmates beim ersten Gebrauch und
+  speichert sie in der Datenbank (Backup!). `PUSH_KONTAKT` ist optional. Push braucht HTTPS.
+- Neu ohne Anmeldung erreichbar: `/api/kalender/<token>.ics` (der Token ist der Schlüssel).
+- Ein Hintergrund-Task prüft jede Minute, ob eine Erinnerung fällig ist.
+- Kino-Chat und Reaktionen liegen nur im Speicher (die letzten 200, höchstens 6 Stunden) und lösen
+  kein Neuladen der anderen Apps aus.
+- Ein Service Worker (`/sw.js`) zeigt die Benachrichtigungen; er speichert nichts zwischen.
+
+## 0.8.0 – 2026-10-05
 
 **Der Gastgeber-Stab:** Wer den Abend führt, ist jetzt eine Rolle, die wandert – weitergeben,
 übernehmen, abstimmen. Damit kann auch ohne Admin jemand die Kiste für alle öffnen und das Kino
@@ -40,7 +93,7 @@ bespielen.
   Tabelle `stabwechsel`, `user.obs_key`. Senden, Programm und Vorstellung beenden prüfen jetzt
   „Gastgeber oder Admin der Gruppe“.
 
-## 0.7.0 – 2026-10-06
+## 0.7.0 – 2026-10-05
 
 **Gemeinsam statt nebeneinander:** Der Gastgeber öffnet die Filmabend-Kiste und alle sehen live
 zu, Änderungen von Freunden erscheinen ohne Neuladen, und reingekommen wird nur noch mit

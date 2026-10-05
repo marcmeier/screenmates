@@ -27,7 +27,7 @@ from pydantic import BaseModel, Field
 from sqlmodel import Session as DBSession
 from sqlmodel import select
 
-from .. import erfolge
+from .. import erfolge, push
 from ..config import settings
 from ..db import get_session
 from ..gruppen import _waehlen, aktive_gruppe, gruppen_admin, ist_gruppen_admin, mitgliedschaften
@@ -41,6 +41,7 @@ router = APIRouter(prefix="/api/kino", tags=["kino"])
 PFAD = re.compile(r"kino-(\d+)")
 PRESENCE_TTL = 25  # seconds without a heartbeat until a viewer counts as gone
 MIN_SCHAUEN = 300  # achievements: seconds of watching until a show counts
+PUSH_PAUSE = 600  # seconds: a sender reconnecting doesn't notify everyone again
 
 
 @dataclass
@@ -55,6 +56,7 @@ class Saal:
 
 
 _saele: dict[int, Saal] = defaultdict(Saal)
+_gemeldet: dict[int, float] = {}  # group -> when "the Kino is live" was last pushed (monotonic)
 
 
 def pfad(gid: int) -> str:
@@ -262,7 +264,29 @@ async def mtx_auth(request: Request, db: DBSession = Depends(get_session)):
         saal.audience.clear()
         saal.seit.clear()
         saal.gezaehlt.clear()
+        _live_melden(db, st)
     return Response(status_code=200)
+
+
+def _live_melden(db: DBSession, st: KinoState) -> None:
+    """Tell the group (who isn't in the app anyway) that the Kino went live."""
+    gid = st.id
+    if gid is None or time.monotonic() - _gemeldet.get(gid, -1e9) < PUSH_PAUSE:
+        return
+    _gemeldet[gid] = time.monotonic()
+    sender = _saele[gid].sender
+    wer = db.get(User, sender) if sender else None
+    push.an(
+        db,
+        push.abwesend(gid, push.mitglieder(db, gid, ausser=sender)),
+        "kino",
+        f"🎬 Das Kino ist live – {push.gruppenname(db, gid)}",
+        f"{wer.name if wer else 'Jemand'} sendet{f' „{st.titel}“' if st.titel else ' gerade'}. Komm dazu!",
+        url="/#/kino",
+        tag=f"kino-{gid}",
+        ttl=1800,
+        dringend=True,
+    )
 
 
 # --- WHIP / WHEP relay ------------------------------------------------------------

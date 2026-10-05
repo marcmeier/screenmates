@@ -8,7 +8,7 @@ from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from sqlmodel import Session
 
-from . import erfolge, tmdb
+from . import erfolge, push, tmdb
 from .config import settings
 from .db import engine, init_db
 from .gruppen import kontext
@@ -20,22 +20,27 @@ from .routers import (
     features,
     gastgeber,
     gruppen,
+    kalender,
     kino,
+    kinochat,
     kiste,
     lists,
     live,
     misc,
     profilbild,
+    rueckblick,
     statistik,
     ueber,
+    umfrage,
     users,
     watched,
     zugang,
 )
 from .routers import erfolge as erfolge_api
+from .routers import push as push_api
 from .seed import seed_if_empty
 
-__version__ = "0.8.0"
+__version__ = "0.9.0"
 
 
 @asynccontextmanager
@@ -48,7 +53,9 @@ async def lifespan(app: FastAPI):
     await tmdb.startup()
     # The Kino's traffic for the statistics: MediaMTX forgets sessions, so count along.
     zaehlen = asyncio.create_task(statistik.kino_mitzaehlen()) if settings.kino_enabled else None
+    erinnern = asyncio.create_task(push.erinnern())  # push reminders on the day of the movie night
     yield
+    erinnern.cancel()
     if zaehlen:
         zaehlen.cancel()
     await tmdb.shutdown()
@@ -86,6 +93,7 @@ for r in (
     lists.router,
     features.router,
     misc.router,
+    kinochat.router,
     kino.router,
     abend.router,
     zugang.router,
@@ -99,6 +107,10 @@ for r in (
     live.router,
     statistik.router,
     ueber.router,
+    umfrage.router,
+    kalender.router,
+    push_api.router,
+    rueckblick.router,
 ):
     app.include_router(r)
 
