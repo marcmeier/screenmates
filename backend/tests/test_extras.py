@@ -59,3 +59,19 @@ def test_design_is_personal(client, browser):
     lena = browser()
     login(lena, "lena")
     assert lena.get("/api/users").json()["ich"]["design"] == {}
+
+
+def test_donation_accounts_are_names_turned_into_links(client, browser):
+    login(client, "marc")
+    become_admin(client)
+    assert client.put("/api/admin/seiten/kofi", json={"text": "https://ko-fi.com/marcmeier/"}).status_code == 200
+    assert client.put("/api/admin/seiten/paypal", json={"text": "@MarcMeier"}).status_code == 200
+    konten = browser().get("/api/ueber").json()["konten"]
+    assert konten["kofi"] == {"label": "Ko-fi", "name": "marcmeier", "url": "https://ko-fi.com/marcmeier"}
+    assert konten["paypal"]["url"] == "https://paypal.me/MarcMeier"
+    assert client.put("/api/admin/seiten/paypal", json={"text": "www.paypal.com/paypalme/marc"}).status_code == 200
+    assert client.get("/api/ueber").json()["konten"]["paypal"]["name"] == "marc"
+    for boese in ("javascript:alert(1)", "https://evil.example/x", "marc meier"):
+        assert client.put("/api/admin/seiten/kofi", json={"text": boese}).status_code == 422
+    assert client.put("/api/admin/seiten/kofi", json={"text": ""}).status_code == 200  # empty removes it
+    assert "kofi" not in client.get("/api/ueber").json()["konten"]

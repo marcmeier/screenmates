@@ -422,7 +422,7 @@ test('achievements: the unlock pops up, and the showcase shows it', async () => 
   await nav('Filmabend')
 })
 
-test('the sidebar shows facts about screenmates, the about page takes an imprint', async () => {
+test('the sidebar shows facts about screenmates, the about page takes an imprint and donation links', async () => {
   await expect(page.locator('.statistik .fakt')).toContainText(/\d/)
   await page.getByRole('link', { name: 'Über · Impressum' }).click()
   await expect(page.getByRole('heading', { name: 'Über screenmates' })).toBeVisible()
@@ -431,6 +431,12 @@ test('the sidebar shows facts about screenmates, the about page takes an imprint
   await page.getByLabel('Impressum (Markdown)').fill('Marc Muster\n\nkontakt@example.org')
   await page.getByRole('button', { name: 'Speichern' }).click()
   await expect(impressum).toContainText('kontakt@example.org')
+  const spenden = page.locator('section#spenden')
+  await spenden.getByRole('button', { name: 'Bearbeiten' }).click()
+  await page.getByLabel('Ko-fi-Name').fill('https://ko-fi.com/screenmates')
+  await page.getByRole('button', { name: 'Speichern' }).click()
+  await expect(spenden.getByRole('link', { name: 'Ko-fi' })).toHaveAttribute('href', 'https://ko-fi.com/screenmates')
+  await expect(spenden.getByRole('img', { name: 'QR-Code für Ko-fi' })).toBeVisible()
   // Without an invitation the app stays closed, the imprint doesn't.
   const fremd = await page.context().browser().newPage()
   await fremd.goto('/#/ueber')

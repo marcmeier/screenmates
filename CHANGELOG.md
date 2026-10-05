@@ -24,6 +24,10 @@ bespielen.
 - **Hinter den Kulissen:** Zwischen den Statistiken in der Seitenleiste blitzt auf, was gerade
   vorbereitet wird – „Popcorn wird vorbereitet …“, „Tauben werden von der Datenleitung
   verscheucht …“ und mehr.
+- **Unterstützen per Ko-fi und PayPal.** Admins tragen auf der Über-Seite ihren Ko-fi- und
+  PayPal.me-Namen ein (oder fügen einfach den Link ein). Jeder Weg bekommt einen Knopf und am
+  Rechner einen QR-Code zum Scannen mit dem Handy – im Browser erzeugt, ohne fremden Dienst.
+  Gespeichert wird nur der Name, verlinkt werden nur ko-fi.com und paypal.me.
 - Neue Screenshots in der README.
 
 ### Behoben
