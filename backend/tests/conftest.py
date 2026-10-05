@@ -20,7 +20,7 @@ from app.config import settings  # noqa: E402
 from app.db import engine  # noqa: E402
 from app.main import app  # noqa: E402
 from app.models import Einladung, Mitglied, User  # noqa: E402
-from app.routers import kino, live, users, zugang  # noqa: E402
+from app.routers import gastgeber, kino, live, users, zugang  # noqa: E402
 
 
 @pytest.fixture
@@ -36,6 +36,7 @@ def client():
     zugang._fehl_alle.clear()
     kino._saele.clear()
     live._stand.clear()
+    gastgeber._gesehen.clear()
     tmdb._cache.clear()
     erfolge._zuletzt = 0.0
     with TestClient(app) as c:

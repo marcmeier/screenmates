@@ -21,6 +21,7 @@ from ..prognose import MIN_BEWERTUNGEN, Film, vorhersage
 from ..serialize import iso
 from ..session import require_user
 from ..util import ensure_movie, upsert_movie
+from . import gastgeber
 from .watched import _payload
 
 router = APIRouter(prefix="/api", tags=["abend"])
@@ -138,6 +139,7 @@ def set_termin(
     if not jetzt - timedelta(hours=6) <= termin <= jetzt + timedelta(days=366):
         raise HTTPException(422, "Der Termin muss in der Zukunft liegen (höchstens ein Jahr).")
     a = _abend(db, gid)
+    gastgeber.termin_gesetzt(db, a, user, a.termin)
     a.termin, a.notiz, a.gesetzt_von, a.gesetzt_am = termin.astimezone(UTC), body.notiz.strip(), user.id, now()
     db.add(a)
     erfolge.protokoll(db, "termin", user.id, termin.astimezone(BERLIN).date().isoformat())

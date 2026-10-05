@@ -12,6 +12,7 @@ import Erinnerungen from '../Erinnerungen.vue'
 import Icon from '../Icon.vue'
 import Poster from '../Poster.vue'
 import KistenOeffnung from '../KistenOeffnung.vue'
+import GastgeberLeiste from '../GastgeberLeiste.vue'
 import { useKiste } from '../../stores/kiste'
 import UserAvatar from '../UserAvatar.vue'
 
@@ -101,6 +102,12 @@ const EVENT_TEXT = {
   wunsch: (e) => `${e.wer ?? 'Jemand'} wünscht sich: ${e.text}`,
   veto: (e) => `${e.wer ?? 'Jemand'} legt ein Veto gegen „${e.film}“ ein`,
   erfolg: (e) => `${e.emoji} ${e.wer ?? 'Jemand'} hat ${e.name} freigeschaltet`,
+  gastgeber: (e) =>
+    e.art === 'uebergabe'
+      ? `${e.von ?? 'Jemand'} gibt den Gastgeber-Stab an ${e.wer ?? 'jemanden'}`
+      : e.art === 'abstimmung'
+        ? `${e.wer ?? 'Jemand'} ist Gastgeber – per Abstimmung (${e.stand})`
+        : `${e.wer ?? 'Jemand'} übernimmt den Gastgeber-Stab`,
   kiste: (e) => `${e.wer ?? 'Jemand'} öffnet die Kiste: „${e.film}“`,
   termin: (e) => {
     const t = terminText({ termin: e.termin })
@@ -146,6 +153,7 @@ const EVENT_TEXT = {
         <span class="spacer"></span>
         <button class="small" @click="einladungOffen = true"><Icon name="teilen" :size="14" /> Einladen</button>
       </div>
+      <GastgeberLeiste />
     </section>
     <TerminDialog v-if="terminOffen" :termin="termin" @close="terminOffen = false" @saved="(t) => ((termin = t), (terminOffen = false))" />
     <Einladung v-if="einladungOffen" :termin="termin" :filme="zurWahl" :dabei="app.dabei" @close="einladungOffen = false" />

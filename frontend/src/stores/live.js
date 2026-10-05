@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { api, beiAenderung } from '../api'
 import { useApp } from './app'
+import { useGastgeber } from './gastgeber'
 import { useKiste } from './kiste'
 import { useUi } from './ui'
 
@@ -23,6 +24,7 @@ export const useLive = defineStore('live', {
         return
       }
       if (r.kiste) useKiste().uebernehmen({ jetzt: r.jetzt, ...r.kiste })
+      if (r.gastgeber) useGastgeber().uebernehmenVon(r.gastgeber)
       const alt = this.stand
       this.stand = r.stand
       // Our own writes have already updated this screen: adopt their count silently.

@@ -13,6 +13,7 @@ import Zugang from './components/Zugang.vue'
 import ErfolgPopup from './components/ErfolgPopup.vue'
 import GemeinsameKiste from './components/GemeinsameKiste.vue'
 import Statistiken from './components/Statistiken.vue'
+import StabWechsel from './components/StabWechsel.vue'
 import { anwenden } from './design'
 import { useLive } from './stores/live'
 import { useErfolge } from './stores/erfolge'
@@ -270,6 +271,7 @@ watch(
   <NamensWahl v-if="ui.loginOpen && !app.draussen" />
   <ErfolgPopup v-if="!app.draussen" />
   <GemeinsameKiste v-if="!app.draussen" />
+  <StabWechsel v-if="!app.draussen" />
   <MovieDetail v-if="ui.detail" />
   <Toasts />
 </template>

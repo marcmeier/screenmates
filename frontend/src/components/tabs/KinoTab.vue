@@ -2,6 +2,8 @@
 import { computed, onBeforeUnmount, onMounted, watch } from 'vue'
 import { api } from '../../api'
 import { useApp } from '../../stores/app'
+import { useGastgeber } from '../../stores/gastgeber'
+import GastgeberLeiste from '../GastgeberLeiste.vue'
 import { useKino } from '../../stores/kino'
 import { useUi } from '../../stores/ui'
 import { vorWann } from '../../format'
@@ -11,6 +13,8 @@ import KinoPlayer from '../kino/KinoPlayer.vue'
 import KinoSenden from '../kino/KinoSenden.vue'
 
 const app = useApp()
+// Sending is for whoever holds the host's baton (and the group's admins).
+const gast = useGastgeber()
 const kino = useKino()
 const ui = useUi()
 
@@ -24,7 +28,7 @@ watch(
   (ids) => ids.some((id) => !app.userById(id)) && app.refreshUsers(),
 )
 
-const vorbei = computed(() => !kino.live && app.gruppenAdmin && kino.movie && kino.publikum.length > 0)
+const vorbei = computed(() => !kino.live && gast.darfModerieren && kino.movie && kino.publikum.length > 0)
 
 async function alsGesehen() {
   const entry = await api.post('/api/watched', { movie_id: kino.movie.id })
@@ -44,6 +48,7 @@ async function alsGesehen() {
         <p>Gemeinsam schauen, egal wo ihr sitzt – alle sehen dasselbe Bild zur selben Zeit.</p>
       </div>
     </header>
+    <GastgeberLeiste v-if="kino.enabled" class="panel stableiste" />
 
     <div v-if="!kino.enabled" class="notice">
       Das Kino ist noch nicht eingerichtet. Es braucht den Medienserver MediaMTX neben screenmates
@@ -51,7 +56,7 @@ async function alsGesehen() {
       Details stehen in der README unter „Kino“.
     </div>
 
-    <div v-else class="layout" :class="{ withDesk: app.gruppenAdmin }">
+    <div v-else class="layout" :class="{ withDesk: gast.darfModerieren }">
       <section class="stage">
         <div v-if="kino.live" class="row onair">
           <span class="badge"><span class="dot"></span>LIVE</span>
@@ -79,7 +84,7 @@ async function alsGesehen() {
           <Icon name="kino" :size="44" />
           <p><strong>Gerade läuft nichts.</strong></p>
           <p class="muted">
-            {{ app.gruppenAdmin ? 'Starte rechts eine Übertragung.' : 'Sobald jemand sendet, erscheint das Bild hier von selbst.' }}
+            {{ gast.darfModerieren ? 'Starte rechts eine Übertragung.' : 'Sobald jemand sendet, erscheint das Bild hier von selbst.' }}
           </p>
         </div>
 
@@ -91,12 +96,13 @@ async function alsGesehen() {
         </div>
       </section>
 
-      <KinoSenden v-if="app.gruppenAdmin" />
+      <KinoSenden v-if="gast.darfModerieren" />
     </div>
   </div>
 </template>
 
 <style scoped>
+.stableiste { margin-bottom: 1rem; padding: 0.6rem 0.9rem; }
 .layout { display: grid; gap: 1.6rem; align-items: start; }
 .layout.withDesk { grid-template-columns: minmax(0, 1fr) 360px; }
 .stage { display: flex; flex-direction: column; gap: 0.8rem; min-width: 0; }

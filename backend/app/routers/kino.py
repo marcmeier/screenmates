@@ -30,10 +30,11 @@ from sqlmodel import select
 from .. import erfolge
 from ..config import settings
 from ..db import get_session
-from ..gruppen import _waehlen, aktive_gruppe, ist_gruppen_admin, mitgliedschaften, require_gruppen_admin
-from ..models import KinoState, Movie, Session, User, now
+from ..gruppen import _waehlen, aktive_gruppe, gruppen_admin, ist_gruppen_admin, mitgliedschaften
+from ..models import Abend, KinoState, Movie, Session, User, now
 from ..serialize import iso, movie_dict
 from ..session import current_session, current_user, is_admin, require_user
+from .gastgeber import darf_moderieren, require_moderation
 
 router = APIRouter(prefix="/api/kino", tags=["kino"])
 
@@ -128,7 +129,7 @@ async def status(gid: int | None = Depends(_gruppe_optional), db: DBSession = De
     }
 
 
-@router.post("/programm", dependencies=[Depends(require_gruppen_admin)])
+@router.post("/programm", dependencies=[Depends(require_moderation)])
 def set_programm(
     body: Programm,
     gid: int = Depends(aktive_gruppe),
@@ -181,24 +182,47 @@ def leave(user: User = Depends(require_user), gid: int = Depends(aktive_gruppe))
     return {"ok": True}
 
 
-@router.get("/obs", dependencies=[Depends(require_gruppen_admin)])
-def obs_settings(request: Request, gid: int = Depends(aktive_gruppe), db: DBSession = Depends(get_session)):
+@router.get("/obs", dependencies=[Depends(require_moderation)])
+def obs_settings(
+    request: Request,
+    gid: int = Depends(aktive_gruppe),
+    db: DBSession = Depends(get_session),
+    user: User = Depends(require_user),
+    admin: bool = Depends(gruppen_admin),
+):
     _require_enabled()
     base = str(request.base_url).rstrip("/")
-    # One URL for every group: the stream key says which Kino it is.
-    return {"server": f"{base}/api/kino/whip", "key": _state(db, gid).obs_key}
+    # One URL for every group: the stream key says which Kino it is. Admins get the group's
+    # key; a host their personal one, which stops working when the baton moves on.
+    return {"server": f"{base}/api/kino/whip", "key": _obs_key(db, gid, user, admin), "persoenlich": not admin}
 
 
-@router.post("/obs/neu", dependencies=[Depends(require_gruppen_admin)])
-def rotate_obs_key(gid: int = Depends(aktive_gruppe), db: DBSession = Depends(get_session)):
-    st = _state(db, gid)
-    st.obs_key = secrets.token_urlsafe(24)
-    db.add(st)
-    db.commit()
-    return {"key": st.obs_key}
+def _obs_key(db: DBSession, gid: int, user: User, admin: bool, neu: bool = False) -> str:
+    if admin:
+        st = _state(db, gid)
+        if neu:
+            st.obs_key = secrets.token_urlsafe(24)
+            db.add(st)
+            db.commit()
+        return st.obs_key
+    if neu or not user.obs_key:
+        user.obs_key = secrets.token_urlsafe(24)
+        db.add(user)
+        db.commit()
+    return user.obs_key
 
 
-@router.delete("", dependencies=[Depends(require_gruppen_admin)])
+@router.post("/obs/neu", dependencies=[Depends(require_moderation)])
+def rotate_obs_key(
+    gid: int = Depends(aktive_gruppe),
+    db: DBSession = Depends(get_session),
+    user: User = Depends(require_user),
+    admin: bool = Depends(gruppen_admin),
+):
+    return {"key": _obs_key(db, gid, user, admin, neu=True)}
+
+
+@router.delete("", dependencies=[Depends(require_moderation)])
 async def stop(gid: int = Depends(aktive_gruppe)):
     """End the show, whoever is sending (also an OBS the admin can't reach)."""
     _require_enabled()
@@ -250,15 +274,22 @@ def _bearer(request: Request) -> str:
 
 
 def _sender_gruppe(request: Request, db: DBSession, gid: int | None, user: User | None, admin: bool) -> int:
-    """Which group's Kino this publisher may send to: an admin's active group, or the OBS key's."""
-    if gid is not None and ist_gruppen_admin(db, gid, user, admin):
+    """Which group's Kino this publisher may send to: the host's or an admin's active group,
+    or the OBS key's (a group's key, or a host's personal key while they hold the baton)."""
+    if gid is not None and darf_moderieren(db, gid, user, ist_gruppen_admin(db, gid, user, admin)):
         return gid
     key = _bearer(request)
     if key:
         for st in db.exec(select(KinoState)).all():
             if st.obs_key and secrets.compare_digest(key, st.obs_key):
                 return st.id
-    raise HTTPException(403, "Senden darf nur ein Admin der Gruppe (oder OBS mit dem Stream-Key).")
+        for u in db.exec(select(User).where(User.obs_key != "")).all():
+            if secrets.compare_digest(key, u.obs_key):
+                a = db.exec(select(Abend).where(Abend.gastgeber_id == u.id).order_by(Abend.id)).first()
+                if a is not None and a.id is not None:
+                    _saele[a.id].sender = u.id
+                    return a.id
+    raise HTTPException(403, "Senden darf der Gastgeber oder ein Admin der Gruppe (oder OBS mit dem Stream-Key).")
 
 
 def _without_tcp_candidates(sdp: bytes) -> bytes:
@@ -317,7 +348,9 @@ async def whip(
     admin: bool = Depends(is_admin),
 ):
     ziel = _sender_gruppe(request, db, gid, user, admin)
-    browser = ziel == gid and user is not None and ist_gruppen_admin(db, gid, user, admin)
+    browser = (
+        ziel == gid and user is not None and darf_moderieren(db, gid, user, ist_gruppen_admin(db, gid, user, admin))
+    )
     if browser:
         _saele[ziel].sender = user.id
     # Browsers handle every candidate (and benefit from the TCP fallback); OBS-style

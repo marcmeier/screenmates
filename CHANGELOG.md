@@ -1,5 +1,41 @@
 # Changelog
 
+## 0.8.0 – 2026-10-06
+
+**Der Gastgeber-Stab:** Wer den Abend führt, ist jetzt eine Rolle, die wandert – weitergeben,
+übernehmen, abstimmen. Damit kann auch ohne Admin jemand die Kiste für alle öffnen und das Kino
+bespielen.
+
+### Neu
+- **Gastgeber-Stab.** Eine Person pro Gruppe hält ihn: Sie öffnet die Kiste für alle und bespielt
+  das Kino (Bildschirm teilen, Programm, Vorstellung beenden, **persönlicher OBS-Schlüssel**, der
+  nur mit dem Stab funktioniert). Admins der Gruppe können weiterhin alles.
+  - Wer einen neuen Termin setzt, bekommt den Stab, wenn ihn gerade niemand hält oder der letzte
+    Abend vorbei ist. Den Termin verschieben nimmt ihn niemandem weg.
+  - **Weitergeben:** Der Gastgeber bietet den Stab jemandem an – annehmen oder ablehnen.
+  - **Übernehmen:** Ist der Gastgeber nicht da (seit einer Minute keine App offen) oder gibt es
+    keinen, nimmt man den Stab einfach. Ist er da, stimmen die Anwesenden 60 Sekunden lang ab:
+    Die Stimme des Gastgebers zählt doppelt, sein Ja entscheidet sofort, mehr Ja als Nein gewinnt,
+    ohne Widerspruch gilt Schweigen als Zustimmung. Steht das Ergebnis fest, endet die Abstimmung
+    sofort. Wer verliert, wartet fünf Minuten.
+  - Läuft beim Wechsel gerade eine Übertragung, läuft sie weiter; der neue Gastgeber kann sie
+    beenden und selbst senden.
+  - Angebote und Abstimmungen erscheinen überall in der App; Wechsel stehen im Aktivitäts-Feed.
+- **Hinter den Kulissen:** Zwischen den Statistiken in der Seitenleiste blitzt auf, was gerade
+  vorbereitet wird – „Popcorn wird vorbereitet …“, „Tauben werden von der Datenleitung
+  verscheucht …“ und mehr.
+- Neue Screenshots in der README.
+
+### Behoben
+- Auf der Profilseite stand die Überschrift „Erfolge“ doppelt.
+- Statistik: „1 Gruppe“ statt „1 Gruppen“ (Einzahl für alle Zahlen).
+- Die Schriftauswahl zeigt jede Schrift gleich in ihrer Schrift, nicht erst beim Drüberfahren.
+
+### Betrieb
+- Migration `0009`: `abend.gastgeber_id` (vorbelegt mit dem, der den Termin gesetzt hat),
+  Tabelle `stabwechsel`, `user.obs_key`. Senden, Programm und Vorstellung beenden prüfen jetzt
+  „Gastgeber oder Admin der Gruppe“.
+
 ## 0.7.0 – 2026-10-06
 
 **Gemeinsam statt nebeneinander:** Der Gastgeber öffnet die Filmabend-Kiste und alle sehen live

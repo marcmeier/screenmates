@@ -108,21 +108,21 @@ def fakten(db: DBSession) -> list[dict]:
     sterne = db.exec(select(func.avg(WatchedRating.stars))).one()
     kino_bytes = zaehler(db, "kino_bytes")
     pakete, verloren = zaehler(db, "kino_pakete"), zaehler(db, "kino_verloren")
-    eintraege = [
-        (_anzahl(db, Watched), "Filme gemeinsam geschaut"),
-        (_anzahl(db, User, col(User.freigegeben)), "Leute dabei"),
-        (_anzahl(db, Gruppe), "Gruppen"),
-        (_anzahl(db, NoteHeart), "Herzen verteilt"),
-        (_anzahl(db, WatchedNote, WatchedNote.geloescht == ""), "Kommentare im Gästebuch"),
-        (_anzahl(db, WatchedRating), "Bewertungen abgegeben"),
-        (_anzahl(db, Wishlist), "Filme auf Merklisten"),
-        (_anzahl(db, Suggestion), "Filme in den Kisten"),
-        (_anzahl(db, Kistenoeffnung), "Kisten für alle geöffnet"),
-        (_anzahl(db, KiAnfrage, col(KiAnfrage.ok)), "Fragen an die KI"),
-        (_anzahl(db, Erfolg, col(Erfolg.entzogen).is_(False)), "Erfolge freigeschaltet"),
-        (_anzahl(db, Movie), "Filme im Katalog"),
+    eintraege = [  # (count, singular, plural)
+        (_anzahl(db, Watched), "Film gemeinsam geschaut", "Filme gemeinsam geschaut"),
+        (_anzahl(db, User, col(User.freigegeben)), "Person dabei", "Leute dabei"),
+        (_anzahl(db, Gruppe), "Gruppe", "Gruppen"),
+        (_anzahl(db, NoteHeart), "Herz verteilt", "Herzen verteilt"),
+        (_anzahl(db, WatchedNote, WatchedNote.geloescht == ""), "Kommentar im Gästebuch", "Kommentare im Gästebuch"),
+        (_anzahl(db, WatchedRating), "Bewertung abgegeben", "Bewertungen abgegeben"),
+        (_anzahl(db, Wishlist), "Film auf Merklisten", "Filme auf Merklisten"),
+        (_anzahl(db, Suggestion), "Film in den Kisten", "Filme in den Kisten"),
+        (_anzahl(db, Kistenoeffnung), "Kiste für alle geöffnet", "Kisten für alle geöffnet"),
+        (_anzahl(db, KiAnfrage, col(KiAnfrage.ok)), "Frage an die KI", "Fragen an die KI"),
+        (_anzahl(db, Erfolg, col(Erfolg.entzogen).is_(False)), "Erfolg freigeschaltet", "Erfolge freigeschaltet"),
+        (_anzahl(db, Movie), "Film im Katalog", "Filme im Katalog"),
     ]
-    liste = [{"wert": _de(n), "text": text} for n, text in eintraege if n]
+    liste = [{"wert": _de(n), "text": eins if n == 1 else viele} for n, eins, viele in eintraege if n]
     if sterne:
         liste.append({"wert": f"{_de(sterne, 1)} ★", "text": "Durchschnitt aller Bewertungen"})
     if kino_bytes:

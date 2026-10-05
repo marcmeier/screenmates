@@ -22,7 +22,7 @@ from ..db import engine, get_session
 from ..gruppen import _waehlen, ist_gruppen_admin, mitgliedschaften
 from ..models import Session, User
 from ..session import COOKIE, current_session, current_user
-from . import kiste
+from . import gastgeber, kiste
 
 router = APIRouter(prefix="/api", tags=["live"])
 
@@ -68,5 +68,8 @@ def live(
     stand = f"{_START}.{_stand['server']}.{_stand[f'g{gid}'] if gid else 0}.{gid or 0}"
     antwort = {"jetzt": int(time.time() * 1000), "stand": stand, "kiste": None}
     if user and gid is not None:
-        antwort["kiste"] = kiste.zustand(db, gid, user, ist_gruppen_admin(db, gid, user, user.is_admin))
+        admin = ist_gruppen_admin(db, gid, user, user.is_admin)
+        gastgeber.melden(gid, user.id)  # this app is open: present
+        antwort["kiste"] = kiste.zustand(db, gid, user, admin)
+        antwort["gastgeber"] = gastgeber.zustand(db, gid, user, admin)
     return antwort

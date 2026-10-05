@@ -24,7 +24,7 @@ Drei Bereiche für die drei Dinge, für die man herkommt:
   macht aus „langsamer Folk-Horror, aber nicht zu brutal“ passende, real existierende Filme.
 - **Unsere Filme** – Merkliste und die Chronik des Gesehenen: Sterne und Kommentare pro Person,
   Teilnehmende, Gästebuch mit Antworten und Herzen.
-- **Kino** – gemeinsam schauen, auch wenn alle in verschiedenen Wohnzimmern sitzen: Ein Admin
+- **Kino** – gemeinsam schauen, auch wenn alle in verschiedenen Wohnzimmern sitzen: Der Gastgeber (oder ein Admin)
   teilt seinen Bildschirm oder sendet aus OBS (eigene Filme, Spiele …), alle sehen live dasselbe
   Bild mit unter einer Sekunde Verzögerung. Läuft etwas, leuchtet der Menüpunkt mit der Zahl der
   Zuschauenden. Danach trägt ein Klick den Film als gesehen ein, mit allen, die dabei waren.
@@ -39,6 +39,10 @@ mit einem Film, den man beim Anmelden anklicken muss.
 Filmabend, ihre Chronik, Merkliste und ihr eigenes Kino, sichtbar nur für ihre Mitglieder. Namen,
 Level und Erfolge gelten serverweit. Server-Admins legen Gruppen an, Gruppen-Admins nehmen Leute
 auf ([`docs/GRUPPEN.md`](docs/GRUPPEN.md)).
+
+**Gastgeber-Stab:** Eine Person führt den Abend – öffnet die Kiste für alle und bespielt das
+Kino. Der Stab wandert: weitergeben, übernehmen, wenn der Gastgeber nicht da ist, oder die
+Anwesenden stimmen ab (die Stimme des Gastgebers zählt doppelt).
 
 **Live:** Was Freunde bewerten, kommentieren, merken oder vorschlagen, erscheint bei allen ohne
 Neuladen. Jede Person stellt sich ihr **Farbschema und ihre Schrift** ein (bleibt dunkel).
@@ -61,6 +65,10 @@ Mit TMDB-Key ist der ganze TMDB-Katalog verfügbar, ohne Key gibt es einen Demo-
 | Finden | Detail | Unsere Filme | Kino | Erfolge | Mobil |
 |---|---|---|---|---|---|
 | ![](docs/screenshots/finden.png) | ![](docs/screenshots/detail.png) | ![](docs/screenshots/unsere-filme.png) | ![](docs/screenshots/kino.png) | ![](docs/screenshots/erfolge.png) | ![](docs/screenshots/mobil.png) |
+
+| Kiste für alle | Gastgeber-Stab | Darstellung |
+|---|---|---|
+| ![](docs/screenshots/kiste.png) | ![](docs/screenshots/stab.png) | ![](docs/screenshots/darstellung.png) |
 
 ## Schnellstart
 

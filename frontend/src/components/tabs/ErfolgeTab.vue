@@ -10,6 +10,8 @@ import UserAvatar from '../UserAvatar.vue'
 
 // Achievements: everyone's level and showcase (no ranking), the latest unlocks,
 // your own progress – and a profile page per person (#/profil/person/<id>).
+// Embedded on your profile page (which has its own heading), or someone else's profile.
+defineProps({ eingebettet: { type: Boolean, default: false } })
 const app = useApp()
 const ui = useUi()
 const route = useRoute()
