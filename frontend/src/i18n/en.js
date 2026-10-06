@@ -1286,6 +1286,10 @@ export default {
     wuensche: "Wishes",
     wuenschen: "Wish",
     wunschBearbeiten: "Edit wish",
+    gruppe: {
+      offen: "Open",
+      erledigt: "Done",
+    },
   },
   zeit: {
     uhr: "{zeit}",
@@ -1297,5 +1301,41 @@ export default {
     rein: "Let me in",
     text: "Ask your movie group for the link. Got a link or code? Paste it here.",
     titel: "You need an invitation link to get in here.",
+  },
+  erklaerung: {
+    wasIst: "What is “{was}”?",
+    vorschlaege:
+      "Everyone suggests films for the next night with ✋. The percentage is the chance the case picks that film – the more people suggest it, the higher.",
+    veto: "Everyone has exactly one veto. A film with a veto doesn't go into the case. Put it on another film and it moves there.",
+    kiste:
+      "On the night the host opens the case for everyone: it picks a film at random from the suggestions, with the odds shown there. A test spin is just for you and doesn't count.",
+    gastgeber:
+      "The host opens the case for everyone and streams in the cinema. Whoever sets the date gets the baton. If the host isn't around, someone else can take it over.",
+  },
+  ersteSchritte: {
+    titel: "First steps",
+    stand: "{fertig} of {alle} done",
+    ausblenden: "Hide",
+    antwort: {
+      titel: "Answer for the next night",
+      text: "So everyone knows who to expect.",
+      ja: "I'm in",
+      nein: "Can't make it",
+    },
+    vorschlag: {
+      titel: "Suggest a film",
+      text: "In “Find” with ✋ – it goes into the case for the night.",
+      los: "Find films",
+    },
+    abos: {
+      titel: "Add your streaming services",
+      text: "Then screenmates shows what you can watch at no extra cost.",
+      los: "To the services",
+    },
+    push: {
+      titel: "Turn on notifications",
+      text: "For dates, the case and “starting soon” – even with the app closed.",
+      los: "Turn on",
+    },
   },
 };

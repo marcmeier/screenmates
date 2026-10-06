@@ -85,6 +85,24 @@ test('someone new picks language and colours, then gets three cards – once', a
   await expect(willkommen).toHaveCount(0) // once, not on every visit
 })
 
+test('newcomers get a first-steps checklist and short explanations', async () => {
+  await page.goto('/#/abend')
+  const schritte = page.getByRole('region', { name: 'Erste Schritte' })
+  await expect(schritte).toBeVisible()
+  await expect(schritte.getByRole('link', { name: 'Filme finden' })).toHaveAttribute('href', '#/finden')
+  // A tap on ⓘ explains our own words.
+  await page.getByRole('button', { name: 'Was ist „Filmabend-Kiste“?' }).click()
+  await expect(page.getByRole('tooltip')).toContainText('zieht zufällig einen Film')
+  await page.keyboard.press('Escape')
+  await expect(page.getByRole('tooltip')).toHaveCount(0)
+  // Put away: gone, also after a reload.
+  await schritte.getByRole('button', { name: 'Ausblenden' }).click()
+  await expect(schritte).toHaveCount(0)
+  await page.reload()
+  await expect(page.locator('.me')).toContainText('Marc')
+  await expect(schritte).toHaveCount(0)
+})
+
 test('joining the next evening', async () => {
   await page.getByRole('button', { name: 'Ich bin dabei!' }).click()
   await expect(page.locator('.crew')).toContainText('Marc')

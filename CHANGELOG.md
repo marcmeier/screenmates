@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.15.0 – 2026-10-06
+
+### Neu
+- **Erste Schritte:** Neue Leute sehen in ihren ersten 30 Tagen oben auf der Filmabend-Seite eine kleine
+  Checkliste – zum nächsten Abend zusagen, einen Film vorschlagen, Streamingdienste eintragen,
+  Benachrichtigungen einschalten. Jeder Punkt führt direkt hin und hakt sich von selbst ab; erledigt oder
+  ausgeblendet verschwindet die Karte (auf allen Geräten).
+- **ⓘ-Erklärungen** bei unseren eigenen Begriffen: Vorschläge und Chancen, Veto, Filmabend-Kiste und
+  Gastgeber – antippen, ein, zwei Sätze lesen.
+
+### Behoben
+- „Offen“/„Erledigt“ auf der Wunschseite waren in der englischen Ansicht noch deutsch.
+
 ## 0.14.1 – 2026-10-06
 
 ### Behoben

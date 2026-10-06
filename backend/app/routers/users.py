@@ -439,6 +439,15 @@ def set_language(body: Sprache, user: User = Depends(require_user), db: DBSessio
     return {"design": json.loads(user.design)}
 
 
+@router.post("/users/me/erste-schritte")
+def first_steps_done(user: User = Depends(require_user), db: DBSession = Depends(get_session)):
+    """The first-steps card was put away: not again, on no device."""
+    user.design = json.dumps(json.loads(user.design or "{}") | {"schritte_aus": True})
+    db.add(user)
+    db.commit()
+    return {"design": json.loads(user.design)}
+
+
 @router.post("/users/me/willkommen")
 def welcomed(user: User = Depends(require_user), db: DBSession = Depends(get_session)):
     """The welcome cards were seen: not again, on no device."""

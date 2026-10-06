@@ -13,6 +13,8 @@ import Icon from '../Icon.vue'
 import Poster from '../Poster.vue'
 import KistenOeffnung from '../KistenOeffnung.vue'
 import NaechsterAbend from '../NaechsterAbend.vue'
+import ErsteSchritte from '../ErsteSchritte.vue'
+import Erklaerung from '../Erklaerung.vue'
 import AbendModus from '../AbendModus.vue'
 import WieWars from '../WieWars.vue'
 import { useKiste } from '../../stores/kiste'
@@ -122,6 +124,7 @@ watch(() => ui.changes, load)
 
 const meinVorschlag = (m) => app.me && m.von.includes(app.me.id)
 const meinVeto = (m) => app.me && m.veto_von.includes(app.me.id)
+const ichSchlageVor = computed(() => vorschlaege.value.some((m) => meinVorschlag(m)))
 const vetoVerbraucht = computed(() => app.me && vorschlaege.value.some((m) => meinVeto(m)))
 const namen = (ids) => ids.map((id) => app.userById(id)?.name ?? '?').join(', ')
 
@@ -182,6 +185,7 @@ const poolQuelle = computed(() => (vorschlaege.value.length ? 'vorschlaege' : 'm
     </a>
 
     <WieWars v-if="app.me" />
+    <ErsteSchritte v-if="app.me && !loading" :termin="termin" :vorgeschlagen="ichSchlageVor" />
     <AbendModus
       v-if="heuteAbend && app.me"
       :termin="termin"
@@ -218,7 +222,7 @@ const poolQuelle = computed(() => (vorschlaege.value.length ? 'vorschlaege' : 'm
       <div class="layout">
         <section>
           <div class="row unterkopf">
-            <h3>{{ $t('abendtab.vorschlaege') }}</h3>
+            <h3>{{ $t('abendtab.vorschlaege') }}<Erklaerung :label="$t('abendtab.vorschlaege')" :text="$t('erklaerung.vorschlaege')" /></h3>
             <span class="spacer"></span>
             <button v-if="app.gruppenAdmin && vorschlaege.length" class="ghost small danger" @click="allesLeeren">
               <Icon name="muell" :size="14" /> {{ $t('abendtab.alleLeeren') }}
@@ -226,7 +230,7 @@ const poolQuelle = computed(() => (vorschlaege.value.length ? 'vorschlaege' : 'm
           </div>
 
           <p v-if="app.me && vorschlaege.length" class="muted small-text veto-hint">
-            {{ $t('abendtab.jedePersonHatEin') }} <strong>{{ $t('abendtab.veto') }}</strong>{{ $t('abendtab.filmeMitVetoKommen') }}
+            {{ $t('abendtab.jedePersonHatEin') }} <strong>{{ $t('abendtab.veto') }}</strong>{{ $t('abendtab.filmeMitVetoKommen') }}<Erklaerung :label="$t('abendtab.veto')" :text="$t('erklaerung.veto')" />
           </p>
           <div v-if="loading" class="list">
             <div v-for="i in 3" :key="i" class="skeleton" style="height: 86px"></div>
@@ -279,7 +283,7 @@ const poolQuelle = computed(() => (vorschlaege.value.length ? 'vorschlaege' : 'm
         </section>
         <aside class="side">
           <div class="panel wheelbox">
-            <h3>{{ $t('abendtab.filmabendKiste') }}</h3>
+            <h3>{{ $t('abendtab.filmabendKiste') }}<Erklaerung :label="$t('abendtab.filmabendKiste')" :text="$t('erklaerung.kiste')" /></h3>
             <template v-if="pool.length">
               <p class="muted small-text">
                 {{ $t(`abendtab.poolAus.${poolQuelle}`, { n: pool.length }, pool.length) }}
