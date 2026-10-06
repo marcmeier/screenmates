@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.19.1 – 2026-10-07
+
+### Geändert
+- **Vorschläge und Kiste auf einer Höhe:** Die Überschrift „Filmabend-Kiste“ steht jetzt in derselben Zeile wie
+  „Vorschläge“, Liste und Kiste beginnen bündig; die Veto-Regel steht unter der Liste.
+- **Der Kisten-Knopf fällt auf:** „Für alle öffnen“ und im Abendmodus „Kiste für alle öffnen“ bzw.
+  „Stab übernehmen & Kiste öffnen“ leuchten im Verlauf und pulsieren dezent (aus bei „Bewegung reduzieren“).
+
 ## 0.19.0 – 2026-10-06
 
 ### Geändert – einfacher zu lesen und einzuordnen

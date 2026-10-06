@@ -228,10 +228,6 @@ async function gewinnerGesehen() {
             </button>
           </div>
 
-          <!-- The veto rule only while it still matters to you. -->
-          <p v-if="app.me && vorschlaege.length && !vetoVerbraucht" class="muted small-text veto-hint">
-            {{ $t('abendtab.jedePersonHatEin') }} <strong>{{ $t('abendtab.veto') }}</strong>{{ $t('abendtab.filmeMitVetoKommen') }}<Erklaerung :label="$t('abendtab.veto')" :text="$t('erklaerung.veto')" />
-          </p>
           <div v-if="loading" class="list">
             <div v-for="i in 3" :key="i" class="skeleton" style="height: 86px"></div>
           </div>
@@ -288,11 +284,18 @@ async function gewinnerGesehen() {
               </div>
             </li>
           </ol>
+          <!-- The veto rule only while it still matters to you. -->
+          <p v-if="app.me && vorschlaege.length && !vetoVerbraucht" class="muted small-text veto-hint unten">
+            {{ $t('abendtab.jedePersonHatEin') }} <strong>{{ $t('abendtab.veto') }}</strong>{{ $t('abendtab.filmeMitVetoKommen') }}<Erklaerung :label="$t('abendtab.veto')" :text="$t('erklaerung.veto')" />
+          </p>
 
         </section>
         <aside class="side">
-          <div class="panel wheelbox">
+          <!-- Same heading row as "Vorschläge": both boxes start at the same height. -->
+          <div class="row unterkopf">
             <h3>{{ $t('abendtab.filmabendKiste') }}<Erklaerung :label="$t('abendtab.filmabendKiste')" :text="$t('erklaerung.kiste')" /></h3>
+          </div>
+          <div class="panel wheelbox">
             <template v-if="pool.length">
               <p class="muted small-text">
                 <template v-if="vorschlaege.length">{{ $t('abendtab.inDerKiste', { n: pool.length }, pool.length) }}</template>
@@ -348,6 +351,8 @@ async function gewinnerGesehen() {
 .layout { display: grid; grid-template-columns: minmax(0, 1fr) 380px; gap: 2rem; align-items: start; }
 .list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 0.6rem; }
 .veto-hint { margin: -0.4rem 0 0.8rem; }
+.veto-hint.unten { margin: 0.7rem 0 0; }
+.unterkopf { min-height: 1.9rem; }
 .anzahl { color: var(--text); }
 .sugg.vetoed { opacity: 0.55; }
 .sugg.vetoed .linklike { text-decoration: line-through; }

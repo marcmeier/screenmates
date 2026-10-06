@@ -123,15 +123,15 @@ async function eintragen() {
               <span><strong>{{ gewinner.title }}</strong><small class="muted">{{ $t('abendmodus.ausDerKiste') }}</small></span>
             </div>
             <template v-else-if="pool.length">
-              <button v-if="kiste.darfOeffnen" class="small primary" :disabled="!!kiste.buehne" @click="audioJetzt(), kiste.oeffnen()">
-                <Icon name="kiste" :size="14" /> {{ $t('abendmodus.kisteFuerAlleOeffnen') }}
+              <button v-if="kiste.darfOeffnen" class="kiste-knopf gross" :disabled="!!kiste.buehne" @click="audioJetzt(), kiste.oeffnen()">
+                <Icon name="kiste" :size="18" /> {{ $t('abendmodus.kisteFuerAlleOeffnen') }}
               </button>
               <template v-else-if="app.me && g.uebernehmen === 'sofort'">
                 <p class="muted klein">
                   {{ g.gastgeber ? $t('abendmodus.gastgeberNichtDa', { name: hostName }) : $t('abendmodus.keinGastgeber') }}
                 </p>
-                <button class="small primary" :disabled="!!kiste.buehne" @click="uebernehmenUndOeffnen">
-                  <Icon name="kiste" :size="14" /> {{ $t('abendmodus.uebernehmenUndOeffnen') }}
+                <button class="kiste-knopf gross" :disabled="!!kiste.buehne" @click="uebernehmenUndOeffnen">
+                  <Icon name="kiste" :size="18" /> {{ $t('abendmodus.uebernehmenUndOeffnen') }}
                 </button>
               </template>
               <template v-else>
@@ -204,4 +204,5 @@ button.selbst:hover { color: var(--text); }
 a.button.small { padding: 0.3rem 0.6rem; font-size: 0.8rem; }
 a.button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
 @media (max-width: 800px) { .schritte { grid-template-columns: minmax(0, 1fr); } }
+.kiste-knopf.gross { width: 100%; padding: 0.7rem 0.9rem; font-size: 0.95rem; border-radius: 10px; }
 </style>
