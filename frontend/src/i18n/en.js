@@ -185,6 +185,7 @@ export default {
     weiteres: "More",
     willkommenIn: "Welcome to “{gruppe}”!",
     zumFilmabend: "screenmates – to movie night",
+    mehr: "More",
   },
   benachrichtigungen: {
     anAuf: "On for {n} device | On for {n} devices",
@@ -523,6 +524,7 @@ export default {
     zumGruppenAdmin: "Make group admin",
     ohneGruppe: "Not in any group yet: {namen}",
     aktiv: "active now",
+    kurz: "Every group has its own movie night – new people join with an invitation link.",
   },
   infocard: {
     abbrechen: "Cancel",
@@ -1319,6 +1321,8 @@ export default {
       "On the night the host opens the case for everyone: it picks a film at random from the suggestions, with the odds shown there. A test spin is just for you and doesn't count.",
     gastgeber:
       "The host opens the case for everyone and streams in the cinema. Whoever sets the date gets the baton. If the host isn't around, someone else can take it over.",
+    gruppen:
+      "Every group has its own movie night, history, watchlist, suggestions, date and cinema – visible only to its members. Names, levels and awards apply to the whole server. New people only get in with an invitation link, which a group admin creates here.",
   },
   ersteSchritte: {
     titel: "First steps",

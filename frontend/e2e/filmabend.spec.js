@@ -216,15 +216,15 @@ test('a veto keeps a film out of the case', async () => {
   await expect(alien).toHaveClass(/vetoed/)
   await expect(alien.locator('.veto-info')).toContainText('Veto von Marc')
   // Out of the case: only Shining is left in it.
-  await expect(alien.locator('.merkmal.chance')).toBeHidden()
-  await expect(page.locator('.sugg', { hasText: 'Shining' }).locator('.merkmal.chance')).toHaveText('100 %')
+  await expect(alien.locator('.chance-text')).toBeHidden()
+  await expect(page.locator('.sugg', { hasText: 'Shining' }).locator('.chance-text')).toHaveText('100 %')
   await alien.getByRole('button', { name: 'Veto zurück' }).click()
   await expect(alien).not.toHaveClass(/vetoed/)
 })
 
 test('each suggestion shows its odds in the case; the case itself stays slim', async () => {
   for (const film of ['Alien', 'Shining']) {
-    await expect(page.locator('.sugg', { hasText: film }).locator('.merkmal.chance')).toHaveText('50 %')
+    await expect(page.locator('.sugg', { hasText: film }).locator('.chance-text')).toHaveText('50 %')
   }
   await expect(page.getByRole('list', { name: /^Kiste mit/ })).toHaveCount(0)
   await expect(page.locator('.wheelbox')).toContainText('Die Chancen stehen bei den Vorschlägen')
@@ -669,9 +669,12 @@ test('a second device must know the film to use the name', async ({ browser }) =
   await phone.locator('.results button', { hasText: 'Midsommar' }).click()
   await expect(phone.getByRole('dialog')).toBeHidden()
   await expect(phone.locator('.me')).toContainText('Marc')
-  // On the phone the profile button opens a menu – the way to the achievements.
+  // On the phone the areas sit in a bar at the bottom; "Mehr" holds the rest.
+  await phone.getByRole('button', { name: 'Mehr' }).click()
+  await phone.getByRole('menuitem', { name: /Wünsche & Ideen/ }).click()
+  await expect(phone).toHaveURL(/#\/wuensche/)
+  // The picture at the top leads to the profile.
   await phone.locator('.me').click()
-  await phone.getByRole('menuitem', { name: /Profil & Erfolge/ }).click()
   await expect(phone.locator('.stand')).toContainText('Level')
   await phone.close()
 })

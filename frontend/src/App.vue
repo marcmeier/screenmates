@@ -94,9 +94,9 @@ const eingeklappt = computed(() => schmal.value && breit.value)
 const reload = () => window.location.reload()
 // Phones hide the secondary navigation: there the profile button opens a menu instead.
 const menue = ref(false)
+// The profile button opens the profile; on phones "Mehr" in the bottom bar holds the rest.
 function profilKlick() {
-  if (breit.value) navigate('profil')
-  else menue.value = !menue.value
+  navigate('profil')
 }
 watch(() => route.value.tab, () => (menue.value = false))
 const kuerzel = (name) => name.split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0]).join('').toUpperCase()
@@ -228,6 +228,12 @@ watch(
             <span class="dot"></span>{{ kino.zuschauer.length || 'live' }}
           </span>
         </a>
+        <!-- Phones: everything that isn't one of the main areas. -->
+        <button v-if="app.me && !breit" class="nav mehr-nav" :class="{ active: menue }" :aria-expanded="menue" @click.stop="menue = !menue">
+          <span class="punkte" aria-hidden="true"><i></i><i></i><i></i></span>
+          <span>{{ $t('app.mehr') }}</span>
+          <span v-if="app.antraege" class="antraege mini" aria-hidden="true">{{ app.antraege }}</span>
+        </button>
       </nav>
 
       <div class="bottom">
@@ -262,11 +268,13 @@ watch(
           <span class="name" :class="{ 'sr-only': eingeklappt }">{{ app.me.name }}</span>
           <span v-if="app.admin && !eingeklappt" class="admin-badge">Admin</span>
         </button>
+        <div v-if="menue && !breit" class="menue-hinter" @click="menue = false"></div>
         <div v-if="menue && !breit" class="menue panel" role="menu" @click="menue = false">
           <a href="#/profil" role="menuitem" class="eintrag">
             <Icon name="pokal" :size="18" /> {{ $t('nav.profil') }} <span v-if="app.me?.level" class="muted">{{ $t('app.level', { n: app.me.level }) }}</span>
           </a>
           <a href="#/profil/einstellungen" role="menuitem" class="eintrag"><Icon name="profil" :size="18" /> {{ $t('app.einstellungen') }}</a>
+          <a href="#/neuigkeiten" role="menuitem" class="eintrag"><Icon name="glocke" :size="18" /> {{ $t('nav.neuigkeiten') }}</a>
           <a href="#/wuensche" role="menuitem" class="eintrag"><Icon name="wuensche" :size="18" /> {{ $t('nav.wuensche') }}</a>
           <a v-if="app.verwaltetGruppen" href="#/verwaltung" role="menuitem" class="eintrag">
             <Icon name="verwaltung" :size="18" /> {{ $t('nav.verwaltung') }}
@@ -365,7 +373,7 @@ nav { display: flex; flex-direction: column; gap: 4px; }
 .secondary-nav { gap: 0; padding-bottom: 0.9rem; border-bottom: 1px solid var(--line); }
 .me { justify-content: flex-start; width: 100%; padding: 0 0.7rem; height: 44px; background: var(--bg-soft); }
 .me .name { font-weight: 600; flex: 1; text-align: left; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.admin-badge { font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--accent); border: 1px solid var(--accent); border-radius: 4px; padding: 1px 5px; }
+.admin-badge { font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); border: 1px solid var(--line); border-radius: 4px; padding: 1px 5px; }
 .pick { width: 100%; justify-content: center; height: 44px; }
 .gruppenwahl { margin-top: -1.2rem; padding: 0 0.6rem; font-size: 0.82rem; height: 32px; display: flex; align-items: center; }
 .gruppenwahl select { width: 100%; height: 32px; padding: 0 0.5rem; font-size: 0.82rem; }
@@ -376,7 +384,7 @@ nav { display: flex; flex-direction: column; gap: 4px; }
   letter-spacing: 0.04em; color: var(--muted); background: var(--bg-soft); border: 1px solid var(--line);
 }
 .keine-gruppe { max-width: 560px; }
-.menue { display: none; }
+.menue, .menue-hinter, .mehr-nav { display: none; }
 /* Fixed height: the folded bar keeps an empty block here, so the profile button doesn't move. */
 .status { margin: 0; padding: 0 0.6rem; font-size: 0.74rem; line-height: 1.35; color: var(--muted); display: flex; flex-direction: column; gap: 2px; height: 4.6rem; overflow: hidden; }
 .warn { color: var(--gold); }
@@ -384,48 +392,52 @@ nav { display: flex; flex-direction: column; gap: 4px; }
 
 /* Phone: brand and profile on top, the three main areas as tabs below. */
 @media (max-width: 860px) {
-  /* Header row hugs its content; the page gets the rest of the height. */
-  .shell { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto 1fr; }
+  /* Phones: one slim row on top (logo, group, bell, picture) and the areas in a bar at the bottom,
+     where thumbs are. */
+  .shell { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto 1fr; padding: 0 env(safe-area-inset-right) 0 env(safe-area-inset-left); }
   .sidebar {
-    z-index: 20; height: auto; padding: 0.7rem 1rem 0; gap: 0.4rem;
-    display: grid; grid-template-columns: 1fr auto; align-items: center;
-    border-right: none; border-bottom: 1px solid var(--line);
-    background: rgba(10, 10, 12, 0.94); backdrop-filter: blur(8px);
+    z-index: 20; height: auto; padding: max(0.55rem, env(safe-area-inset-top)) 1rem 0.55rem; gap: 0.6rem;
+    display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center;
+    border-right: none; border-bottom: 1px solid var(--line); background: var(--bg); overflow: visible;
   }
-  .brand { padding: 0; }
-  .bottom { margin: 0; grid-column: 2; grid-row: 1; }
+  .brand { padding: 0; min-width: 0; font-size: 1.25rem; }
+  .gruppenwahl { grid-column: 2; grid-row: 1; margin: 0; padding: 0; height: auto; min-width: 0; }
+  .gruppenwahl .name { display: none; }
+  .gruppenwahl select { height: 34px; }
+  .bottom { margin: 0; grid-column: 3; grid-row: 1; position: static; flex-direction: row; align-items: center; gap: 0.3rem; min-width: 0; }
   .secondary-nav, .status, .collapse { display: none; }
-  /* Phones stack icon and label: their own heights. */
-  .nav, .me, .pick { height: auto; }
-  .bottom { position: relative; flex-direction: row; align-items: center; gap: 0.3rem; }
-  .sidebar { overflow: visible; } /* the profile menu hangs below the header */
+  .me { width: auto; height: auto; padding: 0.2rem; border-radius: 50%; }
+  .me .name, .me .admin-badge { display: none; }
+  .pick { width: auto; height: auto; }
+  .primary-nav {
+    position: fixed; z-index: 25; left: 0; right: 0; bottom: 0; flex-direction: row; justify-content: space-around; gap: 0;
+    padding: 0 env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+    background: color-mix(in srgb, var(--bg) 96%, transparent); border-top: 1px solid var(--line);
+  }
+  .nav { flex: 1; height: auto; flex-direction: column; justify-content: center; padding: 0.55rem 0.2rem 0.5rem; font-size: 0.72rem; gap: 0.2rem; white-space: nowrap; position: relative; border-radius: 0; }
+  .nav.active { background: none; color: var(--text); }
+  .nav.active::before { left: 25%; right: 25%; top: 0; bottom: auto; width: auto; height: 3px; border-radius: 0 0 3px 3px; }
+  .live { position: absolute; top: 3px; left: calc(50% + 6px); margin: 0; padding: 0 5px; font-size: 0.62rem; }
+  .mehr-nav { display: flex; border: none; background: none; color: var(--muted); }
+  .punkte { display: flex; gap: 3px; height: 20px; align-items: center; }
+  .punkte i { width: 4px; height: 4px; border-radius: 50%; background: currentColor; }
+  .antraege.mini { position: absolute; top: 4px; left: calc(50% + 8px); margin: 0; }
+  .menue-hinter { position: fixed; inset: 0; z-index: 26; }
   .menue {
-    display: flex; flex-direction: column; position: absolute; right: 0; top: calc(100% + 6px); z-index: 30;
-    min-width: 220px; padding: 0.4rem; gap: 2px; box-shadow: 0 12px 40px rgba(0, 0, 0, 0.55);
+    display: flex; flex-direction: column; position: fixed; z-index: 27; right: 0.6rem; left: auto; top: auto;
+    bottom: calc(4.4rem + env(safe-area-inset-bottom)); min-width: 230px; padding: 0.4rem; gap: 2px;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6);
   }
   .eintrag {
-    display: flex; align-items: center; gap: 0.7rem; padding: 0.7rem 0.8rem; border-radius: 8px; width: 100%;
+    display: flex; align-items: center; gap: 0.7rem; padding: 0.75rem 0.8rem; border-radius: 8px; width: 100%;
     color: var(--text); text-decoration: none; font-size: 0.95rem; border: none; background: none; justify-content: flex-start;
   }
   .eintrag:hover { background: var(--bg-raised); }
   .eintrag .muted { margin-left: auto; font-size: 0.8rem; }
   .eintrag .antraege { margin-left: auto; }
-  .gruppenwahl { grid-column: 1 / -1; margin: 0; padding: 0; }
-  .me, .pick { width: auto; }
-  .primary-nav { grid-column: 1 / -1; flex-direction: row; justify-content: space-around; }
-  /* Bottom-tab style: icon above label, so four areas fit a phone. */
-  .nav { flex: 1; flex-direction: column; justify-content: center; padding: 0.5rem 0.2rem 0.6rem; font-size: 0.72rem; gap: 0.2rem; white-space: nowrap; }
-  .live { position: absolute; top: 2px; left: calc(50% + 6px); margin: 0; padding: 0 5px; font-size: 0.62rem; }
-  .nav.active { background: none; }
-  .nav.active::before { left: 12px; right: 12px; top: auto; bottom: 0; width: auto; height: 3px; }
-  .main { padding-top: 1.4rem; }
-  /* The header row never makes the page wider: logo and profile button give way. */
-  .brand { min-width: 0; }
-  .bottom { min-width: 0; }
+  .main { padding-top: 1.2rem; padding-bottom: calc(5.5rem + env(safe-area-inset-bottom)); }
 }
-/* Very narrow phones (or display zoom): the profile button shows only the picture. */
 @media (max-width: 380px) {
-  .me .name, .me .admin-badge { display: none; }
-  .brand { font-size: 1.15rem; }
+  .brand { font-size: 1.1rem; }
 }
 </style>

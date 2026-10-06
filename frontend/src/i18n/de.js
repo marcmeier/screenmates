@@ -186,6 +186,7 @@ export default {
     weiteres: "Weiteres",
     willkommenIn: "Willkommen in „{gruppe}“!",
     zumFilmabend: "screenmates – zum Filmabend",
+    mehr: "Mehr",
   },
   benachrichtigungen: {
     anAuf: "An auf {n} Gerät | An auf {n} Geräten",
@@ -533,6 +534,7 @@ export default {
     zumGruppenAdmin: "Zum Gruppen-Admin",
     ohneGruppe: "Noch in keiner Gruppe: {namen}",
     aktiv: "gerade aktiv",
+    kurz: "Jede Gruppe hat ihren eigenen Filmabend – neue Leute kommen per Einladungslink.",
   },
   infocard: {
     abbrechen: "Abbrechen",
@@ -1344,6 +1346,8 @@ export default {
       "Am Abend öffnet der Gastgeber die Kiste für alle: Sie zieht zufällig einen Film aus den Vorschlägen, mit den Chancen von links. Probedrehen geht nur für dich und zählt nicht.",
     gastgeber:
       "Der Gastgeber öffnet die Kiste für alle und überträgt im Kino. Wer den Termin festlegt, bekommt den Stab. Ist der Gastgeber nicht da, kann ihn jemand anderes übernehmen.",
+    gruppen:
+      "Jede Gruppe hat ihren eigenen Filmabend, ihre Chronik, Merkliste, Vorschläge, ihren Termin und ihr Kino – sichtbar nur für ihre Mitglieder. Namen, Level und Erfolge gelten für den ganzen Server. Neue Leute kommen nur mit einem Einladungslink herein; den erzeugt ein Admin der Gruppe hier.",
   },
   ersteSchritte: {
     titel: "Erste Schritte",

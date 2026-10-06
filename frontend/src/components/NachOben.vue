@@ -37,6 +37,7 @@ onBeforeUnmount(() => {
   width: 46px; height: 46px; padding: 0; justify-content: center; border-radius: 50%;
   background: var(--bg-raised); border: 1px solid var(--line); color: var(--text); box-shadow: var(--shadow);
 }
+@media (max-width: 860px) { .nach-oben { bottom: calc(5.2rem + env(safe-area-inset-bottom)); } }
 .nach-oben:hover { border-color: var(--accent); color: var(--accent); }
 .nach-oben svg { transform: rotate(90deg); }
 .hoch-enter-active, .hoch-leave-active { transition: opacity 0.2s, transform 0.2s; }
