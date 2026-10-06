@@ -3,7 +3,7 @@ import { computed, onMounted, ref, watch } from 'vue'
 import { api } from '../../api'
 import { useApp } from '../../stores/app'
 import { useUi } from '../../stores/ui'
-import { dezimal } from '../../format'
+import { datumFmt, dezimal } from '../../format'
 import WatchedEntry from '../WatchedEntry.vue'
 
 const app = useApp()
@@ -33,6 +33,19 @@ const shown = computed(() => {
   const list = q ? entries.value.filter((e) => e.movie?.title.toLowerCase().includes(q)) : [...entries.value]
   if (sort.value === 'wertung') list.sort((a, b) => (b.rating_avg ?? -1) - (a.rating_avg ?? -1))
   return list
+})
+
+// Newest first, in months ("Oktober 2026 · 3"): easier to find your way than one long list.
+const monate = computed(() => {
+  if (sort.value !== 'datum' || filter.value.trim()) return [{ key: 'alle', titel: '', eintraege: shown.value }]
+  const fmt = datumFmt({ month: 'long', year: 'numeric', timeZone: 'Europe/Berlin' })
+  const gruppen = []
+  for (const e of shown.value) {
+    const titel = fmt.format(new Date(e.watched_at))
+    if (gruppen.at(-1)?.titel !== titel) gruppen.push({ key: titel, titel, eintraege: [] })
+    gruppen.at(-1).eintraege.push(e)
+  }
+  return gruppen
 })
 
 const stats = computed(() => {
@@ -65,16 +78,22 @@ const stats = computed(() => {
     <div v-else-if="!entries.length" class="empty">
       <strong>{{ $t('gesehenview.nochNichtsGeschaut') }}</strong>
       {{ $t('gesehenview.markierEinenFilmAls') }}
+      <a href="#/abend" class="button small leer-los">{{ $t('gesehenview.zumFilmabend') }}</a>
     </div>
-    <div v-else class="list">
-      <WatchedEntry
-        v-for="e in shown"
-        :key="e.id"
-        :entry="e"
-        @update="replace"
-        @removed="entries = entries.filter((x) => x.id !== $event)"
-      />
-    </div>
+    <template v-else>
+      <section v-for="m in monate" :key="m.key" class="monat">
+        <h3 v-if="m.titel" class="section-title">{{ m.titel }} <span class="zahl">· {{ m.eintraege.length }}</span></h3>
+        <div class="list">
+          <WatchedEntry
+            v-for="e in m.eintraege"
+            :key="e.id"
+            :entry="e"
+            @update="replace"
+            @removed="entries = entries.filter((x) => x.id !== $event)"
+          />
+        </div>
+      </section>
+    </template>
   </section>
 </template>
 
@@ -85,4 +104,8 @@ const stats = computed(() => {
 .stats { font-size: 0.9rem; }
 .stats strong { color: var(--text); }
 .list { display: flex; flex-direction: column; gap: 1rem; }
+.monat .section-title { margin: 1.4rem 0 0.7rem; }
+.monat:first-of-type .section-title { margin-top: 0.4rem; }
+.monat .zahl { color: var(--text); }
+.leer-los { margin-top: 0.8rem; }
 </style>

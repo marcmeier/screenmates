@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.19.0 – 2026-10-06
+
+### Geändert – einfacher zu lesen und einzuordnen
+- **Filmabend:** „Vorschläge · 4“ statt Überschrift plus Erklärsatz; der Veto-Hinweis steht nur noch da,
+  solange man sein Veto nicht gesetzt hat; die Kiste sagt nur noch „4 Filme in der Kiste.“ (der Rest steht
+  im ⓘ). Auf Handy und Tablet steht die Kiste unter den Vorschlägen – erst sehen, was drin ist.
+- **Chronik nach Monaten:** „Oktober 2026 · 3“ als Zwischenüberschriften (bei „Neueste zuerst“). Das
+  Gästebuch-Feld klappt erst auf „Ins Gästebuch schreiben“ auf; Ausblenden/Löschen sind schlichter.
+- **Neuigkeiten nach Tagen:** Heute · Gestern · Diese Woche · Älter.
+- **Erfolge:** „Als Nächstes“ zeigt die drei Erfolge, denen man am nächsten ist; der Katalog ist je
+  Kategorie eingeklappt (mit „3/14“), „Zuletzt freigeschaltet“ zeigt nur noch fünf.
+- **Wünsche:** Offene nach Stimmen sortiert, „Erledigt“ eingeklappt.
+- **Leere Listen** führen mit einem Knopf weiter (Merkliste → Filme finden, Chronik → Zum Filmabend).
+
 ## 0.18.0 – 2026-10-06
 
 ### Geändert

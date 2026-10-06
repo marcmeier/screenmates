@@ -88,6 +88,7 @@ export default {
     zuruecknehmen: "Zurücknehmen",
     zurueckziehen: "Zurückziehen",
     zuschauen: "Zuschauen",
+    inDerKiste: "{n} Film in der Kiste. | {n} Filme in der Kiste.",
   },
   adminbereich: {
     abgemeldet: "{name}: {n} Gerät abgemeldet | {name}: {n} Geräte abgemeldet",
@@ -347,6 +348,7 @@ export default {
     vitrine: "Vitrine",
     zuMeinemProfil: "Zu meinem Profil",
     zuletztFreigeschaltet: "Zuletzt freigeschaltet",
+    alsNaechstes: "Als Nächstes",
   },
   erfolgkachel: {
     ausDerVitrineNehmen: "Aus der Vitrine nehmen",
@@ -455,6 +457,7 @@ export default {
     sortierung: "Sortierung",
     sterne: "⌀ Sterne",
     stundenFilm: "Stunden Film ·",
+    zumFilmabend: "Zum Filmabend",
   },
   glocke: {
     neuigkeitenGlockeNeu: "Neuigkeiten, {glocke} neu",
@@ -889,6 +892,12 @@ export default {
       "Noch nichts – hier landet, was screenmates dir mitteilt, auch ohne Push.",
     wasDirScreenmatesMitgeteilt:
       "Was dir screenmates mitgeteilt hat – und was in der Gruppe passiert ist.",
+    tag: {
+      heute: "Heute",
+      gestern: "Gestern",
+      woche: "Diese Woche",
+      aelter: "Älter",
+    },
   },
   personview: {
     alleGenres: "Alle Genres",
@@ -1247,6 +1256,7 @@ export default {
       "„{title}“ samt Bewertungen und Kommentaren löschen?",
     werWarDabei: "Wer war dabei?",
     wiederAnzeigen: "Wieder anzeigen",
+    schreiben: "Ins Gästebuch schreiben",
   },
   webrtc: {
     verbindungFehlgeschlagenStatus: "Verbindung fehlgeschlagen ({status})",

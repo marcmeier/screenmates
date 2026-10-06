@@ -53,6 +53,21 @@ const sichtbare = computed(() => {
   if (alleZeigen.value) return events.value
   return neueEvents.value.length ? neueEvents.value : events.value.slice(0, 8)
 })
+// The group's feed by day: today, yesterday, this week, older.
+function tagGruppe(iso) {
+  const tag = (d) => new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime()
+  const tage = Math.round((tag(new Date()) - tag(new Date(iso))) / 864e5)
+  return tage <= 0 ? 'heute' : tage === 1 ? 'gestern' : tage < 7 ? 'woche' : 'aelter'
+}
+const nachTagen = computed(() => {
+  const gruppen = []
+  for (const e of sichtbare.value) {
+    const g = tagGruppe(e.at)
+    if (gruppen.at(-1)?.key !== g) gruppen.push({ key: g, events: [] })
+    gruppen.at(-1).events.push(e)
+  }
+  return gruppen
+})
 function oeffnen(e) {
   if (e.url) location.hash = new URL(e.url, location.origin).hash
 }
@@ -87,12 +102,17 @@ function oeffnen(e) {
         <Icon name="personen" :size="17" /> {{ $t('neuigkeitentab.inDerGruppe') }}
         <span v-if="neueEvents.length" class="neu-zahl">{{ $t('neuigkeitentab.lengthNeuSeitDeinem', { length: neueEvents.length }) }}</span>
       </h2>
-      <ul v-if="events.length" class="feed">
-        <li v-for="(e, i) in sichtbare" :key="i" :class="{ neu: neu(e) }">
-          <span>{{ ereignisText(e) }}</span>
-          <time class="muted" :datetime="e.at">{{ vorWann(e.at) }}</time>
-        </li>
-      </ul>
+      <template v-if="events.length">
+        <div v-for="g in nachTagen" :key="g.key" class="tag">
+          <h3 class="tag-titel">{{ $t(`neuigkeitentab.tag.${g.key}`) }}</h3>
+          <ul class="feed">
+            <li v-for="(e, i) in g.events" :key="i" :class="{ neu: neu(e) }">
+              <span>{{ ereignisText(e) }}</span>
+              <time class="muted" :datetime="e.at">{{ vorWann(e.at) }}</time>
+            </li>
+          </ul>
+        </div>
+      </template>
       <p v-else class="muted">{{ $t('neuigkeitentab.hierPassiertNochNichts') }}</p>
       <button v-if="events.length > sichtbare.length" class="ghost small" @click="alleZeigen = true">
         {{ $t('neuigkeitentab.aeltereAktivitaetX', { x: events.length - sichtbare.length }) }}
@@ -115,4 +135,6 @@ time { flex: none; font-size: 0.78rem; }
 .liste li.neu strong::before, .feed li.neu span::before {
   content: ''; display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--accent); margin-right: 0.5rem; vertical-align: middle;
 }
+.tag + .tag { margin-top: 0.9rem; }
+.tag-titel { margin: 0 0 0.35rem; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
 </style>
