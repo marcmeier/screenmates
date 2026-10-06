@@ -8,6 +8,7 @@ import { debounce } from '../../format'
 import Icon from '../Icon.vue'
 import MovieGrid from '../MovieGrid.vue'
 import EntdeckenPanel from '../finden/EntdeckenPanel.vue'
+import NachOben from '../NachOben.vue'
 import KiErgebnisse from '../finden/KiErgebnisse.vue'
 import PersonView from '../finden/PersonView.vue'
 
@@ -142,12 +143,14 @@ const placeholder = computed(() =>
     </template>
 
     <EntdeckenPanel v-else />
+
+    <NachOben />
   </div>
 </template>
 
 <style scoped>
-.search { position: relative; max-width: 720px; margin-bottom: 1.6rem; display: flex; gap: 0.5rem; }
-.search input { padding: 0.85rem 1rem 0.85rem 2.7rem; font-size: 1rem; border-radius: 10px; }
+.search { position: relative; max-width: 720px; margin-bottom: 0.9rem; display: flex; gap: 0.5rem; }
+.search input { padding: 0.65rem 1rem 0.65rem 2.6rem; font-size: 0.98rem; border-radius: 10px; }
 .icon { position: absolute; left: 0.9rem; top: 50%; transform: translateY(-50%); color: var(--muted); pointer-events: none; }
 .ki { flex: none; border-radius: 10px; padding: 0 1rem; }
 .back { margin: -0.6rem 0 0.8rem -0.5rem; }
