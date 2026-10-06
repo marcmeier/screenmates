@@ -49,7 +49,8 @@ const zweitesGeraet = async () => {
 }
 
 test('first visit asks for a name', async () => {
-  await expect(page.getByRole('dialog', { name: 'Namen wählen' })).toBeVisible()
+  // The very first request of a freshly started stack can take a while (seeding, cold caches).
+  await expect(page.getByRole('dialog', { name: 'Namen wählen' })).toBeVisible({ timeout: 20_000 })
   await page.getByPlaceholder('Neuer Name').fill('Marc')
   await page.getByRole('button', { name: 'Anlegen' }).click()
   await expect(page.getByRole('dialog', { name: 'Namen wählen' })).toBeHidden()
