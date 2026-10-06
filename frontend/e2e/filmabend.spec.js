@@ -165,15 +165,15 @@ test('a veto keeps a film out of the case', async () => {
   await expect(alien).toHaveClass(/vetoed/)
   await expect(alien.locator('.veto-info')).toContainText('Veto von Marc')
   // Out of the case: only Shining is left in it.
-  await expect(alien.locator('.info.chance')).toBeHidden()
-  await expect(page.locator('.sugg', { hasText: 'Shining' }).locator('.info.chance')).toHaveText('100 %')
+  await expect(alien.locator('.merkmal.chance')).toBeHidden()
+  await expect(page.locator('.sugg', { hasText: 'Shining' }).locator('.merkmal.chance')).toHaveText('100 %')
   await alien.getByRole('button', { name: 'Veto zurück' }).click()
   await expect(alien).not.toHaveClass(/vetoed/)
 })
 
 test('each suggestion shows its odds in the case; the case itself stays slim', async () => {
   for (const film of ['Alien', 'Shining']) {
-    await expect(page.locator('.sugg', { hasText: film }).locator('.info.chance')).toHaveText('50 %')
+    await expect(page.locator('.sugg', { hasText: film }).locator('.merkmal.chance')).toHaveText('50 %')
   }
   await expect(page.getByRole('list', { name: /^Kiste mit/ })).toHaveCount(0)
   await expect(page.locator('.wheelbox')).toContainText('Die Chancen stehen bei den Vorschlägen')

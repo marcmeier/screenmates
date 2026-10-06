@@ -20,17 +20,24 @@ def secret(db) -> str:
 
 
 def offline():
-    respx.get(f"{API}/v3/paths/get/kino-1").mock(return_value=httpx.Response(404))
+    respx.get(f"{API}/v3/paths/list").mock(return_value=httpx.Response(200, json={"itemCount": 0, "items": []}))
 
 
 def live(source_id="s1"):
-    respx.get(f"{API}/v3/paths/get/kino-1").mock(
+    respx.get(f"{API}/v3/paths/list").mock(
         return_value=httpx.Response(
             200,
             json={
-                "ready": True,
-                "readyTime": "2026-10-03T20:00:00Z",
-                "source": {"type": "webRTCSession", "id": source_id},
+                "itemCount": 2,
+                "items": [
+                    {"name": "kino-2", "ready": True, "source": {"type": "webRTCSession", "id": "andere"}},
+                    {
+                        "name": "kino-1",
+                        "ready": True,
+                        "readyTime": "2026-10-03T20:00:00Z",
+                        "source": {"type": "webRTCSession", "id": source_id},
+                    },
+                ],
             },
         )
     )

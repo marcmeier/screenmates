@@ -181,6 +181,10 @@ Mit Docker ist MediaMTX in `compose.yaml` schon dabei.
 - `KINO_PUBLIC_HOST=dein.server.de` setzen (Compose) bzw. `MTX_WEBRTCADDITIONALHOSTS`, damit
   die Zuschauenden eine erreichbare Adresse bekommen,
 - hinter HTTPS `COOKIE_SECURE=true` setzen.
+- gegen Aussetzer in Bild und Ton den UDP-Empfangspuffer vergrößern: auf dem Host
+  `net.core.rmem_max=8388608` (z. B. in `/etc/sysctl.d/`) und für MediaMTX `MTX_UDPREADBUFFERSIZE=8388608`.
+  Der Linux-Standard (208 KB) läuft bei 1080p-Schlüsselbildern über; der Kernel verwirft dann Pakete
+  (sichtbar als `RcvbufErrors` in `/proc/net/snmp` im MediaMTX-Container).
 
 Bandbreite: Der Server braucht je nach Qualitätsstufe 2–8 Mbit/s Upload **pro Zuschauer**, gesendet wird nur einmal.
 

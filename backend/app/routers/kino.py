@@ -93,13 +93,20 @@ def _require_enabled() -> None:
 
 
 async def _mtx_path(gid: int) -> dict | None:
-    """The stream's state from the MediaMTX API, or None when nothing is published."""
+    """The stream's state from the MediaMTX API, or None when nothing is published.
+
+    Asks for the list, not for the one path: `/v3/paths/get/<name>` answers 404
+    while nothing is on air, and MediaMTX logs every one of those polls as an
+    error: thousands a day, burying the warnings that matter (lost packets).
+    """
     try:
         async with httpx.AsyncClient(timeout=3) as c:
-            r = await c.get(f"{settings.mediamtx_api_url}/v3/paths/get/{pfad(gid)}")
+            r = await c.get(f"{settings.mediamtx_api_url}/v3/paths/list", params={"itemsPerPage": 1000})
     except httpx.HTTPError:
         return None
-    return r.json() if r.status_code == 200 else None
+    if r.status_code != 200:
+        return None
+    return next((p for p in r.json().get("items") or [] if p.get("name") == pfad(gid)), None)
 
 
 def _viewers(gid: int) -> list[int]:

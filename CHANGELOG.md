@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.10.1 – 2026-10-06
+
+### Behoben
+- **Hausregeln & Infos** sahen kaputt aus (schmale Pille, Text lief hinaus): Die neuen Hinweise an
+  den Vorschlägen hießen intern wie die Infokarte und gaben ihr ihre Form.
+- **Kino-Aussetzer in Bild und Ton:** Der Medienserver verwarf eingehende Pakete, weil der
+  UDP-Empfangspuffer (Linux-Standard 208 KB) bei 1080p-Schlüsselbildern überlief. MediaMTX lässt
+  sich jetzt mit `MTX_UDPREADBUFFERSIZE` einen größeren Puffer geben (README → Kino); auf midgard
+  sind es 8 MB.
+- Die Kino-Abfrage beim Medienserver erzeugt kein „path not found“ mehr in dessen Log, wenn nichts
+  läuft (tausende Zeilen am Tag, zwischen denen echte Warnungen untergingen).
+
 ## 0.10.0 – 2026-10-06
 
 **Der ganze Abend, nicht nur die Planung:** screenmates führt jetzt durch den Abend selbst, fragt
