@@ -5,6 +5,9 @@
 ### Geändert
 - **Abendmodus:** Ist am Filmabend noch nichts vorgeschlagen, führt im Schritt „Was schauen wir?“ ein
   Knopf **Filme finden** direkt nach Finden.
+- **Kiste ohne Gastgeber:** Wer nicht Gastgeber ist, sieht im Schritt „Was schauen wir?“ jetzt, wer die
+  Kiste öffnet. Ist der Gastgeber nicht da (oder hat niemand den Stab), geht es mit einem Klick:
+  **Stab übernehmen & Kiste öffnen**. Ist er da, startet „Selbst übernehmen?“ die kurze Abstimmung.
 
 ## 0.13.0 – 2026-10-06
 

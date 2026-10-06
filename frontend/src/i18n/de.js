@@ -1,6 +1,12 @@
 // German – the original wording.
 export default {
   abendmodus: {
+    gastgeberNichtDa: "{name} ist gerade nicht da.",
+    keinGastgeber: "Noch hat niemand den Gastgeber-Stab.",
+    uebernehmenUndOeffnen: "Stab übernehmen & Kiste öffnen",
+    gastgeberOeffnetGleich:
+      "{name} öffnet gleich die Kiste – du siehst es live.",
+    selbstUebernehmen: "Selbst übernehmen?",
     ausDerKiste: "aus der Kiste",
     derGastgeberOeffnetGleich:
       "Der Gastgeber öffnet gleich die Kiste – du siehst es live.",
