@@ -19,6 +19,7 @@ from .routers import (
     einladungen,
     features,
     gastgeber,
+    glocke,
     gruppen,
     kalender,
     kino,
@@ -41,7 +42,7 @@ from .routers import erfolge as erfolge_api
 from .routers import push as push_api
 from .seed import seed_if_empty
 
-__version__ = "0.9.2"
+__version__ = "0.10.0"
 
 
 @asynccontextmanager
@@ -113,6 +114,7 @@ for r in (
     push_api.router,
     rueckblick.router,
     reset.router,
+    glocke.router,
 ):
     app.include_router(r)
 

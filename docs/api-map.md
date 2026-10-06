@@ -168,6 +168,19 @@ Admin *dieser Gruppe* oder Server-Admin. Der Katalog bleibt für alle offen; sei
 
 **F** = darf festlegen: wer die Umfrage gestartet hat, der Gastgeber, ein Admin der Gruppe – oder jeder, solange niemand den Stab hält.
 
+## Abend, Vorschläge, Glocke (0.10)
+
+| Methode | Pfad | Recht | Zweck |
+|---|---|:-:|---|
+| GET | `/suggestions/prognose` | N | Pro Vorschlag `wert` (halbe Sterne), `genau` und `personen` (echte Sterne oder Prognose); `fuer`: `dabei` (ab zwei Zusagen) oder `gruppe` |
+| GET | `/suggestions/anbieter` | N | Pro Vorschlag der beste Weg: `art` (`abo`/`kostenlos`/`leihen`/`kaufen`), `name`, `logo`, `bei` (Abo von wem) |
+| GET | `/watched/zu-bewerten` | N | „Wie war's?“: eigene Abende der letzten 4 Tage ohne eigene Sterne |
+| GET | `/glocke` · POST `/glocke/gelesen` | N | Die letzten 30 Benachrichtigungen mit `neu`, Zahl `ungelesen` (auch im Live-Poll als `glocke`) · alle gelesen |
+| GET | `/users/{id}/geschmack` | N | Ähnlichkeit der Sterne zu allen, die mit dir in einer Gruppe sind (ab 3 gemeinsamen Filmen) |
+| POST | `/users/me/willkommen` | N | Die Einführung wurde gesehen (gilt auf allen Geräten) |
+| POST | `/kino/pause` | Gastgeber/A | `{"an": true/false}`: Pause über dem Bild; `GET /kino` liefert `pause` (seit, ms) |
+| POST | `/kino/moment` | N | „Moment, bin gleich da“ – kommt wie eine Reaktion über `/kino/chat` |
+
 ## Gefahrenzone
 
 | Methode | Pfad | Recht | Zweck |

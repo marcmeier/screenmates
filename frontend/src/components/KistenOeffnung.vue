@@ -9,7 +9,8 @@ import Poster from './Poster.vue'
 // The movie night's case on the evening page: what's inside and with which odds.
 // The host (or a group admin) opens it for everyone; anyone can spin on their own
 // as practice. The opening itself plays in KistenBuehne (see GemeinsameKiste).
-const props = defineProps({ pool: { type: Array, required: true } })
+// `kompakt`: the odds are shown at the suggestions, so the list here can go.
+const props = defineProps({ pool: { type: Array, required: true }, kompakt: { type: Boolean, default: false } })
 const kiste = useKiste()
 const busy = ref(false)
 
@@ -41,7 +42,7 @@ async function probe() {
 
 <template>
   <div class="kiste">
-    <ul class="inhalt" :aria-label="`Kiste mit ${pool.length} ${pool.length === 1 ? 'Film' : 'Filmen'}`">
+    <ul v-if="!kompakt" class="inhalt" :aria-label="`Kiste mit ${pool.length} ${pool.length === 1 ? 'Film' : 'Filmen'}`">
       <li v-for="m in inhalt" :key="m.id" :style="{ '--farbe': seltenheitFuer(chance(m)).farbe }">
         <span class="mini"><Poster :movie="m" :title="false" /></span>
         <span class="titel">{{ m.title }}</span>

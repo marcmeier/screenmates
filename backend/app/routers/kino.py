@@ -29,7 +29,7 @@ from sqlmodel import select
 
 from .. import erfolge, push
 from ..config import settings
-from ..db import get_session
+from ..db import freigeben, get_session
 from ..gruppen import _waehlen, aktive_gruppe, gruppen_admin, ist_gruppen_admin, mitgliedschaften
 from ..models import Abend, KinoState, Movie, Session, User, now
 from ..serialize import iso, movie_dict
@@ -57,6 +57,7 @@ class Saal:
 
 _saele: dict[int, Saal] = defaultdict(Saal)
 _gemeldet: dict[int, float] = {}  # group -> when "the Kino is live" was last pushed (monotonic)
+_pause: dict[int, int] = {}  # group -> since when (ms) the host called a break
 
 
 def pfad(gid: int) -> str:
@@ -116,6 +117,7 @@ async def status(gid: int | None = Depends(_gruppe_optional), db: DBSession = De
     if gid is None:  # no name or no group yet: nothing to show, but no error either (it's polled)
         return {"enabled": True, "live": False, "zuschauer": [], "publikum": []}
     st = _state(db, gid)
+    freigeben(db)
     path = await _mtx_path(gid)
     live = bool(path and path.get("ready"))
     movie = db.get(Movie, st.movie_id) if st.movie_id else None
@@ -128,7 +130,22 @@ async def status(gid: int | None = Depends(_gruppe_optional), db: DBSession = De
         "movie": movie_dict(movie) if movie else None,
         "zuschauer": _viewers(gid) if live else [],
         "publikum": sorted(_saele[gid].audience),
+        "pause": _pause.get(gid) if live else None,
     }
+
+
+class Pause(BaseModel):
+    an: bool
+
+
+@router.post("/pause", dependencies=[Depends(require_moderation)])
+def set_pause(body: Pause, gid: int = Depends(aktive_gruppe)):
+    """ "Kurze Pause": everyone sees it over the picture until the host goes on."""
+    if body.an:
+        _pause.setdefault(gid, int(time.time() * 1000))
+    else:
+        _pause.pop(gid, None)
+    return {"pause": _pause.get(gid)}
 
 
 @router.post("/programm", dependencies=[Depends(require_moderation)])
@@ -234,6 +251,7 @@ async def stop(gid: int = Depends(aktive_gruppe)):
         async with httpx.AsyncClient(timeout=3) as c:
             await c.post(f"{settings.mediamtx_api_url}/v3/webrtcsessions/kick/{source['id']}")
     _saele[gid].presence.clear()
+    _pause.pop(gid, None)
     return {"ok": True}
 
 
@@ -333,6 +351,7 @@ async def _relay(
 ) -> Response:
     _require_enabled()
     headers = {"Authorization": f"Bearer {_state(db, gid).secret}"}
+    freigeben(db)
     for h in ("content-type", "if-match"):
         if h in request.headers:
             headers[h] = request.headers[h]

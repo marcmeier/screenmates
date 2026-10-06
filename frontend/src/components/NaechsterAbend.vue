@@ -26,6 +26,8 @@ const heute = computed(() => props.termin?.termin && tag.format(new Date(props.t
 const brauchtDich = computed(() => {
   if (!app.me) return false
   if (t.value && !app.me.rueckmeldung) return true
+  // On the day itself the evening leads (AbendModus); a poll for later can wait folded.
+  if (heute.value) return false
   return umfrageOffen.value && (vorschlaege.value.some((v) => !v.meine) || props.umfrage.darf_festlegen)
 })
 // Your own click wins until the plan changes (another date, another poll).

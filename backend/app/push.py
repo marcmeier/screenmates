@@ -34,11 +34,11 @@ from urllib.parse import urlsplit
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import ec
 from sqlmodel import Session as DBSession
-from sqlmodel import col, select
+from sqlmodel import col, delete, select
 
 from .config import settings
 from .db import engine
-from .models import Abend, AppMeta, Gruppe, Mitglied, PushAbo, User
+from .models import Abend, AppMeta, Benachrichtigung, Gruppe, Mitglied, PushAbo, User, now
 from .util import BERLIN, utc
 
 log = logging.getLogger(__name__)
@@ -52,7 +52,9 @@ ARTEN = {
     "kino": "Das Kino geht live",
     "stab": "Dir wird der Gastgeber-Stab angeboten",
     "antwort": "Jemand antwortet auf deinen Kommentar",
+    "bewerten": "Am Tag danach: den Film vom Vorabend bewerten",
 }
+GLOCKE_TAGE = 30
 ERINNERUNG = timedelta(hours=3)
 PRUEFEN_ALLE = 60  # seconds between two looks for due reminders
 
@@ -161,6 +163,8 @@ def an(
     if not uids:
         return 0
     leute = db.exec(select(User).where(col(User.id).in_(uids), col(User.freigegeben))).all()
+    if art != "test":
+        glocke(db, [u.id for u in leute], art, titel, text, url)
     wollen = {u.id for u in leute if art == "test" or wahl(u).get(art, False)}
     if not wollen:
         return 0
@@ -175,6 +179,14 @@ def an(
     for z in zustellungen:
         abschicken(z)
     return len(zustellungen)
+
+
+def glocke(db: DBSession, uids: list[int], art: str, titel: str, text: str, url: str) -> None:
+    """The same news for the bell in the app: everyone gets it there, push or not (commits)."""
+    for uid in uids:
+        db.add(Benachrichtigung(user_id=uid, art=art, titel=titel, text=text, url=url))
+    db.exec(delete(Benachrichtigung).where(col(Benachrichtigung.am) < now() - timedelta(days=GLOCKE_TAGE)))
+    db.commit()
 
 
 def abschicken(z: Zustellung) -> None:
@@ -247,12 +259,54 @@ def faellige_erinnerungen(db: DBSession, jetzt: datetime | None = None) -> int:
     return n
 
 
+BEWERTEN_AB, BEWERTEN_BIS = 10, 20  # hours (German time) for "how was it?"
+
+
+def bewertungs_erinnerungen(db: DBSession, jetzt: datetime | None = None) -> int:
+    """The day after: ask everyone who watched along but gave no stars yet, once per film (commits)."""
+    from .models import Ereignis, Movie, Watched, WatchedParticipant, WatchedRating
+
+    jetzt = jetzt or datetime.now(UTC)
+    if not BEWERTEN_AB <= jetzt.astimezone(BERLIN).hour < BEWERTEN_BIS:
+        return 0
+    n = 0
+    for w in db.exec(select(Watched).where(col(Watched.hidden).is_(False))).all():
+        if not jetzt - timedelta(hours=36) <= utc(w.watched_at) <= jetzt - timedelta(hours=8):
+            continue
+        dabei = set(db.exec(select(WatchedParticipant.user_id).where(WatchedParticipant.watched_id == w.id)).all())
+        bewertet = set(db.exec(select(WatchedRating.user_id).where(WatchedRating.watched_id == w.id)).all())
+        schon = set(
+            db.exec(
+                select(Ereignis.user_id).where(Ereignis.typ == "bewerten_gefragt", Ereignis.bezug == str(w.id))
+            ).all()
+        )
+        offen = dabei - bewertet - schon
+        if not offen:
+            continue
+        for uid in offen:
+            db.add(Ereignis(typ="bewerten_gefragt", user_id=uid, bezug=str(w.id)))
+        db.commit()
+        film = db.get(Movie, w.movie_id)
+        titel = film.title if film else "der Film"
+        n += an(
+            db,
+            offen,
+            "bewerten",
+            f"⭐ Wie war „{titel}“?",
+            "Gib dem Film von gestern deine Sterne – dauert zwei Sekunden.",
+            tag=f"bewerten-{w.id}",
+            ttl=12 * 3600,
+        )
+    return n
+
+
 async def erinnern() -> None:
     """Background task: look for due reminders every minute."""
 
     def einmal() -> None:
         with DBSession(engine) as db:
             faellige_erinnerungen(db)
+            bewertungs_erinnerungen(db)
 
     while True:
         with contextlib.suppress(Exception):

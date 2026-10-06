@@ -190,6 +190,18 @@ def say(
     return _eintrag(n)
 
 
+@router.post("/moment", status_code=201)
+def just_a_moment(
+    gid: int = Depends(aktive_gruppe),
+    user: User = Depends(require_user),
+):
+    """ "Moment, bin gleich da": shows on everyone's picture for a moment (like a reaction)."""
+    _bremse(user.id, "reaktion")
+    e = Eintrag(next(_ids), "moment", user.id, "", int(time.time() * 1000))
+    _frische_reaktionen(gid).append(e)
+    return asdict(e)
+
+
 @router.post("/reaktion", status_code=201)
 def react(
     body: Reaktion,

@@ -20,6 +20,7 @@ export const useKino = defineStore('kino', {
     movie: null,
     zuschauer: [],
     publikum: [],
+    pause: null, // since when (ms) the host called a break
     localStream: null, // what this browser is sending, for the host's preview
     sendStats: null, // what the encoder actually produces, refreshed every 2 s
   }),

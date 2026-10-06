@@ -1,5 +1,5 @@
 <script setup>
-import { computed, defineAsyncComponent, onMounted, ref, watch } from 'vue'
+import { computed, defineAsyncComponent, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { api } from '../../api'
 import { useApp } from '../../stores/app'
 import { useKino } from '../../stores/kino'
@@ -13,7 +13,10 @@ import Icon from '../Icon.vue'
 import Poster from '../Poster.vue'
 import KistenOeffnung from '../KistenOeffnung.vue'
 import NaechsterAbend from '../NaechsterAbend.vue'
+import AbendModus from '../AbendModus.vue'
+import WieWars from '../WieWars.vue'
 import { useKiste } from '../../stores/kiste'
+import { seltenheitFuer } from '../../seltenheit'
 import UserAvatar from '../UserAvatar.vue'
 
 // Markdown rendering is only needed once there is info text; load it on demand.
@@ -57,7 +60,66 @@ async function load() {
   erinnerungen.value = er.erinnerungen
   umfrage.value = u
   loading.value = false
+  extrasLaden()
 }
+
+// Per suggestion: what the group will think, and where it runs. Loaded after the list (TMDB, maths).
+const prognosen = ref({})
+const prognoseFuer = ref('gruppe')
+const anbieter = ref({})
+async function extrasLaden() {
+  if (!vorschlaege.value.length) return
+  api.get('/api/suggestions/prognose', { quiet: true }).then((r) => {
+    prognosen.value = r.prognosen
+    prognoseFuer.value = r.fuer
+  }).catch(() => {})
+  api.get('/api/suggestions/anbieter', { quiet: true }).then((r) => (anbieter.value = r.anbieter)).catch(() => {})
+}
+const prognoseTitel = (p) =>
+  p.personen.map((x) => `${app.userById(x.user_id)?.name ?? '?'}: ${dezimal(x.sterne)} ★${x.echt ? ' (bewertet)' : ''}`).join('\n')
+const WEG_TEXT = { abo: '', kostenlos: 'Kostenlos: ', leihen: 'Leihen: ', kaufen: 'Kaufen: ' }
+function wegText(w) {
+  const bei = w.bei.map((id) => app.userById(id)?.name).filter(Boolean)
+  return `${WEG_TEXT[w.art]}${w.name}${bei.length ? ` · ${bei.join(', ')}` : ''}`
+}
+// The case's odds, right at the suggestion (vetoed films aren't in the case).
+const poolGesamt = computed(() => pool.value.reduce((s, m) => s + m.gewicht, 0) || 1)
+const chance = (m) => {
+  const p = pool.value.find((x) => x.id === m.id)
+  return p ? p.gewicht / poolGesamt.value : null
+}
+
+// On the day itself the page leads through the evening (see AbendModus.vue).
+const tagFmt = new Intl.DateTimeFormat('sv-SE', { timeZone: 'Europe/Berlin' })
+const heuteAbend = computed(() => {
+  const t = termin.value?.termin
+  return !!t && tagFmt.format(new Date(t)) === tagFmt.format(new Date())
+})
+
+// The feed: what's new since your last visit stands out, the rest folds away.
+const GESEHEN = () => `screenmates.feedGesehen.${app.gruppe?.id}`
+function feedStand() {
+  try {
+    return Number(localStorage.getItem(GESEHEN())) || 0
+  } catch {
+    return 0
+  }
+}
+const zuletzt = ref(feedStand())
+const alleZeigen = ref(false)
+const neueEvents = computed(() => events.value.filter((e) => new Date(e.at).getTime() > zuletzt.value))
+const sichtbareEvents = computed(() => {
+  if (alleZeigen.value) return events.value
+  return neueEvents.value.length ? neueEvents.value : events.value.slice(0, 3)
+})
+const istNeu = (e) => zuletzt.value && new Date(e.at).getTime() > zuletzt.value
+onBeforeUnmount(() => {
+  try {
+    localStorage.setItem(GESEHEN(), String(Date.now()))
+  } catch {
+    /* private mode */
+  }
+})
 async function rueckblickPruefen() {
   const monat = new Date().getMonth() // 0 = January
   if (monat !== 11 && monat !== 0) return
@@ -164,6 +226,9 @@ const EVENT_TEXT = {
       <span class="go">Rückblick ansehen</span>
     </a>
 
+    <WieWars v-if="app.me" />
+    <AbendModus v-if="heuteAbend && app.me" :termin="termin" :pool="pool" @geschaut="load" />
+
     <NaechsterAbend
       :termin="termin"
       :umfrage="umfrage"
@@ -213,6 +278,17 @@ const EVENT_TEXT = {
               <button class="linklike" @click="ui.open(m)">{{ m.title }}</button>
               <div class="muted small-text">{{ m.year }} · ★ {{ dezimal(m.vote_average) }}</div>
               <div class="avatars"><UserAvatar v-for="id in m.von" :key="id" :user-id="id" /></div>
+              <div class="infos">
+                <span v-if="chance(m) != null" class="info chance" :style="{ '--farbe': seltenheitFuer(chance(m)).farbe }" :title="`${seltenheitFuer(chance(m)).name}: so wahrscheinlich zieht ihn die Kiste`">
+                  <Icon name="kiste" :size="12" /> {{ Math.round(chance(m) * 100) }} %
+                </span>
+                <span v-if="prognosen[m.id]" class="info prognose" :title="prognoseTitel(prognosen[m.id])">
+                  Für {{ prognoseFuer === 'dabei' ? 'euch heute' : 'euch' }} ≈ {{ dezimal(prognosen[m.id].wert) }} ★
+                </span>
+                <span v-if="anbieter[m.id]" class="info weg" :class="{ unser: anbieter[m.id].bei.length }">
+                  <img v-if="anbieter[m.id].logo" :src="anbieter[m.id].logo" alt="" />{{ wegText(anbieter[m.id]) }}
+                </span>
+              </div>
               <div v-if="m.veto_von.length" class="veto-info"><Icon name="veto" :size="13" /> Veto von {{ namen(m.veto_von) }}</div>
             </div>
             <div v-if="app.me" class="buttons">
@@ -232,22 +308,33 @@ const EVENT_TEXT = {
           </li>
         </ol>
 
-        <h2 class="section-title">Aktivität</h2>
+        <h2 class="section-title">
+          Aktivität
+          <span v-if="neueEvents.length && zuletzt" class="neu-zahl">{{ neueEvents.length }} neu seit deinem letzten Besuch</span>
+        </h2>
         <ul v-if="events.length" class="feed">
-          <li v-for="(e, i) in events" :key="i">
+          <li v-for="(e, i) in sichtbareEvents" :key="i" :class="{ neu: istNeu(e) }">
             <span>{{ EVENT_TEXT[e.typ](e) }}</span>
             <time class="muted" :datetime="e.at">{{ vorWann(e.at) }}</time>
           </li>
         </ul>
         <p v-else class="muted">Hier passiert noch nichts.</p>
+        <button v-if="events.length > sichtbareEvents.length" class="ghost small mehr" @click="alleZeigen = true">
+          Ältere Aktivität ({{ events.length - sichtbareEvents.length }})
+        </button>
+        <button v-else-if="alleZeigen && events.length > 3" class="ghost small mehr" @click="alleZeigen = false">Weniger zeigen</button>
       </section>
 
       <aside class="side">
         <div class="panel wheelbox">
           <h2 class="section-title" style="margin-top: 0">Filmabend-Kiste</h2>
           <template v-if="pool.length">
-            <p class="muted small-text">{{ pool.length }} {{ pool.length === 1 ? 'Film' : 'Filme' }} aus {{ poolQuelle }}. Je mehr Stimmen, desto größer die Chance – je seltener die Farbe, desto unwahrscheinlicher.</p>
-            <KistenOeffnung :pool="pool" />
+            <p class="muted small-text">
+              {{ pool.length }} {{ pool.length === 1 ? 'Film' : 'Filme' }} aus {{ poolQuelle }}.
+              <template v-if="vorschlaege.length">Die Chancen stehen bei den Vorschlägen – je mehr Stimmen, desto größer.</template>
+              <template v-else>Je seltener die Farbe, desto unwahrscheinlicher.</template>
+            </p>
+            <KistenOeffnung :pool="pool" :kompakt="vorschlaege.length > 0" />
           </template>
           <p v-else-if="vorschlaege.length" class="muted">Gegen alle Vorschläge gibt es ein Veto – schlagt noch etwas vor.</p>
           <p v-else class="muted">Sobald es Vorschläge (oder Filme auf der Merkliste) gibt, kann die Kiste geöffnet werden.</p>
@@ -296,6 +383,19 @@ const EVENT_TEXT = {
 .sugg.vetoed { opacity: 0.55; }
 .sugg.vetoed .linklike { text-decoration: line-through; }
 .veto-info { display: inline-flex; align-items: center; gap: 4px; font-size: 0.78rem; color: var(--accent); }
+.infos { display: flex; flex-wrap: wrap; gap: 0.3rem; margin-top: 2px; }
+.info {
+  display: inline-flex; align-items: center; gap: 4px; font-size: 0.72rem; padding: 1px 7px; border-radius: 999px;
+  border: 1px solid var(--line); color: var(--muted); white-space: nowrap;
+}
+.info img { width: 14px; height: 14px; border-radius: 3px; }
+.info.chance { color: var(--text); border-color: color-mix(in srgb, var(--farbe) 60%, transparent); background: color-mix(in srgb, var(--farbe) 16%, transparent); }
+.info.prognose { color: var(--gold); border-color: color-mix(in srgb, var(--gold) 45%, transparent); }
+.info.weg.unser { color: var(--ok); border-color: color-mix(in srgb, var(--ok) 45%, transparent); }
+.sugg.vetoed .infos { display: none; }
+.neu-zahl { margin-left: 0.6rem; text-transform: none; letter-spacing: 0; color: var(--accent); font-size: 0.75rem; }
+.feed li.neu span::before { content: ''; display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--accent); margin-right: 0.5rem; vertical-align: middle; }
+.mehr { margin-top: 0.4rem; }
 .buttons { display: flex; flex-direction: column; gap: 0.3rem; align-items: stretch; }
 .veto.on { color: #fff; }
 .sugg { display: flex; align-items: center; gap: 0.9rem; background: var(--bg-soft); border: 1px solid var(--line); border-radius: var(--radius); padding: 0.6rem 0.9rem 0.6rem 0.6rem; }

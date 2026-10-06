@@ -14,6 +14,7 @@ export const useApp = defineStore('app', {
     // Invite-only: closed until this browser came in with an invitation (or has a name).
     zugang: { gesperrt: false, offen: true, einladung: null },
     einladungFehler: '',
+    glocke: 0, // unread notifications (comes with the live poll)
     status: { movie_count: 0, canon_count: 0, tmdb: false, ki: false, syncing: false, last_sync: null },
   }),
   getters: {

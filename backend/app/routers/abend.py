@@ -10,14 +10,14 @@ from zoneinfo import ZoneInfo
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
 from sqlmodel import Session as DBSession
-from sqlmodel import col, select
+from sqlmodel import col, func, select
 
 from .. import erfolge, push, tmdb
 from ..config import settings
-from ..db import get_session
+from ..db import freigeben, get_session
 from ..gruppen import aktive_gruppe
 from ..models import Abend, Mitglied, Movie, User, Watched, WatchedRating, now
-from ..prognose import MIN_BEWERTUNGEN, Film, vorhersage
+from ..prognose import MIN_BEWERTUNGEN, Film, Modell, vorhersage
 from ..serialize import iso
 from ..session import require_user
 from ..util import ensure_movie, termin_text, upsert_movie
@@ -59,6 +59,65 @@ async def _stichworte(db: DBSession, filme: list[Movie]) -> None:
         if data is not None:
             upsert_movie(db, data)
     db.commit()
+
+
+def _sterne(db: DBSession) -> tuple[dict[int, dict[int, list[int]]], dict[int, Movie]]:
+    """Everyone's stars per film (oldest film first) and those films."""
+    rows = db.exec(
+        select(WatchedRating.user_id, Watched.movie_id, WatchedRating.stars)
+        .join(Watched, col(Watched.id) == WatchedRating.watched_id)
+        .where(col(Watched.hidden).is_(False))
+        .order_by(Watched.watched_at)
+    ).all()
+    sterne: dict[int, dict[int, list[int]]] = defaultdict(lambda: defaultdict(list))
+    for uid, mid, s in rows:
+        sterne[uid][mid].append(s)
+    filme = {m.id: m for m in db.exec(select(Movie).where(col(Movie.id).in_({mid for _, mid, _ in rows}))).all()}
+    return sterne, filme
+
+
+_gruppen_cache: dict[tuple, dict] = {}
+
+
+async def gruppen_prognose(db: DBSession, movie_ids: list[int], leute: list[int]) -> dict[int, dict]:
+    """For each film: what these people will think: their real stars if they rated it,
+    otherwise their forecast. The group value needs at least two people with a value."""
+    sterne, filme = _sterne(db)
+    ziele = {m.id: m for m in db.exec(select(Movie).where(col(Movie.id).in_(movie_ids))).all()}
+    await _stichworte(db, [*ziele.values(), *filme.values()])
+    stand = db.exec(select(func.count(), func.max(WatchedRating.id), func.sum(WatchedRating.stars))).one()
+    schluessel = (tuple(sorted(leute)), tuple(sorted(ziele)), tuple(stand))
+    if schluessel in _gruppen_cache:
+        return _gruppen_cache[schluessel]
+    film = {mid: Film.aus(m) for mid, m in filme.items()}
+    ziel = {mid: Film.aus(m) for mid, m in ziele.items()}
+
+    def rechnen() -> dict[int, dict]:
+        modelle = {
+            uid: Modell.lernen([(film[mid], sum(v) / len(v)) for mid, v in sterne.get(uid, {}).items() if mid in film])
+            for uid in leute
+        }
+        out = {}
+        for mid, z in ziel.items():
+            personen = []
+            for uid in leute:
+                echt = sterne.get(uid, {}).get(mid)
+                if echt:
+                    personen.append({"user_id": uid, "sterne": round(sum(echt) / len(echt), 1), "echt": True})
+                elif modelle[uid] is not None:
+                    geschaetzt = round(modelle[uid].vorhersage(z).wert, 1)
+                    personen.append({"user_id": uid, "sterne": geschaetzt, "echt": False})
+            if len(personen) >= 2:
+                wert = sum(p["sterne"] for p in personen) / len(personen)
+                out[mid] = {"wert": round(wert * 2) / 2, "genau": round(wert, 2), "personen": personen}
+        return out
+
+    freigeben(db)  # the maths needs no database
+    ergebnis = await asyncio.to_thread(rechnen)
+    if len(_gruppen_cache) > 50:
+        _gruppen_cache.clear()
+    _gruppen_cache[schluessel] = ergebnis
+    return ergebnis
 
 
 @router.get("/movies/{movie_id}/prognose")

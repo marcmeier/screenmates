@@ -1,5 +1,45 @@
 # Changelog
 
+## 0.10.0 – 2026-10-06
+
+**Der ganze Abend, nicht nur die Planung:** screenmates führt jetzt durch den Abend selbst, fragt
+am Tag danach nach den Sternen und hilft beim Aussuchen mit dem, was die Gruppe mag und was wo läuft.
+
+### Neu
+- **Abend-Modus:** Am Tag des Termins führen oben auf der Filmabend-Seite drei Schritte durch den
+  Abend – *Wer ist da?* → *Was schauen wir?* (Kiste für alle öffnen) → *Film ab!* (ins Kino oder
+  „Geschaut – eintragen“, mit allen, die zugesagt haben).
+- **„Wie war's?“:** Filme der letzten Tage, bei denen du dabei warst, aber noch keine Sterne
+  vergeben hast, erscheinen oben mit Sternen zum Antippen. Am Tag danach (10–20 Uhr) erinnert eine
+  Benachrichtigung einmal daran.
+- **Für euch ≈ 4,2 ★:** Jeder Vorschlag zeigt, wie er der Gruppe gefallen dürfte – bei Zusagen für
+  die, die dabei sind. Wer den Film schon bewertet hat, zählt mit den echten Sternen, die anderen mit
+  ihrer Prognose („Wem gefällt's?“). Fährt man darüber, steht es pro Person da.
+- **Läuft bei:** Jeder Vorschlag zeigt den besten Weg – zuerst ein Abo aus der Gruppe („Netflix ·
+  Lena“), sonst kostenlos, Abo, leihen oder kaufen.
+- **Die Kisten-Chance steht am Vorschlag** (in der Seltenheitsfarbe). Die Kiste selbst ist nur noch
+  die Karte mit dem Knopf; ihre Liste gibt es nur, wenn sie aus der Merkliste zieht.
+- **Willkommen:** Wer neu dazukommt, sieht einmal drei kurze Karten (Vorschlagen → Kiste →
+  Schauen & bewerten) und kann gleich seine Streamingdienste eintragen.
+- **Neu seit deinem letzten Besuch:** Der Aktivitäts-Feed markiert Neues und klappt den Rest ein.
+- **Die Glocke:** Alle Benachrichtigungen (Termin, Umfrage, Kiste, Kino, Stab, Antworten, „Wie
+  war's?“) stehen auch in der App, mit Zähler für Ungelesenes – auch ohne Push. Sie bleiben 30 Tage.
+- **Geschmacksverwandte** im Profil: „Lena tickt zu 87 % wie du“, aus mindestens drei gemeinsam
+  bewerteten Filmen. Auf fremden Profilen steht, wie nah man selbst der Person ist.
+- **Kino:** Der Gastgeber sagt eine **Pause** an („Kurze Pause – gleich geht's weiter“ mit Uhr über
+  dem Bild), Zuschauende schicken **„Moment, bin gleich da“** ins Bild.
+
+### Behoben
+- Unter Last (mehrere Kino-Zuschauende, Live-Updates, Video-Kodierung) konnten die
+  Datenbankverbindungen ausgehen, weil Abfragen, die auf MediaMTX, TMDB oder die KI warten, ihre
+  Verbindung so lange festhielten. Sie geben sie jetzt vorher zurück, und der Pool ist größer. Das
+  war vermutlich auch die Ursache für den gelegentlich roten `docker`-CI-Job.
+- Die Prognose lernt das Modell einer Person nur noch einmal und rechnet damit beliebig viele Filme.
+
+### Betrieb
+- Migration `0012`: Tabelle `benachrichtigung` (die Glocke, 30 Tage).
+- Neue Push-Art `bewerten` (Einstellungen → Benachrichtigungen).
+
 ## 0.9.2 – 2026-10-06
 
 ### Neu

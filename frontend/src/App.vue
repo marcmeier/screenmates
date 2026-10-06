@@ -14,11 +14,12 @@ import ErfolgPopup from './components/ErfolgPopup.vue'
 import GemeinsameKiste from './components/GemeinsameKiste.vue'
 import Statistiken from './components/Statistiken.vue'
 import StabWechsel from './components/StabWechsel.vue'
+import Glocke from './components/Glocke.vue'
 import { anwenden } from './design'
 import { useLive } from './stores/live'
 import { useErfolge } from './stores/erfolge'
 import { debounce } from './format'
-import { beiAenderung } from './api'
+import { api, beiAenderung } from './api'
 import AbendTab from './components/tabs/AbendTab.vue'
 import FindenTab from './components/tabs/FindenTab.vue'
 
@@ -86,6 +87,20 @@ function profilKlick() {
 }
 watch(() => route.value.tab, () => (menue.value = false))
 const kuerzel = (name) => name.split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0]).join('').toUpperCase()
+
+// Someone new (name younger than two weeks) gets a short welcome – once, on whichever device.
+const Willkommen = lazy(() => import('./components/Willkommen.vue'))
+const willkommen = computed(
+  () => !!app.me && !app.me.design?.willkommen && Date.now() - new Date(app.me.created_at).getTime() < 14 * 864e5,
+)
+async function willkommenFertig() {
+  // Closed once the server knows – a reload right after must not bring it back.
+  try {
+    await api.post('/api/users/me/willkommen', undefined, { quiet: true })
+  } finally {
+    app.me.design = { ...(app.me.design || {}), willkommen: true }
+  }
+}
 
 // List counts in the navigation follow every change; achievements are checked after every write.
 const erfolge = useErfolge()
@@ -221,6 +236,7 @@ watch(
           </button>
         </nav>
 
+        <Glocke v-if="app.me" :schmal="eingeklappt" />
         <button v-if="app.me" class="me" :class="{ admin: app.admin }" :aria-expanded="breit ? undefined : menue" :title="eingeklappt ? `${app.me.name}${app.admin ? ' (Admin)' : ''} – Profil` : 'Profil & Erfolge'" @click="profilKlick">
           <UserAvatar :user="app.me" />
           <span class="name" :class="{ 'sr-only': eingeklappt }">{{ app.me.name }}</span>
@@ -269,6 +285,7 @@ watch(
   </div>
 
   <NamensWahl v-if="ui.loginOpen && !app.draussen" />
+  <Willkommen v-if="willkommen && !ui.loginOpen && !app.draussen" @fertig="willkommenFertig" />
   <ErfolgPopup v-if="!app.draussen" />
   <GemeinsameKiste v-if="!app.draussen" />
   <StabWechsel v-if="!app.draussen" />
@@ -360,7 +377,7 @@ nav { display: flex; flex-direction: column; gap: 4px; }
   .secondary-nav, .status, .collapse { display: none; }
   /* Phones stack icon and label: their own heights. */
   .nav, .me, .pick { height: auto; }
-  .bottom { position: relative; }
+  .bottom { position: relative; flex-direction: row; align-items: center; gap: 0.3rem; }
   .sidebar { overflow: visible; } /* the profile menu hangs below the header */
   .menue {
     display: flex; flex-direction: column; position: absolute; right: 0; top: calc(100% + 6px); z-index: 30;

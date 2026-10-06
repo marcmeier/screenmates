@@ -25,6 +25,7 @@ export const useLive = defineStore('live', {
       }
       if (r.kiste) useKiste().uebernehmen({ jetzt: r.jetzt, ...r.kiste })
       if (r.gastgeber) useGastgeber().uebernehmenVon(r.gastgeber)
+      if (r.glocke !== undefined) app.glocke = r.glocke
       const alt = this.stand
       this.stand = r.stand
       // Our own writes have already updated this screen: adopt their count silently.

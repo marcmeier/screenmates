@@ -93,6 +93,12 @@ async function kopiere(text, was) {
   }
 }
 
+// "Kurze Pause": a sign over everyone's picture until the host goes on.
+async function pause() {
+  await api.post('/api/kino/pause', { an: !kino.pause })
+  await kino.refresh()
+}
+
 async function beenden() {
   if (!confirm('Übertragung für alle beenden?')) return
   await kino.endShow()
@@ -115,6 +121,7 @@ async function beenden() {
       <span v-if="!kino.sende" class="muted">(über OBS)</span>
       <span v-if="statsZeile" class="stats">{{ statsZeile }}</span>
       <span class="spacer"></span>
+      <button :class="{ on: kino.pause }" @click="pause">{{ kino.pause ? '▶ Weiter geht’s' : '⏸ Pause ansagen' }}</button>
       <button class="danger" @click="beenden">Übertragung beenden</button>
       <span v-if="GRENZE[kino.sendStats?.grenze]" class="warn">{{ GRENZE[kino.sendStats.grenze] }}</span>
     </div>

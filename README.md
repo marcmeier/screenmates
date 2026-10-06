@@ -30,7 +30,8 @@ Drei Bereiche für die drei Dinge, für die man herkommt:
 - **Kino** – gemeinsam schauen, auch wenn alle in verschiedenen Wohnzimmern sitzen: Der Gastgeber (oder ein Admin)
   teilt seinen Bildschirm oder sendet aus OBS (eigene Filme, Spiele …), alle sehen live dasselbe
   Bild mit unter einer Sekunde Verzögerung. Daneben ein **Chat** (30 Tage), und **Reaktionen** (😱 🍿 😂 …)
-  fliegen für alle übers Bild – auch im Vollbild. Läuft etwas, leuchtet der Menüpunkt mit der Zahl
+  fliegen für alle übers Bild – auch im Vollbild. Der Gastgeber kann eine **Pause** ansagen,
+  Zuschauende schicken „Moment, bin gleich da“. Läuft etwas, leuchtet der Menüpunkt mit der Zahl
   der Zuschauenden. Danach trägt ein Klick den Film als gesehen ein, mit allen, die dabei waren.
 
 Dazu: eine Detailansicht mit Trailer, **„Wo läuft's?“** (Abo, leihen, kaufen; Abos der Gruppe
@@ -58,6 +59,13 @@ wird oder jemand auf deinen Kommentar antwortet. Jede Person wählt, worüber; w
 passiert, kommt nur bei denen an, die die App nicht offen haben. Auf dem iPhone geht das in der
 App auf dem Home-Bildschirm.
 
+**Der Abend selbst:** Am Tag des Termins führt ein **Abend-Modus** in drei Schritten durch den Abend
+(Wer ist da? → Kiste → Film ab!), am Tag danach fragt **„Wie war's?“** nach den Sternen. Jeder
+Vorschlag zeigt, wie er **euch gefallen dürfte** („Für euch ≈ 4,2 ★“), **wo er läuft** (Abos der
+Gruppe zuerst) und seine **Chance in der Kiste**. Neue bekommen eine kurze **Einführung**, der
+Aktivitäts-Feed markiert, was **neu seit dem letzten Besuch** ist, und die **Glocke** sammelt alle
+Benachrichtigungen auch in der App. Im Profil steht, wer **geschmacksverwandt** ist.
+
 **Rückblick:** Unter „Unsere Filme“ euer Filmjahr in Zahlen – Filme, Abende, Stunden, Genres, der
 beste und der umstrittenste Film, Rekorde und Auszeichnungen wie „Stammgast“ oder „Strengste
 Kritik“. Und als **Story** zum Durchtippen, im Dezember und Januar mit Hinweis auf der Startseite.
@@ -84,6 +92,10 @@ Mit TMDB-Key ist der ganze TMDB-Katalog verfügbar, ohne Key gibt es einen Demo-
 | Kiste für alle | Gastgeber-Stab | Darstellung |
 |---|---|---|
 | ![](docs/screenshots/kiste.png) | ![](docs/screenshots/stab.png) | ![](docs/screenshots/darstellung.png) |
+
+| Heute Abend | Geschmacksverwandte |
+|---|---|
+| ![](docs/screenshots/abend-heute.png) | ![](docs/screenshots/geschmack.png) |
 
 | Terminumfrage | Rückblick | Rückblick als Story |
 |---|---|---|
