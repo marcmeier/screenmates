@@ -1,13 +1,14 @@
 // The invitation for the next movie night: a share text and a 1080×1350 card
 // (portrait, how messengers show pictures best), drawn on a canvas in the browser.
-
-const tagFmt = new Intl.DateTimeFormat('de-DE', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'Europe/Berlin' })
-const zeitFmt = new Intl.DateTimeFormat('de-DE', { hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Berlin' })
+import { datumFmt } from './format'
+import { t } from './i18n'
 
 export function terminText(termin) {
   if (!termin?.termin) return null
   const d = new Date(termin.termin)
-  return { tag: tagFmt.format(d), zeit: `${zeitFmt.format(d)} Uhr`, notiz: termin.notiz }
+  const tag = datumFmt({ weekday: 'long', day: 'numeric', month: 'long', timeZone: 'Europe/Berlin' }).format(d)
+  const zeit = datumFmt({ hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Berlin' }).format(d)
+  return { tag, zeit: t('zeit.uhr', { zeit }), notiz: termin.notiz }
 }
 
 export function link() {
@@ -16,11 +17,15 @@ export function link() {
 
 /** Plain text for messengers: date, the films up for the vote, who's in, the link. */
 export function einladungsText({ termin, filme, dabei }) {
-  const t = terminText(termin)
-  const zeilen = [t ? `🎬 Filmabend am ${t.tag} um ${t.zeit}${t.notiz ? ` (${t.notiz})` : ''}` : '🎬 Nächster Filmabend – Termin folgt']
-  if (filme.length) zeilen.push(`Zur Wahl: ${filme.map((m) => m.title).join(', ')}`)
-  if (dabei.length) zeilen.push(`Dabei: ${dabei.map((u) => u.name).join(', ')}`)
-  zeilen.push(`Bist du dabei? ${link()}`)
+  const tt = terminText(termin)
+  const zeilen = [
+    tt
+      ? t('einladung.text.am', { tag: tt.tag, zeit: tt.zeit, notiz: tt.notiz ? ` (${tt.notiz})` : '' })
+      : t('einladung.text.folgt'),
+  ]
+  if (filme.length) zeilen.push(t('einladung.text.zurWahl', { filme: filme.map((m) => m.title).join(', ') }))
+  if (dabei.length) zeilen.push(t('einladung.text.dabei', { namen: dabei.map((u) => u.name).join(', ') }))
+  zeilen.push(t('einladung.text.frage', { link: link() }))
   return zeilen.join('\n')
 }
 
@@ -82,16 +87,16 @@ export async function einladungsBild({ termin, filme, dabei }) {
   ctx.font = `800 30px ${FONT}`
   ctx.fillStyle = '#e50914'
   ctx.letterSpacing = '6px'
-  ctx.fillText('FILMABEND', x0, 230)
+  ctx.fillText(t('einladung.karte.filmabend'), x0, 230)
   ctx.letterSpacing = '0px'
 
-  const t = terminText(termin)
+  const tt = terminText(termin)
   ctx.fillStyle = '#ffffff'
   ctx.font = `800 76px ${FONT}`
-  ctx.fillText(kuerzen(ctx, t ? t.tag : 'Termin folgt', W - 2 * x0), x0, 320)
+  ctx.fillText(kuerzen(ctx, tt ? tt.tag : t('einladung.karte.terminFolgt'), W - 2 * x0), x0, 320)
   ctx.font = `500 44px ${FONT}`
   ctx.fillStyle = '#b9b9c6'
-  const unter = t ? [t.zeit, t.notiz].filter(Boolean).join(' · ') : 'Wir sagen Bescheid.'
+  const unter = tt ? [tt.zeit, tt.notiz].filter(Boolean).join(' · ') : t('einladung.karte.bescheid')
   ctx.fillText(kuerzen(ctx, unter, W - 2 * x0), x0, 385)
 
   // The films up for the vote.
@@ -99,7 +104,7 @@ export async function einladungsBild({ termin, filme, dabei }) {
   if (filme.length) {
     ctx.font = `700 28px ${FONT}`
     ctx.fillStyle = '#8b8b99'
-    ctx.fillText('ZUR WAHL', x0, top)
+    ctx.fillText(t('einladung.karte.zurWahl'), x0, top)
     const n = Math.min(3, filme.length)
     const gap = 36
     const pw = (W - 2 * x0 - gap * 2) / 3
@@ -124,20 +129,20 @@ export async function einladungsBild({ termin, filme, dabei }) {
   } else {
     ctx.font = `500 40px ${FONT}`
     ctx.fillStyle = '#b9b9c6'
-    ctx.fillText('Noch keine Vorschläge –', x0, top + 160)
-    ctx.fillText('bring deinen Lieblingsfilm mit!', x0, top + 215)
+    ctx.fillText(t('einladung.karte.keine1'), x0, top + 160)
+    ctx.fillText(t('einladung.karte.keine2'), x0, top + 215)
   }
 
   // Who's in, with their colours.
   const yDabei = 1110
   ctx.font = `700 28px ${FONT}`
   ctx.fillStyle = '#8b8b99'
-  ctx.fillText('DABEI', x0, yDabei)
+  ctx.fillText(t('einladung.karte.dabei'), x0, yDabei)
   let x = x0
   ctx.font = `600 34px ${FONT}`
   if (!dabei.length) {
     ctx.fillStyle = '#b9b9c6'
-    ctx.fillText('Sei die erste Person!', x0, yDabei + 56)
+    ctx.fillText(t('einladung.karte.erste'), x0, yDabei + 56)
   }
   for (const u of dabei) {
     const breite = ctx.measureText(u.name).width
@@ -162,7 +167,7 @@ export async function einladungsBild({ termin, filme, dabei }) {
   ctx.fillStyle = '#ffffff'
   ctx.font = `800 34px ${FONT}`
   ctx.textAlign = 'center'
-  ctx.fillText('Bist du dabei?', W / 2, H - 90)
+  ctx.fillText(t('einladung.karte.frage'), W / 2, H - 90)
   ctx.textAlign = 'start'
 
   return new Promise((resolve) => c.toBlob(resolve, 'image/png'))

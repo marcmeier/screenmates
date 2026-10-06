@@ -16,6 +16,7 @@ import Statistiken from './components/Statistiken.vue'
 import StabWechsel from './components/StabWechsel.vue'
 import Glocke from './components/Glocke.vue'
 import { anwenden } from './design'
+import { spracheSetzen, t } from './i18n'
 import { useLive } from './stores/live'
 import { useErfolge } from './stores/erfolge'
 import { debounce } from './format'
@@ -27,28 +28,36 @@ const lazy = (loader) => defineAsyncComponent(loader)
 
 // Three places for the three things you come here to do; the rest is secondary.
 const PRIMARY = [
-  { id: 'abend', label: 'Filmabend', icon: 'abend', comp: AbendTab },
-  { id: 'finden', label: 'Finden', icon: 'suche', comp: FindenTab },
-  { id: 'sammlung', label: 'Unsere Filme', icon: 'sammlung', comp: lazy(() => import('./components/tabs/SammlungTab.vue')) },
-  { id: 'kino', label: 'Kino', icon: 'kino', comp: lazy(() => import('./components/tabs/KinoTab.vue')) },
+  { id: 'abend', icon: 'abend', comp: AbendTab },
+  { id: 'finden', icon: 'suche', comp: FindenTab },
+  { id: 'sammlung', icon: 'sammlung', comp: lazy(() => import('./components/tabs/SammlungTab.vue')) },
+  { id: 'kino', icon: 'kino', comp: lazy(() => import('./components/tabs/KinoTab.vue')) },
 ]
 const SECONDARY = [
-  { id: 'profil', label: 'Profil & Erfolge', icon: 'profil', comp: lazy(() => import('./components/tabs/ProfilTab.vue')) },
-  { id: 'wuensche', label: 'Wünsche & Ideen', icon: 'wuensche', comp: lazy(() => import('./components/tabs/WuenscheTab.vue')) },
+  { id: 'profil', icon: 'profil', comp: lazy(() => import('./components/tabs/ProfilTab.vue')) },
+  { id: 'wuensche', icon: 'wuensche', comp: lazy(() => import('./components/tabs/WuenscheTab.vue')) },
   // Only for (group) admins: kept apart from everyone's own profile.
-  { id: 'verwaltung', label: 'Verwaltung', icon: 'verwaltung', comp: lazy(() => import('./components/tabs/VerwaltungTab.vue')) },
+  { id: 'verwaltung', icon: 'verwaltung', comp: lazy(() => import('./components/tabs/VerwaltungTab.vue')) },
 ]
 // Not in the navigation: linked from the sidebar's footer and the profile menu.
 const VERSTECKT = [
-  { id: 'ueber', label: 'Über', icon: 'info', comp: lazy(() => import('./components/tabs/UeberTab.vue')) },
+  { id: 'ueber', icon: 'info', comp: lazy(() => import('./components/tabs/UeberTab.vue')) },
   // Reached through the bell.
-  { id: 'neuigkeiten', label: 'Neuigkeiten', icon: 'glocke', comp: lazy(() => import('./components/tabs/NeuigkeitenTab.vue')) },
+  { id: 'neuigkeiten', icon: 'glocke', comp: lazy(() => import('./components/tabs/NeuigkeitenTab.vue')) },
 ]
 const ALL = [...PRIMARY, ...SECONDARY, ...VERSTECKT]
 
 const app = useApp()
-// Your theme and font follow you from device to device.
-watch(() => app.me?.design, (d) => d && anwenden(d), { deep: true })
+// Your theme, font and language follow you from device to device.
+watch(
+  () => app.me?.design,
+  (d) => {
+    if (!d) return
+    anwenden(d)
+    if (d.sprache) spracheSetzen(d.sprache)
+  },
+  { deep: true },
+)
 const kino = useKino()
 // The Kino entry only exists once a media server is configured.
 const primary = computed(() => PRIMARY.filter((t) => t.id !== 'kino' || kino.enabled))
@@ -124,10 +133,10 @@ async function einladung() {
     if (app.me) {
       const r = await app.annehmen(token)
       if (r.status === 'aufgenommen') {
-        ui.toast(`Willkommen in „${r.gruppe}“!`, 'ok')
+        ui.toast(t('app.willkommenIn', { gruppe: r.gruppe }), 'ok')
         await app.wechseln(r.gruppe_id)
-      } else if (r.status === 'angefragt') ui.toast(`Anfrage an „${r.gruppe}“ gestellt – ein Admin der Gruppe entscheidet.`, 'ok', 6000)
-      else ui.toast(`Du bist schon in „${r.gruppe}“.`)
+      } else if (r.status === 'angefragt') ui.toast(t('app.anfrageGestellt', { gruppe: r.gruppe }), 'ok', 6000)
+      else ui.toast(t('app.schonDrin', { gruppe: r.gruppe }))
       return
     }
     await app.einlassen(token)
@@ -169,8 +178,8 @@ watch(
 <template>
   <div v-if="failed" class="splash">
     <div class="brand big">screen<span>mates</span></div>
-    <p>Der Server ist nicht erreichbar.</p>
-    <button @click="reload">Neu laden</button>
+    <p>{{ $t('app.offline') }}</p>
+    <button @click="reload">{{ $t('app.neuLaden') }}</button>
   </div>
 
   <div v-else-if="!app.ready" class="splash" aria-busy="true">
@@ -181,87 +190,87 @@ watch(
 
   <div v-else class="shell" :class="{ schmal: eingeklappt }">
     <aside class="sidebar">
-      <a href="#/abend" class="brand" aria-label="screenmates – zum Filmabend">
+      <a href="#/abend" class="brand" :aria-label="$t('app.zumFilmabend')">
         <template v-if="eingeklappt">s<span>m</span></template>
         <template v-else>screen<span>mates</span></template>
       </a>
 
       <div v-if="app.gruppe" class="gruppenwahl">
-        <button v-if="eingeklappt" class="kurz" :title="`Gruppe: ${app.gruppe.name}`" @click="schmal = false">
-          {{ kuerzel(app.gruppe.name) }}<span class="sr-only">Gruppe: {{ app.gruppe.name }}</span>
+        <button v-if="eingeklappt" class="kurz" :title="$t('app.gruppe', { name: app.gruppe.name })" @click="schmal = false">
+          {{ kuerzel(app.gruppe.name) }}<span class="sr-only">{{ $t('app.gruppe', { name: app.gruppe.name }) }}</span>
         </button>
-        <select v-else-if="app.gruppen.length > 1" :value="app.gruppe.id" aria-label="Gruppe wechseln" @change="app.wechseln(Number($event.target.value))">
+        <select v-else-if="app.gruppen.length > 1" :value="app.gruppe.id" :aria-label="$t('app.gruppeWechseln')" @change="app.wechseln(Number($event.target.value))">
           <option v-for="g in app.gruppen" :key="g.id" :value="g.id">{{ g.name }}</option>
         </select>
         <span v-else class="muted name">{{ app.gruppe.name }}</span>
       </div>
 
-      <nav class="primary-nav" aria-label="Hauptbereiche">
+      <nav class="primary-nav" :aria-label="$t('app.hauptbereiche')">
         <a
-          v-for="t in primary"
-          :key="t.id"
-          :href="`#/${t.id}`"
+          v-for="b in primary"
+          :key="b.id"
+          :href="`#/${b.id}`"
           class="nav"
-          :class="{ active: current.id === t.id }"
-          :aria-current="current.id === t.id ? 'page' : undefined"
-          :title="eingeklappt ? t.label : undefined"
+          :class="{ active: current.id === b.id }"
+          :aria-current="current.id === b.id ? 'page' : undefined"
+          :title="eingeklappt ? $t(`nav.${b.id}`) : undefined"
         >
-          <Icon :name="t.icon" :size="20" />
-          <span :class="{ 'sr-only': eingeklappt }">{{ t.label }}</span>
-          <span v-if="t.id === 'kino' && kino.live" class="live" :title="`Läuft gerade: ${kino.titel || 'Live'}`">
+          <Icon :name="b.icon" :size="20" />
+          <span :class="{ 'sr-only': eingeklappt }">{{ $t(`nav.${b.id}`) }}</span>
+          <span v-if="b.id === 'kino' && kino.live" class="live" :title="$t('app.laeuftGerade', { titel: kino.titel || 'Live' })">
             <span class="dot"></span>{{ kino.zuschauer.length || 'live' }}
           </span>
         </a>
       </nav>
 
       <div class="bottom">
-        <nav class="secondary-nav" aria-label="Weiteres">
+        <nav class="secondary-nav" :aria-label="$t('app.weiteres')">
           <a
-            v-for="t in secondary"
-            :key="t.id"
-            :href="`#/${t.id}`"
+            v-for="b in secondary"
+            :key="b.id"
+            :href="`#/${b.id}`"
             class="nav small"
-            :class="{ active: current.id === t.id }"
-            :aria-current="current.id === t.id ? 'page' : undefined"
-            :title="eingeklappt ? t.label : undefined"
+            :class="{ active: current.id === b.id }"
+            :aria-current="current.id === b.id ? 'page' : undefined"
+            :title="eingeklappt ? $t(`nav.${b.id}`) : undefined"
           >
-            <Icon :name="t.icon" :size="16" />
-            <span :class="{ 'sr-only': eingeklappt }">{{ t.label }}</span>
-            <span v-if="t.id === 'verwaltung' && app.antraege" class="antraege" aria-hidden="true" :title="`${app.antraege} offene Anträge`">{{ app.antraege }}</span>
+            <Icon :name="b.icon" :size="16" />
+            <span :class="{ 'sr-only': eingeklappt }">{{ $t(`nav.${b.id}`) }}</span>
+            <span v-if="b.id === 'verwaltung' && app.antraege" class="antraege" aria-hidden="true" :title="$t('app.offeneAntraege', { n: app.antraege })">{{ app.antraege }}</span>
           </a>
           <button
             class="nav small collapse"
             :aria-expanded="!eingeklappt"
-            :title="eingeklappt ? 'Leiste ausklappen' : undefined"
+            :title="eingeklappt ? $t('app.ausklappen') : undefined"
             @click="schmal = !schmal"
           >
             <Icon name="pfeil" :size="16" :class="{ gedreht: eingeklappt }" />
-            <span :class="{ 'sr-only': eingeklappt }">{{ eingeklappt ? 'Leiste ausklappen' : 'Leiste einklappen' }}</span>
+            <span :class="{ 'sr-only': eingeklappt }">{{ eingeklappt ? $t('app.ausklappen') : $t('app.einklappen') }}</span>
           </button>
         </nav>
 
         <Glocke v-if="app.me" :schmal="eingeklappt" />
-        <button v-if="app.me" class="me" :class="{ admin: app.admin }" :aria-expanded="breit ? undefined : menue" :title="eingeklappt ? `${app.me.name}${app.admin ? ' (Admin)' : ''} – Profil` : 'Profil & Erfolge'" @click="profilKlick">
+        <button v-if="app.me" class="me" :class="{ admin: app.admin }" :aria-expanded="breit ? undefined : menue" :title="eingeklappt ? $t('app.meinProfil', { name: app.me.name + (app.admin ? ' (Admin)' : '') }) : $t('nav.profil')" @click="profilKlick">
           <UserAvatar :user="app.me" />
           <span class="name" :class="{ 'sr-only': eingeklappt }">{{ app.me.name }}</span>
           <span v-if="app.admin && !eingeklappt" class="admin-badge">Admin</span>
         </button>
         <div v-if="menue && !breit" class="menue panel" role="menu" @click="menue = false">
           <a href="#/profil" role="menuitem" class="eintrag">
-            <Icon name="pokal" :size="18" /> Profil & Erfolge <span v-if="app.me?.level" class="muted">Level {{ app.me.level }}</span>
+            <Icon name="pokal" :size="18" /> {{ $t('nav.profil') }} <span v-if="app.me?.level" class="muted">{{ $t('app.level', { n: app.me.level }) }}</span>
           </a>
-          <a href="#/profil/einstellungen" role="menuitem" class="eintrag"><Icon name="profil" :size="18" /> Einstellungen</a>
-          <a href="#/wuensche" role="menuitem" class="eintrag"><Icon name="wuensche" :size="18" /> Wünsche & Ideen</a>
+          <a href="#/profil/einstellungen" role="menuitem" class="eintrag"><Icon name="profil" :size="18" /> {{ $t('app.einstellungen') }}</a>
+          <a href="#/wuensche" role="menuitem" class="eintrag"><Icon name="wuensche" :size="18" /> {{ $t('nav.wuensche') }}</a>
           <a v-if="app.verwaltetGruppen" href="#/verwaltung" role="menuitem" class="eintrag">
-            <Icon name="verwaltung" :size="18" /> Verwaltung
+            <Icon name="verwaltung" :size="18" /> {{ $t('nav.verwaltung') }}
             <span v-if="app.antraege" class="antraege">{{ app.antraege }}</span>
           </a>
-          <a href="#/ueber" role="menuitem" class="eintrag"><Icon name="info" :size="18" /> Über · Impressum</a>
-          <button role="menuitem" class="eintrag ghost" @click="app.logout()"><Icon name="logout" :size="18" /> Abmelden</button>
+          <a href="#/ueber" role="menuitem" class="eintrag"><Icon name="info" :size="18" /> {{ $t('app.ueberImpressum') }}</a>
+          <button role="menuitem" class="eintrag ghost" @click="app.logout()"><Icon name="logout" :size="18" /> {{ $t('einst.abmelden') }}</button>
         </div>
-        <button v-if="!app.me" class="primary pick" :title="eingeklappt ? 'Namen wählen' : undefined" @click="ui.loginOpen = true">
-          <template v-if="eingeklappt"><Icon name="plus" :size="16" /><span class="sr-only">Namen wählen</span></template>
-          <template v-else>Namen wählen</template>
+        <button v-if="!app.me" class="primary pick" :title="eingeklappt ? $t('namen.dialog') : undefined" @click="ui.loginOpen = true">
+          <template v-if="eingeklappt"><Icon name="plus" :size="16" /><span class="sr-only">{{ $t('namen.dialog') }}</span></template>
+          <template v-else>{{ $t('namen.dialog') }}</template>
         </button>
 
         <div class="status" :class="{ leer: eingeklappt }" :aria-hidden="eingeklappt">
@@ -273,13 +282,13 @@ watch(
     <main class="main">
       <div v-if="ohneGruppe" class="empty keine-gruppe">
         <template v-if="!app.me">
-          <strong>Erst Namen wählen</strong>
-          <p class="muted">Filmabend, Chronik und Kino gehören deiner Gruppe – wähl deinen Namen, dann geht’s los.</p>
-          <button class="primary" @click="ui.loginOpen = true">Namen wählen</button>
+          <strong>{{ $t('app.erstNamen') }}</strong>
+          <p class="muted">{{ $t('app.erstNamenText') }}</p>
+          <button class="primary" @click="ui.loginOpen = true">{{ $t('namen.dialog') }}</button>
         </template>
         <template v-else>
-          <strong>Du bist noch in keiner Gruppe</strong>
-          <p class="muted">Filmabende, die Chronik und das Kino gehören einer Gruppe. Sobald dich ein Admin aufnimmt, geht’s hier los. Finden, Erfolge und Wünsche gehen schon jetzt.</p>
+          <strong>{{ $t('app.keineGruppe') }}</strong>
+          <p class="muted">{{ $t('app.keineGruppeText') }}</p>
         </template>
       </div>
       <KeepAlive v-else :include="['FindenTab']">

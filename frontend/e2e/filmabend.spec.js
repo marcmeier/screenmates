@@ -58,9 +58,23 @@ test('first visit asks for a name', async () => {
   await expect(page.locator('.admin-badge')).toBeVisible()
 })
 
-test('someone new is welcomed once, with three cards', async () => {
+test('someone new picks language and colours, then gets three cards – once', async () => {
   const willkommen = page.getByRole('dialog', { name: 'Willkommen bei screenmates' })
   await expect(willkommen).toContainText('Willkommen, Marc!')
+  // Language: switches at once and is kept with the profile.
+  await willkommen.getByRole('radio', { name: 'English' }).click()
+  const welcome = page.getByRole('dialog', { name: 'Welcome to screenmates' })
+  await expect(welcome).toContainText('Welcome, Marc!')
+  await expect(page.locator('html')).toHaveAttribute('lang', 'en')
+  await expect(page.getByRole('link', { name: 'Movie night' }).first()).toBeVisible()
+  await welcome.getByRole('radio', { name: 'Deutsch' }).click()
+  await expect(willkommen).toContainText('Willkommen, Marc!')
+  // Colours: applied right away.
+  await willkommen.getByRole('radio', { name: 'Nacht' }).click()
+  await expect.poll(() => page.evaluate(() => document.documentElement.style.getPropertyValue('--accent'))).toBe('#3b82f6')
+  await willkommen.getByRole('radio', { name: 'Kino' }).click()
+  await willkommen.getByRole('button', { name: 'Weiter' }).click()
+  await expect(willkommen).toContainText('Vorschlagen')
   await willkommen.getByRole('button', { name: 'Weiter' }).click()
   await expect(willkommen).toContainText('Die Kiste entscheidet')
   await willkommen.getByRole('button', { name: 'Weiter' }).click()
@@ -640,6 +654,18 @@ test('a second device must know the film to use the name', async ({ browser }) =
   await phone.getByRole('menuitem', { name: /Profil & Erfolge/ }).click()
   await expect(phone.locator('.stand')).toContainText('Level')
   await phone.close()
+})
+
+test('the door speaks English to an English browser, and switches back', async ({ browser }) => {
+  const ctx = await browser.newContext({ locale: 'en-GB' })
+  const gast = await ctx.newPage()
+  await gast.goto('/')
+  await expect(gast.getByRole('heading', { name: 'You need an invitation link to get in here.' })).toBeVisible()
+  await gast.getByRole('button', { name: 'Deutsch' }).click()
+  await expect(gast.getByRole('button', { name: 'Rein' })).toBeVisible()
+  await gast.reload()
+  await expect(gast.getByRole('button', { name: 'Rein' })).toBeVisible() // this device remembers
+  await ctx.close()
 })
 
 test('a newcomer requests a name and an admin approves it', async ({ browser }) => {

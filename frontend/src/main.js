@@ -4,6 +4,7 @@ import { createPinia } from 'pinia'
 import '@fontsource-variable/inter'
 import './style.css'
 import App from './App.vue'
+import { i18n } from './i18n'
 import { ApiError } from './api'
 import { anwenden, gemerkt } from './design'
 import { registrieren } from './push'
@@ -17,7 +18,7 @@ window.addEventListener('unhandledrejection', (e) => {
   if (e.reason instanceof ApiError || e.reason?.name === 'AbortError') e.preventDefault()
 })
 
-createApp(App).use(createPinia()).mount('#app')
+createApp(App).use(createPinia()).use(i18n).mount('#app')
 
 // Push notifications and the home-screen app.
 registrieren()

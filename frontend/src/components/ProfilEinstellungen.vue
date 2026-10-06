@@ -3,6 +3,7 @@ import { ref } from 'vue'
 import { api } from '../api'
 import { useApp } from '../stores/app'
 import { useUi } from '../stores/ui'
+import { t } from '../i18n'
 import FilmPicker from './FilmPicker.vue'
 import Icon from './Icon.vue'
 import Benachrichtigungen from './Benachrichtigungen.vue'
@@ -20,44 +21,43 @@ async function setSchutz(movie) {
   await api.post(`/api/users/${app.me.id}/schutz`, { movie_id: movie?.id ?? null })
   pickSchutz.value = false
   await app.refreshUsers()
-  ui.toast(movie ? `Dein Name ist jetzt durch „${movie.title}“ geschützt` : 'Schutz entfernt', 'ok')
+  ui.toast(movie ? t('einst.geschuetztDurch', { film: movie.title }) : t('einst.schutzEntfernt'), 'ok')
 }
 </script>
 
 <template>
   <div class="spalte">
     <section class="panel">
-      <h2>Profil & Anmeldung</h2>
+      <h2>{{ $t('einst.profil') }}</h2>
       <div class="row">
         <strong class="ich">{{ app.me.name }}</strong>
         <span class="spacer"></span>
-        <button class="ghost small" @click="app.logout()"><Icon name="logout" :size="14" /> Abmelden</button>
+        <button class="ghost small" @click="app.logout()"><Icon name="logout" :size="14" /> {{ $t('einst.abmelden') }}</button>
       </div>
       <ProfilBild :user="app.me" class="bild" />
       <p class="ideas muted">
-        Ideen, was screenmates noch können soll? <a href="#/wuensche">Wünsche & Ideen</a>
+        {{ $t('einst.ideen') }} <a href="#/wuensche">{{ $t('nav.wuensche') }}</a>
       </p>
 
-      <h3>Film-Schutz</h3>
+      <h3>{{ $t('einst.schutz') }}</h3>
       <p class="muted">
-        Ohne Schutz kann sich jeder als {{ app.me.name }} ausgeben. Mit Schutz muss man beim Anmelden deinen Film anklicken –
-        den Film verrät screenmates niemandem, auch dir nicht.
+        {{ $t('einst.schutzText', { name: app.me.name }) }}
       </p>
       <div class="row">
         <span class="chip" :class="{ ok: app.me.hat_schutz }">
-          <Icon name="schloss" :size="13" /> {{ app.me.hat_schutz ? 'geschützt' : 'ungeschützt' }}
+          <Icon name="schloss" :size="13" /> {{ app.me.hat_schutz ? $t('einst.geschuetzt') : $t('einst.ungeschuetzt') }}
         </span>
-        <button class="small" @click="pickSchutz = !pickSchutz">{{ app.me.hat_schutz ? 'Film ändern' : 'Schutz einrichten' }}</button>
-        <button v-if="app.me.hat_schutz" class="ghost small" @click="setSchutz(null)">Entfernen</button>
+        <button class="small" @click="pickSchutz = !pickSchutz">{{ app.me.hat_schutz ? $t('einst.filmAendern') : $t('einst.schutzEinrichten') }}</button>
+        <button v-if="app.me.hat_schutz" class="ghost small" @click="setSchutz(null)">{{ $t('einst.entfernen') }}</button>
       </div>
-      <div v-if="pickSchutz" class="picker"><FilmPicker placeholder="Deinen Passwort-Film suchen …" @pick="setSchutz" /></div>
+      <div v-if="pickSchutz" class="picker"><FilmPicker :placeholder="$t('einst.passwortFilm')" @pick="setSchutz" /></div>
     </section>
+
+    <Darstellung />
 
     <Benachrichtigungen />
 
     <KalenderAbo />
-
-    <Darstellung />
 
     <MeineAbos v-if="app.status.tmdb" />
   </div>
