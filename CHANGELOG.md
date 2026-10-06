@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.11.1 – 2026-10-06
+
+### Behoben
+- **Nach „Alles neu“ (Gefahrenzone) ging die Kiste nicht mehr auf.** Jeder Browser merkte sich die
+  Nummer der zuletzt gezeigten Öffnung und zeigte nur höhere – nach dem Leeren beginnen die Nummern
+  aber wieder bei 1. Jetzt merkt er sich den Startzeitpunkt, der immer weiter steigt.
+- **Kisten-Ton auf dem iPhone:** „Probedrehen“, „Für alle öffnen“ und der Abend-Modus schalten den
+  Ton direkt im eigenen Klick frei (iOS lässt Ton nur dann starten); die allgemeine Freischaltung
+  reagiert auf Loslassen und Klick statt aufs Antippen. Die gespeicherte Ton-Einstellung beginnt
+  einmal neu bei „an“, weil der alte Fehler sie ungewollt auf „aus“ gesetzt haben kann.
+
 ## 0.11.0 – 2026-10-06
 
 **Aufgeräumt:** Die Filmabend-Seite ist in klare Teile gegliedert, die Neuigkeiten haben ihre eigene

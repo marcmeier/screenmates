@@ -4,7 +4,9 @@ import { api } from '../api'
 // The shared case opening: comes with every live poll (stores/live.js), so every member of
 // the group sees the host open the case – at the same moment, with the same strip.
 const DAUER = 14_000 // countdown + strip + reveal, roughly
-const GESEHEN = 'screenmates.kisteGesehen'
+// The start time (server clock, ms) of the last opening shown on this device. Not its id: ids
+// start again at 1 after an admin clears the movie night (danger zone), start times never do.
+const GESEHEN = 'screenmates.kisteGesehenStart'
 const PROBEN = 8 // clock samples kept
 
 function gesehen() {
@@ -23,7 +25,7 @@ export const useKiste = defineStore('kiste', {
     proben: [], // recent samples of it
     buehne: null, // the opening shown full-screen right now
     probe: null, // a practice spin, only on this device
-    zuletzt: gesehen(), // the last opening shown here
+    zuletzt: gesehen(), // start of the last opening shown here
   }),
   getters: {
     // The server's start time on this device's clock.
@@ -40,7 +42,7 @@ export const useKiste = defineStore('kiste', {
       const k = r.aktuell
       // A new opening that is still on (or about to start): show it, wherever you are in the app.
       // Its start on this device's clock is fixed once: re-reckoned every poll, the strip jumped.
-      if (k && k.id > this.zuletzt && !this.buehne && k.start + DAUER > r.jetzt) this.buehne = { ...k, lokalStart: this.lokal(k.start) }
+      if (k && k.start > this.zuletzt && !this.buehne && k.start + DAUER > r.jetzt) this.buehne = { ...k, lokalStart: this.lokal(k.start) }
     },
     async oeffnen() {
       this.uebernehmen(await api.post('/api/kiste'))
@@ -51,9 +53,9 @@ export const useKiste = defineStore('kiste', {
     },
     fertig() {
       if (this.buehne) {
-        this.zuletzt = this.buehne.id
+        this.zuletzt = this.buehne.start
         try {
-          localStorage.setItem(GESEHEN, String(this.buehne.id))
+          localStorage.setItem(GESEHEN, String(this.buehne.start))
         } catch {
           /* private mode: it may show once more */
         }

@@ -60,7 +60,9 @@ const jitterAnteil = rng() - 0.5 // where on the winner it lands, also the same 
 
 // --- Sound (WebAudio, no files) ------------------------------------------------
 
-const TON_KEY = 'screenmates.kisteTon'
+// A new key: the old one could be "aus" without anyone meaning it (tapping the speaker to get
+// sound on an iPhone used to switch it off) – so everyone starts with sound on once more.
+const TON_KEY = 'screenmates.kisteTon2'
 const ton = ref(true)
 try {
   ton.value = localStorage.getItem(TON_KEY) !== 'aus'

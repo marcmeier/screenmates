@@ -8,6 +8,7 @@ import { useUi } from '../stores/ui'
 import { navigate } from '../composables/useRoute'
 import { terminText } from '../einladung'
 import Icon from './Icon.vue'
+import { audioJetzt } from '../audio'
 import Poster from './Poster.vue'
 import UserAvatar from './UserAvatar.vue'
 
@@ -67,7 +68,7 @@ async function eintragen() {
               <span><strong>{{ gewinner.title }}</strong><small class="muted">aus der Kiste</small></span>
             </div>
             <template v-else-if="pool.length">
-              <button v-if="kiste.darfOeffnen" class="small primary" :disabled="!!kiste.buehne" @click="kiste.oeffnen()">
+              <button v-if="kiste.darfOeffnen" class="small primary" :disabled="!!kiste.buehne" @click="audioJetzt(), kiste.oeffnen()">
                 <Icon name="kiste" :size="14" /> Kiste für alle öffnen
               </button>
               <p v-else class="muted klein">Der Gastgeber öffnet gleich die Kiste – du siehst es live.</p>

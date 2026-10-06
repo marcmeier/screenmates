@@ -7,6 +7,8 @@
 // page says it plays media (navigator.audioSession, Safari 16.4+).
 
 let kontext = null
+// What iOS counts as a gesture that may start sound: the end of a touch or a click, not its start.
+const GESTEN = ['touchend', 'click', 'keydown', 'pointerup']
 
 export function audioKontext() {
   return kontext
@@ -26,13 +28,13 @@ function entsperren() {
     /* no Web Audio: the app simply stays silent */
   }
   if (kontext?.state === 'running') {
-    for (const typ of ['pointerdown', 'touchend', 'keydown']) window.removeEventListener(typ, entsperren, true)
+    for (const typ of GESTEN) window.removeEventListener(typ, entsperren, true)
   }
 }
 
 /** Listen for the first interaction (and keep trying until the context really runs). */
 export function audioVorbereiten() {
-  for (const typ of ['pointerdown', 'touchend', 'keydown']) window.addEventListener(typ, entsperren, true)
+  for (const typ of GESTEN) window.addEventListener(typ, entsperren, true)
 }
 
 /** From a click handler: make sure sound can play now (a tap is a gesture). */

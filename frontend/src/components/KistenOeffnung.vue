@@ -4,6 +4,7 @@ import { api } from '../api'
 import { useKiste } from '../stores/kiste'
 import { seltenheitFuer } from '../seltenheit'
 import Icon from './Icon.vue'
+import { audioJetzt } from '../audio'
 import Poster from './Poster.vue'
 
 // The movie night's case on the evening page: what's inside and with which odds.
@@ -21,6 +22,7 @@ const prozent = (m) => `${Math.round(chance(m) * 100)} %`
 const laeuft = computed(() => !!(kiste.buehne || kiste.probe))
 
 async function fuerAlle() {
+  audioJetzt() // inside the click: the only moment an iPhone lets sound start
   busy.value = true
   try {
     await kiste.oeffnen()
@@ -30,6 +32,7 @@ async function fuerAlle() {
 }
 
 async function probe() {
+  audioJetzt()
   busy.value = true
   try {
     const { pick, pool } = await api.post('/api/spin')
