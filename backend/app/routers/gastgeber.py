@@ -225,10 +225,11 @@ def hand_over(
         push.abwesend(gid, [body.an]),
         "stab",
         "🎬 Der Gastgeber-Stab für dich",
-        f"{user.name} möchte dir den Stab für den Filmabend geben. Annehmen?",
+        "{name} möchte dir den Stab für den Filmabend geben. Annehmen?",
         tag=f"stab-{gid}",
         ttl=int(UEBERGABE_FRIST.total_seconds()),
         dringend=True,
+        werte={"name": user.name},
     )
     return zustand(db, gid, user, admin)
 

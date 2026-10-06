@@ -11,6 +11,7 @@ from sqlmodel import Session as DBSession
 
 from . import tmdb
 from .models import Movie
+from .sprache import aktuell
 
 BERLIN = ZoneInfo("Europe/Berlin")
 WOCHENTAGE = ("Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag", "Sonntag")
@@ -35,9 +36,28 @@ def utc(dt: datetime) -> datetime:
     return dt.replace(tzinfo=UTC) if dt.tzinfo is None else dt.astimezone(UTC)
 
 
+WEEKDAYS = ("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday")
+MONTHS = (
+    "January",
+    "February",
+    "March",
+    "April",
+    "May",
+    "June",
+    "July",
+    "August",
+    "September",
+    "October",
+    "November",
+    "December",
+)
+
+
 def termin_text(dt: datetime) -> str:
-    """'Freitag, 9. Oktober, 20:00 Uhr' in German time (no locale needed on the server)."""
+    """'Freitag, 9. Oktober, 20:00 Uhr' (or 'Friday 9 October, 20:00') in German time, no locale needed."""
     d = utc(dt).astimezone(BERLIN)
+    if aktuell() == "en":
+        return f"{WEEKDAYS[d.weekday()]} {d.day} {MONTHS[d.month - 1]}, {d:%H:%M}"
     return f"{WOCHENTAGE[d.weekday()]}, {d.day}. {MONATE[d.month - 1]}, {d:%H:%M} Uhr"
 
 

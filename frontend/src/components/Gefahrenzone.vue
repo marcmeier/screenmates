@@ -1,4 +1,5 @@
 <script setup>
+import { t } from '../i18n'
 import { computed, onMounted, ref } from 'vue'
 import { api } from '../api'
 import { useUi } from '../stores/ui'
@@ -32,7 +33,7 @@ async function ausfuehren() {
   busy.value = true
   try {
     const r = await api.post('/api/admin/reset', { bereiche: auftrag.value.bereiche, bestaetigung: wort.value })
-    ui.toast(`Gelöscht${r.backup ? ` – Sicherung: ${r.backup}` : ''}`, 'ok', 6000)
+    ui.toast(r.backup ? t('gefahrenzone.geloeschtMit', { datei: r.backup }) : t('gefahrenzone.geloescht'), 'ok', 6000)
     auftrag.value = null
     gewaehlt.value = []
     // So much changed that the app starts afresh.
@@ -45,10 +46,9 @@ async function ausfuehren() {
 
 <template>
   <section class="panel gefahr" aria-labelledby="gefahr-titel">
-    <h2 id="gefahr-titel"><Icon name="muell" :size="18" /> Gefahrenzone</h2>
+    <h2 id="gefahr-titel"><Icon name="muell" :size="18" /> {{ $t('gefahrenzone.gefahrenzone') }}</h2>
     <p class="muted">
-      Zum Aufräumen nach dem Testen, für alle Gruppen. Vor jedem Löschen sichert der Server die Datenbank
-      (die letzten fünf bleiben liegen) – rückgängig machen geht nur über diese Sicherung.
+      {{ $t('gefahrenzone.zumAufraeumenNachDem') }}
     </p>
 
     <template v-if="stand">
@@ -65,43 +65,41 @@ async function ausfuehren() {
       </ul>
       <div class="row">
         <button class="rot" :disabled="!gewaehlt.length" @click="bestaetigen(gewaehlt)">
-          <Icon name="muell" :size="15" /> Ausgewähltes löschen
+          <Icon name="muell" :size="15" /> {{ $t('gefahrenzone.ausgewaehltesLoeschen') }}
         </button>
       </div>
 
       <div class="neustart">
         <div>
-          <strong>Alles neu</strong>
+          <strong>{{ $t('gefahrenzone.allesNeu') }}</strong>
           <p class="muted">
-            Leert alles oben und löscht zusätzlich alle anderen Namen ({{ stand.neustart }} Namen und Einladungen),
-            mit ihren Bildern, Abos und Sitzungen. Es bleiben: du als Admin, die Gruppen, der Filmkatalog,
-            die Über-Seite und die Einstellungen. Ideal, bevor du screenmates deinen Freunden zeigst.
+            {{ $t('gefahrenzone.leertAllesObenUnd', { neustart: stand.neustart }) }}
           </p>
         </div>
-        <button class="rot voll" @click="bestaetigen(['neustart'])"><Icon name="sync" :size="15" /> Alles neu starten</button>
+        <button class="rot voll" @click="bestaetigen(['neustart'])"><Icon name="sync" :size="15" /> {{ $t('gefahrenzone.allesNeuStarten') }}</button>
       </div>
 
       <p v-if="stand.backups.length" class="muted klein">
-        Sicherungen im Datenordner: <code v-for="b in stand.backups" :key="b">{{ b }}</code>
+        {{ $t('gefahrenzone.sicherungenImDatenordner') }} <code v-for="b in stand.backups" :key="b">{{ b }}</code>
       </p>
     </template>
 
-    <Modal v-if="auftrag" label="Wirklich löschen?" @close="auftrag = null">
+    <Modal v-if="auftrag" :label="$t('gefahrenzone.wirklichLoeschen')" @close="auftrag = null">
       <form class="dialog" @submit.prevent="passt && ausfuehren()">
-        <h2><Icon name="muell" /> Wirklich löschen?</h2>
-        <p>Gelöscht wird für alle Gruppen:</p>
+        <h2><Icon name="muell" /> {{ $t('gefahrenzone.wirklichLoeschen2') }}</h2>
+        <p>{{ $t('gefahrenzone.geloeschtWirdFuerAlle') }}</p>
         <ul>
-          <li v-for="t in auftrag.liste" :key="t">{{ t }}</li>
-          <li v-if="auftrag.neustart"><strong>alle anderen Namen, Einladungen und Anträge</strong></li>
+          <li v-for="eintrag in auftrag.liste" :key="eintrag">{{ eintrag }}</li>
+          <li v-if="auftrag.neustart"><strong>{{ $t('gefahrenzone.alleAnderenNamenEinladungen') }}</strong></li>
         </ul>
         <label>
-          <span>Zum Bestätigen <strong>{{ stand.bestaetigung }}</strong> eintippen</span>
-          <input v-model="wort" autocomplete="off" autofocus :placeholder="stand.bestaetigung" aria-label="Bestätigung" />
+          <span>{{ $t('gefahrenzone.bestaetigenMit', { wort: stand.bestaetigung }) }}</span>
+          <input v-model="wort" autocomplete="off" autofocus :placeholder="stand.bestaetigung" :aria-label="$t('gefahrenzone.bestaetigung')" />
         </label>
         <div class="row">
           <span class="spacer"></span>
-          <button type="button" @click="auftrag = null">Abbrechen</button>
-          <button class="rot voll" :disabled="!passt || busy">Endgültig löschen</button>
+          <button type="button" @click="auftrag = null">{{ $t('gefahrenzone.abbrechen') }}</button>
+          <button class="rot voll" :disabled="!passt || busy">{{ $t('gefahrenzone.endgueltigLoeschen') }}</button>
         </div>
       </form>
     </Modal>

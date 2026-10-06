@@ -21,6 +21,7 @@ from ..db import get_session
 from ..gruppen import aktuelle_gruppe, mitglieder
 from ..models import Abo, Movie
 from ..serialize import movie_dict, with_flags
+from ..sprache import aktuell, tr
 from ..util import upsert_movie
 
 router = APIRouter(prefix="/api", tags=["catalog"])
@@ -185,13 +186,13 @@ async def discover(
     inc, exc = _ids(include), _ids(exclude)
     dienste = None
     if (abos or anbieter or kostenlos) and not settings.tmdb_enabled:
-        return {"results": [], "hinweis": "Was wo läuft, weiß screenmates nur mit TMDB (TMDB_API_KEY)."}
+        return {"results": [], "hinweis": tr("Was wo läuft, weiß screenmates nur mit TMDB (TMDB_API_KEY).")}
     if anbieter:
         dienste = tmdb.abo_ids(_ids(anbieter))
     elif abos:
         dienste = tmdb.abo_ids(list({pid for _, pid in _gruppen_abos(db)}))
         if not dienste:
-            return {"results": [], "hinweis": "Noch niemand hat seine Abos eingetragen (Einstellungen)."}
+            return {"results": [], "hinweis": tr("Noch niemand hat seine Abos eingetragen (Einstellungen).")}
     remote = await tmdb.discover(
         sort=sort,
         page=seite,
@@ -341,7 +342,7 @@ async def stoebern(db: DBSession = Depends(get_session)):
             res = await discover(db=db, limit=REGAL_FILME, **_discover_defaults(flt))
             if res["results"]:
                 lokal.append({"id": key, "titel": titel, "untertitel": unter, "filter": flt, "filme": res["results"]})
-        return {"regale": lokal, "tmdb": False}
+        return {"regale": [_sprachlich(x) for x in lokal], "tmdb": False}
 
     gewaehlt = {pid for _, pid in _gruppen_abos(db)}
     alle = [p for p in await tmdb.provider_list() or [] if tmdb.regal_tauglich(p)]
@@ -398,7 +399,12 @@ async def stoebern(db: DBSession = Depends(get_session)):
         if any(len(ids & {m["id"] for m in r["filme"]}) > len(ids) * 0.6 for r in regale if r.get("anbieter")):
             continue
         regale.append(regal)
-    return {"regale": regale, "tmdb": True}
+    return {"regale": [_sprachlich(x) for x in regale], "tmdb": True}
+
+
+def _sprachlich(regal: dict) -> dict:
+    """Shelf titles in the app's language (service names stay as they are)."""
+    return regal | {"titel": tr(regal["titel"]), "untertitel": tr(regal["untertitel"])}
 
 
 def _tmdb_args(flt: dict) -> dict:
@@ -454,6 +460,11 @@ DEPARTMENTS = {
 }
 
 
+def _deutsch(tabelle: dict[str, str], wort: str) -> str:
+    """TMDB's English job titles, in German for the German app."""
+    return wort if aktuell() == "en" else tabelle.get(wort, wort)
+
+
 @router.get("/personen")
 async def people(q: str = Query("", max_length=100)):
     if not q.strip():
@@ -463,7 +474,7 @@ async def people(q: str = Query("", max_length=100)):
         {
             "id": p["id"],
             "name": p["name"],
-            "bereich": DEPARTMENTS.get(p.get("known_for_department") or "", p.get("known_for_department") or ""),
+            "bereich": _deutsch(DEPARTMENTS, p.get("known_for_department") or ""),
             "bild": _profile(p.get("profile_path")),
             "bekannt_fuer": [k.get("title") or k.get("name") for k in p.get("known_for", [])][:3],
         }
@@ -508,7 +519,7 @@ async def person_films(
     for credit in [*data.get("crew", []), *data.get("cast", [])]:
         if genre is not None and genre not in credit.get("genre_ids", []):
             continue
-        rolle = credit.get("character") or JOBS.get(credit.get("job") or "", credit.get("job") or "")
+        rolle = credit.get("character") or _deutsch(JOBS, credit.get("job") or "")
         if _is_cameo(rolle):
             continue
         if credit["id"] in seen:

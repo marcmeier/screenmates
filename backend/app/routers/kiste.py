@@ -127,11 +127,12 @@ def open_for_everyone(
         db,
         push.abwesend(gid, push.mitglieder(db, gid, ausser=user.id)),
         "kiste",
-        f"🎁 Die Kiste geht auf! – {push.gruppenname(db, gid)}",
-        f"{user.name} öffnet die Filmabend-Kiste für alle. Schnell rein!",
+        "🎁 Die Kiste geht auf! – {gruppe}",
+        "{name} öffnet die Filmabend-Kiste für alle. Schnell rein!",
         tag=f"kiste-{gid}",
         ttl=120,
         dringend=True,
+        werte={"gruppe": push.gruppenname(db, gid), "name": user.name},
     )
     return {"jetzt": _ms(jetzt), "aktuell": _dict(db, k)}
 

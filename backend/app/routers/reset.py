@@ -48,6 +48,7 @@ from ..models import (
     now,
 )
 from ..session import current_user, require_admin
+from ..sprache import tr
 from . import kinochat
 
 router = APIRouter(prefix="/api/admin/reset", tags=["admin"], dependencies=[Depends(require_admin)])
@@ -170,17 +171,17 @@ def _alle_anderen_weg(db: DBSession, ich: User) -> None:
 def overview(db: DBSession = Depends(get_session), ich: User = Depends(current_user)):
     zahlen = zaehlen(db, ich)
     return {
-        "bereiche": [{"key": k, "titel": t, "text": x, "anzahl": zahlen[k]} for k, (t, x) in BEREICHE.items()],
+        "bereiche": [{"key": k, "titel": tr(t), "text": tr(x), "anzahl": zahlen[k]} for k, (t, x) in BEREICHE.items()],
         "neustart": zahlen[NEUSTART],
-        "bestaetigung": BESTAETIGUNG,
+        "bestaetigung": tr(BESTAETIGUNG),
         "backups": [p.name for p in backups()],
     }
 
 
 @router.post("")
 def clear(body: Auftrag, db: DBSession = Depends(get_session), ich: User = Depends(current_user)):
-    if body.bestaetigung.strip().upper() != BESTAETIGUNG:
-        raise HTTPException(422, f"Zum Bestätigen „{BESTAETIGUNG}“ eintippen.")
+    if body.bestaetigung.strip().upper() not in (BESTAETIGUNG, "DELETE"):
+        raise HTTPException(422, tr("Zum Bestätigen „{wort}“ eintippen.", wort=tr(BESTAETIGUNG)))
     bereiche = list(BEREICHE) if NEUSTART in body.bereiche else body.bereiche
     unbekannt = set(bereiche) - set(BEREICHE)
     if not bereiche or unbekannt:

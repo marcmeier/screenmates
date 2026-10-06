@@ -292,10 +292,11 @@ def add_note(
             db,
             [parent.user_id],
             "antwort",
-            f"💬 {user.name} hat dir geantwortet{f' – {film.title}' if film else ''}",
-            text[:140],
+            "💬 {name} hat dir geantwortet{film}",
+            "{text}",
             url="/#/sammlung/gesehen",
             tag=f"antwort-{parent.id}",
+            werte={"name": user.name, "film": f" – {film.title}" if film else "", "text": text[:140]},
         )
     return _one(db, w)
 

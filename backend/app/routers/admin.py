@@ -23,6 +23,7 @@ from ..gruppen import aufnehmen
 from ..models import KiAnfrage, Session, User
 from ..serialize import iso, user_dict
 from ..session import require_admin
+from ..sprache import tr
 from .users import clean_name, ensure_not_last_admin, in_einzige_gruppe, new_user
 
 router = APIRouter(prefix="/api/admin", tags=["admin"], dependencies=[Depends(require_admin)])
@@ -91,7 +92,7 @@ def change(user_id: int, body: Aendern, db: DBSession = Depends(get_session)):
         db.commit()
     except IntegrityError:
         db.rollback()
-        raise HTTPException(409, f"„{body.name}“ gibt es schon.") from None
+        raise HTTPException(409, tr("„{name}“ gibt es schon.", name=body.name)) from None
     db.refresh(u)
     return _admin_dict(u, _sitzungen(db)[u.id])
 

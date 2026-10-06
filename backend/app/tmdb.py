@@ -18,6 +18,7 @@ from typing import Any
 import httpx
 
 from .config import settings
+from .sprache import tr
 
 BASE = "https://api.themoviedb.org/3"
 HORROR = 27
@@ -87,11 +88,11 @@ async def _get(path: str, params: dict[str, Any] | None = None) -> dict[str, Any
     try:
         r = await _client.get(path, params=params, headers=headers)
     except httpx.HTTPError as e:
-        raise TMDBError(f"TMDB nicht erreichbar: {e.__class__.__name__}") from e
+        raise TMDBError(tr("TMDB nicht erreichbar: {fehler}", fehler=e.__class__.__name__)) from e
     if r.status_code == 404:
         return None
     if r.status_code >= 400:
-        raise TMDBError(f"TMDB antwortete mit {r.status_code}")
+        raise TMDBError(tr("TMDB antwortete mit {status}", status=r.status_code))
     return r.json()
 
 

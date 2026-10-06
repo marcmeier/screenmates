@@ -2,6 +2,7 @@
 import { api } from '../api'
 import { SPRACHEN, sprache, spracheSetzen } from '../i18n'
 import { useApp } from '../stores/app'
+import { useUi } from '../stores/ui'
 
 // German or English: switches at once and is kept with your profile (all your devices).
 const app = useApp()
@@ -10,6 +11,8 @@ const FLAGGEN = { de: '🇩🇪', en: '🇬🇧' }
 async function waehlen(s) {
   spracheSetzen(s)
   if (app.me) app.me.design = (await api.put('/api/users/me/sprache', { sprache: s })).design
+  // Texts from the server (awards, shelves, facts …) come again in the new language.
+  useUi().changed()
 }
 </script>
 

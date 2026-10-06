@@ -36,6 +36,7 @@ from cryptography.hazmat.primitives.asymmetric import ec
 from sqlmodel import Session as DBSession
 from sqlmodel import col, delete, select
 
+from . import sprache
 from .config import settings
 from .db import engine
 from .models import Abend, AppMeta, Benachrichtigung, Gruppe, Mitglied, PushAbo, User, now
@@ -153,27 +154,41 @@ def an(
     ttl: int = 3600,
     dringend: bool = False,
     warten: bool = False,
+    werte: dict | None = None,
 ) -> int:
     """Notify these people on all their devices, if they want this kind. Returns the number of devices.
 
     `art` is a key of ARTEN, or "test" (always on). Sending happens in the background;
     with `warten` right here, and the number is how many devices really got it.
+    `titel` and `text` are German templates; everyone gets them in their own language,
+    with `werte` filled in (a callable value is worked out in that language, e.g. a date).
     """
     uids = {u for u in uids if u is not None}
     if not uids:
         return 0
     leute = db.exec(select(User).where(col(User.id).in_(uids), col(User.freigegeben))).all()
+    texte = {}
+    for s in {sprache.von(u) for u in leute}:
+        with sprache.als(s):
+            w = {k: v() if callable(v) else v for k, v in (werte or {}).items()}
+            texte[s] = (sprache.tr(titel, **w), sprache.tr(text, **w))
     if art != "test":
-        glocke(db, [u.id for u in leute], art, titel, text, url)
-    wollen = {u.id for u in leute if art == "test" or wahl(u).get(art, False)}
+        for u in leute:
+            glocke(db, [u.id], art, *texte[sprache.von(u)], url, aufraeumen=False)
+        glocke(db, [], art, "", "", url)
+    wollen = {u.id: u for u in leute if art == "test" or wahl(u).get(art, False)}
     if not wollen:
         return 0
     abos = db.exec(select(PushAbo).where(col(PushAbo.user_id).in_(wollen))).all()
     if not abos:
         return 0
     schluessel = privater_schluessel(db)
-    daten = {"titel": titel, "text": text, "url": url, "tag": tag or art}
-    zustellungen = [Zustellung(a.endpoint, a.p256dh, a.auth, daten, ttl, dringend, schluessel) for a in abos]
+
+    def daten(uid: int) -> dict:
+        t, x = texte[sprache.von(wollen[uid])]
+        return {"titel": t, "text": x, "url": url, "tag": tag or art}
+
+    zustellungen = [Zustellung(a.endpoint, a.p256dh, a.auth, daten(a.user_id), ttl, dringend, schluessel) for a in abos]
     if warten:
         return sum(zustellen(z) for z in zustellungen)
     for z in zustellungen:
@@ -181,12 +196,15 @@ def an(
     return len(zustellungen)
 
 
-def glocke(db: DBSession, uids: list[int], art: str, titel: str, text: str, url: str) -> None:
-    """The same news for the bell in the app: everyone gets it there, push or not (commits)."""
+def glocke(
+    db: DBSession, uids: list[int], art: str, titel: str, text: str, url: str, *, aufraeumen: bool = True
+) -> None:
+    """The same news for the bell in the app: everyone gets it there, push or not (commits when tidying up)."""
     for uid in uids:
         db.add(Benachrichtigung(user_id=uid, art=art, titel=titel, text=text, url=url))
-    db.exec(delete(Benachrichtigung).where(col(Benachrichtigung.am) < now() - timedelta(days=GLOCKE_TAGE)))
-    db.commit()
+    if aufraeumen:
+        db.exec(delete(Benachrichtigung).where(col(Benachrichtigung.am) < now() - timedelta(days=GLOCKE_TAGE)))
+        db.commit()
 
 
 def abschicken(z: Zustellung) -> None:
@@ -246,15 +264,19 @@ def faellige_erinnerungen(db: DBSession, jetzt: datetime | None = None) -> int:
         nein = set(
             db.exec(select(Mitglied.user_id).where(Mitglied.gruppe_id == a.id, Mitglied.rueckmeldung == "nein")).all()
         )
-        wo = f" · {a.notiz}" if a.notiz else ""
         n += an(
             db,
             mitglieder(db, a.id) - nein,
             "erinnerung",
-            f"🍿 Heute ist Filmabend – {gruppenname(db, a.id)}",
-            f"Um {termin.astimezone(BERLIN):%H:%M} Uhr{wo} – bist du dabei?",
+            "🍿 Heute ist Filmabend – {gruppe}",
+            "Um {zeit} Uhr{wo} – bist du dabei?",
             tag=f"erinnerung-{a.id}",
             ttl=int(ERINNERUNG.total_seconds()),
+            werte={
+                "gruppe": gruppenname(db, a.id),
+                "zeit": f"{termin.astimezone(BERLIN):%H:%M}",
+                "wo": f" · {a.notiz}" if a.notiz else "",
+            },
         )
     return n
 
@@ -287,15 +309,15 @@ def bewertungs_erinnerungen(db: DBSession, jetzt: datetime | None = None) -> int
             db.add(Ereignis(typ="bewerten_gefragt", user_id=uid, bezug=str(w.id)))
         db.commit()
         film = db.get(Movie, w.movie_id)
-        titel = film.title if film else "der Film"
         n += an(
             db,
             offen,
             "bewerten",
-            f"⭐ Wie war „{titel}“?",
+            "⭐ Wie war „{titel}“?",
             "Gib dem Film von gestern deine Sterne – dauert zwei Sekunden.",
             tag=f"bewerten-{w.id}",
             ttl=12 * 3600,
+            werte={"titel": film.title if film else "?"},
         )
     return n
 

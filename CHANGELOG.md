@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.13.0 – 2026-10-06
+
+### Neu
+- **Englisch durchgehend, Etappe 2:** Auch was der Server schreibt, kommt jetzt in der Sprache der App –
+  Fehlermeldungen, Erfolge (Namen, Beschreibungen, Level-Titel), Regale in Finden, die Fakten in der
+  Seitenleiste, die Auswahl der Benachrichtigungen, die KI-Begründungen und die Rollen in den Filmdetails.
+- **Für jede Person in ihrer Sprache:** Push-Nachrichten, Einträge in der Glocke und der Kalender-Feed
+  richten sich nach der Sprache der Person, die sie bekommt (Datum und Uhrzeit inklusive).
+- Übersetzt sind jetzt auch Verwaltung, Gruppen, Einladungslinks, KI-Nutzung, die Gefahrenzone
+  (Bestätigung mit „LÖSCHEN“ oder „DELETE“) und die Über-Seite.
+
+### Hinweise
+- Filmdaten (Titel, Beschreibungen, Genres) bleiben deutsch; ebenso Texte, die Admins selbst schreiben
+  (Hausregeln, Impressum) und bereits verschickte Benachrichtigungen.
+
 ## 0.12.0 – 2026-10-06
 
 ### Neu

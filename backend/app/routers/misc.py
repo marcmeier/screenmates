@@ -33,6 +33,7 @@ from ..models import (
 )
 from ..serialize import iso, movie_dict, with_flags
 from ..session import current_user, require_admin
+from ..sprache import tr
 from ..util import upsert_movie
 from . import gastgeber, umfrage
 
@@ -228,7 +229,7 @@ def events(limit: int = 30, gid: int = Depends(aktive_gruppe), db: DBSession = D
                     "wer": names.get(e.user_id),
                     "user_id": e.user_id,
                     "key": d.key,
-                    "name": "einen geheimen Erfolg" if d.geheim else f"„{d.name}“",
+                    "name": tr("einen geheimen Erfolg") if d.geheim else tr("„{name}“", name=d.anzeige_name),
                     "emoji": d.emoji,
                     "stufe": d.stufe,
                 }

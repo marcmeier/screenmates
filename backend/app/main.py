@@ -7,6 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from sqlmodel import Session
+from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from . import erfolge, push, tmdb
 from .config import settings
@@ -41,8 +42,9 @@ from .routers import (
 from .routers import erfolge as erfolge_api
 from .routers import push as push_api
 from .seed import seed_if_empty
+from .sprache import SprachMiddleware, tr
 
-__version__ = "0.12.0"
+__version__ = "0.13.0"
 
 
 @asynccontextmanager
@@ -74,6 +76,9 @@ app = FastAPI(
 # Live updates: successful writes bump counters every open app polls (routers/live.py).
 app.middleware("http")(live.mitzaehlen)
 
+# The app's language (X-Sprache) for texts the server writes.
+app.add_middleware(SprachMiddleware)
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[o.strip() for o in settings.cors_origins.split(",") if o.strip()],
@@ -81,6 +86,13 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+# Errors in the language of the app that asked (see sprache.py).
+@app.exception_handler(StarletteHTTPException)
+async def http_error(_: Request, exc: StarletteHTTPException):
+    detail = tr(exc.detail) if isinstance(exc.detail, str) else exc.detail
+    return JSONResponse({"detail": detail}, status_code=exc.status_code, headers=getattr(exc, "headers", None))
 
 
 @app.exception_handler(tmdb.TMDBError)

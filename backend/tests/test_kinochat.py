@@ -104,7 +104,7 @@ def test_chatting_during_a_show_is_a_secret_achievement_and_counts(client, db, m
     client.post("/api/kino/reaktion", json={"emoji": "😱"})
     with Session(engine) as s:
         assert len(s.exec(select(Ereignis).where(Ereignis.typ == "kino_chat")).all()) == 1
-    monkeypatch.setattr(statistik, "_cache", (0.0, []))
+    monkeypatch.setattr(statistik, "_cache", {})
     texte = {f["text"]: f["wert"] for f in client.get("/api/statistik").json()["fakten"]}
     assert texte["Nachrichten im Kino-Chat"] == "2"
     assert texte["Reaktion im Kino"] == "1"

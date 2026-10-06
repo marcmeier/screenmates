@@ -28,6 +28,7 @@ from ..session import (
     require_owner_or_admin,
     require_user,
 )
+from ..sprache import tr
 from ..util import BERLIN, utc
 
 router = APIRouter(prefix="/api", tags=["users"])
@@ -80,7 +81,7 @@ def new_user(db: DBSession, name: str, *, freigegeben: bool, admin: bool = False
         db.commit()
     except IntegrityError:
         db.rollback()
-        raise HTTPException(409, f"„{name}“ gibt es schon.") from None
+        raise HTTPException(409, tr("„{name}“ gibt es schon.", name=name)) from None
     db.refresh(u)
     if freigegeben and not ohne_gruppe:
         in_einzige_gruppe(db, u, admin=admin)
@@ -173,7 +174,7 @@ def create_user(
             # A fresh install: the first name runs the first group.
             gid = db.exec(select(Gruppe.id).order_by(Gruppe.id)).first()
             if gid is None:
-                g = Gruppe(name="Unsere Gruppe")
+                g = Gruppe(name=tr("Unsere Gruppe"))
                 db.add(g)
                 db.flush()
                 gid = g.id
@@ -217,7 +218,7 @@ def choose_user(body: NameWaehlen, request: Request, response: Response, db: DBS
     if u is None:
         raise HTTPException(404, "Diesen Namen gibt es nicht.")
     if not u.freigegeben:
-        raise HTTPException(403, f"„{u.name}“ wartet noch auf die Freigabe durch einen Admin.")
+        raise HTTPException(403, tr("„{name}“ wartet noch auf die Freigabe durch einen Admin.", name=u.name))
     if u.schutz_movie_id is not None:
         if _throttled(u.id):
             raise HTTPException(429, "Zu viele Fehlversuche – bitte später nochmal.")

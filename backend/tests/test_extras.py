@@ -6,7 +6,7 @@ from .conftest import become_admin, login
 
 
 def test_statistics_are_totals_only(client, browser):
-    statistik._cache = (0.0, [])
+    statistik._cache = {}
     login(client, "marc")
     client.post("/api/watched", json={"movie_id": 694})
     fakten = {f["text"]: f["wert"] for f in client.get("/api/statistik").json()["fakten"]}
@@ -28,7 +28,7 @@ def test_kino_traffic_is_added_up_across_sessions(db):
     assert statistik.zaehler(db, "kino_bytes") == 3510
     assert statistik.zaehler(db, "kino_pakete") == 300
     assert statistik.zaehler(db, "kino_verloren") == 2
-    statistik._cache = (0.0, [])
+    statistik._cache = {}
     texte = [f["text"] for f in statistik.fakten(db)]
     assert "im Kino gestreamt" in texte
     assert any(t.startswith("Pakete beim Streamen verloren") for t in texte)
