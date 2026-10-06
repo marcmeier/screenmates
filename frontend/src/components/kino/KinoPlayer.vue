@@ -95,8 +95,29 @@ function attach() {
   }
 }
 
+// Touch screens have no hover: the bar and the close button show on a tap and fade after
+// a few seconds; a tap on the picture while they show hides them again.
+const bedienung = ref(true)
+let ausblenden = null
+function zeigen() {
+  bedienung.value = true
+  clearTimeout(ausblenden)
+  ausblenden = setTimeout(() => (bedienung.value = false), 3000)
+}
+function antippen(e) {
+  if (e.pointerType === 'mouse') return
+  if (e.target.closest('button, input')) return zeigen() // using the bar keeps it there
+  if (bedienung.value) {
+    clearTimeout(ausblenden)
+    bedienung.value = false
+  } else {
+    zeigen()
+  }
+}
+
 onMounted(() => {
   attach()
+  zeigen()
   document.addEventListener('fullscreenchange', vollbildGeaendert)
   window.addEventListener('keydown', escape)
 })
@@ -107,6 +128,7 @@ onBeforeUnmount(() => {
   document.body.style.overflow = ''
   clearInterval(uhr)
   clearInterval(pauseTimer)
+  clearTimeout(ausblenden)
   stopWatching()
   api.del('/api/kino/da', { quiet: true }).catch(() => {})
 })
@@ -132,7 +154,7 @@ function vollbild() {
 </script>
 
 <template>
-  <div ref="box" class="screen" :class="{ ersatz }" @dblclick="vollbild">
+  <div ref="box" class="screen" :class="{ ersatz, bedienung }" @dblclick="vollbild" @pointerup="antippen">
     <video ref="video" autoplay playsinline :muted="muted || kino.sende" :volume="volume"></video>
 
     <div class="flug" aria-hidden="true">
@@ -181,7 +203,8 @@ function vollbild() {
       <span v-if="vollbildAn" class="schnell" role="group" aria-label="Reaktion ins Bild schicken">
         <button v-for="r in chat.reaktionen.slice(0, 6)" :key="r" class="ghost" :aria-label="`Reaktion ${r}`" @click="chat.reagieren(r)">{{ r }}</button>
       </span>
-      <button class="ghost" :aria-label="vollbildAn ? 'Vollbild verlassen' : 'Vollbild'" @click="vollbild"><Icon :name="vollbildAn ? 'x' : 'vollbild'" /></button>
+      <!-- In the stand-in full screen the round button at the top closes it; one way out is enough. -->
+      <button v-if="!ersatz" class="ghost" :aria-label="vollbildAn ? 'Vollbild verlassen' : 'Vollbild'" @click="vollbild"><Icon :name="vollbildAn ? 'x' : 'vollbild'" /></button>
     </div>
   </div>
 </template>
@@ -200,7 +223,7 @@ function vollbild() {
   border: none; border-radius: 0;
   padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
 }
-.screen.ersatz .controls { opacity: 1; padding-bottom: max(0.6rem, env(safe-area-inset-bottom)); }
+.screen.ersatz .controls { padding-bottom: max(0.6rem, env(safe-area-inset-bottom)); }
 video { width: 100%; height: 100%; object-fit: contain; display: block; background: #000; }
 .overlay {
   position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; gap: 0.8rem;
@@ -218,7 +241,12 @@ video { width: 100%; height: 100%; object-fit: contain; display: block; backgrou
 /* Touch devices: the bar is always there; the volume slider goes (iOS ignores it, the
    device's buttons set the volume), and the bar may wrap instead of hiding buttons. */
 @media (hover: none) {
-  .controls { opacity: 1; flex-wrap: wrap; row-gap: 0.2rem; }
+  .controls { flex-wrap: wrap; row-gap: 0.2rem; pointer-events: none; }
+  .screen.bedienung .controls { opacity: 1; pointer-events: auto; }
+  .screen .schliessen { opacity: 0; pointer-events: none; transition: opacity 0.2s; }
+  .screen.bedienung .schliessen { opacity: 1; pointer-events: auto; }
+  /* iOS keeps :hover after a tap – it must not keep the bar on screen. */
+  .screen:not(.bedienung):hover .controls, .screen:not(.bedienung):focus-within .controls { opacity: 0; }
   .controls input[type='range'] { display: none; }
 }
 .schliessen {

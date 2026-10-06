@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.10.3 – 2026-10-06
+
+### Geändert
+- **Kino auf dem Handy:** Steuerleiste und Schließen-Knopf zeigen sich beim Antippen und blenden
+  nach drei Sekunden wieder aus; ein weiterer Tipp aufs Bild blendet sie sofort aus. Reaktionen,
+  Pause und Chat-Einblendungen bleiben sichtbar. Am Rechner erscheint die Leiste wie bisher, wenn
+  die Maus übers Bild fährt.
+- Im iPhone-Vollbild gibt es nur noch einen Schließen-Knopf (oben rechts) statt zwei.
+
 ## 0.10.2 – 2026-10-06
 
 ### Geändert
