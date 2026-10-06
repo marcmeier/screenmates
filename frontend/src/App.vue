@@ -39,7 +39,11 @@ const SECONDARY = [
   { id: 'verwaltung', label: 'Verwaltung', icon: 'verwaltung', comp: lazy(() => import('./components/tabs/VerwaltungTab.vue')) },
 ]
 // Not in the navigation: linked from the sidebar's footer and the profile menu.
-const VERSTECKT = [{ id: 'ueber', label: 'Über', icon: 'info', comp: lazy(() => import('./components/tabs/UeberTab.vue')) }]
+const VERSTECKT = [
+  { id: 'ueber', label: 'Über', icon: 'info', comp: lazy(() => import('./components/tabs/UeberTab.vue')) },
+  // Reached through the bell.
+  { id: 'neuigkeiten', label: 'Neuigkeiten', icon: 'glocke', comp: lazy(() => import('./components/tabs/NeuigkeitenTab.vue')) },
+]
 const ALL = [...PRIMARY, ...SECONDARY, ...VERSTECKT]
 
 const app = useApp()

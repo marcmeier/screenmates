@@ -1,13 +1,12 @@
 <script setup>
-import { computed, defineAsyncComponent, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { computed, defineAsyncComponent, onMounted, ref, watch } from 'vue'
 import { api } from '../../api'
 import { useApp } from '../../stores/app'
 import { useKino } from '../../stores/kino'
 import { useUi } from '../../stores/ui'
 import { useMovieActions } from '../../composables/useMovieActions'
 import { navigate } from '../../composables/useRoute'
-import { dezimal, vorWann } from '../../format'
-import { terminText } from '../../einladung'
+import { dezimal } from '../../format'
 import Erinnerungen from '../Erinnerungen.vue'
 import Icon from '../Icon.vue'
 import Poster from '../Poster.vue'
@@ -32,7 +31,6 @@ const { alsGesehen } = useMovieActions()
 
 const vorschlaege = ref([])
 const pool = ref([])
-const events = ref([])
 const loading = ref(true)
 // The film of the evening: the winner of the case opened for everyone.
 const gewinner = computed(() => kiste.aktuell?.gewinner ?? null)
@@ -45,17 +43,15 @@ const umfrage = ref(null)
 const rueckblickJahr = ref(null)
 
 async function load() {
-  const [s, p, e, t, er, u] = await Promise.all([
+  const [s, p, t, er, u] = await Promise.all([
     api.get('/api/suggestions'),
     api.get('/api/spin'),
-    api.get('/api/events?limit=15'),
     api.get('/api/termin'),
     api.get('/api/erinnerungen'),
     api.get('/api/termin/umfrage'),
   ])
   vorschlaege.value = s.suggestions
   pool.value = p.pool
-  events.value = e.events
   termin.value = t
   erinnerungen.value = er.erinnerungen
   umfrage.value = u
@@ -96,30 +92,6 @@ const heuteAbend = computed(() => {
   return !!t && tagFmt.format(new Date(t)) === tagFmt.format(new Date())
 })
 
-// The feed: what's new since your last visit stands out, the rest folds away.
-const GESEHEN = () => `screenmates.feedGesehen.${app.gruppe?.id}`
-function feedStand() {
-  try {
-    return Number(localStorage.getItem(GESEHEN())) || 0
-  } catch {
-    return 0
-  }
-}
-const zuletzt = ref(feedStand())
-const alleZeigen = ref(false)
-const neueEvents = computed(() => events.value.filter((e) => new Date(e.at).getTime() > zuletzt.value))
-const sichtbareEvents = computed(() => {
-  if (alleZeigen.value) return events.value
-  return neueEvents.value.length ? neueEvents.value : events.value.slice(0, 3)
-})
-const istNeu = (e) => zuletzt.value && new Date(e.at).getTime() > zuletzt.value
-onBeforeUnmount(() => {
-  try {
-    localStorage.setItem(GESEHEN(), String(Date.now()))
-  } catch {
-    /* private mode */
-  }
-})
 async function rueckblickPruefen() {
   const monat = new Date().getMonth() // 0 = January
   if (monat !== 11 && monat !== 0) return
@@ -178,37 +150,14 @@ async function gewinnerGesehen() {
 }
 
 const poolQuelle = computed(() => (vorschlaege.value.length ? 'Vorschlägen' : 'der Merkliste'))
-const EVENT_TEXT = {
-  gesehen: (e) => `„${e.film}“ wurde geschaut`,
-  vorschlag: (e) => `${e.wer ?? 'Jemand'} schlägt „${e.film}“ vor`,
-  kommentar: (e) => `${e.wer ?? 'Jemand'}: „${e.text}“`,
-  wunsch: (e) => `${e.wer ?? 'Jemand'} wünscht sich: ${e.text}`,
-  veto: (e) => `${e.wer ?? 'Jemand'} legt ein Veto gegen „${e.film}“ ein`,
-  erfolg: (e) => `${e.emoji} ${e.wer ?? 'Jemand'} hat ${e.name} freigeschaltet`,
-  gastgeber: (e) =>
-    e.art === 'uebergabe'
-      ? `${e.von ?? 'Jemand'} gibt den Gastgeber-Stab an ${e.wer ?? 'jemanden'}`
-      : e.art === 'abstimmung'
-        ? `${e.wer ?? 'Jemand'} ist Gastgeber – per Abstimmung (${e.stand})`
-        : `${e.wer ?? 'Jemand'} übernimmt den Gastgeber-Stab`,
-  kiste: (e) => `${e.wer ?? 'Jemand'} öffnet die Kiste: „${e.film}“`,
-  termin: (e) => {
-    const t = terminText({ termin: e.termin })
-    return `${e.wer ?? 'Jemand'} legt den Termin fest: ${t.tag}, ${t.zeit}`
-  },
-  umfrage: (e) => {
-    const t = terminText({ termin: e.termin })
-    return `${e.wer ?? 'Jemand'} schlägt einen Termin zur Abstimmung vor: ${t.tag}, ${t.zeit}`
-  },
-}
 </script>
 
 <template>
   <div>
     <header class="page-head">
       <div>
-        <h1>Nächster Filmabend</h1>
-        <p>Wer ist dabei, was steht zur Wahl – und am Ende entscheidet die Kiste.</p>
+        <h1>Filmabend</h1>
+        <p>Wann ist der nächste Abend, wer ist dabei – und was schauen wir?</p>
       </div>
     </header>
 
@@ -247,112 +196,105 @@ const EVENT_TEXT = {
     />
     <Einladung v-if="einladungOffen" :termin="termin" :filme="zurWahl" :dabei="app.dabei" @close="einladungOffen = false" />
 
-    <div class="layout">
-      <section>
-        <div class="row">
-          <h2 class="section-title">Vorschläge</h2>
-          <span class="spacer"></span>
-          <button v-if="app.gruppenAdmin && vorschlaege.length" class="ghost small danger" @click="allesLeeren">
-            <Icon name="muell" :size="14" /> Alle leeren
-          </button>
-        </div>
-
-        <p v-if="app.me && vorschlaege.length" class="muted small-text veto-hint">
-          Jede Person hat ein <strong>Veto</strong>: Filme mit Veto kommen nicht in die Kiste.
-        </p>
-        <div v-if="loading" class="list">
-          <div v-for="i in 3" :key="i" class="skeleton" style="height: 86px"></div>
-        </div>
-        <div v-else-if="!vorschlaege.length" class="empty">
-          <strong>Noch keine Vorschläge</strong>
-          Bei jedem Film gibt es den <Icon name="hand" :size="14" />-Knopf.
-          <div style="margin-top: 0.8rem"><button class="small" @click="navigate('finden')">Filme finden</button></div>
-        </div>
-        <ol v-else class="list">
-          <li v-for="(m, i) in vorschlaege" :key="m.id" class="sugg" :class="{ vetoed: m.veto_von.length }">
-            <span class="rank">{{ i + 1 }}</span>
-            <button class="thumb" :aria-label="`${m.title} – Details`" @click="ui.open(m)">
-              <Poster :movie="m" :title="false" />
+    <section class="teil auswahl" aria-labelledby="auswahl-titel">
+      <header class="teil-kopf">
+        <h2 id="auswahl-titel">Was schauen wir?</h2>
+        <p class="muted">Schlagt Filme vor, legt ein Veto ein – am Abend entscheidet die Kiste.</p>
+      </header>
+      <div class="layout">
+        <section>
+          <div class="row unterkopf">
+            <h3>Vorschläge</h3>
+            <span class="spacer"></span>
+            <button v-if="app.gruppenAdmin && vorschlaege.length" class="ghost small danger" @click="allesLeeren">
+              <Icon name="muell" :size="14" /> Alle leeren
             </button>
-            <div class="what">
-              <button class="linklike" @click="ui.open(m)">{{ m.title }}</button>
-              <div class="muted small-text">{{ m.year }} · ★ {{ dezimal(m.vote_average) }}</div>
-              <div class="avatars"><UserAvatar v-for="id in m.von" :key="id" :user-id="id" /></div>
-              <div class="infos">
-                <span v-if="chance(m) != null" class="merkmal chance" :style="{ '--farbe': seltenheitFuer(chance(m)).farbe }" :title="`${seltenheitFuer(chance(m)).name}: so wahrscheinlich zieht ihn die Kiste`">
-                  <Icon name="kiste" :size="12" /> {{ Math.round(chance(m) * 100) }} %
-                </span>
-                <span v-if="prognosen[m.id]" class="merkmal prognose" :title="prognoseTitel(prognosen[m.id])">
-                  Für {{ prognoseFuer === 'dabei' ? 'euch heute' : 'euch' }} ≈ {{ dezimal(prognosen[m.id].wert) }} ★
-                </span>
-                <span v-if="anbieter[m.id]" class="merkmal weg" :class="{ unser: anbieter[m.id].bei.length }">
-                  <img v-if="anbieter[m.id].logo" :src="anbieter[m.id].logo" alt="" />{{ wegText(anbieter[m.id]) }}
-                </span>
+          </div>
+
+          <p v-if="app.me && vorschlaege.length" class="muted small-text veto-hint">
+            Jede Person hat ein <strong>Veto</strong>: Filme mit Veto kommen nicht in die Kiste.
+          </p>
+          <div v-if="loading" class="list">
+            <div v-for="i in 3" :key="i" class="skeleton" style="height: 86px"></div>
+          </div>
+          <div v-else-if="!vorschlaege.length" class="empty">
+            <strong>Noch keine Vorschläge</strong>
+            Bei jedem Film gibt es den <Icon name="hand" :size="14" />-Knopf.
+            <div style="margin-top: 0.8rem"><button class="small" @click="navigate('finden')">Filme finden</button></div>
+          </div>
+          <ol v-else class="list">
+            <li v-for="(m, i) in vorschlaege" :key="m.id" class="sugg" :class="{ vetoed: m.veto_von.length }">
+              <span class="rank">{{ i + 1 }}</span>
+              <button class="thumb" :aria-label="`${m.title} – Details`" @click="ui.open(m)">
+                <Poster :movie="m" :title="false" />
+              </button>
+              <div class="what">
+                <button class="linklike" @click="ui.open(m)">{{ m.title }}</button>
+                <div class="muted small-text">{{ m.year }} · ★ {{ dezimal(m.vote_average) }}</div>
+                <div class="avatars"><UserAvatar v-for="id in m.von" :key="id" :user-id="id" /></div>
+                <div class="infos">
+                  <span v-if="chance(m) != null" class="merkmal chance" :style="{ '--farbe': seltenheitFuer(chance(m)).farbe }" :title="`${seltenheitFuer(chance(m)).name}: so wahrscheinlich zieht ihn die Kiste`">
+                    <Icon name="kiste" :size="12" /> {{ Math.round(chance(m) * 100) }} %
+                  </span>
+                  <span v-if="prognosen[m.id]" class="merkmal prognose" :title="prognoseTitel(prognosen[m.id])">
+                    Für {{ prognoseFuer === 'dabei' ? 'euch heute' : 'euch' }} ≈ {{ dezimal(prognosen[m.id].wert) }} ★
+                  </span>
+                  <span v-if="anbieter[m.id]" class="merkmal weg" :class="{ unser: anbieter[m.id].bei.length }">
+                    <img v-if="anbieter[m.id].logo" :src="anbieter[m.id].logo" alt="" />{{ wegText(anbieter[m.id]) }}
+                  </span>
+                </div>
+                <div v-if="m.veto_von.length" class="veto-info"><Icon name="veto" :size="13" /> Veto von {{ namen(m.veto_von) }}</div>
               </div>
-              <div v-if="m.veto_von.length" class="veto-info"><Icon name="veto" :size="13" /> Veto von {{ namen(m.veto_von) }}</div>
-            </div>
-            <div v-if="app.me" class="buttons">
-              <button class="small" :class="{ on: meinVorschlag(m) }" @click="toggle(m)">
-                <Icon name="hand" :size="14" /> {{ meinVorschlag(m) ? 'Zurückziehen' : '+1' }}
-              </button>
-              <button
-                class="small ghost veto"
-                :class="{ on: meinVeto(m) }"
-                :aria-pressed="meinVeto(m)"
-                :title="meinVeto(m) ? 'Veto zurücknehmen' : vetoVerbraucht ? 'Dein Veto hierher verschieben' : 'Nicht mit mir – der Film kommt nicht in die Kiste'"
-                @click="veto(m)"
-              >
-                <Icon name="veto" :size="14" /> {{ meinVeto(m) ? 'Veto zurück' : 'Veto' }}
-              </button>
-            </div>
-          </li>
-        </ol>
+              <div v-if="app.me" class="buttons">
+                <button class="small" :class="{ on: meinVorschlag(m) }" @click="toggle(m)">
+                  <Icon name="hand" :size="14" /> {{ meinVorschlag(m) ? 'Zurückziehen' : '+1' }}
+                </button>
+                <button
+                  class="small ghost veto"
+                  :class="{ on: meinVeto(m) }"
+                  :aria-pressed="meinVeto(m)"
+                  :title="meinVeto(m) ? 'Veto zurücknehmen' : vetoVerbraucht ? 'Dein Veto hierher verschieben' : 'Nicht mit mir – der Film kommt nicht in die Kiste'"
+                  @click="veto(m)"
+                >
+                  <Icon name="veto" :size="14" /> {{ meinVeto(m) ? 'Veto zurück' : 'Veto' }}
+                </button>
+              </div>
+            </li>
+          </ol>
 
-        <h2 class="section-title">
-          Aktivität
-          <span v-if="neueEvents.length && zuletzt" class="neu-zahl">{{ neueEvents.length }} neu seit deinem letzten Besuch</span>
-        </h2>
-        <ul v-if="events.length" class="feed">
-          <li v-for="(e, i) in sichtbareEvents" :key="i" :class="{ neu: istNeu(e) }">
-            <span>{{ EVENT_TEXT[e.typ](e) }}</span>
-            <time class="muted" :datetime="e.at">{{ vorWann(e.at) }}</time>
-          </li>
-        </ul>
-        <p v-else class="muted">Hier passiert noch nichts.</p>
-        <button v-if="events.length > sichtbareEvents.length" class="ghost small mehr" @click="alleZeigen = true">
-          Ältere Aktivität ({{ events.length - sichtbareEvents.length }})
-        </button>
-        <button v-else-if="alleZeigen && events.length > 3" class="ghost small mehr" @click="alleZeigen = false">Weniger zeigen</button>
-      </section>
+        </section>
+        <aside class="side">
+          <div class="panel wheelbox">
+            <h3>Filmabend-Kiste</h3>
+            <template v-if="pool.length">
+              <p class="muted small-text">
+                {{ pool.length }} {{ pool.length === 1 ? 'Film' : 'Filme' }} aus {{ poolQuelle }}.
+                <template v-if="vorschlaege.length">Die Chancen stehen bei den Vorschlägen – je mehr Stimmen, desto größer.</template>
+                <template v-else>Je seltener die Farbe, desto unwahrscheinlicher.</template>
+              </p>
+              <KistenOeffnung :pool="pool" :kompakt="vorschlaege.length > 0" />
+            </template>
+            <p v-else-if="vorschlaege.length" class="muted">Gegen alle Vorschläge gibt es ein Veto – schlagt noch etwas vor.</p>
+            <p v-else class="muted">Sobald es Vorschläge (oder Filme auf der Merkliste) gibt, kann die Kiste geöffnet werden.</p>
 
-      <aside class="side">
-        <div class="panel wheelbox">
-          <h2 class="section-title" style="margin-top: 0">Filmabend-Kiste</h2>
-          <template v-if="pool.length">
-            <p class="muted small-text">
-              {{ pool.length }} {{ pool.length === 1 ? 'Film' : 'Filme' }} aus {{ poolQuelle }}.
-              <template v-if="vorschlaege.length">Die Chancen stehen bei den Vorschlägen – je mehr Stimmen, desto größer.</template>
-              <template v-else>Je seltener die Farbe, desto unwahrscheinlicher.</template>
-            </p>
-            <KistenOeffnung :pool="pool" :kompakt="vorschlaege.length > 0" />
-          </template>
-          <p v-else-if="vorschlaege.length" class="muted">Gegen alle Vorschläge gibt es ein Veto – schlagt noch etwas vor.</p>
-          <p v-else class="muted">Sobald es Vorschläge (oder Filme auf der Merkliste) gibt, kann die Kiste geöffnet werden.</p>
-
-          <div v-if="gewinner && !kiste.buehne" class="winner" role="status">
-            <span class="muted small-text">Film des Abends<template v-if="app.userById(kiste.aktuell.von)"> · aus der Kiste von {{ app.userById(kiste.aktuell.von).name }}</template></span>
-            <strong>{{ gewinner.title }}</strong>
-            <div class="row">
-              <button class="small" @click="ui.open(gewinner)">Details</button>
-              <button v-if="app.me" class="small primary" @click="gewinnerGesehen"><Icon name="gesehen" :size="14" /> Geschaut</button>
-              <button v-if="kiste.darfOeffnen" class="ghost small" @click="kiste.zuruecknehmen()">Zurücknehmen</button>
+            <div v-if="gewinner && !kiste.buehne" class="winner" role="status">
+              <span class="muted small-text">Film des Abends<template v-if="app.userById(kiste.aktuell.von)"> · aus der Kiste von {{ app.userById(kiste.aktuell.von).name }}</template></span>
+              <strong>{{ gewinner.title }}</strong>
+              <div class="row">
+                <button class="small" @click="ui.open(gewinner)">Details</button>
+                <button v-if="app.me" class="small primary" @click="gewinnerGesehen"><Icon name="gesehen" :size="14" /> Geschaut</button>
+                <button v-if="kiste.darfOeffnen" class="ghost small" @click="kiste.zuruecknehmen()">Zurücknehmen</button>
+              </div>
             </div>
           </div>
-        </div>
-        <Erinnerungen v-if="erinnerungen.length" :erinnerungen="erinnerungen" />
-        <InfoCard />
-      </aside>
-    </div>
+        </aside>
+      </div>
+    </section>
+
+    <footer class="fuss" :class="{ zwei: erinnerungen.length }">
+      <InfoCard />
+      <Erinnerungen v-if="erinnerungen.length" :erinnerungen="erinnerungen" />
+    </footer>
   </div>
 </template>
 
@@ -393,9 +335,6 @@ const EVENT_TEXT = {
 .merkmal.prognose { color: var(--gold); border-color: color-mix(in srgb, var(--gold) 45%, transparent); }
 .merkmal.weg.unser { color: var(--ok); border-color: color-mix(in srgb, var(--ok) 45%, transparent); }
 .sugg.vetoed .infos { display: none; }
-.neu-zahl { margin-left: 0.6rem; text-transform: none; letter-spacing: 0; color: var(--accent); font-size: 0.75rem; }
-.feed li.neu span::before { content: ''; display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--accent); margin-right: 0.5rem; vertical-align: middle; }
-.mehr { margin-top: 0.4rem; }
 .buttons { display: flex; flex-direction: column; gap: 0.3rem; align-items: stretch; }
 .veto.on { color: #fff; }
 .sugg { display: flex; align-items: center; gap: 0.9rem; background: var(--bg-soft); border: 1px solid var(--line); border-radius: var(--radius); padding: 0.6rem 0.9rem 0.6rem 0.6rem; }
@@ -408,11 +347,20 @@ const EVENT_TEXT = {
 .small-text { font-size: 0.8rem; }
 .avatars .avatar { width: 22px; height: 22px; font-size: 0.6rem; }
 .side { min-width: 0; }
+/* The page in three parts: the next evening, what we watch, and the extras at the foot. */
+.teil { margin-top: 2.2rem; }
+.teil-kopf { display: flex; align-items: baseline; gap: 0.4rem 1rem; flex-wrap: wrap; margin-bottom: 1rem; padding-bottom: 0.7rem; border-bottom: 1px solid var(--line); }
+.teil-kopf h2 { margin: 0; font-size: 1.3rem; letter-spacing: -0.01em; }
+.teil-kopf p { margin: 0; font-size: 0.9rem; }
+h3 { margin: 0 0 0.6rem; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); font-weight: 600; }
+.unterkopf h3 { margin: 0; }
+.unterkopf { margin-bottom: 0.6rem; }
+.fuss { margin-top: 2.6rem; padding-top: 1.2rem; border-top: 1px solid var(--line); display: grid; gap: 1.2rem; }
+.fuss.zwei { grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); align-items: start; }
+.fuss :deep(.info) { margin-top: 0; }
+@media (max-width: 900px) { .fuss.zwei { grid-template-columns: 1fr; } }
 .winner { margin-top: 1.2rem; border-top: 1px solid var(--line); padding-top: 1rem; display: flex; flex-direction: column; gap: 0.4rem; text-align: center; align-items: center; }
 .winner strong { font-size: 1.3rem; }
-.feed { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; }
-.feed li { display: flex; gap: 1rem; justify-content: space-between; padding: 0.55rem 0; border-bottom: 1px solid var(--line); font-size: 0.88rem; }
-.feed time { flex: none; font-size: 0.78rem; }
 @media (max-width: 1100px) {
   .layout { grid-template-columns: 1fr; }
   .side { order: -1; }

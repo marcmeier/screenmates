@@ -1,7 +1,7 @@
 import { execFileSync, spawn } from 'node:child_process'
 import { existsSync } from 'node:fs'
 import { resolve } from 'node:path'
-import { chromium, expect, test } from '@playwright/test'
+import { chromium, devices, expect, test } from '@playwright/test'
 import { ADMIN_SITZUNG, KINO } from '../playwright.config.js'
 
 // A host shares "their screen", two friends watch live, the host ends the show
@@ -239,6 +239,9 @@ test('without element full screen (iPhone) the picture covers the screen itself'
   await bild.hover()
   await viewer.getByRole('button', { name: 'Vollbild', exact: true }).click()
   await expect(bild).toHaveClass(/ersatz/)
+  // One way out: the round button at the top, not a second one in the bar.
+  await expect(viewer.getByRole('button', { name: 'Vollbild verlassen' })).toHaveCount(0)
+  await expect(viewer.getByRole('button', { name: 'Vollbild schließen' })).toHaveCount(1)
   const groesse = await bild.boundingBox()
   const fenster = viewer.viewportSize()
   expect([Math.round(groesse.width), Math.round(groesse.height)]).toEqual([fenster.width, fenster.height])
@@ -251,6 +254,20 @@ test('without element full screen (iPhone) the picture covers the screen itself'
   await viewer.getByRole('button', { name: 'Vollbild schließen' }).click()
   await expect(bild).not.toHaveClass(/ersatz/)
   await viewer.setViewportSize({ width: 1400, height: 900 })
+})
+
+test('on a touch screen the bar shows on a tap and fades again', async ({ browser }) => {
+  const ctx = await browser.newContext({ ...devices['iPhone 13'], storageState: await viewer.context().storageState() })
+  const handy = await ctx.newPage()
+  await handy.goto(viewer.url().split('#')[0] + '#/kino')
+  const leiste = handy.locator('.screen .controls')
+  const sichtbar = () => leiste.evaluate((el) => getComputedStyle(el).opacity)
+  await expect.poll(sichtbar, { timeout: 8000 }).toBe('0') // fades by itself
+  await handy.locator('.screen').tap({ position: { x: 20, y: 20 } })
+  await expect.poll(sichtbar).toBe('1')
+  await handy.locator('.screen').tap({ position: { x: 20, y: 20 } }) // a second tap hides it at once
+  await expect.poll(sichtbar).toBe('0')
+  await ctx.close()
 })
 
 test('the audience chats, and reactions fly across the picture', async () => {

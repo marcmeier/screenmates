@@ -1,5 +1,31 @@
 # Changelog
 
+## 0.11.0 – 2026-10-06
+
+**Aufgeräumt:** Die Filmabend-Seite ist in klare Teile gegliedert, die Neuigkeiten haben ihre eigene
+Seite, und im Kino gehören Bild und Chat wieder die Bühne.
+
+### Geändert
+- **Filmabend in drei Teilen:** oben der nächste Abend (Termin, wer dabei ist, deine Antwort), darunter
+  abgesetzt **„Was schauen wir?“** mit Vorschlägen und Kiste, ganz unten als Fuß die Hausregeln & Infos
+  (und „Heute vor einem Jahr“).
+- **Neuigkeiten** als eigene Seite hinter der Glocke: „Für dich“ (deine Benachrichtigungen) und „In der
+  Gruppe“ (die Aktivität, Neues seit deinem letzten Besuch markiert). Die Aktivität ist dafür von der
+  Filmabend-Seite verschwunden.
+- **Senden im Kino entschlackt:** eine Zeile mit „Was läuft?“, Film, Quelle und Start; Qualität, Inhalt
+  und Ton unter „Einstellungen“, die OBS-Anleitung nur bei OBS. Während der Übertragung nur noch
+  „live“, Pause und Beenden.
+- **Der Film aus der Kiste kommt ins Kino:** Hat die Kiste gezogen und ist im Kino noch nichts
+  eingetragen, steht der Film des Abends gleich als Programm drin („aus der Kiste“).
+- **Kino auf dem Handy:** Steuerleiste und Schließen-Knopf erscheinen beim Antippen und blenden nach
+  drei Sekunden aus; im iPhone-Vollbild gibt es nur noch einen Schließen-Knopf (oben rechts).
+
+### Behoben
+- **Kein Ton bei der Kiste auf dem iPhone:** Safari spielt nur Ton, der während eines Antippens
+  freigeschaltet wurde. Der Ton wird jetzt beim ersten Antippen irgendwo in der App freigeschaltet und
+  wiederverwendet, klingt auch bei aktivem Stummschalter, und das Lautsprecher-Symbol holt blockierten
+  Ton zurück („Ton antippen“) statt ihn abzuschalten.
+
 ## 0.10.2 – 2026-10-06
 
 ### Geändert
