@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.9.1 – 2026-10-06
+
+### Behoben
+- **Push-Nachrichten kamen nicht an.** Die Kontaktadresse für die Push-Dienste
+  (`https://github.com/marcmeier/screenmates`) hatte einen Pfad, den die Signatur nicht erlaubt –
+  jede Zustellung scheiterte. Jetzt geht nur der Ursprung raus (`https://github.com`), ebenso bei
+  einer eigenen `PUSH_KONTAKT`-Adresse. Ein Test signiert und verschlüsselt jetzt echt.
+- **„Test schicken“** wartet auf die Antwort des Push-Dienstes und meldet, ob die Nachricht wirklich
+  zugestellt wurde (vorher hieß es „geschickt“, sobald sie in der Warteschlange lag).
+- Findet der Browser seinen Push-Dienst nicht (Brave ohne Google-Push, Chromium-Builds ohne
+  Google-Dienste), erklärt screenmates jetzt auf Deutsch, was zu tun ist, statt „Registration failed“.
+
 ## 0.9.0 – 2026-10-06
 
 **Gemeinsam planen, gemeinsam erinnern:** Den Termin findet die Gruppe per Umfrage, jede Person

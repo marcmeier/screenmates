@@ -75,7 +75,7 @@ def test_at_most_ten_devices_the_oldest_goes(client):
     assert f"{PUSHDIENST}g0" not in endpoints and f"{PUSHDIENST}g11" in endpoints
 
 
-def test_choices_and_the_test_message(client):
+def test_choices_and_the_test_message(client, monkeypatch):
     login(client, "marc")
     assert client.post("/api/push/test").status_code == 409  # no device yet
     geraet(client, "marc")
@@ -84,9 +84,13 @@ def test_choices_and_the_test_message(client):
     r = client.put("/api/push/arten", json={"arten": {"kino": False}}).json()
     assert {a["key"]: a["an"] for a in r["arten"]}["kino"] is False
     assert client.put("/api/push/arten", json={"arten": {"quatsch": True}}).status_code == 422
-    gesendet.clear()
-    assert client.post("/api/push/test").json() == {"geraete": 1}
-    assert gesendet[0].daten["tag"] == "test"
+    # The test message is delivered right away, and its result is reported.
+    zugestellt = []
+    monkeypatch.setattr(push, "zustellen", lambda z: zugestellt.append(z) or True)
+    assert client.post("/api/push/test").json() == {"geraete": 1, "von": 1}
+    assert zugestellt[0].daten["tag"] == "test"
+    monkeypatch.setattr(push, "zustellen", lambda z: False)
+    assert client.post("/api/push/test").status_code == 502
 
 
 def test_a_new_date_tells_everyone_else_who_wants_it(runde):
@@ -174,6 +178,61 @@ def test_a_date_set_shortly_before_needs_no_extra_reminder(runde):
         assert push.faellige_erinnerungen(s) == 0
 
 
+@pytest.mark.parametrize(
+    ("einstellung", "gesendet_als"),
+    [
+        ("https://github.com/marcmeier/screenmates", "https://github.com"),
+        ("https://screenmates.example.org/", "https://screenmates.example.org"),
+        ("mailto:admin@example.org", "mailto:admin@example.org"),
+    ],
+)
+def test_the_contact_is_one_the_push_services_accept(client, monkeypatch, einstellung, gesendet_als):
+    """Signed for real (not mocked): py_vapid refuses a contact URL with a path."""
+    from py_vapid import Vapid
+
+    from app.config import settings
+
+    monkeypatch.setattr(settings, "push_kontakt", einstellung)
+    assert push.kontakt() == gesendet_als
+    with Session(engine) as s:
+        v = Vapid.from_pem(push.privater_schluessel(s).encode())
+    kopf = v.sign({"sub": push.kontakt(), "aud": "https://fcm.googleapis.com"})
+    assert kopf["Authorization"].startswith("vapid t=")
+
+
+def test_delivery_really_builds_the_request(runde, monkeypatch):
+    """The whole pywebpush path (keys, encryption, VAPID); only the HTTP post is caught."""
+    import requests
+    from cryptography.hazmat.primitives import serialization
+    from cryptography.hazmat.primitives.asymmetric import ec
+
+    browser = ec.generate_private_key(ec.SECP256R1()).public_key()
+    p256dh = (
+        base64.urlsafe_b64encode(
+            browser.public_bytes(serialization.Encoding.X962, serialization.PublicFormat.UncompressedPoint)
+        )
+        .rstrip(b"=")
+        .decode()
+    )
+    auth = base64.urlsafe_b64encode(b"0123456789abcdef").rstrip(b"=").decode()
+    gepostet = []
+
+    def post(self, url, data=None, headers=None, timeout=None, **kw):
+        gepostet.append((url, headers))
+        r = requests.Response()
+        r.status_code = 201
+        return r
+
+    monkeypatch.setattr(requests.Session, "post", post)
+    monkeypatch.setattr(requests, "post", lambda url, **kw: post(None, url, **kw))
+    with Session(engine) as s:
+        schluessel = push.privater_schluessel(s)
+    push.zustellen(push.Zustellung(f"{PUSHDIENST}x", p256dh, auth, {"titel": "Hallo"}, 60, False, schluessel))
+    ((url, headers),) = gepostet
+    assert url == f"{PUSHDIENST}x"
+    assert headers["Authorization"].startswith("vapid t=") and headers["Content-Encoding"] == "aes128gcm"
+
+
 class _Antwort:
     def __init__(self, status):
         self.status_code = status
@@ -192,7 +251,7 @@ def test_delivery_signs_encrypts_and_forgets_gone_devices(runde, monkeypatch):
     (info, daten), kw = aufrufe[0]
     assert info == {"endpoint": z.endpoint, "keys": {"p256dh": z.p256dh, "auth": z.auth}}
     assert json.loads(daten) == {"titel": "Hallo"}
-    assert kw["vapid_claims"] == {"sub": "https://github.com/marcmeier/screenmates"}
+    assert kw["vapid_claims"] == {"sub": "https://github.com"}
     assert (kw["ttl"], kw["headers"]) == (60, {"Urgency": "high"})
 
     def weg(*a, **kw):
