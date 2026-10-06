@@ -21,6 +21,8 @@ export const useKino = defineStore('kino', {
     zuschauer: [],
     publikum: [],
     pause: null, // since when (ms) the host called a break
+    quelle: null, // 'browser' | 'obs' – where the show on air comes from
+    sender: null, // who sends it (user id)
     localStream: null, // what this browser is sending, for the host's preview
     sendStats: null, // what the encoder actually produces, refreshed every 2 s
   }),

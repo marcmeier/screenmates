@@ -99,11 +99,25 @@ def test_publishing_is_host_or_obs_key_only(client, browser, kino_on):
     assert client.post("/api/kino/whip", content=SDP).status_code == 403
     become_admin(client)
     assert client.post("/api/kino/whip", content=SDP).status_code == 201
+    assert kino._saele[1].quelle == "browser"
 
     key = client.get("/api/kino/obs").json()["key"]
     obs = browser()  # OBS has no session, only the key
     assert obs.post("/api/kino/whip", content=SDP, headers={"authorization": "Bearer falsch"}).status_code == 403
     assert obs.post("/api/kino/whip", content=SDP, headers={"authorization": f"Bearer {key}"}).status_code == 201
+    assert kino._saele[1].quelle == "obs"
+
+
+@respx.mock
+def test_the_status_says_where_the_show_comes_from(client, kino_on):
+    respx.post(f"{MTX}/kino-1/whip").mock(
+        return_value=httpx.Response(201, content=b"a", headers={"location": "/kino-1/whip/x1"})
+    )
+    live()
+    me = login(client, "marc", admin=True)
+    client.post("/api/kino/whip", content=SDP)  # from this browser …
+    r = client.get("/api/kino").json()  # … seen from any device of the same person
+    assert (r["quelle"], r["sender"]) == ("browser", me["id"])
 
 
 def test_obs_key_is_host_only_and_rotates(client, browser, kino_on):

@@ -1,6 +1,7 @@
 <script setup>
 import { computed, onMounted, ref, watch } from 'vue'
 import { api } from '../../api'
+import { useApp } from '../../stores/app'
 import { useKino } from '../../stores/kino'
 import { useUi } from '../../stores/ui'
 import { INHALT, QUALITAET } from '../../webrtc'
@@ -93,6 +94,16 @@ async function kopiere(text, was) {
   }
 }
 
+// Who is on air: this browser, the same person on another device, someone else's browser, or OBS.
+const app = useApp()
+const liveText = computed(() => {
+  if (kino.sende) return 'Du bist live'
+  if (kino.quelle === 'obs') return 'Live über OBS'
+  if (kino.sender && kino.sender === app.me?.id) return 'Du sendest von einem anderen Gerät'
+  const wer = app.userById(kino.sender)?.name
+  return wer ? `${wer} sendet aus dem Browser` : 'Live'
+})
+
 // "Kurze Pause": a sign over everyone's picture until the host goes on.
 async function pause() {
   await api.post('/api/kino/pause', { an: !kino.pause })
@@ -117,8 +128,7 @@ async function beenden() {
 
     <div v-if="kino.live" class="onair">
       <span class="live-dot"></span>
-      <strong>Du bist live</strong>
-      <span v-if="!kino.sende" class="muted">(über OBS)</span>
+      <strong>{{ liveText }}</strong>
       <span v-if="statsZeile" class="stats">{{ statsZeile }}</span>
       <span class="spacer"></span>
       <button :class="{ on: kino.pause }" @click="pause">{{ kino.pause ? '▶ Weiter geht’s' : '⏸ Pause ansagen' }}</button>
