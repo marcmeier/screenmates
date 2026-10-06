@@ -9,6 +9,10 @@
   UDP-Empfangspuffer (Linux-Standard 208 KB) bei 1080p-Schlüsselbildern überlief. MediaMTX lässt
   sich jetzt mit `MTX_UDPREADBUFFERSIZE` einen größeren Puffer geben (README → Kino); auf midgard
   sind es 8 MB.
+- **Vollbild auf dem iPhone:** Safari kann dort nur den eigenen Videoplayer bildschirmfüllend
+  zeigen. Jetzt legt sich das Kino-Bild selbst über den ganzen Bildschirm – in der App auf dem
+  Home-Bildschirm wie echtes Vollbild, mit Reaktionen, Pause und Chat-Einblendungen. Doppeltippen
+  zoomt die Seite nicht mehr.
 - Die Kino-Abfrage beim Medienserver erzeugt kein „path not found“ mehr in dessen Log, wenn nichts
   läuft (tausende Zeilen am Tag, zwischen denen echte Warnungen untergingen).
 

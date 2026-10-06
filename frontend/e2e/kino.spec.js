@@ -226,6 +226,20 @@ test('friends see it everywhere and watch in sync', async () => {
   await expect(host.locator('.viewers')).toContainText('2 schauen', { timeout: 15_000 })
 })
 
+test('without element full screen (iPhone) the picture covers the screen itself', async () => {
+  // Safari on the iPhone has no requestFullscreen for elements.
+  await viewer.evaluate(() => (Element.prototype.requestFullscreen = undefined))
+  const bild = viewer.locator('.screen')
+  await bild.hover()
+  await viewer.getByRole('button', { name: 'Vollbild', exact: true }).click()
+  await expect(bild).toHaveClass(/ersatz/)
+  const groesse = await bild.boundingBox()
+  const fenster = viewer.viewportSize()
+  expect([Math.round(groesse.width), Math.round(groesse.height)]).toEqual([fenster.width, fenster.height])
+  await viewer.keyboard.press('Escape')
+  await expect(bild).not.toHaveClass(/ersatz/)
+})
+
 test('the audience chats, and reactions fly across the picture', async () => {
   await viewer.getByLabel('Nachricht an alle').fill('Gänsehaut!')
   await viewer.getByLabel('Nachricht an alle').press('Enter')
