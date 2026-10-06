@@ -28,6 +28,7 @@ from .routers import (
     live,
     misc,
     profilbild,
+    reset,
     rueckblick,
     statistik,
     ueber,
@@ -111,6 +112,7 @@ for r in (
     kalender.router,
     push_api.router,
     rueckblick.router,
+    reset.router,
 ):
     app.include_router(r)
 

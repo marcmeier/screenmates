@@ -40,6 +40,8 @@ def client():
     for suffix in ("", "-wal", "-shm"):
         Path(f"{_tmp}/test.db{suffix}").unlink(missing_ok=True)
     shutil.rmtree(f"{_tmp}/media", ignore_errors=True)
+    for backup in Path(_tmp).glob("backup-vor-reset-*.db"):
+        backup.unlink()
     users._fails.clear()
     zugang._fehl_ip.clear()
     zugang._fehl_alle.clear()

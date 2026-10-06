@@ -5,6 +5,7 @@ import { useApp } from '../../stores/app'
 import { useUi } from '../../stores/ui'
 import { vorWann } from '../../format'
 import AdminBereich from '../AdminBereich.vue'
+import Gefahrenzone from '../Gefahrenzone.vue'
 import GruppenVerwaltung from '../GruppenVerwaltung.vue'
 import Icon from '../Icon.vue'
 import KiNutzung from '../KiNutzung.vue'
@@ -72,6 +73,7 @@ async function resetDabei() {
           <p v-else class="notice">Ohne <code>TMDB_API_KEY</code> läuft screenmates auf dem mitgelieferten Seed-Katalog.</p>
         </section>
 
+        <Gefahrenzone />
       </template>
     </template>
   </div>

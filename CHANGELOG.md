@@ -2,6 +2,13 @@
 
 ## 0.9.1 – 2026-10-06
 
+### Neu
+- **Gefahrenzone** in der Verwaltung (nur Server-Admins): Chronik, Filmabend, Kino-Chat, Wünsche,
+  Erfolge sowie Statistik & KI-Protokoll einzeln leeren – oder **„Alles neu“**: zusätzlich alle
+  anderen Namen, Einladungen und Anträge weg, es bleiben der Admin, die Gruppen, der Filmkatalog,
+  die Über-Seite und die Einstellungen. Vorher wird „LÖSCHEN“ eingetippt, und der Server sichert die
+  Datenbank (`backup-vor-reset-<Zeit>.db` neben der Datenbank, die letzten fünf bleiben).
+
 ### Geändert
 - **Kino neu aufgeteilt:** Der Chat steht für alle – auch für den Gastgeber – rechts neben dem Bild,
   mit fester Höhe zum Scrollen. „Senden“ liegt jetzt breit unter dem Bild.

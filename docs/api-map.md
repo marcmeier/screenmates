@@ -168,6 +168,13 @@ Admin *dieser Gruppe* oder Server-Admin. Der Katalog bleibt für alle offen; sei
 
 **F** = darf festlegen: wer die Umfrage gestartet hat, der Gastgeber, ein Admin der Gruppe – oder jeder, solange niemand den Stab hält.
 
+## Gefahrenzone
+
+| Methode | Pfad | Recht | Zweck |
+|---|---|:-:|---|
+| GET | `/admin/reset` | A | Bereiche mit Anzahl (`chronik`, `filmabend`, `kino`, `wuensche`, `erfolge`, `statistik`), `neustart` (andere Namen + Einladungen), vorhandene Sicherungen |
+| POST | `/admin/reset` | A | `bereiche` leeren (für alle Gruppen) oder `["neustart"]`; `bestaetigung` muss `LÖSCHEN` sein. Sichert vorher die Datenbank |
+
 ## Benachrichtigungen
 
 | Methode | Pfad | Recht | Zweck |

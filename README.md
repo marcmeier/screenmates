@@ -139,6 +139,12 @@ docker compose exec screenmates python -m app.cli einladung       # Notfall-Link
 So kommt eine bestehende Installation zu ihrem ersten Admin, und so hilft man sich, wenn sich alle
 Admins ausgesperrt haben.
 
+**Aufräumen:** In der Verwaltung gibt es für Server-Admins eine **Gefahrenzone**: einzelne Bereiche
+(Chronik, Filmabend, Kino-Chat, Wünsche, Erfolge, Statistik) leeren oder mit „Alles neu“ zum
+Werkszustand zurück – nur der eigene Admin-Name, die Gruppen, der Katalog und die Einstellungen
+bleiben. Vor jedem Löschen legt screenmates eine Sicherung der Datenbank daneben
+(`backup-vor-reset-*.db`, die letzten fünf).
+
 ## Kino
 
 Das Kino überträgt per WebRTC über den Medienserver [MediaMTX](https://github.com/bluenviron/mediamtx):

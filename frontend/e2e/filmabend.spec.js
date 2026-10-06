@@ -651,6 +651,23 @@ test('admins rename someone and log them out everywhere', async () => {
   await lena.close()
 })
 
+test('the danger zone clears an area only after typing the word', async () => {
+  await page.goto('/#/verwaltung')
+  const zone = page.getByRole('region', { name: 'Gefahrenzone' })
+  await zone.getByRole('checkbox', { name: /Wünsche & Ideen/ }).check()
+  await zone.getByRole('button', { name: 'Ausgewähltes löschen' }).click()
+  const dialog = page.getByRole('dialog', { name: 'Wirklich löschen?' })
+  const los = dialog.getByRole('button', { name: 'Endgültig löschen' })
+  await expect(los).toBeDisabled()
+  await dialog.getByLabel('Bestätigung').fill('löschen')
+  await los.click()
+  await expect(page.getByText(/Gelöscht – Sicherung: backup-vor-reset-/)).toBeVisible()
+  await page.waitForEvent('load') // the app starts afresh
+  await page.goto('/#/wuensche')
+  await expect(page.locator('main')).not.toContainText('Serien unterstützen')
+  await page.goto('/#/abend')
+})
+
 test('a second group has its own movie night', async () => {
   await nav('Verwaltung')
   await page.getByLabel('Neue Gruppe').fill('Horror-Crew')
