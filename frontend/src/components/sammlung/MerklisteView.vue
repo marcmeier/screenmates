@@ -47,7 +47,7 @@ const sorted = computed(() => {
       </select>
     </div>
 
-    <MovieGrid :movies="sorted" :loading="loading && !movies.length" :failed="failed" :empty-title="$t('merklisteview.dieMerklisteIstLeer')" :empty-text="$t('merklisteview.beiJedemFilmGibt')" @retry="load">
+    <MovieGrid :movies="sorted" :loading="loading && !movies.length" :failed="failed" :empty-title="$t('merklisteview.dieMerklisteIstLeer')" :empty-text="$t('merklisteview.beiJedemFilmGibt')" :empty-link="{ href: '#/finden', label: $t('abendtab.filmeFinden') }" @retry="load">
       <template #card="{ movie }">
         <div v-if="movie.gemerkt_von" class="by"><UserAvatar :user-id="movie.gemerkt_von" /></div>
       </template>

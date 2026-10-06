@@ -227,7 +227,7 @@ test('each suggestion shows its odds in the case; the case itself stays slim', a
     await expect(page.locator('.sugg', { hasText: film }).locator('.chance-text')).toHaveText('50 %')
   }
   await expect(page.getByRole('list', { name: /^Kiste mit/ })).toHaveCount(0)
-  await expect(page.locator('.wheelbox')).toContainText('Die Chancen stehen bei den Vorschlägen')
+  await expect(page.locator('.wheelbox')).toContainText('2 Filme in der Kiste')
 })
 
 test('a practice spin: Escape skips the animation, the reveal names the winner, nothing counts', async () => {
@@ -367,6 +367,7 @@ test('rating: the n-th star gives n stars', async () => {
 })
 
 test('guestbook threads replies', async () => {
+  await page.getByRole('button', { name: 'Ins Gästebuch schreiben' }).click()
   await page.getByLabel('Kommentar').fill('Was für ein Abend!')
   await page.locator('form.add').getByRole('button', { name: 'Senden' }).click()
   await page.getByRole('button', { name: 'Antworten' }).click()
@@ -568,7 +569,9 @@ test('achievements: the unlock pops up, and the showcase shows it', async () => 
   await expect(page.getByRole('heading', { name: 'Marc', exact: true })).toBeVisible()
   await expect(page.locator('.stand')).toContainText('Level 1')
   await expect(page.locator('.kachel', { hasText: 'Sicher ist sicher' })).toHaveClass(/offen/)
-  await expect(page.locator('.kachel', { hasText: '???' }).first()).toBeVisible() // secret ones stay hidden
+  // The catalogue is folded by category; secret ones stay hidden even when opened.
+  await page.locator('details.kategorie', { hasText: 'Geheim' }).locator('summary').click()
+  await expect(page.locator('.kachel', { hasText: '???' }).first()).toBeVisible()
   await page.getByRole('button', { name: 'Meine Vitrine' }).click()
   await page.getByRole('button', { name: 'Gesicht zeigen in die Vitrine' }).click()
   await expect(page.locator('.vitrine')).toContainText('Gesicht zeigen')

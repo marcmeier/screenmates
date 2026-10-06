@@ -31,6 +31,19 @@ const nachKategorie = computed(() =>
   ),
 )
 const ich = computed(() => daten.value?.ich)
+// The three you're closest to – what to do next, before the whole catalogue.
+const alsNaechstes = computed(() => {
+  const i = ich.value
+  if (!i) return []
+  return (daten.value?.katalog || [])
+    .filter((d) => !d.geheim && !i.freigeschaltet[d.key] && (i.fortschritt[d.familie] ?? 0) > 0)
+    .map((d) => ({ d, anteil: Math.min(1, (i.fortschritt[d.familie] ?? 0) / d.ziel) }))
+    .sort((a, b) => b.anteil - a.anteil)
+    .filter((x, n, alle) => alle.findIndex((y) => y.d.familie === x.d.familie) === n) // one per family
+    .slice(0, 3)
+    .map((x) => x.d)
+})
+const geschafft = (k) => k.erfolge.filter((d) => ich.value?.freigeschaltet[d.key]).length
 const levelProzent = computed(() => {
   const i = ich.value
   if (!i) return 0
@@ -152,10 +165,17 @@ const name = (id) => app.userById(id)?.name || t('allg.jemand')
         </div>
       </section>
 
+      <section v-if="alsNaechstes.length" class="panel">
+        <h2>{{ $t('erfolgetab.alsNaechstes') }}</h2>
+        <div class="raster">
+          <ErfolgKachel v-for="d in alsNaechstes" :key="d.key" :erfolg="d" :am="null" :wert="ich?.fortschritt[d.familie] ?? null" />
+        </div>
+      </section>
+
       <section v-if="daten?.neueste.length" class="panel">
         <h2>{{ $t('erfolgetab.zuletztFreigeschaltet') }}</h2>
         <ul class="feed">
-          <li v-for="(n, i) in daten.neueste" :key="i">
+          <li v-for="(n, i) in daten.neueste.slice(0, 5)" :key="i">
             <UserAvatar :user-id="n.user_id" />
             <span class="was">
               <a :href="`#/profil/person/${n.user_id}`">{{ name(n.user_id) }}</a>:
@@ -166,8 +186,12 @@ const name = (id) => app.userById(id)?.name || t('allg.jemand')
         </ul>
       </section>
 
-      <section v-for="k in nachKategorie" :key="k.name" class="panel">
-        <h2>{{ $t(`erfolgetab.kat.${k.name}`) }}</h2>
+      <!-- The whole catalogue, one folded box per category. -->
+      <details v-for="k in nachKategorie" :key="k.name" class="panel kategorie">
+        <summary>
+          <h2>{{ $t(`erfolgetab.kat.${k.name}`) }}</h2>
+          <span class="muted">{{ geschafft(k) }}/{{ k.erfolge.length }}</span>
+        </summary>
         <div class="raster">
           <ErfolgKachel
             v-for="d in k.erfolge"
@@ -177,7 +201,7 @@ const name = (id) => app.userById(id)?.name || t('allg.jemand')
             :wert="ich?.fortschritt[d.familie] ?? null"
           />
         </div>
-      </section>
+      </details>
     </template>
   </div>
 </template>
@@ -229,4 +253,10 @@ h2 { margin: 0 0 1rem; font-size: 1.1rem; }
 .feed li .was { flex: 1; }
 .feed a { color: var(--text); }
 .feed time { font-size: 0.76rem; }
+.kategorie summary { display: flex; align-items: center; gap: 0.6rem; cursor: pointer; list-style: none; }
+.kategorie summary::-webkit-details-marker { display: none; }
+.kategorie summary h2 { margin: 0; }
+.kategorie summary::after { content: '›'; margin-left: auto; font-size: 1.3rem; color: var(--muted); transition: transform 0.15s; }
+.kategorie[open] summary::after { transform: rotate(90deg); }
+.kategorie[open] summary { margin-bottom: 0.9rem; }
 </style>

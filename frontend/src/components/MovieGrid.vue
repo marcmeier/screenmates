@@ -9,6 +9,7 @@ const props = defineProps({
   more: Boolean,
   emptyTitle: { type: String, default: null },
   emptyText: { type: String, default: '' },
+  emptyLink: { type: Object, default: null }, // { href, label }: one way on from an empty list
 })
 const emit = defineEmits(['more', 'retry'])
 
@@ -55,6 +56,7 @@ onBeforeUnmount(() => beobachter?.disconnect())
     <div v-else-if="!movies.length" class="empty">
       <strong>{{ emptyTitle ?? $t('moviegrid.nichtsGefunden') }}</strong>
       <span v-if="emptyText">{{ emptyText }}</span>
+      <a v-if="emptyLink" :href="emptyLink.href" class="button small leer-los">{{ emptyLink.label }}</a>
     </div>
 
     <div v-if="more && !loading" ref="knopf" class="more">
@@ -65,4 +67,5 @@ onBeforeUnmount(() => beobachter?.disconnect())
 
 <style scoped>
 .more { display: flex; justify-content: center; margin-top: 1.8rem; }
+.leer-los { margin-top: 0.8rem; }
 </style>

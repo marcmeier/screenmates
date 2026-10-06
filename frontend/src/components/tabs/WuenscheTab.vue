@@ -64,7 +64,8 @@ async function removeNote(f, n) {
 }
 
 const mine = (o) => app.me && o.user_id === app.me.id
-const offen = computed(() => features.value.filter((f) => !f.done))
+const offen = computed(() => features.value.filter((f) => !f.done).sort((a, b) => b.votes - a.votes))
+const erledigtOffen = ref(false)
 const erledigt = computed(() => features.value.filter((f) => f.done))
 </script>
 
@@ -86,8 +87,11 @@ const erledigt = computed(() => features.value.filter((f) => f.done))
     <div v-else-if="!features.length" class="empty"><strong>{{ $t('wuenschetab.nochKeineWuensche') }}</strong>{{ $t('wuenschetab.derErsteWunschIst') }}</div>
 
     <template v-for="[title, list] in [['offen', offen], ['erledigt', erledigt]]" :key="title">
-      <h2 v-if="list.length" class="section-title">{{ $t(`wuenschetab.gruppe.${title}`) }} · {{ list.length }}</h2>
-      <ul class="list">
+      <h2 v-if="list.length && title === 'offen'" class="section-title">{{ $t(`wuenschetab.gruppe.${title}`) }} · {{ list.length }}</h2>
+      <button v-else-if="list.length" class="ghost section-title umschalten" :aria-expanded="erledigtOffen" @click="erledigtOffen = !erledigtOffen">
+        {{ $t(`wuenschetab.gruppe.${title}`) }} · {{ list.length }} <span class="pfeil" :class="{ auf: erledigtOffen }">›</span>
+      </button>
+      <ul v-if="title === 'offen' || erledigtOffen" class="list">
         <li v-for="f in list" :key="f.id" class="wish" :class="{ done: f.done }">
           <button
             class="vote"
@@ -164,4 +168,7 @@ const erledigt = computed(() => features.value.filter((f) => f.done))
 .note { display: flex; align-items: center; gap: 0.5rem; font-size: 0.88rem; padding: 0.25rem 0; }
 .small-add { margin: 0.5rem 0 0; }
 .actions { display: flex; gap: 0.1rem; }
+.umschalten { display: inline-flex; align-items: center; gap: 0.4rem; border: none; padding: 0; background: none; }
+.umschalten .pfeil { transition: transform 0.15s; }
+.umschalten .pfeil.auf { transform: rotate(90deg); }
 </style>

@@ -158,7 +158,6 @@ async function gewinnerGesehen() {
   kiste.aktuell = null
 }
 
-const poolQuelle = computed(() => (vorschlaege.value.length ? 'vorschlaege' : 'merkliste'))
 </script>
 
 <template>
@@ -222,14 +221,15 @@ const poolQuelle = computed(() => (vorschlaege.value.length ? 'vorschlaege' : 'm
       <div class="layout">
         <section>
           <div class="row unterkopf">
-            <h3>{{ $t('abendtab.vorschlaege') }}<Erklaerung :label="$t('abendtab.vorschlaege')" :text="$t('erklaerung.vorschlaege')" /></h3>
+            <h3>{{ $t('abendtab.vorschlaege') }}<span v-if="vorschlaege.length" class="anzahl"> · {{ vorschlaege.length }}</span><Erklaerung :label="$t('abendtab.vorschlaege')" :text="$t('erklaerung.vorschlaege')" /></h3>
             <span class="spacer"></span>
             <button v-if="app.gruppenAdmin && vorschlaege.length" class="ghost small danger" @click="allesLeeren">
               <Icon name="muell" :size="14" /> {{ $t('abendtab.alleLeeren') }}
             </button>
           </div>
 
-          <p v-if="app.me && vorschlaege.length" class="muted small-text veto-hint">
+          <!-- The veto rule only while it still matters to you. -->
+          <p v-if="app.me && vorschlaege.length && !vetoVerbraucht" class="muted small-text veto-hint">
             {{ $t('abendtab.jedePersonHatEin') }} <strong>{{ $t('abendtab.veto') }}</strong>{{ $t('abendtab.filmeMitVetoKommen') }}<Erklaerung :label="$t('abendtab.veto')" :text="$t('erklaerung.veto')" />
           </p>
           <div v-if="loading" class="list">
@@ -295,9 +295,8 @@ const poolQuelle = computed(() => (vorschlaege.value.length ? 'vorschlaege' : 'm
             <h3>{{ $t('abendtab.filmabendKiste') }}<Erklaerung :label="$t('abendtab.filmabendKiste')" :text="$t('erklaerung.kiste')" /></h3>
             <template v-if="pool.length">
               <p class="muted small-text">
-                {{ $t(`abendtab.poolAus.${poolQuelle}`, { n: pool.length }, pool.length) }}
-                <template v-if="vorschlaege.length">{{ $t('abendtab.dieChancenStehenBei') }}</template>
-                <template v-else>{{ $t('abendtab.jeSeltenerDieFarbe') }}</template>
+                <template v-if="vorschlaege.length">{{ $t('abendtab.inDerKiste', { n: pool.length }, pool.length) }}</template>
+                <template v-else>{{ $t('abendtab.poolAus.merkliste', { n: pool.length }, pool.length) }}</template>
               </p>
               <KistenOeffnung :pool="pool" :kompakt="vorschlaege.length > 0" />
             </template>
@@ -349,6 +348,7 @@ const poolQuelle = computed(() => (vorschlaege.value.length ? 'vorschlaege' : 'm
 .layout { display: grid; grid-template-columns: minmax(0, 1fr) 380px; gap: 2rem; align-items: start; }
 .list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 0.6rem; }
 .veto-hint { margin: -0.4rem 0 0.8rem; }
+.anzahl { color: var(--text); }
 .sugg.vetoed { opacity: 0.55; }
 .sugg.vetoed .linklike { text-decoration: line-through; }
 .veto-info { display: inline-flex; align-items: center; gap: 4px; font-size: 0.78rem; color: var(--accent); }
@@ -407,7 +407,7 @@ h3 { margin: 0 0 0.6rem; font-size: 0.78rem; text-transform: uppercase; letter-s
 .winner { margin-top: 1.2rem; border-top: 1px solid var(--line); padding-top: 1rem; display: flex; flex-direction: column; gap: 0.4rem; text-align: center; align-items: center; }
 .winner strong { font-size: 1.3rem; }
 @media (max-width: 1100px) {
+  /* One column: first what's in the running, then the case below it. */
   .layout { grid-template-columns: minmax(0, 1fr); }
-  .side { order: -1; }
 }
 </style>

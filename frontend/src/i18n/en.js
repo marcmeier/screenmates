@@ -87,6 +87,7 @@ export default {
     zuruecknehmen: "Undo",
     zurueckziehen: "Withdraw",
     zuschauen: "Watch",
+    inDerKiste: "{n} film in the case. | {n} films in the case.",
   },
   adminbereich: {
     abgemeldet:
@@ -341,6 +342,7 @@ export default {
     vitrine: "Showcase",
     zuMeinemProfil: "To my profile",
     zuletztFreigeschaltet: "Recently unlocked",
+    alsNaechstes: "Up next",
   },
   erfolgkachel: {
     ausDerVitrineNehmen: "Take out of the showcase",
@@ -446,6 +448,7 @@ export default {
     sortierung: "Sort order",
     sterne: "⌀ stars",
     stundenFilm: "hours of film ·",
+    zumFilmabend: "To movie night",
   },
   glocke: {
     neuigkeitenGlockeNeu: "News, {glocke} new",
@@ -873,6 +876,12 @@ export default {
       "Nothing yet – whatever screenmates tells you lands here, even without push.",
     wasDirScreenmatesMitgeteilt:
       "What screenmates told you – and what happened in the group.",
+    tag: {
+      heute: "Today",
+      gestern: "Yesterday",
+      woche: "This week",
+      aelter: "Older",
+    },
   },
   personview: {
     alleGenres: "All genres",
@@ -1223,6 +1232,7 @@ export default {
     titleSamtBewertungenUnd: "Delete “{title}” with all ratings and comments?",
     werWarDabei: "Who was there?",
     wiederAnzeigen: "Show again",
+    schreiben: "Write in the guestbook",
   },
   webrtc: {
     verbindungFehlgeschlagenStatus: "Connection failed ({status})",

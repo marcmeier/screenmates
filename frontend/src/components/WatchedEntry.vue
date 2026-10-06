@@ -17,6 +17,8 @@ const emit = defineEmits(['update', 'removed'])
 const app = useApp()
 const ui = useUi()
 const note = ref('')
+// In the chronicle the guestbook field opens on demand (in the film's details it is always there).
+const schreiben = ref(false)
 const editDate = ref(false)
 
 const m = computed(() => props.entry.movie)
@@ -141,15 +143,20 @@ async function remove() {
           @heart="heart"
           @remove="removeNote"
         />
-        <form v-if="app.me" class="add" @submit.prevent="send">
-          <input v-model="note" maxlength="2000" :placeholder="$t('watchedentry.insGaestebuchSchreiben')" :aria-label="$t('watchedentry.kommentar')" />
+        <button v-if="app.me && !kompakt && !schreiben" class="ghost small schreiben" @click="schreiben = true">
+          <Icon name="chat" :size="14" /> {{ $t('watchedentry.schreiben') }}
+        </button>
+        <form v-else-if="app.me" class="add" @submit.prevent="send">
+          <input v-model="note" maxlength="2000" :placeholder="$t('watchedentry.insGaestebuchSchreiben')" :aria-label="$t('watchedentry.kommentar')" :autofocus="!kompakt" />
           <button class="small" :disabled="!note.trim()">{{ $t('watchedentry.senden') }}</button>
         </form>
       </div>
 
       <footer v-if="app.gruppenAdmin" class="row host">
-        <button class="ghost small" @click="hide">{{ entry.hidden ? $t('watchedentry.wiederAnzeigen') : $t('watchedentry.ausblenden') }}</button>
-        <button class="ghost small danger" @click="remove"><Icon name="muell" :size="14" /> {{ $t('watchedentry.loeschen') }}</button>
+        <button class="ghost small" :title="entry.hidden ? $t('watchedentry.wiederAnzeigen') : $t('watchedentry.ausblenden')" @click="hide">
+          {{ entry.hidden ? $t('watchedentry.wiederAnzeigen') : $t('watchedentry.ausblenden') }}
+        </button>
+        <button class="ghost small danger" :aria-label="$t('watchedentry.loeschen')" :title="$t('watchedentry.loeschen')" @click="remove"><Icon name="muell" :size="14" /></button>
       </footer>
     </div>
   </article>
@@ -182,4 +189,6 @@ h3 { margin: 0; font-size: 1.15rem; }
 @media (max-width: 600px) { .entry { grid-template-columns: 70px minmax(0, 1fr); } }
 .entry.kompakt { grid-template-columns: minmax(0, 1fr); background: transparent; border: none; padding: 0; }
 .entry.kompakt .sub { margin-top: 0; }
+.schreiben { align-self: flex-start; color: var(--muted); }
+.host button { font-size: 0.75rem; color: var(--muted); }
 </style>
