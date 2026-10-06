@@ -531,6 +531,8 @@ export default {
     xIstKeinGruppen: "{x} ist kein Gruppen-Admin mehr",
     xIstNichtMehr: "{x} ist nicht mehr in „{name}“",
     zumGruppenAdmin: "Zum Gruppen-Admin",
+    ohneGruppe: "Noch in keiner Gruppe: {namen}",
+    aktiv: "gerade aktiv",
   },
   infocard: {
     abbrechen: "Abbrechen",
@@ -1213,6 +1215,12 @@ export default {
     teilnahmeZurueckgesetzt: "Teilnahme zurückgesetzt",
     zugangGruppenKatalogUnd:
       "Zugang, Gruppen, Katalog und KI – nur für Admins sichtbar.",
+    reiter: {
+      gruppen: "Gruppen",
+      personen: "Personen",
+      system: "System",
+      gefahr: "Gefahrenzone",
+    },
   },
   watchedentry: {
     ausblenden: "Ausblenden",
