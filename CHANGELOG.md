@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.13.1 – 2026-10-06
+
+### Geändert
+- **Abendmodus:** Ist am Filmabend noch nichts vorgeschlagen, führt im Schritt „Was schauen wir?“ ein
+  Knopf **Filme finden** direkt nach Finden.
+
 ## 0.13.0 – 2026-10-06
 
 ### Neu

@@ -74,7 +74,10 @@ async function eintragen() {
               </button>
               <p v-else class="muted klein">{{ $t('abendmodus.derGastgeberOeffnetGleich') }}</p>
             </template>
-            <p v-else class="muted klein">{{ $t('abendmodus.nochNichtsVorgeschlagenSchnell') }}</p>
+            <template v-else>
+              <p class="muted klein">{{ $t('abendmodus.nochNichtsVorgeschlagenSchnell') }}</p>
+              <a href="#/finden" class="button small primary"><Icon name="suche" :size="14" /> {{ $t('abendtab.filmeFinden') }}</a>
+            </template>
           </template>
 
           <template v-else>
