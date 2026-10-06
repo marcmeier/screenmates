@@ -405,6 +405,19 @@ class KinoNachricht(SQLModel, table=True):
     am: datetime = Field(default_factory=now, index=True)
 
 
+class Benachrichtigung(SQLModel, table=True):
+    """What the bell in the app lists: every notification, also without push (kept 30 days)."""
+
+    id: int | None = Field(default=None, primary_key=True)
+    user_id: int = Field(foreign_key="user.id", index=True, ondelete="CASCADE")
+    art: str  # a key of push.ARTEN
+    titel: str
+    text: str = ""
+    url: str = ""
+    am: datetime = Field(default_factory=now, index=True)
+    gelesen: bool = False
+
+
 class PushAbo(SQLModel, table=True):
     """One device that gets push notifications (a browser's PushSubscription)."""
 

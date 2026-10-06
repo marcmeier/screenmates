@@ -22,7 +22,7 @@ from ..db import engine, get_session
 from ..gruppen import _waehlen, ist_gruppen_admin, mitgliedschaften
 from ..models import Session, User
 from ..session import COOKIE, current_session, current_user
-from . import gastgeber, kiste
+from . import gastgeber, glocke, kiste
 
 router = APIRouter(prefix="/api", tags=["live"])
 
@@ -39,6 +39,8 @@ STILL = (
     "/api/gruppen/aktiv",
     "/api/push",
     "/api/kalender",
+    "/api/glocke",
+    "/api/kino/moment",
 )
 
 
@@ -78,6 +80,8 @@ def live(
     gid = _waehlen(sess, mitgliedschaften(db, user.id)) if user else None
     stand = f"{_START}.{_stand['server']}.{_stand[f'g{gid}'] if gid else 0}.{gid or 0}"
     antwort = {"jetzt": int(time.time() * 1000), "stand": stand, "kiste": None}
+    if user:
+        antwort["glocke"] = glocke.ungelesen(db, user.id)
     if user and gid is not None:
         admin = ist_gruppen_admin(db, gid, user, user.is_admin)
         gastgeber.melden(gid, user.id)  # this app is open: present

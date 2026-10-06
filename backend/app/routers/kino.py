@@ -57,6 +57,7 @@ class Saal:
 
 _saele: dict[int, Saal] = defaultdict(Saal)
 _gemeldet: dict[int, float] = {}  # group -> when "the Kino is live" was last pushed (monotonic)
+_pause: dict[int, int] = {}  # group -> since when (ms) the host called a break
 
 
 def pfad(gid: int) -> str:
@@ -128,7 +129,22 @@ async def status(gid: int | None = Depends(_gruppe_optional), db: DBSession = De
         "movie": movie_dict(movie) if movie else None,
         "zuschauer": _viewers(gid) if live else [],
         "publikum": sorted(_saele[gid].audience),
+        "pause": _pause.get(gid) if live else None,
     }
+
+
+class Pause(BaseModel):
+    an: bool
+
+
+@router.post("/pause", dependencies=[Depends(require_moderation)])
+def set_pause(body: Pause, gid: int = Depends(aktive_gruppe)):
+    """ "Kurze Pause": everyone sees it over the picture until the host goes on."""
+    if body.an:
+        _pause.setdefault(gid, int(time.time() * 1000))
+    else:
+        _pause.pop(gid, None)
+    return {"pause": _pause.get(gid)}
 
 
 @router.post("/programm", dependencies=[Depends(require_moderation)])
@@ -234,6 +250,7 @@ async def stop(gid: int = Depends(aktive_gruppe)):
         async with httpx.AsyncClient(timeout=3) as c:
             await c.post(f"{settings.mediamtx_api_url}/v3/webrtcsessions/kick/{source['id']}")
     _saele[gid].presence.clear()
+    _pause.pop(gid, None)
     return {"ok": True}
 
 

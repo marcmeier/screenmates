@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from collections import defaultdict
-from datetime import datetime
+from datetime import UTC, datetime, timedelta
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
@@ -27,7 +27,9 @@ from ..models import (
 )
 from ..serialize import iso, movie_dict
 from ..session import current_user, require_user
-from ..util import ensure_movie
+from ..util import ensure_movie, utc
+
+ZU_BEWERTEN_TAGE = 4  # "Wie war's?" asks about evenings this recent
 
 router = APIRouter(prefix="/api", tags=["watched"])
 
@@ -129,6 +131,31 @@ def _get(db: DBSession, watched_id: int, gid: int) -> Watched:
 def _one(db: DBSession, w: Watched) -> dict:
     db.refresh(w)
     return _payload(db, [w])[0]
+
+
+@router.get("/watched/zu-bewerten")
+def to_rate(
+    user: User = Depends(require_user), gid: int = Depends(aktive_gruppe), db: DBSession = Depends(get_session)
+):
+    """ "Wie war's?": evenings of the last days I was at but haven't rated yet."""
+    grenze = datetime.now(UTC) - timedelta(days=ZU_BEWERTEN_TAGE)
+    dabei = set(db.exec(select(WatchedParticipant.watched_id).where(WatchedParticipant.user_id == user.id)).all())
+    bewertet = set(db.exec(select(WatchedRating.watched_id).where(WatchedRating.user_id == user.id)).all())
+    offen = [
+        w
+        for w in db.exec(
+            select(Watched).where(Watched.gruppe_id == gid, col(Watched.hidden).is_(False)).order_by(Watched.watched_at)
+        ).all()
+        if w.id in dabei - bewertet and grenze <= utc(w.watched_at) <= datetime.now(UTC)
+    ]
+    filme = {m.id: m for m in db.exec(select(Movie).where(col(Movie.id).in_([w.movie_id for w in offen]))).all()}
+    return {
+        "offen": [
+            {"id": w.id, "am": iso(w.watched_at), "movie": movie_dict(filme[w.movie_id])}
+            for w in offen
+            if w.movie_id in filme
+        ]
+    }
 
 
 @router.get("/watched")

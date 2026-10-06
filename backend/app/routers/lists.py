@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 from collections import defaultdict
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -9,9 +10,11 @@ from pydantic import BaseModel
 from sqlmodel import Session as DBSession
 from sqlmodel import col, select
 
+from .. import tmdb
+from ..config import settings
 from ..db import get_session
 from ..gruppen import aktive_gruppe, require_gruppen_admin
-from ..models import Movie, Suggestion, User, Veto, Wishlist
+from ..models import Abo, Mitglied, Movie, Suggestion, User, Veto, Wishlist
 from ..serialize import iso, movie_dict, with_flags
 from ..session import require_user
 from ..util import ensure_movie
@@ -52,6 +55,57 @@ def remove_wishlist(movie_id: int, gid: int = Depends(aktive_gruppe), db: DBSess
         db.delete(w)
     db.commit()
     return {"ok": True}
+
+
+@router.get("/suggestions/prognose")
+async def suggestions_forecast(gid: int = Depends(aktive_gruppe), db: DBSession = Depends(get_session)):
+    """ "Für euch ≈ 4 ★": per suggestion, the expected stars of who's in (or the whole group)."""
+    from .abend import gruppen_prognose
+
+    filme = list(set(db.exec(select(Suggestion.movie_id).where(Suggestion.gruppe_id == gid)).all()))
+    mit = db.exec(select(Mitglied).where(Mitglied.gruppe_id == gid)).all()
+    dabei = [m.user_id for m in mit if m.dabei]
+    leute = dabei if len(dabei) >= 2 else [m.user_id for m in mit]
+    prognosen = await gruppen_prognose(db, filme, leute) if filme else {}
+    return {"fuer": "dabei" if leute is dabei else "gruppe", "prognosen": {str(k): v for k, v in prognosen.items()}}
+
+
+def bester_weg(data: dict | None, wer: dict[int, list[int]]) -> dict | None:
+    """The one line people decide by: our own subscription first, then free, any subscription, rent, buy."""
+    if not data:
+        return None
+    for p in data["abo"]:
+        bei = wer.get(tmdb.ABO_VARIANTE.get(p["id"], p["id"]))
+        if bei:
+            return {"art": "abo", "name": p["name"], "logo": p["logo"], "bei": sorted(bei)}
+    for art, key in (("kostenlos", "kostenlos"), ("abo", "abo"), ("leihen", "leihen"), ("kaufen", "kaufen")):
+        if data.get(key):
+            p = data[key][0]
+            return {"art": art, "name": p["name"], "logo": p["logo"], "bei": []}
+    return None
+
+
+@router.get("/suggestions/anbieter")
+async def suggestions_where(gid: int = Depends(aktive_gruppe), db: DBSession = Depends(get_session)):
+    """ "Läuft bei": for every suggestion where it can be watched, our subscriptions first."""
+    if not settings.tmdb_enabled:
+        return {"verfuegbar": False, "anbieter": {}}
+    filme = list(set(db.exec(select(Suggestion.movie_id).where(Suggestion.gruppe_id == gid)).all()))[:30]
+    leute = [m.user_id for m in db.exec(select(Mitglied).where(Mitglied.gruppe_id == gid)).all()]
+    wer: dict[int, list[int]] = defaultdict(list)
+    for uid, pid in db.exec(select(Abo.user_id, Abo.provider_id).where(col(Abo.user_id).in_(leute))).all():
+        wer[pid].append(uid)
+    gate = asyncio.Semaphore(5)
+
+    async def laden(mid: int):
+        async with gate:
+            try:
+                return mid, await tmdb.watch_providers(mid)
+            except tmdb.TMDBError:
+                return mid, None
+
+    ergebnis = await asyncio.gather(*(laden(mid) for mid in filme))
+    return {"verfuegbar": True, "anbieter": {str(mid): bester_weg(data, wer) for mid, data in ergebnis}}
 
 
 @router.get("/suggestions")

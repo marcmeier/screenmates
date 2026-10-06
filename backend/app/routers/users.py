@@ -357,6 +357,48 @@ def reset_dabei(
     return {"ok": True}
 
 
+GEMEINSAM_MIN = 3  # films both rated before a taste match is shown
+
+
+@router.get("/users/{user_id}/geschmack")
+def taste(
+    user_id: int,
+    ich: User = Depends(require_user),
+    db: DBSession = Depends(get_session),
+):
+    """ "Lena tickt zu 87 % wie du": how close this person's stars are to everyone's they share a group with.
+
+    100 % means the same stars on every film both rated, 0 % always four stars apart.
+    Only people who share a group with the asker are compared.
+    """
+    from ..models import Watched, WatchedRating
+
+    meine_gruppen = set(mitgliedschaften(db, ich.id))
+    leute = set(db.exec(select(Mitglied.user_id).where(col(Mitglied.gruppe_id).in_(meine_gruppen))).all())
+    if user_id not in leute | {ich.id}:
+        raise HTTPException(404)
+    nachbarn = leute - {user_id}
+    sterne: dict[int, dict[int, list[int]]] = defaultdict(lambda: defaultdict(list))
+    for uid, mid, s in db.exec(
+        select(WatchedRating.user_id, Watched.movie_id, WatchedRating.stars)
+        .join(Watched, col(Watched.id) == WatchedRating.watched_id)
+        .where(col(Watched.hidden).is_(False))
+    ).all():
+        sterne[uid][mid].append(s)
+    mittel = {uid: {mid: sum(v) / len(v) for mid, v in filme.items()} for uid, filme in sterne.items()}
+    meine = mittel.get(user_id, {})
+    out = []
+    for uid in nachbarn:
+        deine = mittel.get(uid, {})
+        gemeinsam = set(meine) & set(deine)
+        if len(gemeinsam) < GEMEINSAM_MIN:
+            continue
+        abstand = sum(abs(meine[m] - deine[m]) for m in gemeinsam) / len(gemeinsam)
+        out.append({"user_id": uid, "prozent": round(100 * (1 - abstand / 4)), "gemeinsam": len(gemeinsam)})
+    out.sort(key=lambda v: (-v["prozent"], -v["gemeinsam"]))
+    return {"vergleiche": out, "min": GEMEINSAM_MIN}
+
+
 THEMES = ("kino", "nacht", "neon", "wald", "bernstein", "violett", "oled")
 SCHRIFTEN = ("inter", "grotesk", "lesbar", "serif", "mono", "rund", "system")
 

@@ -100,14 +100,41 @@ class Prognose:
 
 def vorhersage(ziel: Film, eigene: list[tuple[Film, float]]) -> Prognose | None:
     """Predict stars for `ziel` from someone's ratings [(film, stars)], newest last."""
-    eigene = [(f, s) for f, s in eigene if f.id != ziel.id][-MAX_BEWERTUNGEN:]
-    if len(eigene) < MIN_BEWERTUNGEN:
-        return None
-    mu = sum(s for _, s in eigene) / len(eigene)
-    bekannt = Counter(k for f, _ in eigene for k in f.stichworte)
-    x = [merkmale(f, bekannt) for f, _ in eigene]
-    kern = [[_dot(x[i], x[j]) + (LAMBDA if i == j else 0.0) for j in range(len(x))] for i in range(len(x))]
-    alpha = _loesen(kern, [s - mu for _, s in eigene])
+    m = Modell.lernen([(f, s) for f, s in eigene if f.id != ziel.id])
+    return m.vorhersage(ziel) if m else None
+
+
+@dataclass
+class Modell:
+    """What one person's stars depend on, learnt once and applied to any number of films.
+
+    Learning is the expensive part (one solve over all their ratings); a group
+    forecast for a whole list of suggestions learns once per person.
+    """
+
+    eigene: list[tuple[Film, float]]
+    mu: float
+    bekannt: Counter
+    x: list[dict[str, float]]
+    alpha: list[float]
+
+    @classmethod
+    def lernen(cls, eigene: list[tuple[Film, float]]) -> Modell | None:
+        eigene = eigene[-MAX_BEWERTUNGEN:]
+        if len(eigene) < MIN_BEWERTUNGEN:
+            return None
+        mu = sum(s for _, s in eigene) / len(eigene)
+        bekannt = Counter(k for f, _ in eigene for k in f.stichworte)
+        x = [merkmale(f, bekannt) for f, _ in eigene]
+        kern = [[_dot(x[i], x[j]) + (LAMBDA if i == j else 0.0) for j in range(len(x))] for i in range(len(x))]
+        return cls(eigene, mu, bekannt, x, _loesen(kern, [s - mu for _, s in eigene]))
+
+    def vorhersage(self, ziel: Film) -> Prognose:
+        return _erklaeren(self, ziel)
+
+
+def _erklaeren(m: Modell, ziel: Film) -> Prognose:
+    eigene, mu, bekannt, x, alpha = m.eigene, m.mu, m.bekannt, m.x, m.alpha
     z = merkmale(ziel, bekannt)
     wert = min(5.0, max(1.0, mu + sum(a * _dot(z, xi) for a, xi in zip(alpha, x, strict=True))))
     # The reason shown to people: the most similar film they rated in the same
