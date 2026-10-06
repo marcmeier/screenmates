@@ -10,7 +10,7 @@ from pydantic import BaseModel, Field
 from sqlmodel import Session as DBSession
 from sqlmodel import col, select
 
-from .. import erfolge
+from .. import erfolge, push
 from ..db import get_session
 from ..gruppen import aktive_gruppe, gruppen_admin, mitglieder, require_owner_or_gruppen_admin
 from ..models import (
@@ -251,12 +251,25 @@ def add_note(
     db: DBSession = Depends(get_session),
 ):
     w = _get(db, watched_id, gid)
+    parent = None
     if body.parent_id is not None:
         parent = db.get(WatchedNote, body.parent_id)
         if parent is None or parent.watched_id != watched_id:
             raise HTTPException(422, "Antwort passt nicht zu diesem Eintrag.")
-    db.add(WatchedNote(watched_id=watched_id, user_id=user.id, text=body.text.strip(), parent_id=body.parent_id))
+    text = body.text.strip()
+    db.add(WatchedNote(watched_id=watched_id, user_id=user.id, text=text, parent_id=body.parent_id))
     db.commit()
+    if parent is not None and parent.user_id not in (None, user.id):
+        film = db.get(Movie, w.movie_id)
+        push.an(
+            db,
+            [parent.user_id],
+            "antwort",
+            f"💬 {user.name} hat dir geantwortet{f' – {film.title}' if film else ''}",
+            text[:140],
+            url="/#/sammlung/gesehen",
+            tag=f"antwort-{parent.id}",
+        )
     return _one(db, w)
 
 

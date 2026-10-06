@@ -114,6 +114,21 @@ KATALOG: list[Def] = [
         [("Gastgeber", 1), ("Partyplaner", 5), ("Hausherr", 15)],
     ),
     *_reihe(
+        "zusage",
+        "🤞",
+        "Filmabend",
+        ("Zugesagt und gekommen", "{n}× zugesagt und gekommen"),
+        [("Wort gehalten", 1), ("Verlässlich", 5), ("Fels in der Brandung", 15)],
+    ),
+    Def(
+        "terminfinder",
+        "terminfinder",
+        "Terminfinder",
+        "Ein Termin aus deiner Umfrage wurde gewählt, und der Abend fand statt",
+        "🗓️",
+        2,
+    ),
+    *_reihe(
         "treffer",
         "🎯",
         "Filmabend",
@@ -233,6 +248,16 @@ KATALOG: list[Def] = [
         kategorie="Geheim",
     ),
     Def("jubilaeum", "jubilaeum", "Jubiläum", "Seit einem Jahr dabei", "🎂", 3, geheim=True, kategorie="Geheim"),
+    Def(
+        "zwischenruf",
+        "zwischenruf",
+        "Zwischenrufer",
+        "Während einer Vorstellung im Kino-Chat mitgeredet",
+        "💬",
+        1,
+        geheim=True,
+        kategorie="Geheim",
+    ),
 ]
 NACH_KEY = {d.key: d for d in KATALOG}
 
@@ -334,6 +359,9 @@ def stand(db: DBSession) -> dict[int, Counter]:
     regie: dict[int, set[str]] = defaultdict(set)
     kino: dict[int, set[str]] = defaultdict(set)
     treffer: dict[int, set[int]] = defaultdict(set)
+    zusagen: dict[int, set[date]] = defaultdict(set)
+    umfragen: dict[int, set[date]] = defaultdict(set)
+    zwischenrufe: dict[int, set[str]] = defaultdict(set)
     for e in ereignisse:
         if e.user_id is None:
             continue
@@ -345,6 +373,12 @@ def stand(db: DBSession) -> dict[int, Counter]:
             kino[e.user_id].add(e.bezug)
         elif e.typ == "treffer" and e.bezug:
             treffer[e.user_id].add(int(e.bezug))
+        elif e.typ == "zusage" and e.bezug:
+            zusagen[e.user_id].add(date.fromisoformat(e.bezug))
+        elif e.typ == "umfrage" and e.bezug:
+            umfragen[e.user_id].add(date.fromisoformat(e.bezug))
+        elif e.typ == "kino_chat":
+            zwischenrufe[e.user_id].add(e.bezug)
     for abend in db.exec(select(Abend)).all():  # one per group; before the launch only the current one is known
         if abend.termin and abend.gesetzt_von and abend.gesetzt_am and _aware(abend.gesetzt_am) < seit:
             termine[abend.gesetzt_von].add(_tag(abend.termin))
@@ -375,6 +409,10 @@ def stand(db: DBSession) -> dict[int, Counter]:
         c["herz"] = len(herzen[u])
         c["ideen"] = ideen[u]
         c["gastgeber"] = sum(1 for t in termine[u] if abend_fand_statt(t))
+        # Said yes, and was there (±1 day, like the host's date).
+        c["zusage"] = sum(1 for d in zusagen[u] if any(abs((t - d).days) <= 1 for t in tage))
+        c["terminfinder"] = int(any(abend_fand_statt(d) for d in umfragen[u]))
+        c["zwischenruf"] = int(bool(zwischenrufe[u]))
         c["regie"] = len(regie[u])
         c["kino"] = len(kino[u])
         c["treffer"] = sum(1 for wid in treffer[u] if wid in watched and any(echt(watched[wid], p) for p in teil[wid]))

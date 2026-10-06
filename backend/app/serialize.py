@@ -82,12 +82,19 @@ def with_flags(db: DBSession, movies: list[dict[str, Any]], gid: int | None = No
     return movies
 
 
-def user_dict(u: User, abos: list[int] | None = None, level: int | None = None, dabei: bool = False) -> dict[str, Any]:
+def user_dict(
+    u: User,
+    abos: list[int] | None = None,
+    level: int | None = None,
+    dabei: bool = False,
+    rueckmeldung: str | None = None,
+) -> dict[str, Any]:
     return {
         "id": u.id,
         "name": u.name,
         "color": u.color,
         "dabei": dabei,  # in for the next movie night of the caller's active group
+        "rueckmeldung": "ja" if dabei else rueckmeldung,  # ja | vielleicht | nein | None (no answer yet)
         "hat_schutz": u.schutz_movie_id is not None,
         "admin": u.is_admin,
         "freigegeben": u.freigegeben,

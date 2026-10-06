@@ -5,7 +5,9 @@ import { useApp } from '../stores/app'
 import { useUi } from '../stores/ui'
 import FilmPicker from './FilmPicker.vue'
 import Icon from './Icon.vue'
+import Benachrichtigungen from './Benachrichtigungen.vue'
 import Darstellung from './Darstellung.vue'
+import KalenderAbo from './KalenderAbo.vue'
 import MeineAbos from './MeineAbos.vue'
 import ProfilBild from './ProfilBild.vue'
 
@@ -50,6 +52,10 @@ async function setSchutz(movie) {
       </div>
       <div v-if="pickSchutz" class="picker"><FilmPicker placeholder="Deinen Passwort-Film suchen …" @pick="setSchutz" /></div>
     </section>
+
+    <Benachrichtigungen />
+
+    <KalenderAbo />
 
     <Darstellung />
 

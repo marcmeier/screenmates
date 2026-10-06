@@ -1,14 +1,28 @@
 <script setup>
-import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { api } from '../../api'
+import { useApp } from '../../stores/app'
 import { useKino } from '../../stores/kino'
+import { useKinoChat } from '../../stores/kinochat'
 import { createViewer } from '../../webrtc'
 import Icon from '../Icon.vue'
 
 // The screen. Viewers get the relayed stream; the host who is sending sees the
 // local capture instead (no extra delay, no extra upload).
 const kino = useKino()
+const app = useApp()
+const chat = useKinoChat()
 const box = ref(null)
+// Full screen hides the chat panel: the latest messages show on the picture instead.
+const vollbildAn = ref(false)
+const jetzt = ref(Date.now())
+let uhr = null
+const einblendungen = computed(() => chat.nachrichten.filter((n) => jetzt.value - n.at < 8000).slice(-4))
+function vollbildGeaendert() {
+  vollbildAn.value = document.fullscreenElement === box.value
+  clearInterval(uhr)
+  if (vollbildAn.value) uhr = setInterval(() => (jetzt.value = Date.now()), 1000)
+}
 const video = ref(null)
 const state = ref('verbinde')
 const muted = ref(true) // browsers only autoplay muted video
@@ -55,9 +69,14 @@ function attach() {
   }
 }
 
-onMounted(attach)
+onMounted(() => {
+  attach()
+  document.addEventListener('fullscreenchange', vollbildGeaendert)
+})
 watch(() => [kino.live, kino.sende], attach)
 onBeforeUnmount(() => {
+  document.removeEventListener('fullscreenchange', vollbildGeaendert)
+  clearInterval(uhr)
   stopWatching()
   api.del('/api/kino/da', { quiet: true }).catch(() => {})
 })
@@ -81,6 +100,21 @@ function vollbild() {
   <div ref="box" class="screen" @dblclick="vollbild">
     <video ref="video" autoplay playsinline :muted="muted || kino.sende" :volume="volume"></video>
 
+    <div class="flug" aria-hidden="true">
+      <span
+        v-for="f in chat.fliegend"
+        :key="f.key"
+        :style="{ left: `${f.links}%`, animationDuration: `${f.dauer}ms`, '--kippen': `${f.kippen}deg` }"
+      >
+        {{ f.inhalt }}<small v-if="vollbildAn">{{ app.userById(f.user_id)?.name }}</small>
+      </span>
+    </div>
+    <ol v-if="vollbildAn && einblendungen.length" class="einblendungen" aria-live="polite">
+      <li v-for="n in einblendungen" :key="n.id">
+        <strong :style="{ color: app.userById(n.user_id)?.color }">{{ app.userById(n.user_id)?.name ?? 'Jemand' }}</strong> {{ n.inhalt }}
+      </li>
+    </ol>
+
     <div v-if="state !== 'live'" class="overlay">
       <span class="spinner" aria-hidden="true"></span>
       {{ state === 'verbinde' ? 'Verbinde …' : 'Verbindung unterbrochen – versuche es erneut …' }}
@@ -98,6 +132,9 @@ function vollbild() {
         <input v-model.number="volume" type="range" min="0" max="1" step="0.05" aria-label="Lautstärke" />
       </template>
       <span class="spacer"></span>
+      <span v-if="vollbildAn" class="schnell" role="group" aria-label="Reaktion ins Bild schicken">
+        <button v-for="r in chat.reaktionen.slice(0, 6)" :key="r" class="ghost" :aria-label="`Reaktion ${r}`" @click="chat.reagieren(r)">{{ r }}</button>
+      </span>
       <button class="ghost" aria-label="Vollbild" @click="vollbild"><Icon name="vollbild" /></button>
     </div>
   </div>
@@ -127,4 +164,34 @@ video { width: 100%; height: 100%; object-fit: contain; display: block; backgrou
 .controls button { color: #fff; padding: 0.35rem; }
 .controls input[type='range'] { width: 110px; padding: 0; accent-color: var(--accent); }
 .hint { font-size: 0.8rem; color: #ddd; }
+
+/* Reactions rising across the picture. */
+.flug { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+.flug span {
+  position: absolute; bottom: 4%; font-size: clamp(1.6rem, 3.2vw, 2.6rem); line-height: 1;
+  display: flex; flex-direction: column; align-items: center; gap: 2px;
+  animation: steigen linear forwards; filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.6));
+}
+.flug small { font-size: 0.7rem; color: #fff; font-weight: 600; text-shadow: 0 1px 3px #000; }
+@keyframes steigen {
+  0% { transform: translateY(0) scale(0.4) rotate(0deg); opacity: 0; }
+  12% { transform: translateY(-12%) scale(1.15) rotate(var(--kippen)); opacity: 1; }
+  80% { opacity: 1; }
+  100% { transform: translateY(-620%) scale(0.9) rotate(calc(var(--kippen) * -1)); opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .flug span { animation-name: blinken; }
+  @keyframes blinken { 0%, 100% { opacity: 0; } 20%, 80% { opacity: 1; } }
+}
+.einblendungen {
+  position: absolute; left: 1.2rem; bottom: 4.2rem; margin: 0; padding: 0; list-style: none; max-width: min(40%, 28rem);
+  display: flex; flex-direction: column; gap: 0.35rem; pointer-events: none;
+}
+.einblendungen li {
+  background: rgba(0, 0, 0, 0.62); color: #fff; padding: 0.4rem 0.7rem; border-radius: 10px; font-size: 0.95rem;
+  animation: auftauchen 0.25s ease-out; overflow-wrap: anywhere;
+}
+@keyframes auftauchen { from { opacity: 0; transform: translateY(6px); } }
+.schnell { display: inline-flex; }
+.schnell button { font-size: 1.15rem; padding: 0.2rem 0.3rem; }
 </style>

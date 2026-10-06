@@ -5,6 +5,8 @@ from __future__ import annotations
 import json
 import time
 from collections import defaultdict, deque
+from datetime import UTC, datetime, timedelta
+from typing import Literal
 
 from fastapi import APIRouter, Depends, HTTPException, Request, Response
 from pydantic import BaseModel, Field
@@ -15,7 +17,7 @@ from sqlmodel import col, func, select
 from .. import bilder, erfolge
 from ..db import get_session
 from ..gruppen import aktive_gruppe, aufnehmen, gruppen_admin, mitgliedschaften
-from ..models import Abo, Gruppe, Mitglied, Session, User
+from ..models import Abend, Abo, Ereignis, Gruppe, Mitglied, Session, User
 from ..serialize import user_dict
 from ..session import (
     current_session,
@@ -26,6 +28,7 @@ from ..session import (
     require_owner_or_admin,
     require_user,
 )
+from ..util import BERLIN, utc
 
 router = APIRouter(prefix="/api", tags=["users"])
 
@@ -117,6 +120,7 @@ def list_users(
     lv = erfolge.levels(db)
     gruppe = None
     dabei: set[int] = set()
+    antworten: dict[int, str] = {}
     if user:
         ms = mitgliedschaften(db, user.id)
         gid = sess.gruppe_id if sess and sess.gruppe_id in ms else (min(ms) if ms else None)
@@ -124,20 +128,21 @@ def list_users(
             g = db.get(Gruppe, gid)
             mit = db.exec(select(Mitglied).where(Mitglied.gruppe_id == gid)).all()
             dabei = {m.user_id for m in mit if m.dabei}
+            antworten = {m.user_id: m.rueckmeldung for m in mit if m.rueckmeldung}
             gruppe = {
                 "id": gid,
                 "name": g.name if g else "",
                 "admin": admin or ms[gid].ist_admin,
                 "mitglieder": sorted(m.user_id for m in mit),
             }
-    me = user_dict(user, abos[user.id], lv.get(user.id, 1), user.id in dabei) if user else None
+    me = user_dict(user, abos[user.id], lv.get(user.id, 1), user.id in dabei, antworten.get(user.id)) if user else None
     if me is not None and user is not None:
         me["design"] = json.loads(user.design) if user.design else {}
     antraege = (
         db.exec(select(func.count()).select_from(User).where(col(User.freigegeben).is_(False))).one() if admin else 0
     )
     return {
-        "users": [user_dict(u, abos[u.id], lv.get(u.id, 1), u.id in dabei) for u in rows],
+        "users": [user_dict(u, abos[u.id], lv.get(u.id, 1), u.id in dabei, antworten.get(u.id)) for u in rows],
         "ich": me,
         "admin": admin,
         "antraege": antraege,
@@ -279,15 +284,63 @@ def set_abos(body: AbosSetzen, user: User = Depends(require_user), db: DBSession
     return {"abos": sorted(set(body.anbieter))}
 
 
+def rueckmelden(db: DBSession, m: Mitglied, antwort: str | None, termin: datetime | None) -> None:
+    """In, maybe, no, or no answer (None). No commit.
+
+    A yes to an upcoming date is remembered for the "Wort gehalten" achievement:
+    it counts once that evening took place with this person there.
+    """
+    m.dabei = antwort == "ja"
+    m.rueckmeldung = antwort if antwort in ("vielleicht", "nein") else ""
+    db.add(m)
+    if antwort == "ja" and termin is not None and utc(termin) > datetime.now(UTC) - timedelta(hours=6):
+        tag = utc(termin).astimezone(BERLIN).date().isoformat()
+        schon = db.exec(
+            select(Ereignis).where(Ereignis.typ == "zusage", Ereignis.user_id == m.user_id, Ereignis.bezug == tag)
+        ).first()
+        if not schon:
+            erfolge.protokoll(db, "zusage", m.user_id, tag)
+
+
+def _mitglied(db: DBSession, gid: int, user: User) -> Mitglied:
+    return db.exec(select(Mitglied).where(Mitglied.gruppe_id == gid, Mitglied.user_id == user.id)).one()
+
+
+def _termin(db: DBSession, gid: int) -> datetime | None:
+    a = db.get(Abend, gid)
+    return a.termin if a else None
+
+
+def _antwort(m: Mitglied) -> dict:
+    return {"dabei": m.dabei, "rueckmeldung": "ja" if m.dabei else (m.rueckmeldung or None)}
+
+
 @router.post("/dabei")
 def toggle_dabei(
     user: User = Depends(require_user), gid: int = Depends(aktive_gruppe), db: DBSession = Depends(get_session)
 ):
-    m = db.exec(select(Mitglied).where(Mitglied.gruppe_id == gid, Mitglied.user_id == user.id)).one()
-    m.dabei = not m.dabei
-    db.add(m)
+    m = _mitglied(db, gid, user)
+    rueckmelden(db, m, None if m.dabei else "ja", _termin(db, gid))
     db.commit()
-    return {"dabei": m.dabei}
+    return _antwort(m)
+
+
+class Rueckmeldung(BaseModel):
+    antwort: Literal["ja", "vielleicht", "nein"] | None = None
+
+
+@router.put("/dabei")
+def reply(
+    body: Rueckmeldung,
+    user: User = Depends(require_user),
+    gid: int = Depends(aktive_gruppe),
+    db: DBSession = Depends(get_session),
+):
+    """Answer for the next movie night: in, maybe, no (None takes the answer back)."""
+    m = _mitglied(db, gid, user)
+    rueckmelden(db, m, body.antwort, _termin(db, gid))
+    db.commit()
+    return _antwort(m)
 
 
 @router.delete("/dabei")
@@ -296,9 +349,10 @@ def reset_dabei(
 ):
     if not ok:
         raise HTTPException(403, "Das darf nur ein Admin dieser Gruppe.")
-    for m in db.exec(select(Mitglied).where(Mitglied.gruppe_id == gid, col(Mitglied.dabei))).all():
-        m.dabei = False
-        db.add(m)
+    for m in db.exec(select(Mitglied).where(Mitglied.gruppe_id == gid)).all():
+        if m.dabei or m.rueckmeldung:
+            m.dabei, m.rueckmeldung = False, ""
+            db.add(m)
     db.commit()
     return {"ok": True}
 

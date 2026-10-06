@@ -28,7 +28,18 @@ router = APIRouter(prefix="/api", tags=["live"])
 
 _stand: dict[str, int] = defaultdict(int)  # "server" and "g<id>"
 _START = int(time.time())  # a restart shows as a new epoch
-STILL = ("/api/live", "/api/kino/da", "/api/erfolge/neu", "/api/zugang", "/api/gruppen/aktiv")
+# Writes that change nothing anyone else has on screen. The Kino chat has its own poll.
+STILL = (
+    "/api/live",
+    "/api/kino/da",
+    "/api/kino/chat",
+    "/api/kino/reaktion",
+    "/api/erfolge/neu",
+    "/api/zugang",
+    "/api/gruppen/aktiv",
+    "/api/push",
+    "/api/kalender",
+)
 
 
 def gruppe_der_sitzung(sid: str | None) -> int | None:

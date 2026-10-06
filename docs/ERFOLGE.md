@@ -23,6 +23,8 @@ Punkte und steigt im Level auf. Code: `backend/app/erfolge.py` (Regeln und Katal
 |---|---|---|
 | 🛋️ Stammgast | 1 · 5 · 15 · 40 | bestätigte Filmabende, bei denen man dabei war (höchstens einer pro Tag) |
 | 🏠 Gastgeber | 1 · 5 · 15 | gesetzte Termine, an denen (±1 Tag) ein bestätigter Abend stattfand |
+| 🤞 Wort gehalten | 1 · 5 · 15 | Termine, für die man zugesagt hat und bei deren bestätigtem Abend (±1 Tag) man dabei war |
+| 🗓️ Terminfinder | einmalig (Silber) | ein selbst vorgeschlagener Termin wurde in der Umfrage gewählt, und der Abend fand statt |
 | 🎯 Treffsicher | 1 · 5 · 15 | eigene Vorschläge, die bei einem bestätigten Abend geschaut wurden |
 | ✍️ Kritiker | 1 · 10 · 30 · 75 | bewertete bestätigte Abende |
 | 📖 Gästebuch | 1 · 10 · 40 | Gästebuch-Einträge ab 20 Zeichen, einer pro Abend, höchstens drei pro Tag |
@@ -31,7 +33,7 @@ Punkte und steigt im Level auf. Code: `backend/app/erfolge.py` (Regeln und Katal
 | 🎬 Kino-Regie | 1 · 5 · 15 | gesendete Vorstellungen, bei denen mindestens zwei andere je 5 Minuten zugeschaut haben |
 | 🎟️ Kinogänger | 1 · 5 · 20 | Vorstellungen, die man mindestens 5 Minuten geschaut hat |
 | Profil | einmalig | 📸 Profilbild, 🔐 Film-Passwort, 📺 Streamingdienste eingetragen |
-| Geheim | einmalig | sechs Stück – siehe Code, hier nicht verraten |
+| Geheim | einmalig | sieben Stück – siehe Code, hier nicht verraten |
 
 ## Gegen das Ausnutzen
 

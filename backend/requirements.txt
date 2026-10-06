@@ -7,3 +7,4 @@ python-dotenv>=1.0
 pydantic-settings>=2.4
 alembic>=1.14
 pillow>=11
+pywebpush>=2.0

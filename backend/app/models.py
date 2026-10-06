@@ -66,6 +66,8 @@ class User(SQLModel, table=True):
     antrag_gruppe_id: int | None = Field(default=None, foreign_key="gruppe.id", ondelete="SET NULL")  # requested via
     bild: str = ""  # token of the profile picture file, "" = none (see bilder.py)
     vitrine: str = "[]"  # JSON: up to three achievement keys for the profile showcase
+    kalender: str = ""  # token of the personal calendar feed (see routers/kalender.py), "" = none
+    push: str = ""  # JSON {kind: on?}: which push notifications this person wants; missing kinds are on
     created_at: datetime = Field(default_factory=now)
 
 
@@ -94,6 +96,7 @@ class Mitglied(SQLModel, table=True):
     user_id: int = Field(foreign_key="user.id", index=True, ondelete="CASCADE")
     ist_admin: bool = False  # group admin
     dabei: bool = False  # in for this group's next movie night
+    rueckmeldung: str = ""  # not (yet) in: "" (no answer), "vielleicht" or "nein"
     seit: datetime = Field(default_factory=now)
 
 
@@ -251,6 +254,7 @@ class AppMeta(SQLModel, table=True):
     last_sync: datetime | None = None
     erfolge_seit: datetime | None = None  # achievements: data from before this counts as it is
     erfolge_geprueft: bool = False  # the first check ran (its unlocks are marked retroactive)
+    vapid: str = ""  # Web Push: the server's VAPID private key (PEM), made on first use
 
 
 class KinoState(SQLModel, table=True):
@@ -279,6 +283,7 @@ class Abend(SQLModel, table=True):
     gesetzt_am: datetime | None = None
     # Holds the host's baton: runs the evening (case for everyone, Kino). See routers/gastgeber.py.
     gastgeber_id: int | None = Field(default=None, foreign_key="user.id", ondelete="SET NULL")
+    erinnert: datetime | None = None  # the date the push reminder went out for (see push.py)
 
 
 class Info(SQLModel, table=True):
@@ -368,3 +373,35 @@ class Stabwechsel(SQLModel, table=True):
     stimmen: str = "{}"  # votes: JSON {user id: yes?}
     status: str = "offen"  # offen | angenommen | abgelehnt | abgelaufen | zurueckgezogen
     erledigt_am: datetime | None = None
+
+
+class TerminVorschlag(SQLModel, table=True):
+    """A possible date in the group's poll (see routers/umfrage.py)."""
+
+    id: int | None = Field(default=None, primary_key=True)
+    gruppe_id: int = Field(foreign_key="gruppe.id", index=True, ondelete="CASCADE")
+    termin: datetime
+    notiz: str = ""
+    von_id: int | None = Field(default=None, foreign_key="user.id", ondelete="SET NULL")
+    am: datetime = Field(default_factory=now)
+
+
+class TerminStimme(SQLModel, table=True):
+    __table_args__ = (UniqueConstraint("vorschlag_id", "user_id"),)
+
+    id: int | None = Field(default=None, primary_key=True)
+    vorschlag_id: int = Field(foreign_key="terminvorschlag.id", index=True, ondelete="CASCADE")
+    user_id: int = Field(foreign_key="user.id", ondelete="CASCADE")
+    antwort: str  # ja | vielleicht | nein
+
+
+class PushAbo(SQLModel, table=True):
+    """One device that gets push notifications (a browser's PushSubscription)."""
+
+    id: int | None = Field(default=None, primary_key=True)
+    user_id: int = Field(foreign_key="user.id", index=True, ondelete="CASCADE")
+    endpoint: str = Field(unique=True)
+    p256dh: str
+    auth: str
+    geraet: str = ""  # e.g. "Firefox auf Android", for the settings page
+    am: datetime = Field(default_factory=now)

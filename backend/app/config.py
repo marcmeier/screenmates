@@ -39,6 +39,9 @@ class Settings(BaseSettings):
     # Uploaded files (profile pictures). Empty: backend/media. Docker: /data/media.
     media_dir: str = ""
 
+    # Web Push: a contact for the push services (mailto: or https: URL). The keys are made automatically.
+    push_kontakt: str = "https://github.com/marcmeier/screenmates"
+
     session_cookie: str = "screenmates_sid"
     # Set to true when served over HTTPS so the session cookie is never sent in clear.
     cookie_secure: bool = False

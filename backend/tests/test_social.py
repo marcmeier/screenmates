@@ -139,7 +139,7 @@ def test_spin_falls_back_to_wishlist(client):
 
 def test_dabei_toggle_and_reset(client):
     login(client, "marc")
-    assert client.post("/api/dabei").json() == {"dabei": True}
+    assert client.post("/api/dabei").json() == {"dabei": True, "rueckmeldung": "ja"}
     assert client.get("/api/users").json()["ich"]["dabei"] is True
     become_admin(client)
     client.delete("/api/dabei")

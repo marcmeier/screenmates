@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import { api } from '../api'
+import { ausschalten } from '../push'
 
 export const useApp = defineStore('app', {
   state: () => ({
@@ -18,6 +19,8 @@ export const useApp = defineStore('app', {
   getters: {
     userById: (s) => (id) => s.users.find((u) => u.id === id),
     dabei: (s) => s.users.filter((u) => u.dabei),
+    vielleicht: (s) => s.users.filter((u) => u.rueckmeldung === 'vielleicht'),
+    absagen: (s) => s.users.filter((u) => u.rueckmeldung === 'nein'),
     // Members of the active group (the server has more people than any one group).
     mitglieder: (s) => (s.gruppe ? s.users.filter((u) => s.gruppe.mitglieder.includes(u.id)) : []),
     // Movie-night admin rights: group admin, or server admin.
@@ -82,6 +85,8 @@ export const useApp = defineStore('app', {
       return u
     },
     async logout() {
+      // Notifications on this device were for this person, not for whoever logs in next.
+      await ausschalten({ quiet: true }).catch(() => {})
       await api.post('/api/users/waehlen', { user_id: null })
       this.me = null
       this.admin = false
@@ -90,8 +95,12 @@ export const useApp = defineStore('app', {
       this.gruppen = []
     },
     async toggleDabei() {
-      const r = await api.post('/api/dabei')
-      this.me.dabei = r.dabei
+      Object.assign(this.me, await api.post('/api/dabei'))
+      await this.refreshUsers()
+    },
+    /** Answer for the next movie night: 'ja', 'vielleicht', 'nein' or null (take it back). */
+    async antworten(antwort) {
+      Object.assign(this.me, await api.put('/api/dabei', { antwort }))
       await this.refreshUsers()
     },
   },

@@ -47,8 +47,9 @@ Jeder Film trägt die Gruppen-Flags `gesehen`, `gemerkt` und `vorgeschlagen_von`
 | GET | `/users/{id}/bild` | – | Profilbild (URL mit `?v=…` aus `users[].bild`, lange gecacht) |
 | GET/POST | `/users/{id}/schutz` | –/E | Schutz abfragen (nur `hat_schutz`) bzw. setzen oder entfernen |
 | POST | `/abos` | N | Eigene Streaming-Abos setzen (Provider-IDs) |
-| POST | `/dabei` | N | Eigene Teilnahme am nächsten Abend umschalten |
-| DELETE | `/dabei` | A | Teilnahme aller zurücksetzen |
+| POST | `/dabei` | N | Eigene Teilnahme am nächsten Abend umschalten (dabei ↔ keine Antwort) |
+| PUT | `/dabei` | N | Rückmeldung `antwort`: `ja`, `vielleicht`, `nein` oder `null`; zugesagt zählt für den Erfolg „Wort gehalten“ |
+| DELETE | `/dabei` | A | Teilnahme und Rückmeldungen aller zurücksetzen |
 
 ## Gruppen
 
@@ -68,7 +69,7 @@ Admin *dieser Gruppe* oder Server-Admin. Der Katalog bleibt für alle offen; sei
 | DELETE | `/admin/gruppen/{id}` | Server-Admin | Gruppe mit allem darin löschen (Mitglieder und Erfolge bleiben) |
 | PUT/DELETE | `/admin/gruppen/{id}/mitglieder/{user}` | Gruppen-/Server-Admin | Aufnehmen bzw. Gruppen-Admin-Recht setzen (`admin`) / entfernen |
 
-`/users` liefert zusätzlich `gruppe` (aktive Gruppe: `id`, `name`, `admin`, `mitglieder`); `dabei` gilt für die aktive Gruppe.
+`/users` liefert zusätzlich `gruppe` (aktive Gruppe: `id`, `name`, `admin`, `mitglieder`); `dabei` und `rueckmeldung` (`ja`/`vielleicht`/`nein`/`null`) gelten für die aktive Gruppe.
 
 ## Erfolge
 
@@ -107,7 +108,17 @@ Admin *dieser Gruppe* oder Server-Admin. Der Katalog bleibt für alle offen; sei
 | POST/DELETE | `/veto` | N | Eigenes Veto gegen einen Vorschlag setzen bzw. zurücknehmen (eins pro Person) |
 | GET/POST | `/spin` | – | Pool mit `gewicht` (ohne Filme mit Veto), bzw. gewichtete Ziehung |
 | GET | `/termin` | – | Nächster Termin mit `notiz` (vergangene Termine: `null`) |
-| PUT/DELETE | `/termin` | N | Termin setzen (ohne Zeitzone = deutsche Zeit) bzw. entfernen |
+| PUT/DELETE | `/termin` | N | Termin setzen (ohne Zeitzone = deutsche Zeit) bzw. entfernen. Setzen benachrichtigt die Gruppe per Push |
+| GET | `/termin.ics` | N | Der nächste Termin als Kalenderdatei |
+| GET | `/termin/umfrage` | N | Terminumfrage: offene Vorschläge mit Stimmen, `favorit`, `darf_festlegen` |
+| POST | `/termin/umfrage` | N | Termin vorschlagen (`termin`, `notiz`; höchstens 8, zählt als eigenes Ja) |
+| PUT | `/termin/umfrage/{id}/stimme` | N | `antwort`: `ja`, `vielleicht`, `nein` oder `null` |
+| DELETE | `/termin/umfrage/{id}` | E/F | Vorschlag zurücknehmen |
+| POST | `/termin/umfrage/{id}/festlegen` | F | Termin festlegen: Antworten werden Rückmeldungen, die Umfrage schließt |
+| DELETE | `/termin/umfrage` | F | Umfrage ohne Termin beenden |
+| GET/POST/DELETE | `/kalender` | N | Persönlicher Kalender-Abo-Link (`pfad`): ansehen, neu erzeugen (der alte erlischt), abschalten |
+| GET | `/kalender/{token}.ics` | Token | Kalender-Abo: die nächsten Termine aller eigenen Gruppen, ohne Anmeldung |
+| GET | `/rueckblick` · `/rueckblick/{jahr}` | N | Jahre mit Filmen bzw. das Filmjahr der Gruppe in Zahlen |
 | GET | `/erinnerungen` | – | „Heute vor einem Jahr": Gesehenes aus früheren Jahren, ±3 Tage (`heute=` zum Testen) |
 | GET | `/events` | – | Aktivitäts-Feed |
 | GET/POST/DELETE | `/wishlist[/{movie_id}]` | –/N/N | Merkliste |
@@ -152,6 +163,20 @@ Admin *dieser Gruppe* oder Server-Admin. Der Katalog bleibt für alle offen; sei
 | GET | `/kino/obs` · POST `/kino/obs/neu` | A | Server-URL und Stream-Key für OBS, Key erneuern |
 | DELETE | `/kino` | A | Übertragung für alle beenden (auch OBS) |
 | POST | `/kino/mtx-auth` | intern | Rechteprüfung, die MediaMTX bei jeder Aktion aufruft |
+| GET | `/kino/chat` | N | Chat und Reaktionen der Gruppe: ohne `seit` der bisherige Chat, mit `seit=<id>` alles Neue |
+| POST | `/kino/chat` · `/kino/reaktion` | N | Nachricht (bis 300 Zeichen) bzw. Reaktion (`emoji` aus `reaktionen`) |
+
+**F** = darf festlegen: wer die Umfrage gestartet hat, der Gastgeber, ein Admin der Gruppe – oder jeder, solange niemand den Stab hält.
+
+## Benachrichtigungen
+
+| Methode | Pfad | Recht | Zweck |
+|---|---|:-:|---|
+| GET | `/push` | N | VAPID-`schluessel` (für `pushManager.subscribe`), gewählte `arten`, Anzahl `geraete` |
+| POST | `/push/abo` | N | Dieses Gerät anmelden (`endpoint`, `keys`, `geraet`); gehört der Person, die darauf angemeldet ist |
+| POST | `/push/abmelden` | N | Dieses Gerät abmelden |
+| PUT | `/push/arten` | N | Auswahl ändern, z. B. `{"arten": {"kino": false}}` |
+| POST | `/push/test` | N | Testnachricht an alle eigenen Geräte |
 
 ## Noch nicht umgesetzt (aus dem Original)
 

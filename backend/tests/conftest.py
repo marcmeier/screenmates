@@ -15,12 +15,21 @@ import pytest  # noqa: E402
 from fastapi.testclient import TestClient  # noqa: E402
 from sqlmodel import Session, select  # noqa: E402
 
-from app import erfolge, tmdb  # noqa: E402
+from app import erfolge, push, tmdb  # noqa: E402
 from app.config import settings  # noqa: E402
 from app.db import engine  # noqa: E402
 from app.main import app  # noqa: E402
 from app.models import Einladung, Mitglied, User  # noqa: E402
-from app.routers import gastgeber, kino, live, users, zugang  # noqa: E402
+from app.routers import gastgeber, kino, kinochat, live, users, zugang  # noqa: E402
+
+# Push messages the app wanted to send in this test (nothing leaves the machine).
+gesendet: list[push.Zustellung] = []
+
+
+@pytest.fixture(autouse=True)
+def _kein_push(monkeypatch):
+    gesendet.clear()
+    monkeypatch.setattr(push, "abschicken", gesendet.append)
 
 
 @pytest.fixture
@@ -35,6 +44,10 @@ def client():
     zugang._fehl_ip.clear()
     zugang._fehl_alle.clear()
     kino._saele.clear()
+    kino._gemeldet.clear()
+    kinochat._verlauf.clear()
+    kinochat._takt.clear()
+    kinochat._mitgeredet.clear()
     live._stand.clear()
     gastgeber._gesehen.clear()
     tmdb._cache.clear()

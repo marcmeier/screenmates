@@ -6,6 +6,7 @@ import './style.css'
 import App from './App.vue'
 import { ApiError } from './api'
 import { anwenden, gemerkt } from './design'
+import { registrieren } from './push'
 
 // This device's last theme and font right away – no flash of the default look.
 anwenden(gemerkt())
@@ -16,3 +17,6 @@ window.addEventListener('unhandledrejection', (e) => {
 })
 
 createApp(App).use(createPinia()).mount('#app')
+
+// Push notifications and the home-screen app.
+registrieren()

@@ -22,6 +22,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlmodel import Session as DBSession
 from sqlmodel import col, select
 
+from .. import push
 from ..db import get_session
 from ..gruppen import aktive_gruppe, gruppen_admin
 from ..models import Kistenoeffnung, Movie, User
@@ -122,6 +123,16 @@ def open_for_everyone(
     db.add(k)
     db.commit()
     db.refresh(k)
+    push.an(
+        db,
+        push.abwesend(gid, push.mitglieder(db, gid, ausser=user.id)),
+        "kiste",
+        f"🎁 Die Kiste geht auf! – {push.gruppenname(db, gid)}",
+        f"{user.name} öffnet die Filmabend-Kiste für alle. Schnell rein!",
+        tag=f"kiste-{gid}",
+        ttl=120,
+        dringend=True,
+    )
     return {"jetzt": _ms(jetzt), "aktuell": _dict(db, k)}
 
 
