@@ -128,7 +128,7 @@ export const INHALT = {
 }
 
 /** Ask the user what to share. Throws if they cancel. */
-export async function pickScreen({ audio = true, inhalt = 'film' } = {}) {
+export async function pickScreen({ audio = true, inhalt = 'film', leise = false } = {}) {
   const fps = INHALT[inhalt].fps
   const stream = await navigator.mediaDevices.getDisplayMedia({
     video: { frameRate: { ideal: fps, max: fps }, width: { ideal: 1920 }, height: { ideal: 1080 } },
@@ -139,6 +139,8 @@ export async function pickScreen({ audio = true, inhalt = 'film' } = {}) {
       autoGainControl: false,
       channelCount: { ideal: 2 },
       sampleRate: { ideal: 48000 },
+      // Chrome: the shared tab stays silent here, the host hears the (delayed) stream instead.
+      suppressLocalAudioPlayback: leise,
     },
   })
   const [video] = stream.getVideoTracks()

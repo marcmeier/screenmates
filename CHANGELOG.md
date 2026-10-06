@@ -1,6 +1,18 @@
 # Changelog
 
-## 0.19.1 – 2026-10-07
+## 0.20.0 – 2026-10-07
+
+### Neu
+- **Gastgeber schaut wie alle:** Wer sendet, sieht im Kino jetzt standardmäßig den Stream wie die anderen –
+  mit derselben Verzögerung und mit Ton und Lautstärkeregler. Damit der Ton nicht doppelt kommt, bleibt
+  der geteilte Tab in Chrome stumm. Ein Schalter im Player wechselt zur verzögerungsfreien Vorschau.
+
+### Behoben
+- **„Übertragung beenden“** beendet die Vorstellung zuverlässig: erst beim Server, dann lokal (vorher konnte
+  der lokale Abbau den Aufruf verhindern).
+- Der Knopf „Kiste für alle öffnen“ im Abendmodus wirkte ausgegraut, solange Schritt 1 offen war.
+- Im Kino beginnen Chat und Bild auf gleicher Höhe (die LIVE-Zeile steht darüber); „seit …“ und
+  „x schauen“ sind übersetzt.
 
 ### Geändert
 - **Vorschläge und Kiste auf einer Höhe:** Die Überschrift „Filmabend-Kiste“ steht jetzt in derselben Zeile wie

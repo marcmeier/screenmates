@@ -586,6 +586,7 @@ export default {
       mittel: "Medium – 720p",
       sparsam: "Light – 480p",
     },
+    beendet: "Stream ended",
   },
   kinochat: {
     aeltereNachrichten: "Older messages",
@@ -617,6 +618,8 @@ export default {
     vollbild: "Full screen",
     vollbildSchliessen: "Close full screen",
     vollbildVerlassen: "Exit full screen",
+    zurVorschau: "Instant preview",
+    wieAlle: "Watch like everyone (with sound)",
   },
   kinosenden: {
     ausDerKiste: "from the case",
@@ -683,6 +686,7 @@ export default {
     ueberTitle: "About “{title}”",
     vorstellungVorbei: "Show’s over –",
     waehlEinenNamenUm: "Choose a name to watch.",
+    schauen: "{n} watching | {n} watching",
   },
   kinutzung: {
     "30Tage": "30 days",

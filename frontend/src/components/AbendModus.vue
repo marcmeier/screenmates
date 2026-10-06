@@ -205,4 +205,6 @@ a.button.small { padding: 0.3rem 0.6rem; font-size: 0.8rem; }
 a.button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
 @media (max-width: 800px) { .schritte { grid-template-columns: minmax(0, 1fr); } }
 .kiste-knopf.gross { width: 100%; padding: 0.7rem 0.9rem; font-size: 0.95rem; border-radius: 10px; }
+/* A step you can act on now is never dimmed – the case button must not look switched off. */
+.schritte li:has(.kiste-knopf) { opacity: 1; }
 </style>

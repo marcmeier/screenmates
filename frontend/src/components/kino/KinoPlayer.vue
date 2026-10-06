@@ -83,7 +83,7 @@ function stopWatching() {
 }
 
 function attach() {
-  if (kino.sende) {
+  if (kino.sende && !kino.wieAlle) {
     stopWatching()
     video.value.srcObject = kino.localStream
     state.value = 'live'
@@ -121,7 +121,7 @@ onMounted(() => {
   document.addEventListener('fullscreenchange', vollbildGeaendert)
   window.addEventListener('keydown', escape)
 })
-watch(() => [kino.live, kino.sende], attach)
+watch(() => [kino.live, kino.sende, kino.wieAlle], attach)
 onBeforeUnmount(() => {
   document.removeEventListener('fullscreenchange', vollbildGeaendert)
   window.removeEventListener('keydown', escape)
@@ -155,7 +155,7 @@ function vollbild() {
 
 <template>
   <div ref="box" class="screen" :class="{ ersatz, bedienung }" @dblclick="vollbild" @pointerup="antippen">
-    <video ref="video" autoplay playsinline :muted="muted || kino.sende" :volume="volume"></video>
+    <video ref="video" autoplay playsinline :muted="muted || (kino.sende && !kino.wieAlle)" :volume="volume"></video>
 
     <div class="flug" aria-hidden="true">
       <span
@@ -184,7 +184,7 @@ function vollbild() {
       <span class="spinner" aria-hidden="true"></span>
       {{ state === 'verbinde' ? $t('kinoplayer.verbinde') : $t('kinoplayer.verbindungUnterbrochenVersucheEs') }}
     </div>
-    <button v-else-if="muted && !kino.sende" class="primary unmute" @click="tonAn">
+    <button v-else-if="muted && !(kino.sende && !kino.wieAlle)" class="primary unmute" @click="tonAn">
       <Icon name="ton" :size="18" /> {{ $t('kinoplayer.tonAn') }}
     </button>
 
@@ -192,7 +192,7 @@ function vollbild() {
     <button v-if="ersatz" class="schliessen" :aria-label="$t('kinoplayer.vollbildSchliessen')" @click="vollbild"><Icon name="x" :size="20" /></button>
 
     <div class="controls">
-      <span v-if="kino.sende" class="hint">{{ $t('kinoplayer.deineVorschauDuHoerst') }}</span>
+      <span v-if="kino.sende && !kino.wieAlle" class="hint">{{ $t('kinoplayer.deineVorschauDuHoerst') }}</span>
       <template v-else>
         <button class="ghost" :aria-label="muted ? $t('kinoplayer.tonAn2') : $t('kinoplayer.stumm')" @click="muted = !muted">
           <Icon :name="muted ? 'stumm' : 'ton'" />
@@ -200,6 +200,10 @@ function vollbild() {
         <input v-model.number="volume" type="range" min="0" max="1" step="0.05" :aria-label="$t('kinoplayer.lautstaerke')" />
       </template>
       <span class="spacer"></span>
+      <!-- The host: watch like everyone (delayed, with sound) or the instant preview. -->
+      <button v-if="kino.sende" class="ghost small modus" :aria-pressed="kino.wieAlle" @click="kino.setWieAlle(!kino.wieAlle)">
+        {{ kino.wieAlle ? $t('kinoplayer.zurVorschau') : $t('kinoplayer.wieAlle') }}
+      </button>
       <span v-if="vollbildAn" class="schnell" role="group" :aria-label="$t('kinoplayer.reaktionInsBildSchicken')">
         <button v-for="r in chat.reaktionen.slice(0, 6)" :key="r" class="ghost" :aria-label="$t('kinoplayer.reaktionR', { r })" @click="chat.reagieren(r)">{{ r }}</button>
       </span>
@@ -296,4 +300,5 @@ video { width: 100%; height: 100%; object-fit: contain; display: block; backgrou
 .momente li { background: rgba(0, 0, 0, 0.7); color: #fff; padding: 0.4rem 0.8rem; border-radius: 999px; font-size: 0.9rem; white-space: nowrap; animation: auftauchen 0.25s ease-out; }
 .schnell { display: inline-flex; }
 .schnell button { font-size: 1.15rem; padding: 0.2rem 0.3rem; }
+.modus { font-size: 0.75rem; white-space: nowrap; }
 </style>
