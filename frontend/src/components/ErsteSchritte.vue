@@ -32,8 +32,8 @@ const schritte = computed(() =>
   [
     props.termin?.termin && { key: 'antwort', erledigt: !!(app.me.dabei || app.me.rueckmeldung) },
     { key: 'vorschlag', erledigt: props.vorgeschlagen, href: '#/finden' },
-    app.status.tmdb && { key: 'abos', erledigt: !!app.me.abos?.length, href: '#/profil/einstellungen' },
-    (pushMoeglich() || istIos()) && { key: 'push', erledigt: pushAn.value, href: '#/profil/einstellungen' },
+    app.status.tmdb && { key: 'abos', erledigt: !!app.me.abos?.length, href: '#/profil/einstellungen/dienste' },
+    (pushMoeglich() || istIos()) && { key: 'push', erledigt: pushAn.value, href: '#/profil/einstellungen/benachrichtigungen' },
   ]
     .filter(Boolean)
     .map((s) => ({ ...s, erledigt: s.erledigt || !!gemerkt.value[s.key] })),

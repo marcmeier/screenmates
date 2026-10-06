@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.18.0 – 2026-10-06
+
+### Geändert
+- **Einstellungen mit Reitern:** Profil · Darstellung · Benachrichtigungen (mit Kalender-Abo) · Dienste –
+  statt einer langen Seite. Jeder Reiter hat eine eigene Adresse (z. B. `#/profil/einstellungen/dienste`);
+  Hinweise wie „Streamingdienste eintragen“ führen direkt dorthin.
+- **Kompaktere Seitenköpfe auf dem Handy:** kleinere Überschrift, kein Untertitel (die Leiste unten zeigt
+  ja, wo man ist); auch der Profilkopf ist kleiner.
+
+### Behoben
+- Die untere Leiste auf dem Handy war in Safari durchscheinend; jetzt hat sie einen festen Hintergrund.
+
 ## 0.17.0 – 2026-10-06
 
 ### Geändert

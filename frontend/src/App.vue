@@ -412,7 +412,7 @@ nav { display: flex; flex-direction: column; gap: 4px; }
   .primary-nav {
     position: fixed; z-index: 25; left: 0; right: 0; bottom: 0; flex-direction: row; justify-content: space-around; gap: 0;
     padding: 0 env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
-    background: color-mix(in srgb, var(--bg) 96%, transparent); border-top: 1px solid var(--line);
+    background: var(--bg); border-top: 1px solid var(--line);
   }
   .nav { flex: 1; height: auto; flex-direction: column; justify-content: center; padding: 0.55rem 0.2rem 0.5rem; font-size: 0.72rem; gap: 0.2rem; white-space: nowrap; position: relative; border-radius: 0; }
   .nav.active { background: none; color: var(--text); }

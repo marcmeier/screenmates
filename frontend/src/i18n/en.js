@@ -263,6 +263,12 @@ export default {
     schutzText:
       "Without protection anyone can pretend to be {name}. With it, signing in means clicking your film – screenmates never reveals the film to anyone, not even you.",
     ungeschuetzt: "unprotected",
+    reiter: {
+      profil: "Profile",
+      darstellung: "Appearance",
+      benachrichtigungen: "Notifications",
+      dienste: "Services",
+    },
   },
   entdeckenpanel: {
     aelteste: "Oldest",

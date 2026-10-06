@@ -50,6 +50,12 @@ const seite = computed(() => (route.value.sub === 'einstellungen' ? 'einstellung
 .kopf h1 { margin: 0; }
 .kopf p { margin: 0.2rem 0 0; }
 .gross { width: 64px; height: 64px; font-size: 1.3rem; }
+@media (max-width: 600px) {
+  .kopf { gap: 0.8rem; }
+  .kopf h1 { font-size: 1.35rem; }
+  .kopf p { font-size: 0.85rem; }
+  .gross { width: 46px; height: 46px; font-size: 1rem; }
+}
 .unter { display: flex; gap: 0.3rem; border-bottom: 1px solid var(--line); }
 .unter a {
   padding: 0.55rem 0.9rem; text-decoration: none; color: var(--muted); font-weight: 600; font-size: 0.92rem;
