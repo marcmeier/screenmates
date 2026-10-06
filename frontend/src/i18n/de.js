@@ -28,6 +28,7 @@ export default {
     wasSchauenWir: "Was schauen wir?",
     werIstDa: "Wer ist da?",
     zumKinoLaeuftSchon: "Zum Kino – läuft schon",
+    schritt: "Schritt {n} von 3",
   },
   abendtab: {
     alleLeeren: "Alle leeren",

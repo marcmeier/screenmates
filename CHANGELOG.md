@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.20.1 – 2026-10-07
+
+### Geändert
+- **Der Abendmodus führt durch die drei Schritte:** Immer genau ein Schritt ist dran (rot, leicht leuchtend),
+  erledigte sind grün abgehakt, kommende gedimmt; Pfeile zwischen den Schritten und ein Fortschrittsbalken
+  zeigen den Weg. Ist der Film gezogen, gelten die Schritte davor als erledigt (vorher blieb „Wer ist da?“
+  mit nur einer Zusage rot).
+- **Schritt 3:** „Im Kino schauen“ bzw. „Zum Kino – läuft schon“ ist jetzt der große, leuchtende Knopf;
+  „Geschaut – eintragen“ steht schlicht daneben.
+
 ## 0.20.0 – 2026-10-07
 
 ### Neu
