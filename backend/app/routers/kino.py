@@ -51,6 +51,7 @@ class Saal:
     presence: dict[int, float] = field(default_factory=dict)
     audience: set[int] = field(default_factory=set)  # everyone who watched during the current show
     sender: int | None = None  # admin whose browser sends, or who set the programme (OBS)
+    quelle: str = ""  # "browser" (someone's logged-in browser) or "obs" (stream key), for the current show
     seit: dict[int, float] = field(default_factory=dict)  # viewer -> first heartbeat of this show
     gezaehlt: set[int] = field(default_factory=set)  # viewers of this show already recorded
 
@@ -138,6 +139,9 @@ async def status(gid: int | None = Depends(_gruppe_optional), db: DBSession = De
         "zuschauer": _viewers(gid) if live else [],
         "publikum": sorted(_saele[gid].audience),
         "pause": _pause.get(gid) if live else None,
+        # Where the show comes from, so a host on another device isn't told "über OBS".
+        "quelle": _saele[gid].quelle or None if live else None,
+        "sender": _saele[gid].sender if live else None,
     }
 
 
@@ -403,6 +407,8 @@ async def whip(
     )
     if browser:
         _saele[ziel].sender = user.id
+    # Who sends is known only here: a browser with a session, or OBS with the stream key.
+    _saele[ziel].quelle = "browser" if browser else "obs"
     # Browsers handle every candidate (and benefit from the TCP fallback); OBS-style
     # clients that authenticate with the stream key get UDP candidates only.
     return await _relay("POST", f"{pfad(ziel)}/whip", request, db, ziel, udp_only=not browser)

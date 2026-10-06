@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.10.2 – 2026-10-06
+
+### Geändert
+- **Die Kiste springt nicht mehr:** Das Filmband steht beim Countdown, beim Drehen und bei der
+  Enthüllung an genau derselben Stelle in der Bildschirmmitte; was darunter erscheint (Hinweis,
+  „Überspringen“, der Gewinner mit „Weiter“), wächst nur nach unten.
+- Fliegende Reaktionen im Kino zeigen jetzt immer, von wem sie kommen – vorher nur im Vollbild.
+- Der Senden-Block sagt richtig, woher die Übertragung kommt: „Du bist live“, „Du sendest von einem
+  anderen Gerät“, „Lena sendet aus dem Browser“ oder „Live über OBS“. Vorher hieß alles, was nicht
+  aus diesem Browser kam, „über OBS“.
+- iPhone-Vollbild im Hochformat: Ein eigener Schließen-Knopf oben rechts liegt immer frei (vorher
+  verdeckten die Reaktionsknöpfe das ✕). Auf Touch-Geräten bricht die Steuerleiste um, und der
+  Lautstärkeregler entfällt (iOS ignoriert ihn; die Tasten am Gerät regeln die Lautstärke).
+
 ## 0.10.1 – 2026-10-06
 
 ### Behoben

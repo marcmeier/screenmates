@@ -141,7 +141,7 @@ function vollbild() {
         :key="f.key"
         :style="{ left: `${f.links}%`, animationDuration: `${f.dauer}ms`, '--kippen': `${f.kippen}deg` }"
       >
-        {{ f.inhalt }}<small v-if="vollbildAn">{{ app.userById(f.user_id)?.name }}</small>
+        {{ f.inhalt }}<small>{{ app.userById(f.user_id)?.name }}</small>
       </span>
     </div>
     <div v-if="kino.pause" class="pause" role="status">
@@ -165,6 +165,9 @@ function vollbild() {
     <button v-else-if="muted && !kino.sende" class="primary unmute" @click="tonAn">
       <Icon name="ton" :size="18" /> Ton an
     </button>
+
+    <!-- The stand-in full screen always has a way out, whatever the bar below holds. -->
+    <button v-if="ersatz" class="schliessen" aria-label="Vollbild schließen" @click="vollbild"><Icon name="x" :size="20" /></button>
 
     <div class="controls">
       <span v-if="kino.sende" class="hint">Deine Vorschau – du hörst dich selbst nicht</span>
@@ -212,7 +215,17 @@ video { width: 100%; height: 100%; object-fit: contain; display: block; backgrou
   opacity: 0; transition: opacity 0.2s;
 }
 .screen:hover .controls, .screen:focus-within .controls { opacity: 1; }
-@media (hover: none) { .controls { opacity: 1; } }
+/* Touch devices: the bar is always there; the volume slider goes (iOS ignores it, the
+   device's buttons set the volume), and the bar may wrap instead of hiding buttons. */
+@media (hover: none) {
+  .controls { opacity: 1; flex-wrap: wrap; row-gap: 0.2rem; }
+  .controls input[type='range'] { display: none; }
+}
+.schliessen {
+  position: absolute; z-index: 4; right: max(0.6rem, env(safe-area-inset-right)); top: max(0.6rem, env(safe-area-inset-top));
+  width: 40px; height: 40px; padding: 0; justify-content: center; border-radius: 50%;
+  background: rgba(0, 0, 0, 0.55); border: 1px solid rgba(255, 255, 255, 0.25); color: #fff;
+}
 .controls button { color: #fff; padding: 0.35rem; }
 .controls input[type='range'] { width: 110px; padding: 0; accent-color: var(--accent); }
 .hint { font-size: 0.8rem; color: #ddd; }

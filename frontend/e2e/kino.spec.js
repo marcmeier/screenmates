@@ -201,6 +201,12 @@ test('the host links a film and goes live', async () => {
   await host.locator('.desk .results button', { hasText: 'Shining' }).first().click()
   await host.getByRole('button', { name: 'Übertragung starten' }).click()
   await expect(host.getByText('Du bist live', { exact: true })).toBeVisible({ timeout: 10_000 })
+  // The same host on a second device (phone): not "über OBS", but the other device.
+  const handy = await host.context().newPage()
+  await handy.goto(host.url())
+  await expect(handy.locator('.desk .onair')).toContainText('Du sendest von einem anderen Gerät', { timeout: 10_000 })
+  await expect(handy.locator('.desk')).not.toContainText('OBS)')
+  await handy.close()
 })
 
 test('friends see it everywhere and watch in sync', async () => {
@@ -238,6 +244,13 @@ test('without element full screen (iPhone) the picture covers the screen itself'
   expect([Math.round(groesse.width), Math.round(groesse.height)]).toEqual([fenster.width, fenster.height])
   await viewer.keyboard.press('Escape')
   await expect(bild).not.toHaveClass(/ersatz/)
+  // On a narrow phone in portrait the way out stays free (reactions used to cover it).
+  await viewer.setViewportSize({ width: 390, height: 844 })
+  await viewer.getByRole('button', { name: 'Vollbild', exact: true }).click()
+  await viewer.getByRole('button', { name: 'Vollbild schließen' }).click({ trial: true }) // nothing in the way
+  await viewer.getByRole('button', { name: 'Vollbild schließen' }).click()
+  await expect(bild).not.toHaveClass(/ersatz/)
+  await viewer.setViewportSize({ width: 1400, height: 900 })
 })
 
 test('the audience chats, and reactions fly across the picture', async () => {

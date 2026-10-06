@@ -238,7 +238,9 @@ onBeforeUnmount(() => {
 
 <style scoped>
 .buehne {
-  position: fixed; inset: 0; z-index: 200; display: flex; flex-direction: column; justify-content: center; gap: 1.6rem;
+  /* The strip sits in the exact middle and never moves: the rows above and below share the
+     rest equally, whatever appears underneath (countdown note, skip button, the winner). */
+  position: fixed; inset: 0; z-index: 200; display: grid; grid-template-rows: minmax(0, 1fr) auto minmax(0, 1fr);
   background: radial-gradient(ellipse at center, rgba(30, 30, 40, 0.97), rgba(5, 5, 8, 0.98)); backdrop-filter: blur(6px);
 }
 .kopf { position: absolute; top: 0; left: 0; right: 0; display: flex; align-items: center; gap: 0.8rem; padding: 1rem 1.4rem; }
@@ -287,7 +289,8 @@ onBeforeUnmount(() => {
 .enthuellt .item:not(.sieger) { opacity: 0.25; }
 .enthuellt .item.sieger { transform: scale(1.08); box-shadow: 0 0 0 2px var(--farbe), 0 0 60px var(--farbe); z-index: 1; }
 
-.fuss { min-height: 110px; display: flex; flex-direction: column; align-items: center; gap: 0.9rem; }
+.fenster { grid-row: 2; }
+.fuss { grid-row: 3; align-self: start; padding-top: 1.6rem; display: flex; flex-direction: column; align-items: center; gap: 0.9rem; }
 .enthuellung { display: flex; flex-direction: column; align-items: center; gap: 0.2rem; animation: auf 0.5s cubic-bezier(0.2, 1.4, 0.4, 1); }
 .enthuellung .stufe { color: var(--farbe); font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; font-size: 0.8rem; }
 .enthuellung strong { font-size: clamp(1.4rem, 4vw, 2.2rem); text-align: center; padding: 0 1rem; text-shadow: 0 0 30px var(--farbe); }
