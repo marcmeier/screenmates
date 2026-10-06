@@ -12,6 +12,15 @@ let statsTimer = null
 // The live state of the Kino, polled app-wide so the navigation can show that
 // something is on air on every page. Sending lives here too, not in the Kino
 // page: the host can browse the app while the show keeps running.
+const WIE_ALLE = 'screenmates.kino.wieAlle'
+function wieAlleGemerkt() {
+  try {
+    return localStorage.getItem(WIE_ALLE) !== 'nein'
+  } catch {
+    return true
+  }
+}
+
 export const useKino = defineStore('kino', {
   state: () => ({
     enabled: false,
@@ -26,6 +35,8 @@ export const useKino = defineStore('kino', {
     sender: null, // who sends it (user id)
     localStream: null, // what this browser is sending, for the host's preview
     sendStats: null, // what the encoder actually produces, refreshed every 2 s
+    // The host watches the stream like everyone (same delay, with sound) – or the instant preview.
+    wieAlle: wieAlleGemerkt(),
   }),
   getters: {
     sende: (s) => !!s.localStream,
@@ -48,7 +59,8 @@ export const useKino = defineStore('kino', {
       const ui = useUi()
       let stream
       try {
-        stream = await pickScreen({ audio, inhalt })
+        // Watching the stream like everyone: the shared tab's own sound would come twice.
+        stream = await pickScreen({ audio, inhalt, leise: this.wieAlle })
       } catch {
         return // the user cancelled the picker
       }
@@ -81,14 +93,34 @@ export const useKino = defineStore('kino', {
     },
 
     stopSending() {
-      publisher?.stop()
+      try {
+        publisher?.stop()
+      } catch {
+        /* already gone */
+      }
     },
 
-    // Ends whatever is on air, including an OBS the host can't reach directly.
+    setWieAlle(an) {
+      this.wieAlle = an
+      try {
+        localStorage.setItem(WIE_ALLE, an ? 'ja' : 'nein')
+      } catch {
+        /* private mode */
+      }
+      // The shared tab plays its own sound only when the host watches the instant preview.
+      for (const t of this.localStream?.getAudioTracks() ?? []) t.applyConstraints({ suppressLocalAudioPlayback: an }).catch(() => {})
+    },
+
+    // Ends whatever is on air, including an OBS the host can't reach directly. The server goes
+    // first: tearing down the local stream changes the page, and the show must end regardless.
     async endShow() {
-      this.stopSending()
-      await api.del('/api/kino')
-      await this.refresh()
+      try {
+        await api.del('/api/kino')
+      } finally {
+        this.stopSending()
+        await this.refresh()
+      }
+      useUi().toast(t('kino.beendet'), 'ok')
     },
   },
 })

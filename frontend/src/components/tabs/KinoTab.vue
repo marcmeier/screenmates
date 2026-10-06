@@ -65,50 +65,52 @@ async function alsGesehen() {
       {{ $t('kinotab.nichtEingerichtet') }}
     </div>
 
-    <div v-else class="layout" :class="{ mitChat: app.me }">
-      <section class="stage">
-        <div v-if="kino.live" class="row onair">
-          <span class="badge"><span class="dot"></span>LIVE</span>
-          <h2>{{ kino.titel || $t('kinotab.ohneTitel') }}</h2>
-          <span v-if="kino.seit" class="muted since">seit {{ vorWann(kino.seit).replace('vor ', '') }}</span>
-          <span class="spacer"></span>
-          <span v-if="kino.zuschauer.length" class="viewers" :title="kino.zuschauer.map((id) => app.userById(id)?.name).join(', ')">
-            <span class="avatars"><UserAvatar v-for="id in kino.zuschauer" :key="id" :user-id="id" /></span>
-            {{ kino.zuschauer.length }} {{ kino.zuschauer.length === 1 ? 'schaut' : 'schauen' }}
-          </span>
-        </div>
+    <template v-else>
+      <div v-if="kino.live" class="row onair">
+        <span class="badge"><span class="dot"></span>LIVE</span>
+        <h2>{{ kino.titel || $t('kinotab.ohneTitel') }}</h2>
+        <span v-if="kino.seit" class="muted since">{{ vorWann(kino.seit) }}</span>
+        <span class="spacer"></span>
+        <span v-if="kino.zuschauer.length" class="viewers" :title="kino.zuschauer.map((id) => app.userById(id)?.name).join(', ')">
+          <span class="avatars"><UserAvatar v-for="id in kino.zuschauer" :key="id" :user-id="id" /></span>
+          {{ $t('kinotab.schauen', { n: kino.zuschauer.length }, kino.zuschauer.length) }}
+        </span>
+      </div>
+      <div class="layout" :class="{ mitChat: app.me }">
+        <section class="stage">
 
-        <template v-if="kino.live || kino.sende">
-          <KinoPlayer v-if="app.me" />
+          <template v-if="kino.live || kino.sende">
+            <KinoPlayer v-if="app.me" />
+            <div v-else class="screen empty-screen">
+              <p>{{ $t('kinotab.waehlEinenNamenUm') }}</p>
+              <button class="primary" @click="ui.loginOpen = true">{{ $t('namen.dialog') }}</button>
+            </div>
+            <button v-if="kino.movie" class="ghost small movie" @click="ui.open(kino.movie)">
+              <Icon name="info" :size="14" /> {{ $t('kinotab.ueberTitle', { title: kino.movie.title }) }}
+            </button>
+          </template>
+
           <div v-else class="screen empty-screen">
-            <p>{{ $t('kinotab.waehlEinenNamenUm') }}</p>
-            <button class="primary" @click="ui.loginOpen = true">{{ $t('namen.dialog') }}</button>
+            <Icon name="kino" :size="44" />
+            <p><strong>{{ $t('kinotab.geradeLaeuftNichts') }}</strong></p>
+            <p class="muted">
+              {{ gast.darfModerieren ? $t('kinotab.starteUntenEineUebertragung') : $t('kinotab.sobaldJemandSendetErscheint') }}
+            </p>
           </div>
-          <button v-if="kino.movie" class="ghost small movie" @click="ui.open(kino.movie)">
-            <Icon name="info" :size="14" /> {{ $t('kinotab.ueberTitle', { title: kino.movie.title }) }}
-          </button>
-        </template>
 
-        <div v-else class="screen empty-screen">
-          <Icon name="kino" :size="44" />
-          <p><strong>{{ $t('kinotab.geradeLaeuftNichts') }}</strong></p>
-          <p class="muted">
-            {{ gast.darfModerieren ? $t('kinotab.starteUntenEineUebertragung') : $t('kinotab.sobaldJemandSendetErscheint') }}
-          </p>
-        </div>
+          <div v-if="vorbei" class="panel done">
+            <span>{{ $t('kinotab.vorstellungVorbei') }} <strong>{{ kino.movie.title }}</strong> {{ $t('kinotab.alsGesehenEintragen') }}</span>
+            <span class="spacer"></span>
+            <span class="avatars"><UserAvatar v-for="id in kino.publikum" :key="id" :user-id="id" /></span>
+            <button class="primary small" @click="alsGesehen"><Icon name="gesehen" :size="14" /> {{ $t('kinotab.eintragen') }}</button>
+          </div>
 
-        <div v-if="vorbei" class="panel done">
-          <span>{{ $t('kinotab.vorstellungVorbei') }} <strong>{{ kino.movie.title }}</strong> {{ $t('kinotab.alsGesehenEintragen') }}</span>
-          <span class="spacer"></span>
-          <span class="avatars"><UserAvatar v-for="id in kino.publikum" :key="id" :user-id="id" /></span>
-          <button class="primary small" @click="alsGesehen"><Icon name="gesehen" :size="14" /> {{ $t('kinotab.eintragen') }}</button>
-        </div>
+          <KinoSenden v-if="gast.darfModerieren" />
+        </section>
 
-        <KinoSenden v-if="gast.darfModerieren" />
-      </section>
-
-      <KinoChat v-if="app.me" class="seite" />
-    </div>
+        <KinoChat v-if="app.me" class="seite" />
+      </div>
+    </template>
   </div>
 </template>
 

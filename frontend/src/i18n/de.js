@@ -597,6 +597,7 @@ export default {
       mittel: "Mittel – 720p",
       sparsam: "Sparsam – 480p",
     },
+    beendet: "Übertragung beendet",
   },
   kinochat: {
     aeltereNachrichten: "Ältere Nachrichten",
@@ -630,6 +631,8 @@ export default {
     vollbild: "Vollbild",
     vollbildSchliessen: "Vollbild schließen",
     vollbildVerlassen: "Vollbild verlassen",
+    zurVorschau: "Vorschau ohne Verzögerung",
+    wieAlle: "Wie alle schauen (mit Ton)",
   },
   kinosenden: {
     ausDerKiste: "aus der Kiste",
@@ -698,6 +701,7 @@ export default {
     ueberTitle: "Über „{title}“",
     vorstellungVorbei: "Vorstellung vorbei –",
     waehlEinenNamenUm: "Wähl einen Namen, um zuzuschauen.",
+    schauen: "{n} schaut | {n} schauen",
   },
   kinutzung: {
     "30Tage": "30 Tage",

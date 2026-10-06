@@ -53,7 +53,7 @@ async function probe() {
       </li>
     </ul>
     <template v-if="kiste.darfOeffnen">
-      <button class="primary oeffnen" :disabled="busy || laeuft" @click="fuerAlle"><Icon name="kiste" :size="18" /> {{ $t('kistenoeffnung.fuerAlleOeffnen') }}</button>
+      <button class="kiste-knopf oeffnen" :disabled="busy || laeuft" @click="fuerAlle"><Icon name="kiste" :size="20" /> {{ $t('kistenoeffnung.fuerAlleOeffnen') }}</button>
       <button class="ghost small probe" :disabled="busy || laeuft" @click="probe">{{ $t('kistenoeffnung.probedrehenNurFuerMich') }}</button>
     </template>
     <template v-else>
@@ -74,6 +74,7 @@ async function probe() {
 .titel { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .chance { font-variant-numeric: tabular-nums; color: var(--muted); font-size: 0.8rem; }
 .oeffnen { width: 100%; justify-content: center; padding: 0.7rem; font-size: 1rem; }
+.kiste-knopf.oeffnen { padding: 0.95rem; font-size: 1.1rem; border-radius: 12px; }
 .probe { width: 100%; justify-content: center; margin-top: 0.3rem; }
 .hinweis { font-size: 0.8rem; margin: 0.5rem 0 0; text-align: center; }
 </style>
