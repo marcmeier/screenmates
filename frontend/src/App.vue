@@ -103,14 +103,21 @@ const kuerzel = (name) => name.split(/\s+/).filter(Boolean).slice(0, 2).map((w) 
 
 // Someone new (name younger than two weeks) gets a short welcome – once, on whichever device.
 const Willkommen = lazy(() => import('./components/Willkommen.vue'))
+// Closed here stays closed: a poll answered just before the server knew must not bring it back.
+const willkommenZu = ref(false)
 const willkommen = computed(
-  () => !!app.me && !app.me.design?.willkommen && Date.now() - new Date(app.me.created_at).getTime() < 14 * 864e5,
+  () =>
+    !!app.me &&
+    !willkommenZu.value &&
+    !app.me.design?.willkommen &&
+    Date.now() - new Date(app.me.created_at).getTime() < 14 * 864e5,
 )
 async function willkommenFertig() {
   // Closed once the server knows – a reload right after must not bring it back.
   try {
     await api.post('/api/users/me/willkommen', undefined, { quiet: true })
   } finally {
+    willkommenZu.value = true
     app.me.design = { ...(app.me.design || {}), willkommen: true }
   }
 }

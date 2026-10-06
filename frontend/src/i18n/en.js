@@ -1,6 +1,12 @@
 // English. Same keys as de.js (film data from TMDB stays German).
 export default {
   abendmodus: {
+    gastgeberNichtDa: "{name} isn't here right now.",
+    keinGastgeber: "Nobody has the host baton yet.",
+    uebernehmenUndOeffnen: "Take the baton & open the case",
+    gastgeberOeffnetGleich:
+      "{name} is about to open the case – you'll see it live.",
+    selbstUebernehmen: "Take over yourself?",
     ausDerKiste: "from the case",
     derGastgeberOeffnetGleich:
       "The host is about to open the case – you'll see it live.",

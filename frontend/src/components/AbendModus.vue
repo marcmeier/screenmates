@@ -4,6 +4,7 @@ import { computed } from 'vue'
 import { api } from '../api'
 import { useApp } from '../stores/app'
 import { useKiste } from '../stores/kiste'
+import { useGastgeber } from '../stores/gastgeber'
 import { useKino } from '../stores/kino'
 import { useUi } from '../stores/ui'
 import { navigate } from '../composables/useRoute'
@@ -21,6 +22,16 @@ const app = useApp()
 const kiste = useKiste()
 const kino = useKino()
 const ui = useUi()
+const g = useGastgeber()
+
+// Not the host? Then say who is, and – if they aren't around (or nobody is) – take the baton
+// and open the case in one go. With the host there, taking over goes to a short vote.
+const hostName = computed(() => app.userById(g.gastgeber)?.name ?? '')
+async function uebernehmenUndOeffnen() {
+  audioJetzt()
+  await g.nehmen()
+  await kiste.oeffnen()
+}
 
 const t = computed(() => terminText(props.termin))
 const gewinner = computed(() => kiste.aktuell?.gewinner ?? null)
@@ -72,9 +83,27 @@ async function eintragen() {
               <button v-if="kiste.darfOeffnen" class="small primary" :disabled="!!kiste.buehne" @click="audioJetzt(), kiste.oeffnen()">
                 <Icon name="kiste" :size="14" /> {{ $t('abendmodus.kisteFuerAlleOeffnen') }}
               </button>
-              <p v-else class="muted klein">{{ $t('abendmodus.derGastgeberOeffnetGleich') }}</p>
+              <template v-else-if="app.me && g.uebernehmen === 'sofort'">
+                <p class="muted klein">
+                  {{ g.gastgeber ? $t('abendmodus.gastgeberNichtDa', { name: hostName }) : $t('abendmodus.keinGastgeber') }}
+                </p>
+                <button class="small primary" :disabled="!!kiste.buehne" @click="uebernehmenUndOeffnen">
+                  <Icon name="kiste" :size="14" /> {{ $t('abendmodus.uebernehmenUndOeffnen') }}
+                </button>
+              </template>
+              <template v-else>
+                <p class="muted klein">
+                  {{ hostName ? $t('abendmodus.gastgeberOeffnetGleich', { name: hostName }) : $t('abendmodus.derGastgeberOeffnetGleich') }}
+                </p>
+                <button v-if="app.me && g.uebernehmen === 'abstimmung'" class="ghost small selbst" :title="$t('gastgeberleiste.dieAnwesendenStimmenAb')" @click="g.nehmen()">
+                  {{ $t('abendmodus.selbstUebernehmen') }}
+                </button>
+              </template>
             </template>
-            <p v-else class="muted klein">{{ $t('abendmodus.nochNichtsVorgeschlagenSchnell') }}</p>
+            <template v-else>
+              <p class="muted klein">{{ $t('abendmodus.nochNichtsVorgeschlagenSchnell') }}</p>
+              <a href="#/finden" class="button small primary"><Icon name="suche" :size="14" /> {{ $t('abendtab.filmeFinden') }}</a>
+            </template>
           </template>
 
           <template v-else>
@@ -116,6 +145,8 @@ h3 { margin: 0.15rem 0 0; font-size: 0.95rem; }
 .film { display: flex; gap: 0.6rem; align-items: center; }
 .film span:last-child { display: flex; flex-direction: column; font-size: 0.88rem; }
 .plakat { width: 34px; height: 51px; border-radius: 4px; overflow: hidden; flex: none; background: var(--bg-raised); }
+button.selbst { padding: 0.2rem 0; font-size: 0.78rem; color: var(--muted); }
+button.selbst:hover { color: var(--text); }
 a.button.small { padding: 0.3rem 0.6rem; font-size: 0.8rem; }
 a.button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
 @media (max-width: 800px) { .schritte { grid-template-columns: 1fr; } }
