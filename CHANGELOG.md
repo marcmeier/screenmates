@@ -9,6 +9,9 @@
   Kiste öffnet. Ist der Gastgeber nicht da (oder hat niemand den Stab), geht es mit einem Klick:
   **Stab übernehmen & Kiste öffnen**. Ist er da, startet „Selbst übernehmen?“ die kurze Abstimmung.
 
+### Behoben
+- Das Willkommen konnte sich gleich wieder öffnen, wenn eine ältere Antwort des Servers nachkam.
+
 ## 0.13.0 – 2026-10-06
 
 ### Neu
