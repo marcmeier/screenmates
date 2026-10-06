@@ -1,9 +1,10 @@
 <script setup>
+import { t } from '../../i18n'
 import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
 import { api } from '../../api'
 import { useApp } from '../../stores/app'
 import { useMovieList } from '../../composables/useMovieList'
-import { debounce } from '../../format'
+import { debounce, zahl } from '../../format'
 import Icon from '../Icon.vue'
 import MovieGrid from '../MovieGrid.vue'
 import Regale from './Regale.vue'
@@ -44,10 +45,9 @@ const genres = ref([])
 const dienste = ref([])
 const app = useApp()
 const { items, loading, failed, more, hinweis, gesamt, load, loadMore } = useMovieList('/api/discover', 24)
-const anzahl = new Intl.NumberFormat('de-DE')
 // TMDB caps its count (20.001) and serves at most 500 pages of 20.
 const gesamtText = computed(() =>
-  gesamt.value > 10000 ? 'Mehr als 10.000 Filme' : `${anzahl.format(gesamt.value)} ${gesamt.value === 1 ? 'Film' : 'Filme'}`,
+  gesamt.value > 10000 ? t('entdeckenpanel.mehrAls10000') : t('entdeckenpanel.anzahlFilme', { n: zahl(gesamt.value) }, gesamt.value),
 )
 
 const rangesActive = computed(() => RANGES.some((k) => f[k] !== DEFAULTS[k] && f[k] !== ''))
@@ -130,18 +130,18 @@ onBeforeUnmount(() => {
 const woAktiv = computed(() => !!(f.anbieter || f.beiUns || f.kostenlos))
 const gewaehlterDienst = computed(() => dienste.value.find((d) => d.id === f.anbieter) || null)
 const woText = computed(() => {
-  if (f.beiUns) return 'Läuft bei uns'
-  if (f.kostenlos) return 'Kostenlos'
-  if (f.anbieter) return gewaehlterDienst.value?.name ?? 'Ein Dienst'
-  return 'Wo läuft’s?'
+  if (f.beiUns) return t('entdeckenpanel.laeuftBeiUns')
+  if (f.kostenlos) return t('entdeckenpanel.kostenlos')
+  if (f.anbieter) return gewaehlterDienst.value?.name ?? t('entdeckenpanel.einDienst')
+  return t('entdeckenpanel.woLaeuftS')
 })
 function alleDienste() {
   Object.assign(f, { anbieter: null, beiUns: false, kostenlos: false })
 }
 const genreText = computed(() => {
   const namen = f.include.map((id) => genres.value.find((g) => g.id === id)?.name).filter(Boolean)
-  if (!namen.length) return 'Genre'
-  return namen.length <= 2 ? namen.join(', ') : `${namen.length} Genres`
+  if (!namen.length) return t('entdeckenpanel.genre')
+  return namen.length <= 2 ? namen.join(', ') : t('entdeckenpanel.lengthGenres', { length: namen.length })
 })
 
 function toggleGenre(id) {
@@ -159,36 +159,36 @@ const sichtbar = computed(() => (f.ohneGesehene ? items.value.filter((m) => !m.g
   <section>
     <!-- One bar instead of five rows: view, where it runs, genres, filters, order, how many. -->
     <div class="leiste">
-      <div class="ansicht" role="tablist" aria-label="Ansicht">
+      <div class="ansicht" role="tablist" :aria-label="$t('entdeckenpanel.ansicht')">
         <button role="tab" :aria-selected="f.ansicht === 'stoebern'" :class="{ on: f.ansicht === 'stoebern' }" @click="f.ansicht = 'stoebern'">
-          Stöbern
+          {{ $t('entdeckenpanel.stoebern') }}
         </button>
         <button role="tab" :aria-selected="f.ansicht === 'raster'" :class="{ on: f.ansicht === 'raster' }" @click="f.ansicht = 'raster'">
-          Alle Filme
+          {{ $t('entdeckenpanel.alleFilme') }}
         </button>
       </div>
 
       <template v-if="f.ansicht === 'raster'">
         <div class="aufklapp">
-          <button class="small wahl" :class="{ on: woAktiv }" :aria-expanded="offen === 'wo'" aria-label="Wo läuft's?" @click.stop="umschalten('wo')">
+          <button class="small wahl" :class="{ on: woAktiv }" :aria-expanded="offen === 'wo'" :aria-label="$t('entdeckenpanel.woLaeuftS2')" @click.stop="umschalten('wo')">
             <img v-if="gewaehlterDienst?.logo" :src="gewaehlterDienst.logo" alt="" class="mini" />
             <span>{{ woText }}</span>
             <Icon name="pfeil" :size="12" class="pfeil" />
           </button>
-          <div v-if="offen === 'wo'" class="menue panel" role="group" aria-label="Streamingdienst" @click.stop>
+          <div v-if="offen === 'wo'" class="menue panel" role="group" :aria-label="$t('entdeckenpanel.streamingdienst')" @click.stop>
             <div class="optionen">
-              <button class="small" :class="{ on: !woAktiv }" @click="alleDienste">Überall</button>
+              <button class="small" :class="{ on: !woAktiv }" @click="alleDienste">{{ $t('entdeckenpanel.ueberall') }}</button>
               <button
                 v-if="app.status.tmdb"
                 class="small"
                 :class="{ on: f.beiUns }"
                 :aria-pressed="f.beiUns"
-                title="Nur Filme, die bei einem Abo aus eurer Gruppe laufen"
+                :title="$t('entdeckenpanel.nurFilmeDieBei')"
                 @click="beiUnsUmschalten"
               >
-                <Icon name="gesehen" :size="14" /> Läuft bei uns
+                <Icon name="gesehen" :size="14" /> {{ $t('entdeckenpanel.laeuftBeiUns2') }}
               </button>
-              <button class="small" :class="{ on: f.kostenlos }" :aria-pressed="f.kostenlos" @click="kostenlosUmschalten">Kostenlos</button>
+              <button class="small" :class="{ on: f.kostenlos }" :aria-pressed="f.kostenlos" @click="kostenlosUmschalten">{{ $t('entdeckenpanel.kostenlos2') }}</button>
             </div>
             <div v-if="dienste.length" class="dienste">
               <button
@@ -207,12 +207,12 @@ const sichtbar = computed(() => (f.ohneGesehene ? items.value.filter((m) => !m.g
         </div>
 
         <div class="aufklapp">
-          <button class="small wahl" :class="{ on: f.include.length }" :aria-expanded="offen === 'genre'" aria-label="Genres" @click.stop="umschalten('genre')">
+          <button class="small wahl" :class="{ on: f.include.length }" :aria-expanded="offen === 'genre'" :aria-label="$t('entdeckenpanel.genres')" @click.stop="umschalten('genre')">
             <span>{{ genreText }}</span>
             <Icon name="pfeil" :size="12" class="pfeil" />
           </button>
           <div v-if="offen === 'genre'" class="menue panel breit" @click.stop>
-            <div class="chips" role="group" aria-label="Genres">
+            <div class="chips" role="group" :aria-label="$t('entdeckenpanel.genres2')">
               <button
                 v-for="g in genres"
                 :key="g.id"
@@ -222,20 +222,20 @@ const sichtbar = computed(() => (f.ohneGesehene ? items.value.filter((m) => !m.g
                 @click="toggleGenre(g.id)"
               >{{ g.name }}</button>
             </div>
-            <button v-if="f.include.length" class="ghost small" @click="f.include = []">Alle Genres</button>
+            <button v-if="f.include.length" class="ghost small" @click="f.include = []">{{ $t('entdeckenpanel.alleGenres') }}</button>
           </div>
         </div>
 
         <button class="small" :class="{ on: rangesActive }" :aria-expanded="showRanges" @click="showRanges = !showRanges">
-          <Icon name="filter" :size="14" /> Filter
+          <Icon name="filter" :size="14" /> {{ $t('entdeckenpanel.filter') }}
         </button>
-        <select v-model="f.sort" aria-label="Sortierung">
-          <option value="popularity.desc">Beliebt</option>
-          <option value="vote_average.desc">Beste Bewertung</option>
-          <option value="primary_release_date.desc">Neueste</option>
-          <option value="primary_release_date.asc">Älteste</option>
+        <select v-model="f.sort" :aria-label="$t('entdeckenpanel.sortierung')">
+          <option value="popularity.desc">{{ $t('entdeckenpanel.beliebt') }}</option>
+          <option value="vote_average.desc">{{ $t('entdeckenpanel.besteBewertung') }}</option>
+          <option value="primary_release_date.desc">{{ $t('entdeckenpanel.neueste') }}</option>
+          <option value="primary_release_date.asc">{{ $t('entdeckenpanel.aelteste') }}</option>
         </select>
-        <button v-if="anyActive" class="ghost small" @click="reset"><Icon name="x" :size="13" /> Filter zurücksetzen</button>
+        <button v-if="anyActive" class="ghost small" @click="reset"><Icon name="x" :size="13" /> {{ $t('entdeckenpanel.filterZuruecksetzen') }}</button>
         <span class="spacer"></span>
         <span v-if="gesamt && !hinweis" class="muted gesamt">{{ gesamtText }}</span>
       </template>
@@ -245,15 +245,15 @@ const sichtbar = computed(() => (f.ohneGesehene ? items.value.filter((m) => !m.g
 
     <template v-else>
       <div v-if="showRanges" class="ranges panel">
-        <label class="field">Jahr ab<input v-model.number="f.jahr_min" type="number" min="1900" max="2100" placeholder="1970" /></label>
-        <label class="field">Jahr bis<input v-model.number="f.jahr_max" type="number" min="1900" max="2100" placeholder="2025" /></label>
-        <label class="field">Note ab<input v-model.number="f.note_min" type="number" min="0" max="10" step="0.5" placeholder="6.5" /></label>
-        <label class="field">Länge bis (min)<input v-model.number="f.dauer_max" type="number" min="0" step="5" placeholder="120" /></label>
-        <label class="check"><input v-model="f.ohneGesehene" type="checkbox" /> Gesehene ausblenden</label>
+        <label class="field">{{ $t('entdeckenpanel.jahrAb') }}<input v-model.number="f.jahr_min" type="number" min="1900" max="2100" placeholder="1970" /></label>
+        <label class="field">{{ $t('entdeckenpanel.jahrBis') }}<input v-model.number="f.jahr_max" type="number" min="1900" max="2100" placeholder="2025" /></label>
+        <label class="field">{{ $t('entdeckenpanel.noteAb') }}<input v-model.number="f.note_min" type="number" min="0" max="10" step="0.5" placeholder="6.5" /></label>
+        <label class="field">{{ $t('entdeckenpanel.laengeBisMin') }}<input v-model.number="f.dauer_max" type="number" min="0" step="5" placeholder="120" /></label>
+        <label class="check"><input v-model="f.ohneGesehene" type="checkbox" /> {{ $t('entdeckenpanel.geseheneAusblenden') }}</label>
       </div>
 
       <p v-if="hinweis" class="notice hinweis">
-        {{ hinweis }} <a v-if="hinweis.includes('Abos')" href="#/profil/einstellungen">Zu den Einstellungen</a>
+        {{ hinweis }} <a v-if="hinweis.includes('Abos')" href="#/profil/einstellungen">{{ $t('entdeckenpanel.zuDenEinstellungen') }}</a>
       </p>
       <MovieGrid
         v-else
@@ -261,8 +261,8 @@ const sichtbar = computed(() => (f.ohneGesehene ? items.value.filter((m) => !m.g
         :loading="loading"
         :failed="failed"
         :more="more"
-        empty-title="Keine Filme für diese Filter"
-        empty-text="Versuch es mit weniger Einschränkungen."
+        :empty-title="$t('entdeckenpanel.keineFilmeFuerDiese')"
+        :empty-text="$t('entdeckenpanel.versuchEsMitWeniger')"
         @more="loadMore"
         @retry="load(query())"
       />

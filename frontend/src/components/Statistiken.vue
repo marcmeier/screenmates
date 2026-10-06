@@ -1,4 +1,5 @@
 <script setup>
+import { t } from '../i18n'
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { api } from '../api'
 import { useApp } from '../stores/app'
@@ -14,31 +15,31 @@ let wechsel = null
 let laden = null
 
 const HINTER_DEN_KULISSEN = [
-  '🍿 Popcorn wird vorbereitet …',
-  '🟥 Der rote Teppich wird ausgerollt …',
-  '🕊️ Tauben werden von der Datenleitung verscheucht …',
-  '🎞️ Filmrollen werden zurückgespult …',
-  '🧹 Krümel werden aus dem Sofa gesaugt …',
-  '🔦 Platzanweiser suchen ihre Taschenlampen …',
-  '🥤 Strohhalme werden sortiert (nach Farbe)',
-  '🎟️ Kinokarten werden abgerissen …',
-  '📼 VHS-Kassetten werden höflich gebeten, zurückgespult zu werden',
-  '🛋️ Die beste Sofaecke wird schon mal reserviert …',
-  '🔇 Handys werden auf lautlos gestellt …',
-  '🐈 Die Katze wird vom Laptop-Kabel gelockt …',
-  '📡 Pixel werden nachgezählt – alle da',
-  '🧂 Popcorn: süß oder salzig? Gremium tagt noch …',
-  '🎬 Der Regisseur sucht seinen Stuhl …',
-  '🌀 Spoiler werden aus dem Gruppenchat gefegt …',
-  '🍕 Pizzaboten werden auf Spoiler geprüft …',
-  '🧦 Kuschelsocken werden vorgewärmt …',
-  '🦉 Nachteulen werden geweckt …',
-  '🔊 Der Bass wird den Nachbarn schonend beigebracht …',
-  '🎻 Das Orchester stimmt die Abspannmusik …',
-  '🕯️ Das Licht wird langsam gedimmt …',
-  '🧊 Getränke werden auf Filmtemperatur gebracht …',
-  '🤫 Leute, die bei Filmen reden, werden sanft ermahnt …',
-  '🦖 Der Dinosaurier aus dem Trailer wird wieder eingefangen …',
+  t('statistiken.popcornWirdVorbereitet'),
+  t('statistiken.derRoteTeppichWird'),
+  t('statistiken.taubenWerdenVonDer'),
+  t('statistiken.filmrollenWerdenZurueckgespult'),
+  t('statistiken.kruemelWerdenAusDem'),
+  t('statistiken.platzanweiserSuchenIhreTaschenlampen'),
+  t('statistiken.strohhalmeWerdenSortiertNach'),
+  t('statistiken.kinokartenWerdenAbgerissen'),
+  t('statistiken.vhsKassettenWerdenHoeflich'),
+  t('statistiken.dieBesteSofaeckeWird'),
+  t('statistiken.handysWerdenAufLautlos'),
+  t('statistiken.dieKatzeWirdVom'),
+  t('statistiken.pixelWerdenNachgezaehltAlle'),
+  t('statistiken.popcornSuessOderSalzig'),
+  t('statistiken.derRegisseurSuchtSeinen'),
+  t('statistiken.spoilerWerdenAusDem'),
+  t('statistiken.pizzabotenWerdenAufSpoiler'),
+  t('statistiken.kuschelsockenWerdenVorgewaermt'),
+  t('statistiken.nachteulenWerdenGeweckt'),
+  t('statistiken.derBassWirdDen'),
+  t('statistiken.dasOrchesterStimmtDie'),
+  t('statistiken.dasLichtWirdLangsam'),
+  t('statistiken.getraenkeWerdenAufFilmtemperatur'),
+  t('statistiken.leuteDieBeiFilmen'),
+  t('statistiken.derDinosaurierAusDem'),
 ]
 let letzterSpass = -1
 function spass() {
@@ -80,14 +81,14 @@ const fakt = computed(() => aktuell.value)
 
 <template>
   <div class="statistik">
-    <button v-if="fakt" class="fakt" title="Weiter" @click="weiter">
+    <button v-if="fakt" class="fakt" :title="$t('statistiken.weiter')" @click="weiter">
       <Transition name="blende" mode="out-in">
         <span v-if="fakt.spass" :key="`s${schritt}`" class="spass">{{ fakt.text }}</span>
         <span v-else :key="schritt"><strong>{{ fakt.wert }}</strong> {{ fakt.text }}</span>
       </Transition>
     </button>
-    <span v-if="!app.status.tmdb" class="warn">Demo-Katalog · TMDB nicht verbunden</span>
-    <a href="#/ueber" class="ueber">Über · Impressum</a>
+    <span v-if="!app.status.tmdb" class="warn">{{ $t('statistiken.demoKatalogTmdbNicht') }}</span>
+    <a href="#/ueber" class="ueber">{{ $t('app.ueberImpressum') }}</a>
   </div>
 </template>
 

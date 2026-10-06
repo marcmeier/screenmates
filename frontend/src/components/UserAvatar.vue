@@ -1,4 +1,5 @@
 <script setup>
+import { t } from '../i18n'
 import { computed, ref, watch } from 'vue'
 import { useApp } from '../stores/app'
 import { initialen } from '../format'
@@ -16,7 +17,7 @@ const u = computed(() => props.user || app.userById(props.userId))
 const level = computed(() => u.value?.level ?? app.userById(u.value?.id)?.level ?? null)
 const kaputt = ref(false)
 watch(() => u.value?.bild, () => (kaputt.value = false))
-const titel = computed(() => (u.value ? `${u.value.name}${level.value > 1 ? ` · Level ${level.value}` : ''}` : 'Gelöschter Nutzer'))
+const titel = computed(() => (u.value ? `${u.value.name}${level.value > 1 ? ` · Level ${level.value}` : ''}` : t('useravatar.geloeschterNutzer')))
 </script>
 
 <template>

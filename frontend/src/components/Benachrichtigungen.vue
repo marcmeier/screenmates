@@ -1,4 +1,5 @@
 <script setup>
+import { t } from '../i18n'
 import { computed, onMounted, ref } from 'vue'
 import { api } from '../api'
 import { useUi } from '../stores/ui'
@@ -25,7 +26,7 @@ async function an() {
   try {
     zustand.value = await einschalten(zustand.value.schluessel)
     hier.value = true
-    ui.toast('Benachrichtigungen sind an', 'ok')
+    ui.toast(t('benachrichtigungen.benachrichtigungenSindAn'), 'ok')
   } catch (e) {
     blockiert.value = Notification.permission === 'denied'
     if (e.status === undefined) ui.toast(e.message, 'error', 7000)
@@ -39,7 +40,7 @@ async function aus() {
   try {
     zustand.value = (await ausschalten()) || zustand.value
     hier.value = false
-    ui.toast('Auf diesem Gerät gibt es keine Benachrichtigungen mehr')
+    ui.toast(t('benachrichtigungen.aufDiesemGeraetGibt'))
   } finally {
     busy.value = false
   }
@@ -51,47 +52,44 @@ async function waehlen(art, wert) {
 
 async function testen() {
   const r = await api.post('/api/push/test')
-  const geraete = `${r.geraete} ${r.geraete === 1 ? 'Gerät' : 'Geräte'}`
-  if (r.geraete < r.von) ui.toast(`Test an ${geraete} zugestellt, ${r.von - r.geraete} hat der Push-Dienst abgelehnt`, 'error', 6000)
-  else ui.toast(`Test an ${geraete} zugestellt`, 'ok')
+  const geraete = t('benachrichtigungen.geraete', { n: r.geraete }, r.geraete)
+  if (r.geraete < r.von) ui.toast(t('benachrichtigungen.testAbgelehnt', { geraete, x: r.von - r.geraete }), 'error', 6000)
+  else ui.toast(t('benachrichtigungen.testZugestellt', { geraete }), 'ok')
 }
 
 const geraeteText = computed(() => {
   const n = zustand.value?.geraete ?? 0
-  return n ? `An auf ${n} ${n === 1 ? 'Gerät' : 'Geräten'}` : 'Noch auf keinem Gerät an'
+  return n ? t('benachrichtigungen.anAuf', { n }, n) : t('benachrichtigungen.nochAufKeinemGeraet')
 })
 </script>
 
 <template>
   <section class="panel">
-    <h2><Icon name="glocke" :size="18" /> Benachrichtigungen</h2>
+    <h2><Icon name="glocke" :size="18" /> {{ $t('benachrichtigungen.benachrichtigungen') }}</h2>
     <p class="muted">
-      Erfahre auch bei geschlossener App, wenn ein Termin steht, die Kiste aufgeht oder das Kino live ist.
-      Für Dinge, die gerade passieren, meldet sich screenmates nur, wenn du die App nicht offen hast.
+      {{ $t('benachrichtigungen.erfahreAuchBeiGeschlossener') }}
     </p>
 
     <p v-if="!moeglich && iosOhneApp" class="notice">
-      Auf dem iPhone und iPad: Öffne screenmates in Safari, tippe auf <strong>Teilen → Zum Home-Bildschirm</strong> und
-      starte screenmates von dort. Dann kannst du Benachrichtigungen hier einschalten.
+      {{ $t('benachrichtigungen.aufDemIphoneUnd') }} <strong>{{ $t('benachrichtigungen.teilenZumHomeBildschirm') }}</strong> {{ $t('benachrichtigungen.undStarteScreenmatesVon') }}
     </p>
-    <p v-else-if="!moeglich" class="notice">Dieser Browser kann keine Benachrichtigungen empfangen.</p>
+    <p v-else-if="!moeglich" class="notice">{{ $t('benachrichtigungen.dieserBrowserKannKeine') }}</p>
     <template v-else-if="zustand">
       <div class="row">
-        <span class="chip" :class="{ ok: hier }"><Icon name="glocke" :size="13" /> {{ hier ? 'Auf diesem Gerät an' : 'Auf diesem Gerät aus' }}</span>
-        <button v-if="!hier" class="primary small" :disabled="busy || blockiert" @click="an">Auf diesem Gerät einschalten</button>
-        <button v-else class="small" :disabled="busy" @click="aus">Ausschalten</button>
-        <button v-if="zustand.geraete" class="small ghost" @click="testen">Test schicken</button>
+        <span class="chip" :class="{ ok: hier }"><Icon name="glocke" :size="13" /> {{ hier ? $t('benachrichtigungen.aufDiesemGeraetAn') : $t('benachrichtigungen.aufDiesemGeraetAus') }}</span>
+        <button v-if="!hier" class="primary small" :disabled="busy || blockiert" @click="an">{{ $t('benachrichtigungen.aufDiesemGeraetEinschalten') }}</button>
+        <button v-else class="small" :disabled="busy" @click="aus">{{ $t('benachrichtigungen.ausschalten') }}</button>
+        <button v-if="zustand.geraete" class="small ghost" @click="testen">{{ $t('benachrichtigungen.testSchicken') }}</button>
         <span class="spacer"></span>
         <span class="muted klein">{{ geraeteText }}</span>
       </div>
       <p v-if="blockiert" class="notice klein">
-        Der Browser blockiert Benachrichtigungen für screenmates. Erlaube sie in den Website-Einstellungen (Schloss-Symbol
-        neben der Adresse) und lade die Seite neu.
+        {{ $t('benachrichtigungen.derBrowserBlockiertBenachrichtigungen') }}
       </p>
     </template>
 
     <template v-if="zustand && moeglich">
-      <h3>Worüber?</h3>
+      <h3>{{ $t('benachrichtigungen.worueber') }}</h3>
       <ul class="arten">
         <li v-for="a in zustand.arten" :key="a.key">
           <label>

@@ -1,4 +1,5 @@
 <script setup>
+import { t } from '../i18n'
 import { computed, onMounted, ref } from 'vue'
 import { api } from '../api'
 import { useApp } from '../stores/app'
@@ -22,7 +23,7 @@ const speichern = debounce(async () => {
   await api.post('/api/abos', { anbieter: [...gewaehlt.value] })
   await app.refreshUsers()
   ui.changed()
-  ui.toast('Abos gespeichert', 'ok')
+  ui.toast(t('meineabos.abosGespeichert'), 'ok')
 }, 600)
 
 function umschalten(id) {
@@ -42,9 +43,9 @@ const gruppe = computed(() => {
 
 <template>
   <section class="panel abos">
-    <h2>Meine Abos</h2>
-    <p class="muted">Wähl deine Streamingdienste. Daraus wird „Läuft bei uns“ beim Suchen und in jeder Filmansicht.</p>
-    <ul class="grid-logos" role="group" aria-label="Streamingdienste">
+    <h2>{{ $t('meineabos.meineAbos') }}</h2>
+    <p class="muted">{{ $t('meineabos.waehlDeineStreamingdiensteDaraus') }}</p>
+    <ul class="grid-logos" role="group" :aria-label="$t('meineabos.streamingdienste')">
       <li v-for="p in sichtbar" :key="p.id">
         <button :class="{ on: gewaehlt.has(p.id) }" :aria-pressed="gewaehlt.has(p.id)" :title="p.name" @click="umschalten(p.id)">
           <img v-if="p.logo" :src="p.logo" :alt="p.name" loading="lazy" />
@@ -52,10 +53,10 @@ const gruppe = computed(() => {
         </button>
       </li>
     </ul>
-    <button v-if="alle.length > 16" class="ghost small" @click="mehr = !mehr">{{ mehr ? 'Weniger zeigen' : 'Mehr Dienste zeigen' }}</button>
+    <button v-if="alle.length > 16" class="ghost small" @click="mehr = !mehr">{{ mehr ? $t('meineabos.wenigerZeigen') : $t('meineabos.mehrDiensteZeigen') }}</button>
 
     <div v-if="gruppe.length" class="gruppe">
-      <h3>Die Gruppe hat</h3>
+      <h3>{{ $t('meineabos.dieGruppeHat') }}</h3>
       <ul>
         <li v-for="g in gruppe" :key="g.p.id">
           <img v-if="g.p.logo" :src="g.p.logo" alt="" />

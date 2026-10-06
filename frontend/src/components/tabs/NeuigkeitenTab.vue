@@ -62,15 +62,15 @@ function oeffnen(e) {
   <div class="seite">
     <header class="page-head">
       <div>
-        <h1>Neuigkeiten</h1>
-        <p>Was dir screenmates mitgeteilt hat – und was in der Gruppe passiert ist.</p>
+        <h1>{{ $t('nav.neuigkeiten') }}</h1>
+        <p>{{ $t('neuigkeitentab.wasDirScreenmatesMitgeteilt') }}</p>
       </div>
     </header>
 
     <section class="panel" aria-labelledby="fuer-dich">
-      <h2 id="fuer-dich"><Icon name="glocke" :size="17" /> Für dich</h2>
+      <h2 id="fuer-dich"><Icon name="glocke" :size="17" /> {{ $t('neuigkeitentab.fuerDich') }}</h2>
       <div v-if="meine === null" class="skeleton" style="height: 80px"></div>
-      <p v-else-if="!meine.length" class="muted">Noch nichts – hier landet, was screenmates dir mitteilt, auch ohne Push.</p>
+      <p v-else-if="!meine.length" class="muted">{{ $t('neuigkeitentab.nochNichtsHierLandet') }}</p>
       <ul v-else class="liste">
         <li v-for="b in meine" :key="b.id" :class="{ neu: b.neu }">
           <button class="eintrag" @click="oeffnen(b)">
@@ -84,8 +84,8 @@ function oeffnen(e) {
 
     <section v-if="app.gruppe" class="panel" aria-labelledby="in-der-gruppe">
       <h2 id="in-der-gruppe">
-        <Icon name="personen" :size="17" /> In der Gruppe
-        <span v-if="neueEvents.length" class="neu-zahl">{{ neueEvents.length }} neu seit deinem letzten Besuch</span>
+        <Icon name="personen" :size="17" /> {{ $t('neuigkeitentab.inDerGruppe') }}
+        <span v-if="neueEvents.length" class="neu-zahl">{{ $t('neuigkeitentab.lengthNeuSeitDeinem', { length: neueEvents.length }) }}</span>
       </h2>
       <ul v-if="events.length" class="feed">
         <li v-for="(e, i) in sichtbare" :key="i" :class="{ neu: neu(e) }">
@@ -93,9 +93,9 @@ function oeffnen(e) {
           <time class="muted" :datetime="e.at">{{ vorWann(e.at) }}</time>
         </li>
       </ul>
-      <p v-else class="muted">Hier passiert noch nichts.</p>
+      <p v-else class="muted">{{ $t('neuigkeitentab.hierPassiertNochNichts') }}</p>
       <button v-if="events.length > sichtbare.length" class="ghost small" @click="alleZeigen = true">
-        Ältere Aktivität ({{ events.length - sichtbare.length }})
+        {{ $t('neuigkeitentab.aeltereAktivitaetX', { x: events.length - sichtbare.length }) }}
       </button>
     </section>
   </div>

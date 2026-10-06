@@ -49,13 +49,13 @@ const stats = computed(() => {
   <section>
     <div v-if="entries.length" class="row tools">
       <span class="stats muted">
-        <strong>{{ stats.stunden }}</strong> Stunden Film · <strong>{{ stats.schnitt }}</strong> ⌀ Sterne
+        <strong>{{ stats.stunden }}</strong> {{ $t('gesehenview.stundenFilm') }} <strong>{{ stats.schnitt }}</strong> {{ $t('gesehenview.sterne') }}
       </span>
       <span class="spacer"></span>
-      <input v-if="entries.length > 3" v-model="filter" type="search" placeholder="In der Chronik suchen …" aria-label="Chronik durchsuchen" />
-      <select v-model="sort" aria-label="Sortierung">
-        <option value="datum">Neueste zuerst</option>
-        <option value="wertung">Beste Wertung</option>
+      <input v-if="entries.length > 3" v-model="filter" type="search" :placeholder="$t('gesehenview.inDerChronikSuchen')" :aria-label="$t('gesehenview.chronikDurchsuchen')" />
+      <select v-model="sort" :aria-label="$t('gesehenview.sortierung')">
+        <option value="datum">{{ $t('gesehenview.neuesteZuerst') }}</option>
+        <option value="wertung">{{ $t('gesehenview.besteWertung') }}</option>
       </select>
     </div>
 
@@ -63,8 +63,8 @@ const stats = computed(() => {
       <div v-for="i in 3" :key="i" class="skeleton" style="height: 190px"></div>
     </div>
     <div v-else-if="!entries.length" class="empty">
-      <strong>Noch nichts geschaut</strong>
-      Markier einen Film als „Gesehen“, dann beginnt hier die Chronik.
+      <strong>{{ $t('gesehenview.nochNichtsGeschaut') }}</strong>
+      {{ $t('gesehenview.markierEinenFilmAls') }}
     </div>
     <div v-else class="list">
       <WatchedEntry

@@ -3,6 +3,8 @@ import { computed, nextTick, ref, watch } from 'vue'
 import { useApp } from '../../stores/app'
 import { useKinoChat } from '../../stores/kinochat'
 import UserAvatar from '../UserAvatar.vue'
+import { datumFmt } from '../../format'
+import { t, t as tr } from '../../i18n'
 import Icon from '../Icon.vue'
 
 // Chat next to the screen, a fixed height that scrolls. New messages scroll into view
@@ -13,13 +15,13 @@ const text = ref('')
 const liste = ref(null)
 const sendet = ref(false)
 const laedt = ref(false)
-const zeit = new Intl.DateTimeFormat('de-DE', { hour: '2-digit', minute: '2-digit' })
-const datum = new Intl.DateTimeFormat('de-DE', { weekday: 'long', day: 'numeric', month: 'long' })
+const zeit = { format: (d) => datumFmt({ hour: '2-digit', minute: '2-digit' }).format(d) }
+const datum = { format: (d) => datumFmt({ weekday: 'long', day: 'numeric', month: 'long' }).format(d) }
 
 function tagText(ms) {
   const tag = new Date(ms).toDateString()
-  if (tag === new Date().toDateString()) return 'Heute'
-  if (tag === new Date(Date.now() - 864e5).toDateString()) return 'Gestern'
+  if (tag === new Date().toDateString()) return t('allg.heute')
+  if (tag === new Date(Date.now() - 864e5).toDateString()) return t('allg.gestern')
   return datum.format(ms)
 }
 // Messages with a day line wherever the day changes.
@@ -73,23 +75,23 @@ async function senden() {
     sendet.value = false
   }
 }
-const name = (id) => app.userById(id)?.name ?? 'Jemand'
+const name = (id) => app.userById(id)?.name ?? tr('allg.jemand')
 const farbe = (id) => app.userById(id)?.color || 'var(--muted)'
 </script>
 
 <template>
-  <section class="panel kinochat" aria-label="Kino-Chat">
+  <section class="panel kinochat" :aria-label="$t('kinochat.kinoChat')">
     <header class="row">
       <Icon name="chat" :size="16" class="muted" />
-      <h2>Chat</h2>
+      <h2>{{ $t('kinochat.chat') }}</h2>
       <span class="spacer"></span>
-      <small class="muted" :title="`Nachrichten verschwinden nach ${chat.tage} Tagen`">{{ chat.tage }} Tage</small>
+      <small class="muted" :title="$t('kinochat.nachrichtenVerschwindenNachTage', { tage: chat.tage })">{{ $t('kinochat.tageTage', { tage: chat.tage }) }}</small>
     </header>
     <ol ref="liste" class="nachrichten" aria-live="polite">
       <li v-if="chat.mehr" class="mehr">
-        <button class="ghost small" :disabled="laedt" @click="aelter">Ältere Nachrichten</button>
+        <button class="ghost small" :disabled="laedt" @click="aelter">{{ $t('kinochat.aeltereNachrichten') }}</button>
       </li>
-      <li v-if="!chat.nachrichten.length" class="leer muted">Noch still hier. Sag hallo – oder schick unten eine Reaktion ins Bild.</li>
+      <li v-if="!chat.nachrichten.length" class="leer muted">{{ $t('kinochat.nochStillHierSag') }}</li>
       <template v-for="n in zeilen" :key="n.id">
         <li v-if="n.trenner" class="trenner"><span>{{ n.trenner }}</span></li>
         <li class="nachricht" :class="{ meine: n.user_id === app.me?.id }">
@@ -102,13 +104,13 @@ const farbe = (id) => app.userById(id)?.color || 'var(--muted)'
         </li>
       </template>
     </ol>
-    <div class="reaktionen" role="group" aria-label="Reaktion ins Bild schicken">
-      <button v-for="r in chat.reaktionen" :key="r" class="ghost" :aria-label="`Reaktion ${r}`" @click="chat.reagieren(r)">{{ r }}</button>
+    <div class="reaktionen" role="group" :aria-label="$t('kinochat.reaktionInsBildSchicken')">
+      <button v-for="r in chat.reaktionen" :key="r" class="ghost" :aria-label="$t('kinochat.reaktionR', { r })" @click="chat.reagieren(r)">{{ r }}</button>
     </div>
-    <button class="ghost small moment" @click="chat.moment()">✋ Moment, bin gleich da</button>
+    <button class="ghost small moment" @click="chat.moment()">{{ $t('kinochat.momentBinGleichDa') }}</button>
     <form class="eingabe" @submit.prevent="senden">
-      <input v-model="text" maxlength="300" placeholder="Nachricht an alle …" aria-label="Nachricht an alle" autocomplete="off" />
-      <button class="primary small" :disabled="!text.trim() || sendet" aria-label="Senden"><Icon name="play" :size="14" /></button>
+      <input v-model="text" maxlength="300" :placeholder="$t('kinochat.nachrichtAnAlle')" :aria-label="$t('kinochat.nachrichtAnAlle2')" autocomplete="off" />
+      <button class="primary small" :disabled="!text.trim() || sendet" :aria-label="$t('kinochat.senden')"><Icon name="play" :size="14" /></button>
     </form>
   </section>
 </template>

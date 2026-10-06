@@ -14,11 +14,11 @@ const route = useRoute()
     href="#/neuigkeiten"
     class="nav small glocke"
     :class="{ schmal, active: route.tab === 'neuigkeiten' }"
-    :aria-label="app.glocke ? `Neuigkeiten, ${app.glocke} neu` : 'Neuigkeiten'"
-    :title="schmal ? 'Neuigkeiten' : undefined"
+    :aria-label="app.glocke ? $t('glocke.neuigkeitenGlockeNeu', { glocke: app.glocke }) : $t('nav.neuigkeiten')"
+    :title="schmal ? $t('nav.neuigkeiten') : undefined"
   >
     <Icon name="glocke" :size="16" />
-    <span class="label">Neuigkeiten</span>
+    <span class="label">{{ $t('nav.neuigkeiten') }}</span>
     <span v-if="app.glocke" class="zahl">{{ app.glocke > 9 ? '9+' : app.glocke }}</span>
   </a>
 </template>

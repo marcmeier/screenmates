@@ -1,4 +1,5 @@
 <script setup>
+import { t as tr } from '../../i18n'
 import { computed, ref, watch } from 'vue'
 import { api } from '../../api'
 import { useApp } from '../../stores/app'
@@ -71,10 +72,10 @@ function onEnter() {
 
 const placeholder = computed(() =>
   app.status.ki
-    ? 'Titel, Person – oder beschreib, worauf ihr Lust habt'
+    ? tr('findentab.titelPersonOderBeschreib')
     : app.status.tmdb
-      ? 'Titel oder Person suchen …'
-      : 'Titel suchen …',
+      ? tr('findentab.titelOderPersonSuchen')
+      : tr('findentab.titelSuchen'),
 )
 </script>
 
@@ -82,28 +83,28 @@ const placeholder = computed(() =>
   <div>
     <header class="page-head">
       <div>
-        <h1>Finden</h1>
-        <p>Stöbern, gezielt suchen oder die KI fragen.</p>
+        <h1>{{ $t('nav.finden') }}</h1>
+        <p>{{ $t('findentab.stoebernGezieltSuchenOder') }}</p>
       </div>
     </header>
 
     <div v-if="mode === 'person'" class="back">
-      <button class="ghost small" @click="navigate('finden')"><Icon name="pfeil" :size="14" /> Zurück</button>
+      <button class="ghost small" @click="navigate('finden')"><Icon name="pfeil" :size="14" /> {{ $t('allg.zurueck') }}</button>
     </div>
 
     <form v-else class="search" role="search" @submit.prevent="onEnter">
       <Icon name="suche" class="icon" />
-      <input v-model="q" type="search" :placeholder="placeholder" aria-label="Suchen" />
+      <input v-model="q" type="search" :placeholder="placeholder" :aria-label="$t('findentab.suchen')" />
       <button
         v-if="app.status.ki"
         type="button"
         class="ki"
         :class="{ primary: klingtNachBeschreibung, on: mode === 'ki' }"
         :disabled="!term"
-        title="Den Text als Stimmung verstehen und passende Filme vorschlagen"
+        :title="$t('findentab.denTextAlsStimmung')"
         @click="frageKi"
       >
-        <Icon name="ki" :size="16" /> KI fragen
+        <Icon name="ki" :size="16" /> {{ $t('findentab.kiFragen') }}
       </button>
     </form>
 
@@ -113,11 +114,11 @@ const placeholder = computed(() =>
 
     <template v-else-if="mode === 'suche'">
       <p v-if="klingtNachBeschreibung" class="hint">
-        Klingt nach einer Beschreibung – <button class="linklike" @click="frageKi">die KI fragen</button> (oder Enter).
+        {{ $t('findentab.klingtNachEinerBeschreibung') }} <button class="linklike" @click="frageKi">{{ $t('findentab.dieKiFragen') }}</button> {{ $t('findentab.oderEnter') }}
       </p>
 
       <template v-if="people.length">
-        <h2 class="section-title">Personen</h2>
+        <h2 class="section-title">{{ $t('findentab.personen') }}</h2>
         <ul class="people">
           <li v-for="p in people" :key="p.id">
             <button class="person" @click="navigate('finden', 'person', p.id)">
@@ -127,7 +128,7 @@ const placeholder = computed(() =>
             </button>
           </li>
         </ul>
-        <h2 class="section-title">Filme</h2>
+        <h2 class="section-title">{{ $t('findentab.filme') }}</h2>
       </template>
 
       <MovieGrid
@@ -135,8 +136,8 @@ const placeholder = computed(() =>
         :loading="films.loading.value"
         :failed="films.failed.value"
         :more="films.more.value"
-        :empty-title="`Kein Film heißt „${term}“`"
-        :empty-text="app.status.ki ? 'Wenn du eine Stimmung beschreibst, frag lieber die KI.' : ''"
+        :empty-title="$t('findentab.keinFilmHeisstTerm', { term })"
+        :empty-text="app.status.ki ? $t('findentab.wennDuEineStimmung') : ''"
         @more="films.loadMore"
         @retry="films.load({ q: term })"
       />

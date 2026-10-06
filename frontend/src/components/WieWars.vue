@@ -1,4 +1,5 @@
 <script setup>
+import { t } from '../i18n'
 import { computed, onMounted, ref, watch } from 'vue'
 import { api } from '../api'
 import { useUi } from '../stores/ui'
@@ -30,7 +31,7 @@ watch(() => ui.changes, laden)
 async function bewerten(w, sterne) {
   await api.post(`/api/watched/${w.id}/rating`, { stars: sterne })
   offen.value = offen.value.filter((x) => x.id !== w.id)
-  ui.toast(`${sterne} ★ für „${w.movie.title}“ – danke!`, 'ok')
+  ui.toast(t('wiewars.sterneFuerTitleDanke', { sterne, title: w.movie.title }), 'ok')
   ui.changed()
 }
 function spaeter(w) {
@@ -44,15 +45,15 @@ function spaeter(w) {
 </script>
 
 <template>
-  <section v-if="sichtbar.length" class="wiewars" aria-label="Wie war's?">
+  <section v-if="sichtbar.length" class="wiewars" :aria-label="$t('wiewars.wieWarS')">
     <div v-for="w in sichtbar" :key="w.id" class="eintrag">
       <span class="plakat"><Poster :movie="w.movie" :title="false" /></span>
       <div class="text">
-        <strong>Wie war „{{ w.movie.title }}“?</strong>
-        <small class="muted">{{ datum(w.am) }} – deine Sterne fehlen noch</small>
+        <strong>{{ $t('wiewars.wieWarTitle', { title: w.movie.title }) }}</strong>
+        <small class="muted">{{ $t('wiewars.xDeineSterneFehlen', { x: datum(w.am) }) }}</small>
       </div>
       <StarRating :model-value="0" @update:model-value="(n) => bewerten(w, n)" />
-      <button class="ghost small" @click="spaeter(w)">Später</button>
+      <button class="ghost small" @click="spaeter(w)">{{ $t('wiewars.spaeter') }}</button>
     </div>
   </section>
 </template>

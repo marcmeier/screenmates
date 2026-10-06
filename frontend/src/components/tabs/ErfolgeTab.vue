@@ -1,4 +1,5 @@
 <script setup>
+import { t } from '../../i18n'
 import Geschmack from '../Geschmack.vue'
 import { computed, ref, watch } from 'vue'
 import { api } from '../../api'
@@ -48,38 +49,38 @@ const vitrine = computed(() => (profil.value?.vitrine || []).map((k) => profilEr
 async function vitrineUmschalten(key) {
   const jetzt = profil.value.vitrine
   const neu = jetzt.includes(key) ? jetzt.filter((k) => k !== key) : [...jetzt, key]
-  if (neu.length > 3) return ui.toast('In die Vitrine passen drei Erfolge – nimm erst einen heraus.')
+  if (neu.length > 3) return ui.toast(t('erfolgetab.inDieVitrinePassen'))
   await api.put('/api/erfolge/vitrine', { keys: neu })
   await laden()
 }
 
 async function entziehen(e) {
-  if (!confirm(`„${e.name}“ entziehen? Der Erfolg bleibt entzogen, bis ein Admin ihn zurückgibt.`)) return
+  if (!confirm(t('erfolgetab.nameEntziehenDerErfolg', { name: e.name }))) return
   await api.patch(`/api/admin/erfolge/${personId.value}/${e.key}`, { entzogen: true })
   await app.refreshUsers()
   await laden()
-  ui.toast('Erfolg entzogen')
+  ui.toast(t('erfolgetab.erfolgEntzogen'))
 }
 
-const name = (id) => app.userById(id)?.name || 'Jemand'
+const name = (id) => app.userById(id)?.name || t('allg.jemand')
 </script>
 
 <template>
   <div class="page">
     <!-- profile of one person -->
     <template v-if="personId != null">
-      <a :href="eigenes ? '#/profil' : '#/profil'" class="back muted">← {{ eigenes ? 'Mein Profil' : 'Zu meinem Profil' }}</a>
+      <a :href="eigenes ? '#/profil' : '#/profil'" class="back muted">← {{ eigenes ? $t('erfolgetab.meinProfil') : $t('erfolgetab.zuMeinemProfil') }}</a>
       <section v-if="profil" class="panel kopf">
         <UserAvatar :user-id="personId" class="gross" />
         <div>
           <h1>{{ name(personId) }}</h1>
-          <p class="muted">Level {{ profil.level }} · {{ profil.titel }} · {{ profil.freigeschaltet.length }} Erfolge</p>
+          <p class="muted">{{ $t('erfolgetab.levelLevelTitelLength', { level: profil.level, titel: profil.titel, length: profil.freigeschaltet.length }) }}</p>
         </div>
       </section>
       <Geschmack v-if="app.me" :user-id="personId" />
 
       <section v-if="profil" class="panel">
-        <h2>Vitrine</h2>
+        <h2>{{ $t('erfolgetab.vitrine') }}</h2>
         <div v-if="vitrine.length" class="vitrine">
           <div v-for="e in vitrine" :key="e.key" class="pokal" :class="`stufe-${e.stufe}`">
             <span class="medaille">{{ e.emoji }}</span>
@@ -88,12 +89,12 @@ const name = (id) => app.userById(id)?.name || 'Jemand'
           </div>
         </div>
         <p v-else class="muted">
-          {{ eigenes ? 'Noch leer. Mit ★ an einem Erfolg legst du ihn hier hinein – bis zu drei.' : 'Noch nichts ausgestellt.' }}
+          {{ eigenes ? $t('erfolgetab.nochLeerMitAn') : $t('erfolgetab.nochNichtsAusgestellt') }}
         </p>
       </section>
 
       <section v-if="profil" class="panel">
-        <h2>Freigeschaltet</h2>
+        <h2>{{ $t('erfolgetab.freigeschaltet') }}</h2>
         <div v-if="profil.freigeschaltet.length" class="raster">
           <div v-for="e in profil.freigeschaltet" :key="e.key" class="mit-aktion">
             <ErfolgKachel
@@ -103,46 +104,46 @@ const name = (id) => app.userById(id)?.name || 'Jemand'
               :vitrine="profil.vitrine.includes(e.key)"
               @vitrine="vitrineUmschalten"
             />
-            <button v-if="app.admin" class="ghost small danger" @click="entziehen(e)">Entziehen</button>
+            <button v-if="app.admin" class="ghost small danger" @click="entziehen(e)">{{ $t('erfolgetab.entziehen') }}</button>
           </div>
         </div>
-        <p v-else class="muted">Noch keine Erfolge – das kommt mit dem ersten Filmabend.</p>
+        <p v-else class="muted">{{ $t('erfolgetab.nochKeineErfolgeDas') }}</p>
       </section>
     </template>
 
     <!-- overview -->
     <template v-else>
       <header v-if="!eingebettet" class="page-head">
-        <h1>Erfolge</h1>
-        <p>Für Filmabende, Kritiken, Kino und alles, was die Gruppe zusammenbringt. Punkte gibt es nur für Erfolge – Masse allein bringt nichts.</p>
+        <h1>{{ $t('erfolgetab.erfolge') }}</h1>
+        <p>{{ $t('erfolgetab.fuerFilmabendeKritikenKino') }}</p>
       </header>
 
       <section v-if="ich" class="panel stand">
         <UserAvatar :user="app.me" class="gross" />
         <div class="levelinfo">
           <div class="row">
-            <strong class="lvl">Level {{ ich.level }}</strong>
+            <strong class="lvl">{{ $t('erfolgetab.levelLevel', { level: ich.level }) }}</strong>
             <span class="muted">{{ ich.titel }}</span>
             <span class="spacer"></span>
             <span class="score">{{ ich.punkte }} P</span>
           </div>
-          <div class="levelbalken" :title="`${ich.punkte} von ${ich.naechstes_ab} Punkten für Level ${ich.level + 1}`">
+          <div class="levelbalken" :title="$t('erfolgetab.punkteVonNaechstesAb', { punkte: ich.punkte, naechstes_ab: ich.naechstes_ab, x: ich.level + 1 })">
             <span :style="{ width: `${levelProzent}%` }"></span>
           </div>
-          <small class="muted">Noch {{ ich.naechstes_ab - ich.punkte }} P bis Level {{ ich.level + 1 }}</small>
+          <small class="muted">{{ $t('erfolgetab.nochXPBis', { x: ich.naechstes_ab - ich.punkte, x2: ich.level + 1 }) }}</small>
         </div>
-        <button class="small" @click="navigate('profil', 'person', app.me.id)">Meine Vitrine</button>
+        <button class="small" @click="navigate('profil', 'person', app.me.id)">{{ $t('erfolgetab.meineVitrine') }}</button>
       </section>
       <Geschmack v-if="app.me && !personId" :user-id="app.me.id" />
 
       <section v-if="daten" class="panel">
-        <h2>Die Gruppe</h2>
+        <h2>{{ $t('erfolgetab.dieGruppe') }}</h2>
         <div class="gruppe">
           <a v-for="g in daten.gruppe" :key="g.user_id" :href="`#/profil/person/${g.user_id}`" class="mitglied">
             <UserAvatar :user-id="g.user_id" />
             <span class="wer">
               <strong>{{ name(g.user_id) }}</strong>
-              <small class="muted">Level {{ g.level }} · {{ g.titel }}</small>
+              <small class="muted">{{ $t('erfolgetab.levelLevelTitel', { level: g.level, titel: g.titel }) }}</small>
             </span>
             <span class="mini" :title="g.vitrine.map((k) => katalog[k]?.name).join(', ')">
               <span v-for="k in g.vitrine" :key="k">{{ katalog[k]?.emoji }}</span>
@@ -152,7 +153,7 @@ const name = (id) => app.userById(id)?.name || 'Jemand'
       </section>
 
       <section v-if="daten?.neueste.length" class="panel">
-        <h2>Zuletzt freigeschaltet</h2>
+        <h2>{{ $t('erfolgetab.zuletztFreigeschaltet') }}</h2>
         <ul class="feed">
           <li v-for="(n, i) in daten.neueste" :key="i">
             <UserAvatar :user-id="n.user_id" />
@@ -166,7 +167,7 @@ const name = (id) => app.userById(id)?.name || 'Jemand'
       </section>
 
       <section v-for="k in nachKategorie" :key="k.name" class="panel">
-        <h2>{{ k.name }}</h2>
+        <h2>{{ $t(`erfolgetab.kat.${k.name}`) }}</h2>
         <div class="raster">
           <ErfolgKachel
             v-for="d in k.erfolge"

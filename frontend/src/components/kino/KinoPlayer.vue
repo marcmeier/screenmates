@@ -168,43 +168,43 @@ function vollbild() {
     </div>
     <div v-if="kino.pause" class="pause" role="status">
       <span class="symbol" aria-hidden="true">⏸</span>
-      <strong>Kurze Pause – gleich geht’s weiter</strong>
+      <strong>{{ $t('kinoplayer.kurzePauseGleichGeht') }}</strong>
       <small>seit {{ pauseDauer }}</small>
     </div>
     <ol v-if="chat.momente.length" class="momente" aria-live="polite">
-      <li v-for="m in chat.momente" :key="m.id">✋ <strong>{{ app.userById(m.user_id)?.name ?? 'Jemand' }}</strong>: Moment, bin gleich da</li>
+      <li v-for="m in chat.momente" :key="m.id">✋ <strong>{{ app.userById(m.user_id)?.name ?? $t('allg.jemand') }}</strong>{{ $t('kinoplayer.momentBinGleichDa') }}</li>
     </ol>
     <ol v-if="vollbildAn && einblendungen.length" class="einblendungen" aria-live="polite">
       <li v-for="n in einblendungen" :key="n.id">
-        <strong :style="{ color: app.userById(n.user_id)?.color }">{{ app.userById(n.user_id)?.name ?? 'Jemand' }}</strong> {{ n.inhalt }}
+        <strong :style="{ color: app.userById(n.user_id)?.color }">{{ app.userById(n.user_id)?.name ?? $t('allg.jemand') }}</strong> {{ n.inhalt }}
       </li>
     </ol>
 
     <div v-if="state !== 'live'" class="overlay">
       <span class="spinner" aria-hidden="true"></span>
-      {{ state === 'verbinde' ? 'Verbinde …' : 'Verbindung unterbrochen – versuche es erneut …' }}
+      {{ state === 'verbinde' ? $t('kinoplayer.verbinde') : $t('kinoplayer.verbindungUnterbrochenVersucheEs') }}
     </div>
     <button v-else-if="muted && !kino.sende" class="primary unmute" @click="tonAn">
-      <Icon name="ton" :size="18" /> Ton an
+      <Icon name="ton" :size="18" /> {{ $t('kinoplayer.tonAn') }}
     </button>
 
     <!-- The stand-in full screen always has a way out, whatever the bar below holds. -->
-    <button v-if="ersatz" class="schliessen" aria-label="Vollbild schließen" @click="vollbild"><Icon name="x" :size="20" /></button>
+    <button v-if="ersatz" class="schliessen" :aria-label="$t('kinoplayer.vollbildSchliessen')" @click="vollbild"><Icon name="x" :size="20" /></button>
 
     <div class="controls">
-      <span v-if="kino.sende" class="hint">Deine Vorschau – du hörst dich selbst nicht</span>
+      <span v-if="kino.sende" class="hint">{{ $t('kinoplayer.deineVorschauDuHoerst') }}</span>
       <template v-else>
-        <button class="ghost" :aria-label="muted ? 'Ton an' : 'Stumm'" @click="muted = !muted">
+        <button class="ghost" :aria-label="muted ? $t('kinoplayer.tonAn2') : $t('kinoplayer.stumm')" @click="muted = !muted">
           <Icon :name="muted ? 'stumm' : 'ton'" />
         </button>
-        <input v-model.number="volume" type="range" min="0" max="1" step="0.05" aria-label="Lautstärke" />
+        <input v-model.number="volume" type="range" min="0" max="1" step="0.05" :aria-label="$t('kinoplayer.lautstaerke')" />
       </template>
       <span class="spacer"></span>
-      <span v-if="vollbildAn" class="schnell" role="group" aria-label="Reaktion ins Bild schicken">
-        <button v-for="r in chat.reaktionen.slice(0, 6)" :key="r" class="ghost" :aria-label="`Reaktion ${r}`" @click="chat.reagieren(r)">{{ r }}</button>
+      <span v-if="vollbildAn" class="schnell" role="group" :aria-label="$t('kinoplayer.reaktionInsBildSchicken')">
+        <button v-for="r in chat.reaktionen.slice(0, 6)" :key="r" class="ghost" :aria-label="$t('kinoplayer.reaktionR', { r })" @click="chat.reagieren(r)">{{ r }}</button>
       </span>
       <!-- In the stand-in full screen the round button at the top closes it; one way out is enough. -->
-      <button v-if="!ersatz" class="ghost" :aria-label="vollbildAn ? 'Vollbild verlassen' : 'Vollbild'" @click="vollbild"><Icon :name="vollbildAn ? 'x' : 'vollbild'" /></button>
+      <button v-if="!ersatz" class="ghost" :aria-label="vollbildAn ? $t('kinoplayer.vollbildVerlassen') : $t('kinoplayer.vollbild')" @click="vollbild"><Icon :name="vollbildAn ? 'x' : 'vollbild'" /></button>
     </div>
   </div>
 </template>

@@ -45,7 +45,7 @@ async function probe() {
 
 <template>
   <div class="kiste">
-    <ul v-if="!kompakt" class="inhalt" :aria-label="`Kiste mit ${pool.length} ${pool.length === 1 ? 'Film' : 'Filmen'}`">
+    <ul v-if="!kompakt" class="inhalt" :aria-label="$t('kistenoeffnung.kisteMit', { n: pool.length }, pool.length)">
       <li v-for="m in inhalt" :key="m.id" :style="{ '--farbe': seltenheitFuer(chance(m)).farbe }">
         <span class="mini"><Poster :movie="m" :title="false" /></span>
         <span class="titel">{{ m.title }}</span>
@@ -53,12 +53,12 @@ async function probe() {
       </li>
     </ul>
     <template v-if="kiste.darfOeffnen">
-      <button class="primary oeffnen" :disabled="busy || laeuft" @click="fuerAlle"><Icon name="kiste" :size="18" /> Für alle öffnen</button>
-      <button class="ghost small probe" :disabled="busy || laeuft" @click="probe">Probedrehen (nur für mich)</button>
+      <button class="primary oeffnen" :disabled="busy || laeuft" @click="fuerAlle"><Icon name="kiste" :size="18" /> {{ $t('kistenoeffnung.fuerAlleOeffnen') }}</button>
+      <button class="ghost small probe" :disabled="busy || laeuft" @click="probe">{{ $t('kistenoeffnung.probedrehenNurFuerMich') }}</button>
     </template>
     <template v-else>
-      <button class="oeffnen" :disabled="busy || laeuft" @click="probe"><Icon name="kiste" :size="18" /> Probedrehen</button>
-      <p class="muted hinweis">Für alle öffnet der Gastgeber – du siehst es live mit. Oben kannst du den Stab übernehmen.</p>
+      <button class="oeffnen" :disabled="busy || laeuft" @click="probe"><Icon name="kiste" :size="18" /> {{ $t('kistenoeffnung.probedrehen') }}</button>
+      <p class="muted hinweis">{{ $t('kistenoeffnung.fuerAlleOeffnetDer') }}</p>
     </template>
   </div>
 </template>

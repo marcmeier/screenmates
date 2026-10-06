@@ -1,4 +1,5 @@
 <script setup>
+import { t as tr } from '../../i18n'
 import { computed, defineAsyncComponent, onMounted, ref, watch } from 'vue'
 import { api } from '../../api'
 import { useApp } from '../../stores/app'
@@ -72,8 +73,10 @@ async function extrasLaden() {
   api.get('/api/suggestions/anbieter', { quiet: true }).then((r) => (anbieter.value = r.anbieter)).catch(() => {})
 }
 const prognoseTitel = (p) =>
-  p.personen.map((x) => `${app.userById(x.user_id)?.name ?? '?'}: ${dezimal(x.sterne)} ★${x.echt ? ' (bewertet)' : ''}`).join('\n')
-const WEG_TEXT = { abo: '', kostenlos: 'Kostenlos: ', leihen: 'Leihen: ', kaufen: 'Kaufen: ' }
+  p.personen
+    .map((x) => `${app.userById(x.user_id)?.name ?? '?'}: ${dezimal(x.sterne)} ★${x.echt ? ` (${tr('abendtab.bewertet')})` : ''}`)
+    .join('\n')
+const WEG_TEXT = { abo: '', kostenlos: tr('abendtab.kostenlos'), leihen: tr('abendtab.leihen'), kaufen: tr('abendtab.kaufen') }
 function wegText(w) {
   const bei = w.bei.map((id) => app.userById(id)?.name).filter(Boolean)
   return `${WEG_TEXT[w.art]}${w.name}${bei.length ? ` · ${bei.join(', ')}` : ''}`
@@ -123,10 +126,10 @@ const namen = (ids) => ids.map((id) => app.userById(id)?.name ?? '?').join(', ')
 async function veto(m) {
   if (meinVeto(m)) {
     await api.del('/api/veto')
-    ui.toast(`Veto gegen „${m.title}“ zurückgenommen`)
+    ui.toast(tr('abendtab.vetoGegenTitleZurueckgenommen', { title: m.title }))
   } else {
     await api.post('/api/veto', { movie_id: m.id })
-    ui.toast(`Veto gegen „${m.title}“ – er kommt nicht in die Kiste`, 'ok')
+    ui.toast(tr('abendtab.vetoGegenTitleEr', { title: m.title }), 'ok')
   }
   ui.changed()
 }
@@ -138,9 +141,9 @@ async function toggle(m) {
 }
 
 async function allesLeeren() {
-  if (!confirm('Alle Vorschläge löschen? Das betrifft alle.')) return
+  if (!confirm(tr('abendtab.alleVorschlaegeLoeschenDas'))) return
   await api.del('/api/suggestions/alle')
-  ui.toast('Vorschläge geleert')
+  ui.toast(tr('abendtab.vorschlaegeGeleert'))
   ui.changed()
 }
 
@@ -149,30 +152,30 @@ async function gewinnerGesehen() {
   kiste.aktuell = null
 }
 
-const poolQuelle = computed(() => (vorschlaege.value.length ? 'Vorschlägen' : 'der Merkliste'))
+const poolQuelle = computed(() => (vorschlaege.value.length ? 'vorschlaege' : 'merkliste'))
 </script>
 
 <template>
   <div>
     <header class="page-head">
       <div>
-        <h1>Filmabend</h1>
-        <p>Wann ist der nächste Abend, wer ist dabei – und was schauen wir?</p>
+        <h1>{{ $t('nav.abend') }}</h1>
+        <p>{{ $t('abendtab.wannIstDerNaechste') }}</p>
       </div>
     </header>
 
     <a v-if="kino.live" href="#/kino" class="onair">
       <span class="badge"><span class="dot"></span>LIVE</span>
-      <span>Jetzt im Kino: <strong>{{ kino.titel || 'Übertragung läuft' }}</strong></span>
+      <span>{{ $t('abendtab.jetztImKino') }} <strong>{{ kino.titel || $t('abendtab.uebertragungLaeuft') }}</strong></span>
       <span class="spacer"></span>
-      <span class="go">Zuschauen <Icon name="kino" :size="16" /></span>
+      <span class="go">{{ $t('abendtab.zuschauen') }} <Icon name="kino" :size="16" /></span>
     </a>
 
     <a v-if="rueckblickJahr" :href="`#/sammlung/rueckblick/${rueckblickJahr}`" class="rueckblick-teaser">
       <Icon name="funken" :size="20" />
-      <span><strong>Euer Filmjahr {{ rueckblickJahr }} ist da</strong> – die besten Filme, die strengste Kritik, eure Rekorde.</span>
+      <span><strong>{{ $t('abendtab.euerFilmjahrRueckblickjahrIst', { rueckblickJahr }) }}</strong> {{ $t('abendtab.dieBestenFilmeDie') }}</span>
       <span class="spacer"></span>
-      <span class="go">Rückblick ansehen</span>
+      <span class="go">{{ $t('abendtab.rueckblickAnsehen') }}</span>
     </a>
 
     <WieWars v-if="app.me" />
@@ -198,34 +201,34 @@ const poolQuelle = computed(() => (vorschlaege.value.length ? 'Vorschlägen' : '
 
     <section class="teil auswahl" aria-labelledby="auswahl-titel">
       <header class="teil-kopf">
-        <h2 id="auswahl-titel">Was schauen wir?</h2>
-        <p class="muted">Schlagt Filme vor, legt ein Veto ein – am Abend entscheidet die Kiste.</p>
+        <h2 id="auswahl-titel">{{ $t('abendtab.wasSchauenWir') }}</h2>
+        <p class="muted">{{ $t('abendtab.schlagtFilmeVorLegt') }}</p>
       </header>
       <div class="layout">
         <section>
           <div class="row unterkopf">
-            <h3>Vorschläge</h3>
+            <h3>{{ $t('abendtab.vorschlaege') }}</h3>
             <span class="spacer"></span>
             <button v-if="app.gruppenAdmin && vorschlaege.length" class="ghost small danger" @click="allesLeeren">
-              <Icon name="muell" :size="14" /> Alle leeren
+              <Icon name="muell" :size="14" /> {{ $t('abendtab.alleLeeren') }}
             </button>
           </div>
 
           <p v-if="app.me && vorschlaege.length" class="muted small-text veto-hint">
-            Jede Person hat ein <strong>Veto</strong>: Filme mit Veto kommen nicht in die Kiste.
+            {{ $t('abendtab.jedePersonHatEin') }} <strong>{{ $t('abendtab.veto') }}</strong>{{ $t('abendtab.filmeMitVetoKommen') }}
           </p>
           <div v-if="loading" class="list">
             <div v-for="i in 3" :key="i" class="skeleton" style="height: 86px"></div>
           </div>
           <div v-else-if="!vorschlaege.length" class="empty">
-            <strong>Noch keine Vorschläge</strong>
-            Bei jedem Film gibt es den <Icon name="hand" :size="14" />-Knopf.
-            <div style="margin-top: 0.8rem"><button class="small" @click="navigate('finden')">Filme finden</button></div>
+            <strong>{{ $t('abendtab.nochKeineVorschlaege') }}</strong>
+            {{ $t('abendtab.beiJedemFilmGibt') }} <Icon name="hand" :size="14" />{{ $t('abendtab.knopf') }}
+            <div style="margin-top: 0.8rem"><button class="small" @click="navigate('finden')">{{ $t('abendtab.filmeFinden') }}</button></div>
           </div>
           <ol v-else class="list">
             <li v-for="(m, i) in vorschlaege" :key="m.id" class="sugg" :class="{ vetoed: m.veto_von.length }">
               <span class="rank">{{ i + 1 }}</span>
-              <button class="thumb" :aria-label="`${m.title} – Details`" @click="ui.open(m)">
+              <button class="thumb" :aria-label="$t('abendtab.titleDetails', { title: m.title })" @click="ui.open(m)">
                 <Poster :movie="m" :title="false" />
               </button>
               <div class="what">
@@ -233,30 +236,30 @@ const poolQuelle = computed(() => (vorschlaege.value.length ? 'Vorschlägen' : '
                 <div class="muted small-text">{{ m.year }} · ★ {{ dezimal(m.vote_average) }}</div>
                 <div class="avatars"><UserAvatar v-for="id in m.von" :key="id" :user-id="id" /></div>
                 <div class="infos">
-                  <span v-if="chance(m) != null" class="merkmal chance" :style="{ '--farbe': seltenheitFuer(chance(m)).farbe }" :title="`${seltenheitFuer(chance(m)).name}: so wahrscheinlich zieht ihn die Kiste`">
+                  <span v-if="chance(m) != null" class="merkmal chance" :style="{ '--farbe': seltenheitFuer(chance(m)).farbe }" :title="$t('abendtab.xSoWahrscheinlichZieht', { x: seltenheitFuer(chance(m)).name })">
                     <Icon name="kiste" :size="12" /> {{ Math.round(chance(m) * 100) }} %
                   </span>
                   <span v-if="prognosen[m.id]" class="merkmal prognose" :title="prognoseTitel(prognosen[m.id])">
-                    Für {{ prognoseFuer === 'dabei' ? 'euch heute' : 'euch' }} ≈ {{ dezimal(prognosen[m.id].wert) }} ★
+                    {{ $t(prognoseFuer === 'dabei' ? 'abendtab.prognoseHeute' : 'abendtab.prognose', { wert: dezimal(prognosen[m.id].wert) }) }}
                   </span>
                   <span v-if="anbieter[m.id]" class="merkmal weg" :class="{ unser: anbieter[m.id].bei.length }">
                     <img v-if="anbieter[m.id].logo" :src="anbieter[m.id].logo" alt="" />{{ wegText(anbieter[m.id]) }}
                   </span>
                 </div>
-                <div v-if="m.veto_von.length" class="veto-info"><Icon name="veto" :size="13" /> Veto von {{ namen(m.veto_von) }}</div>
+                <div v-if="m.veto_von.length" class="veto-info"><Icon name="veto" :size="13" /> {{ $t('abendtab.vetoVonX', { x: namen(m.veto_von) }) }}</div>
               </div>
               <div v-if="app.me" class="buttons">
                 <button class="small" :class="{ on: meinVorschlag(m) }" @click="toggle(m)">
-                  <Icon name="hand" :size="14" /> {{ meinVorschlag(m) ? 'Zurückziehen' : '+1' }}
+                  <Icon name="hand" :size="14" /> {{ meinVorschlag(m) ? $t('abendtab.zurueckziehen') : '+1' }}
                 </button>
                 <button
                   class="small ghost veto"
                   :class="{ on: meinVeto(m) }"
                   :aria-pressed="meinVeto(m)"
-                  :title="meinVeto(m) ? 'Veto zurücknehmen' : vetoVerbraucht ? 'Dein Veto hierher verschieben' : 'Nicht mit mir – der Film kommt nicht in die Kiste'"
+                  :title="meinVeto(m) ? $t('abendtab.vetoZuruecknehmen') : vetoVerbraucht ? $t('abendtab.deinVetoHierherVerschieben') : $t('abendtab.nichtMitMirDer')"
                   @click="veto(m)"
                 >
-                  <Icon name="veto" :size="14" /> {{ meinVeto(m) ? 'Veto zurück' : 'Veto' }}
+                  <Icon name="veto" :size="14" /> {{ meinVeto(m) ? $t('abendtab.vetoZurueck') : $t('abendtab.veto2') }}
                 </button>
               </div>
             </li>
@@ -265,25 +268,25 @@ const poolQuelle = computed(() => (vorschlaege.value.length ? 'Vorschlägen' : '
         </section>
         <aside class="side">
           <div class="panel wheelbox">
-            <h3>Filmabend-Kiste</h3>
+            <h3>{{ $t('abendtab.filmabendKiste') }}</h3>
             <template v-if="pool.length">
               <p class="muted small-text">
-                {{ pool.length }} {{ pool.length === 1 ? 'Film' : 'Filme' }} aus {{ poolQuelle }}.
-                <template v-if="vorschlaege.length">Die Chancen stehen bei den Vorschlägen – je mehr Stimmen, desto größer.</template>
-                <template v-else>Je seltener die Farbe, desto unwahrscheinlicher.</template>
+                {{ $t(`abendtab.poolAus.${poolQuelle}`, { n: pool.length }, pool.length) }}
+                <template v-if="vorschlaege.length">{{ $t('abendtab.dieChancenStehenBei') }}</template>
+                <template v-else>{{ $t('abendtab.jeSeltenerDieFarbe') }}</template>
               </p>
               <KistenOeffnung :pool="pool" :kompakt="vorschlaege.length > 0" />
             </template>
-            <p v-else-if="vorschlaege.length" class="muted">Gegen alle Vorschläge gibt es ein Veto – schlagt noch etwas vor.</p>
-            <p v-else class="muted">Sobald es Vorschläge (oder Filme auf der Merkliste) gibt, kann die Kiste geöffnet werden.</p>
+            <p v-else-if="vorschlaege.length" class="muted">{{ $t('abendtab.gegenAlleVorschlaegeGibt') }}</p>
+            <p v-else class="muted">{{ $t('abendtab.sobaldEsVorschlaegeOder') }}</p>
 
             <div v-if="gewinner && !kiste.buehne" class="winner" role="status">
-              <span class="muted small-text">Film des Abends<template v-if="app.userById(kiste.aktuell.von)"> · aus der Kiste von {{ app.userById(kiste.aktuell.von).name }}</template></span>
+              <span class="muted small-text">{{ $t('abendtab.filmDesAbends') }}<template v-if="app.userById(kiste.aktuell.von)"> {{ $t('abendtab.ausDerKisteVon', { x: app.userById(kiste.aktuell.von).name }) }}</template></span>
               <strong>{{ gewinner.title }}</strong>
               <div class="row">
-                <button class="small" @click="ui.open(gewinner)">Details</button>
-                <button v-if="app.me" class="small primary" @click="gewinnerGesehen"><Icon name="gesehen" :size="14" /> Geschaut</button>
-                <button v-if="kiste.darfOeffnen" class="ghost small" @click="kiste.zuruecknehmen()">Zurücknehmen</button>
+                <button class="small" @click="ui.open(gewinner)">{{ $t('abendtab.details') }}</button>
+                <button v-if="app.me" class="small primary" @click="gewinnerGesehen"><Icon name="gesehen" :size="14" /> {{ $t('abendtab.geschaut') }}</button>
+                <button v-if="kiste.darfOeffnen" class="ghost small" @click="kiste.zuruecknehmen()">{{ $t('abendtab.zuruecknehmen') }}</button>
               </div>
             </div>
           </div>

@@ -25,7 +25,7 @@ onBeforeUnmount(() => {
 
 <template>
   <Transition name="hoch">
-    <button v-if="sichtbar" class="nach-oben" aria-label="Nach oben" title="Nach oben" @click="hoch">
+    <button v-if="sichtbar" class="nach-oben" :aria-label="$t('nachoben.nachOben')" :title="$t('nachoben.nachOben2')" @click="hoch">
       <Icon name="pfeil" :size="20" />
     </button>
   </Transition>

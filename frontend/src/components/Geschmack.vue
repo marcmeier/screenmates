@@ -1,4 +1,5 @@
 <script setup>
+import { t } from '../i18n'
 import { computed, ref, watch } from 'vue'
 import { api } from '../api'
 import { useApp } from '../stores/app'
@@ -14,29 +15,29 @@ watch(
   { immediate: true },
 )
 const ich = computed(() => props.userId === app.me?.id)
-const name = (id) => app.userById(id)?.name ?? 'Jemand'
+const name = (id) => app.userById(id)?.name ?? t('allg.jemand')
 const mitMir = computed(() => (ich.value ? null : daten.value?.vergleiche.find((v) => v.user_id === app.me?.id)))
 const liste = computed(() => (daten.value?.vergleiche ?? []).filter((v) => v.user_id !== app.me?.id || ich.value).slice(0, 4))
 </script>
 
 <template>
   <section v-if="daten" class="panel geschmack">
-    <h2>Geschmacksverwandte</h2>
+    <h2>{{ $t('geschmack.geschmacksverwandte') }}</h2>
     <p v-if="mitMir" class="mitmir">
-      Du und {{ name(userId) }}: <strong>{{ mitMir.prozent }} %</strong>
-      <small class="muted">aus {{ mitMir.gemeinsam }} gemeinsam bewerteten Filmen</small>
+      {{ $t('geschmack.duUndX', { x: name(userId) }) }} <strong>{{ mitMir.prozent }} %</strong>
+      <small class="muted">{{ $t('geschmack.ausGemeinsamGemeinsamBewerteten', { gemeinsam: mitMir.gemeinsam }) }}</small>
     </p>
     <ul v-if="liste.length">
       <li v-for="v in liste" :key="v.user_id">
         <UserAvatar :user-id="v.user_id" link />
-        <span class="wer">{{ name(v.user_id) }} <small class="muted">tickt zu</small></span>
+        <span class="wer">{{ name(v.user_id) }} <small class="muted">{{ $t('geschmack.ticktZu') }}</small></span>
         <span class="balken"><span :style="{ width: `${v.prozent}%` }"></span></span>
         <strong>{{ v.prozent }} %</strong>
-        <small class="muted">{{ ich ? 'wie du' : `wie ${name(userId)}` }}</small>
+        <small class="muted">{{ ich ? $t('geschmack.wieDu') : $t('geschmack.wie', { name: name(userId) }) }}</small>
       </li>
     </ul>
     <p v-else-if="!mitMir" class="muted">
-      Sobald {{ ich ? 'du' : name(userId) }} und andere mindestens {{ daten.min }} gleiche Filme bewertet habt, steht hier, wer ähnlich tickt.
+      {{ ich ? $t('geschmack.sobaldDu', { n: daten.min }) : $t('geschmack.sobald', { name: name(userId), n: daten.min }) }}
     </p>
   </section>
 </template>

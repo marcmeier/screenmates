@@ -1,4 +1,5 @@
 <script setup>
+import { t } from '../../i18n'
 import { computed, onBeforeUnmount, onMounted, watch } from 'vue'
 import { api } from '../../api'
 import { useApp } from '../../stores/app'
@@ -43,7 +44,7 @@ const vorbei = computed(() => !kino.live && gast.darfModerieren && kino.movie &&
 async function alsGesehen() {
   const entry = await api.post('/api/watched', { movie_id: kino.movie.id })
   await api.post(`/api/watched/${entry.id}/dabei`, { user_ids: kino.publikum })
-  ui.toast(`„${kino.movie.title}“ eingetragen – mit ${kino.publikum.length} Zuschauenden`, 'ok')
+  ui.toast(t('kinotab.titleEingetragenMitLength', { title: kino.movie.title, length: kino.publikum.length }), 'ok')
   await api.post('/api/kino/programm', { titel: '', movie_id: null })
   ui.changed()
   await kino.refresh()
@@ -54,23 +55,21 @@ async function alsGesehen() {
   <div>
     <header class="page-head">
       <div>
-        <h1>Kino</h1>
-        <p>Gemeinsam schauen, egal wo ihr sitzt – alle sehen dasselbe Bild zur selben Zeit.</p>
+        <h1>{{ $t('nav.kino') }}</h1>
+        <p>{{ $t('kinotab.gemeinsamSchauenEgalWo') }}</p>
       </div>
     </header>
     <GastgeberLeiste v-if="kino.enabled" class="panel stableiste" />
 
     <div v-if="!kino.enabled" class="notice">
-      Das Kino ist noch nicht eingerichtet. Es braucht den Medienserver MediaMTX neben screenmates
-      (bei <code>docker compose up</code> ist er dabei) und <code>MEDIAMTX_WEBRTC_URL</code> in <code>backend/.env</code>.
-      Details stehen in der README unter „Kino“.
+      {{ $t('kinotab.nichtEingerichtet') }}
     </div>
 
     <div v-else class="layout" :class="{ mitChat: app.me }">
       <section class="stage">
         <div v-if="kino.live" class="row onair">
           <span class="badge"><span class="dot"></span>LIVE</span>
-          <h2>{{ kino.titel || 'Ohne Titel' }}</h2>
+          <h2>{{ kino.titel || $t('kinotab.ohneTitel') }}</h2>
           <span v-if="kino.seit" class="muted since">seit {{ vorWann(kino.seit).replace('vor ', '') }}</span>
           <span class="spacer"></span>
           <span v-if="kino.zuschauer.length" class="viewers" :title="kino.zuschauer.map((id) => app.userById(id)?.name).join(', ')">
@@ -82,27 +81,27 @@ async function alsGesehen() {
         <template v-if="kino.live || kino.sende">
           <KinoPlayer v-if="app.me" />
           <div v-else class="screen empty-screen">
-            <p>Wähl einen Namen, um zuzuschauen.</p>
-            <button class="primary" @click="ui.loginOpen = true">Namen wählen</button>
+            <p>{{ $t('kinotab.waehlEinenNamenUm') }}</p>
+            <button class="primary" @click="ui.loginOpen = true">{{ $t('namen.dialog') }}</button>
           </div>
           <button v-if="kino.movie" class="ghost small movie" @click="ui.open(kino.movie)">
-            <Icon name="info" :size="14" /> Über „{{ kino.movie.title }}“
+            <Icon name="info" :size="14" /> {{ $t('kinotab.ueberTitle', { title: kino.movie.title }) }}
           </button>
         </template>
 
         <div v-else class="screen empty-screen">
           <Icon name="kino" :size="44" />
-          <p><strong>Gerade läuft nichts.</strong></p>
+          <p><strong>{{ $t('kinotab.geradeLaeuftNichts') }}</strong></p>
           <p class="muted">
-            {{ gast.darfModerieren ? 'Starte unten eine Übertragung.' : 'Sobald jemand sendet, erscheint das Bild hier von selbst.' }}
+            {{ gast.darfModerieren ? $t('kinotab.starteUntenEineUebertragung') : $t('kinotab.sobaldJemandSendetErscheint') }}
           </p>
         </div>
 
         <div v-if="vorbei" class="panel done">
-          <span>Vorstellung vorbei – <strong>{{ kino.movie.title }}</strong> als gesehen eintragen?</span>
+          <span>{{ $t('kinotab.vorstellungVorbei') }} <strong>{{ kino.movie.title }}</strong> {{ $t('kinotab.alsGesehenEintragen') }}</span>
           <span class="spacer"></span>
           <span class="avatars"><UserAvatar v-for="id in kino.publikum" :key="id" :user-id="id" /></span>
-          <button class="primary small" @click="alsGesehen"><Icon name="gesehen" :size="14" /> Eintragen</button>
+          <button class="primary small" @click="alsGesehen"><Icon name="gesehen" :size="14" /> {{ $t('kinotab.eintragen') }}</button>
         </div>
 
         <KinoSenden v-if="gast.darfModerieren" />

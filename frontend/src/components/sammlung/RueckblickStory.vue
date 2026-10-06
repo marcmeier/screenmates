@@ -1,7 +1,8 @@
 <script setup>
+import { t as tr } from '../../i18n'
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useApp } from '../../stores/app'
-import { FILME, TITEL, n, sterne, stunden } from '../../rueckblick'
+import { FILME, TITEL, monatName, n, sterne, stunden, wochentagName } from '../../rueckblick'
 import Icon from '../Icon.vue'
 import Poster from '../Poster.vue'
 import UserAvatar from '../UserAvatar.vue'
@@ -12,7 +13,7 @@ const props = defineProps({ daten: { type: Object, required: true } })
 const emit = defineEmits(['close'])
 const app = useApp()
 const DAUER = 6000
-const name = (id) => app.userById(id)?.name ?? 'Jemand'
+const name = (id) => app.userById(id)?.name ?? tr('allg.jemand')
 
 const karten = computed(() => {
   const d = props.daten
@@ -85,11 +86,11 @@ const karte = computed(() => karten.value[i.value])
 
 <template>
   <Teleport to="body">
-    <div class="story" role="dialog" aria-modal="true" :aria-label="`Euer Filmjahr ${daten.jahr}`">
+    <div class="story" role="dialog" aria-modal="true" :aria-label="$t('rueckblickstory.euerFilmjahrJahr', { jahr: daten.jahr })">
       <div class="balken" aria-hidden="true">
         <span v-for="(k, j) in karten" :key="j"><span :style="{ width: `${j < i ? 100 : j === i ? fortschritt * 100 : 0}%` }"></span></span>
       </div>
-      <button class="zu ghost" aria-label="Schließen" @click="emit('close')"><Icon name="x" /></button>
+      <button class="zu ghost" :aria-label="$t('rueckblickstory.schliessen')" @click="emit('close')"><Icon name="x" /></button>
 
       <div
         class="buehne"
@@ -104,18 +105,18 @@ const karte = computed(() => karten.value[i.value])
             <template v-if="karte.art === 'start'">
               <span class="klein">{{ app.gruppe?.name }}</span>
               <h2 class="riesig">{{ daten.jahr }}</h2>
-              <p class="gross">Euer Filmjahr.<br />Tippt euch durch.</p>
+              <p class="gross">{{ $t('rueckblickstory.euerFilmjahr') }}<br />{{ $t('rueckblickstory.tipptEuchDurch') }}</p>
             </template>
 
             <template v-else-if="karte.art === 'zahlen'">
-              <p class="gross">Ihr habt</p>
+              <p class="gross">{{ $t('rueckblickstory.ihrHabt') }}</p>
               <h2 class="riesig">{{ n(daten.filme) }}</h2>
-              <p class="gross">{{ daten.filme === 1 ? 'Film' : 'Filme' }} geschaut, an {{ n(daten.abende) }} {{ daten.abende === 1 ? 'Abend' : 'Abenden' }}.</p>
-              <p class="mittel">Das sind <strong>{{ n(stunden(daten.minuten)) }} Stunden</strong> zusammen auf dem Sofa.</p>
+              <p class="gross">{{ $t(daten.filme === 1 ? 'rueckblickstory.geschautFilm' : 'rueckblickstory.geschautFilme', { abende: n(daten.abende) }, daten.abende) }}</p>
+              <p class="mittel">{{ $t('rueckblickstory.dasSind') }} <strong>{{ $t('rueckblickstory.stunden', { n: n(stunden(daten.minuten)) }) }}</strong> {{ $t('rueckblickstory.sofa') }}</p>
             </template>
 
             <template v-else-if="karte.art === 'genres'">
-              <p class="gross">Euer Genre war</p>
+              <p class="gross">{{ $t('rueckblickstory.euerGenreWar') }}</p>
               <h2 class="riesig wort">{{ daten.genres[0].name }}</h2>
               <ol class="liste">
                 <li v-for="(g, j) in daten.genres.slice(1, 5)" :key="g.name"><span>{{ j + 2 }}</span> {{ g.name }} <em>{{ g.anzahl }}</em></li>
@@ -130,7 +131,7 @@ const karte = computed(() => karten.value[i.value])
             </template>
 
             <template v-else-if="karte.art === 'titel'">
-              <p class="gross">Und die Auszeichnungen gehen an …</p>
+              <p class="gross">{{ $t('rueckblickstory.undDieAuszeichnungenGehen') }}</p>
               <ul class="preise">
                 <li v-for="t in karte.titel" :key="t.key">
                   <span class="emoji">{{ t.emoji }}</span>
@@ -141,23 +142,23 @@ const karte = computed(() => karten.value[i.value])
             </template>
 
             <template v-else-if="karte.art === 'rekorde'">
-              <p class="gross">Rekorde</p>
+              <p class="gross">{{ $t('rueckblickstory.rekorde') }}</p>
               <ul class="rekorde">
-                <li><strong>{{ n(daten.serie) }}</strong> {{ daten.serie === 1 ? 'Woche' : 'Wochen' }} am Stück mit Filmabend</li>
-                <li><strong>{{ daten.wochentag.name }}</strong> ist euer Filmabend-Tag</li>
-                <li><strong>{{ daten.monat.name }}</strong> war euer Kino-Monat ({{ n(daten.monat.anzahl) }} Filme)</li>
-                <li v-if="daten.schnitt"><strong>{{ sterne(daten.schnitt) }}</strong> im Schnitt aus {{ n(daten.bewertungen) }} Bewertungen</li>
-                <li v-if="daten.kisten"><strong>{{ n(daten.kisten) }}</strong> {{ daten.kisten === 1 ? 'Kiste' : 'Kisten' }} für alle geöffnet</li>
-                <li v-if="daten.herzen"><strong>{{ n(daten.herzen) }}</strong> Herzen im Gästebuch</li>
+                <li><strong>{{ n(daten.serie) }}</strong> {{ $t('rueckblickstory.serie', daten.serie) }}</li>
+                <li><strong>{{ wochentagName(daten.wochentag) }}</strong> {{ $t('rueckblickstory.tag') }}</li>
+                <li><strong>{{ monatName(daten.monat) }}</strong> {{ $t('rueckblickstory.monat', { n: n(daten.monat.anzahl) }) }}</li>
+                <li v-if="daten.schnitt"><strong>{{ sterne(daten.schnitt) }}</strong> {{ $t('rueckblickstory.imSchnittAusX', { x: n(daten.bewertungen) }) }}</li>
+                <li v-if="daten.kisten"><strong>{{ n(daten.kisten) }}</strong> {{ $t('rueckblickstory.kisten', daten.kisten) }}</li>
+                <li v-if="daten.herzen"><strong>{{ n(daten.herzen) }}</strong> {{ $t('rueckblickstory.herzenImGaestebuch') }}</li>
               </ul>
             </template>
 
             <template v-else>
-              <h2 class="riesig wort">Danke!</h2>
-              <p class="gross">Auf ein neues Filmjahr mit euch.</p>
+              <h2 class="riesig wort">{{ $t('rueckblickstory.danke') }}</h2>
+              <p class="gross">{{ $t('rueckblickstory.aufEinNeuesFilmjahr') }}</p>
               <div class="row ende" @click.stop>
-                <button @click="zeigen(0)"><Icon name="sync" :size="16" /> Nochmal</button>
-                <button class="primary" @click="emit('close')">Fertig</button>
+                <button @click="zeigen(0)"><Icon name="sync" :size="16" /> {{ $t('rueckblickstory.nochmal') }}</button>
+                <button class="primary" @click="emit('close')">{{ $t('rueckblickstory.fertig') }}</button>
               </div>
             </template>
           </div>

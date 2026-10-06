@@ -3,6 +3,7 @@ import { markRaw } from 'vue'
 import { api } from '../api'
 import { pickScreen, publish } from '../webrtc'
 import { useUi } from './ui'
+import { t } from '../i18n'
 
 let timer = null
 let publisher = null
@@ -69,9 +70,9 @@ export const useKino = defineStore('kino', {
           this.sendStats = (await publisher?.stats().catch(() => null)) ?? null
         }, 2000)
         if (audio && !stream.getAudioTracks().length) {
-          ui.toast('Ohne Ton: Beim Teilen „Audio teilen“ anhaken (geht bei Tabs und unter Windows auch für den ganzen Bildschirm).', 'info', 7000)
+          ui.toast(t('kino.ohneTonBeimTeilen'), 'info', 7000)
         } else {
-          ui.toast('Du bist live', 'ok')
+          ui.toast(t('kino.duBistLive'), 'ok')
         }
         setTimeout(() => this.refresh(), 1200)
       } catch (e) {

@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { api } from '../api'
 import { useApp } from './app'
+import { t } from '../i18n'
 import { useUi } from './ui'
 
 // The host's baton (see backend routers/gastgeber.py): comes with every live poll.
@@ -27,8 +28,11 @@ export const useGastgeber = defineStore('gastgeber', {
         uebernehmen: z.uebernehmen,
       })
       if (this.geladen && vorher !== z.gastgeber && z.gastgeber) {
-        const wer = z.gastgeber === app.me?.id ? 'Du hast' : `${app.userById(z.gastgeber)?.name || 'Jemand'} hat`
-        useUi().toast(`🎬 ${wer} jetzt den Gastgeber-Stab`, 'ok', 5000)
+        const text =
+          z.gastgeber === app.me?.id
+            ? t('gastgeber.duHast')
+            : t('gastgeber.hat', { wer: app.userById(z.gastgeber)?.name || t('allg.jemand') })
+        useUi().toast(`🎬 ${text}`, 'ok', 5000)
       }
       this.geladen = true
     },

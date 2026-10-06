@@ -18,12 +18,12 @@ const zitat = (eintrag) => [...eintrag.notes].sort((a, b) => b.hearts.length - a
     <article v-for="e in erinnerungen" :key="e.eintrag.id">
       <h2 class="section-title">{{ wann(e) }}</h2>
       <div class="film">
-        <button class="thumb" :aria-label="`${e.eintrag.movie?.title} – Details`" @click="ui.open(e.eintrag.movie)">
+        <button class="thumb" :aria-label="$t('allg.detailsVon', { title: e.eintrag.movie?.title })" @click="ui.open(e.eintrag.movie)">
           <Poster :movie="e.eintrag.movie" :title="false" />
         </button>
         <div class="was">
           <button class="titel" @click="ui.open(e.eintrag.movie)">{{ e.eintrag.movie?.title }}</button>
-          <span class="muted klein">{{ datum(e.eintrag.watched_at) }}<template v-if="e.eintrag.rating_avg"> · ihr: ★ {{ dezimal(e.eintrag.rating_avg) }}</template></span>
+          <span class="muted klein">{{ datum(e.eintrag.watched_at) }}<template v-if="e.eintrag.rating_avg"> {{ $t('erinnerungen.ihrX', { x: dezimal(e.eintrag.rating_avg) }) }}</template></span>
           <span class="avatare"><UserAvatar v-for="id in e.eintrag.participants" :key="id" :user-id="id" /></span>
         </div>
       </div>

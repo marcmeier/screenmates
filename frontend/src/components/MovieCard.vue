@@ -14,7 +14,7 @@ const { toggleMerken, toggleVorschlag, istVorgeschlagen } = useMovieActions()
 
 <template>
   <article class="card" :class="{ seen: movie.gesehen }">
-    <button class="cover" :aria-label="`${movie.title} – Details`" @click="ui.open(movie)">
+    <button class="cover" :aria-label="$t('allg.detailsVon', { title: movie.title })" @click="ui.open(movie)">
       <Poster :movie="movie" />
       <span v-if="movie.vote_average" class="score">★ {{ dezimal(movie.vote_average) }}</span>
       <span v-if="movie.gesehen" class="ribbon"><Icon name="gesehen" :size="13" /> gesehen</span>
@@ -25,19 +25,19 @@ const { toggleMerken, toggleVorschlag, istVorgeschlagen } = useMovieActions()
         class="small"
         :class="{ on: movie.gemerkt }"
         :aria-pressed="!!movie.gemerkt"
-        :title="movie.gemerkt ? 'Von der Merkliste nehmen' : 'Merken'"
+        :title="movie.gemerkt ? $t('moviecard.vonDerMerklisteNehmen') : $t('moviecard.merken')"
         @click="toggleMerken(movie)"
       >
-        <Icon name="merken" :size="15" /><span class="sr-only">Merken</span>
+        <Icon name="merken" :size="15" /><span class="sr-only">{{ $t('moviecard.merken2') }}</span>
       </button>
       <button
         class="small"
         :class="{ on: istVorgeschlagen(props.movie) }"
         :aria-pressed="istVorgeschlagen(props.movie)"
-        :title="istVorgeschlagen(props.movie) ? 'Vorschlag zurückziehen' : 'Für den nächsten Abend vorschlagen'"
+        :title="istVorgeschlagen(props.movie) ? $t('moviecard.vorschlagZurueckziehen') : $t('moviecard.fuerDenNaechstenAbend')"
         @click="toggleVorschlag(movie)"
       >
-        <Icon name="hand" :size="15" /><span class="sr-only">Vorschlagen</span>
+        <Icon name="hand" :size="15" /><span class="sr-only">{{ $t('moviecard.vorschlagen') }}</span>
       </button>
     </div>
 
@@ -45,7 +45,7 @@ const { toggleMerken, toggleVorschlag, istVorgeschlagen } = useMovieActions()
       <div class="title" :title="movie.title">{{ movie.title }}</div>
       <div class="sub">
         {{ movie.year || '—' }}
-        <span v-if="movie.vorgeschlagen_von?.length" class="votes" :title="`${movie.vorgeschlagen_von.length} Vorschläge`">
+        <span v-if="movie.vorgeschlagen_von?.length" class="votes" :title="$t('moviecard.lengthVorschlaege', { length: movie.vorgeschlagen_von.length })">
           · <Icon name="hand" :size="12" /> {{ movie.vorgeschlagen_von.length }}
         </span>
       </div>

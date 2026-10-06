@@ -1,4 +1,5 @@
 <script setup>
+import { t } from '../i18n'
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { useApp } from '../stores/app'
 import { useGastgeber } from '../stores/gastgeber'
@@ -15,7 +16,7 @@ onMounted(() => (uhr = setInterval(() => (jetzt.value = Date.now()), 500)))
 onBeforeUnmount(() => clearInterval(uhr))
 
 const w = computed(() => g.wechsel)
-const name = (id) => app.userById(id)?.name || 'Jemand'
+const name = (id) => app.userById(id)?.name || t('allg.jemand')
 const rest = computed(() => Math.max(0, Math.ceil((w.value.frist - kiste.versatz - jetzt.value) / 1000)))
 const zeit = computed(() => `${Math.floor(rest.value / 60)}:${String(rest.value % 60).padStart(2, '0')}`)
 const binHost = computed(() => g.gastgeber === app.me?.id)
@@ -30,38 +31,38 @@ const art = computed(() => {
 
 <template>
   <Transition name="hoch">
-    <div v-if="art" class="stabwechsel panel" role="alertdialog" aria-label="Gastgeber-Stab">
+    <div v-if="art" class="stabwechsel panel" role="alertdialog" :aria-label="$t('stabwechsel.gastgeberStab')">
       <span class="stab" aria-hidden="true">🎬</span>
       <div class="text">
         <template v-if="art === 'angebot'">
-          <strong>{{ name(w.von) }} reicht dir den Gastgeber-Stab.</strong>
-          <span class="muted">Damit öffnest du die Kiste für alle und bespielst das Kino.</span>
+          <strong>{{ $t('stabwechsel.xReichtDirDen', { x: name(w.von) }) }}</strong>
+          <span class="muted">{{ $t('stabwechsel.damitOeffnestDuDie') }}</span>
         </template>
         <template v-else-if="art === 'warte'">
-          <strong>Stab angeboten an {{ name(w.an) }}</strong>
-          <span class="muted">Wartet auf Antwort …</span>
+          <strong>{{ $t('stabwechsel.stabAngebotenAnX', { x: name(w.an) }) }}</strong>
+          <span class="muted">{{ $t('stabwechsel.wartetAufAntwort') }}</span>
         </template>
         <template v-else-if="art === 'kandidat'">
-          <strong>Abstimmung: Du als Gastgeber?</strong>
-          <span class="muted">{{ w.ja }} Ja · {{ w.nein }} Nein – ohne Widerspruch bekommst du den Stab.</span>
+          <strong>{{ $t('stabwechsel.abstimmungDuAlsGastgeber') }}</strong>
+          <span class="muted">{{ $t('stabwechsel.jaJaNeinNein', { ja: w.ja, nein: w.nein }) }}</span>
         </template>
         <template v-else>
-          <strong>{{ name(w.an) }} möchte den Gastgeber-Stab übernehmen.</strong>
+          <strong>{{ $t('stabwechsel.xMoechteDenGastgeber', { x: name(w.an) }) }}</strong>
           <span class="muted">
-            {{ w.ja }} Ja · {{ w.nein }} Nein<template v-if="binHost"> · deine Stimme zählt doppelt, dein Ja entscheidet sofort</template><template v-if="art === 'abgestimmt'"> · du hast abgestimmt</template>
+            {{ $t('stabwechsel.jaJaNeinNein2', { ja: w.ja, nein: w.nein }) }}<template v-if="binHost"> {{ $t('stabwechsel.deineStimmeZaehltDoppelt') }}</template><template v-if="art === 'abgestimmt'"> {{ $t('stabwechsel.duHastAbgestimmt') }}</template>
           </span>
         </template>
       </div>
-      <span class="uhr" :aria-label="`noch ${rest} Sekunden`">{{ zeit }}</span>
+      <span class="uhr" :aria-label="$t('stabwechsel.nochRestSekunden', { rest })">{{ zeit }}</span>
       <div class="knoepfe">
         <template v-if="art === 'angebot'">
-          <button class="small primary" @click="g.antworten(true)">Annehmen</button>
-          <button class="small ghost" @click="g.antworten(false)">Ablehnen</button>
+          <button class="small primary" @click="g.antworten(true)">{{ $t('stabwechsel.annehmen') }}</button>
+          <button class="small ghost" @click="g.antworten(false)">{{ $t('stabwechsel.ablehnen') }}</button>
         </template>
-        <button v-else-if="art === 'warte' || art === 'kandidat'" class="small ghost" @click="g.zurueckziehen()">Zurückziehen</button>
+        <button v-else-if="art === 'warte' || art === 'kandidat'" class="small ghost" @click="g.zurueckziehen()">{{ $t('stabwechsel.zurueckziehen') }}</button>
         <template v-else-if="art === 'stimme'">
-          <button class="small primary" @click="g.antworten(true)">{{ binHost ? 'Stab übergeben' : 'Ja' }}</button>
-          <button class="small ghost" @click="g.antworten(false)">Nein</button>
+          <button class="small primary" @click="g.antworten(true)">{{ binHost ? $t('stabwechsel.stabUebergeben') : $t('stabwechsel.ja') }}</button>
+          <button class="small ghost" @click="g.antworten(false)">{{ $t('stabwechsel.nein') }}</button>
         </template>
       </div>
     </div>

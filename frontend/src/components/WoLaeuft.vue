@@ -1,4 +1,5 @@
 <script setup>
+import { t } from '../i18n'
 import { computed } from 'vue'
 import { useApp } from '../stores/app'
 import Icon from './Icon.vue'
@@ -9,10 +10,10 @@ const props = defineProps({ anbieter: { type: Object, required: true } })
 const app = useApp()
 
 const GRUPPEN = [
-  { key: 'abo', label: 'Im Abo' },
-  { key: 'kostenlos', label: 'Kostenlos' },
-  { key: 'leihen', label: 'Leihen' },
-  { key: 'kaufen', label: 'Kaufen' },
+  { key: 'abo', label: t('wolaeuft.imAbo') },
+  { key: 'kostenlos', label: t('wolaeuft.kostenlos') },
+  { key: 'leihen', label: t('wolaeuft.leihen') },
+  { key: 'kaufen', label: t('wolaeuft.kaufen') },
 ]
 const gruppen = computed(() => GRUPPEN.filter((g) => props.anbieter[g.key]?.length))
 const beiUns = computed(() => props.anbieter.abo.filter((p) => p.bei?.length))
@@ -21,11 +22,11 @@ const namen = (ids) => ids.map((id) => app.userById(id)?.name ?? '?').join(', ')
 
 <template>
   <section class="wo">
-    <h3 class="section-title">Wo läuft's?</h3>
+    <h3 class="section-title">{{ $t('wolaeuft.woLaeuftS') }}</h3>
 
     <p v-if="beiUns.length" class="treffer">
       <Icon name="gesehen" :size="15" />
-      Läuft bei uns: <strong>{{ beiUns.map((p) => p.name).join(', ') }}</strong>
+      {{ $t('wolaeuft.laeuftBeiUns') }} <strong>{{ beiUns.map((p) => p.name).join(', ') }}</strong>
       <span class="muted">({{ namen([...new Set(beiUns.flatMap((p) => p.bei))]) }})</span>
     </p>
 
@@ -37,7 +38,7 @@ const namen = (ids) => ids.map((id) => app.userById(id)?.name ?? '?').join(', ')
             v-for="p in anbieter[g.key]"
             :key="p.id"
             :class="{ unser: p.bei?.length }"
-            :title="p.bei?.length ? `${p.name} – hat: ${namen(p.bei)}` : p.name"
+            :title="p.bei?.length ? $t('wolaeuft.nameHatX', { name: p.name, x: namen(p.bei) }) : p.name"
           >
             <img v-if="p.logo" :src="p.logo" :alt="p.name" loading="lazy" />
             <span v-else class="name">{{ p.name }}</span>
@@ -45,11 +46,11 @@ const namen = (ids) => ids.map((id) => app.userById(id)?.name ?? '?').join(', ')
         </ul>
       </div>
     </template>
-    <p v-else class="muted">In Deutschland gerade nirgends zu sehen.</p>
+    <p v-else class="muted">{{ $t('wolaeuft.inDeutschlandGeradeNirgends') }}</p>
 
     <p class="quelle muted">
-      <a v-if="anbieter.link" :href="anbieter.link" target="_blank" rel="noopener noreferrer">Alle Angebote <Icon name="extern" :size="12" /></a>
-      Daten: JustWatch
+      <a v-if="anbieter.link" :href="anbieter.link" target="_blank" rel="noopener noreferrer">{{ $t('wolaeuft.alleAngebote') }} <Icon name="extern" :size="12" /></a>
+      {{ $t('wolaeuft.datenJustwatch') }}
     </p>
   </section>
 </template>

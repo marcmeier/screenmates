@@ -93,14 +93,14 @@ function person(p) {
     <div v-if="trailerAn" class="player">
       <iframe
         :src="`https://www.youtube-nocookie.com/embed/${trailer.key}?autoplay=1&rel=0&hl=de`"
-        :title="`Trailer: ${film.title}`"
+        :title="$t('moviedetail.trailerTitle', { title: film.title })"
         allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
         allowfullscreen
       ></iframe>
-      <button class="close" aria-label="Trailer schließen" @click="trailerAn = false"><Icon name="x" /></button>
+      <button class="close" :aria-label="$t('moviedetail.trailerSchliessen')" @click="trailerAn = false"><Icon name="x" /></button>
     </div>
     <div v-else class="hero" :style="film.backdrop_url ? { backgroundImage: `url(${film.backdrop_url})` } : {}">
-      <button class="close" aria-label="Schließen" @click="ui.detail = null"><Icon name="x" /></button>
+      <button class="close" :aria-label="$t('einladung.schliessen')" @click="ui.detail = null"><Icon name="x" /></button>
       <button v-if="trailer" class="trailer-btn" @click="trailerAn = true">
         <Icon name="play" :size="18" /> Trailer{{ trailer.sprache && trailer.sprache !== 'de' ? ` (${trailer.sprache.toUpperCase()})` : '' }}
       </button>
@@ -114,47 +114,47 @@ function person(p) {
         <div class="row facts">
           <span v-if="film.year">{{ film.year }}</span>
           <span v-if="film.runtime">{{ laufzeit(film.runtime) }}</span>
-          <span v-if="film.vote_average" class="gold" title="Bewertung bei TMDB">★ {{ dezimal(film.vote_average) }} <span class="muted">({{ film.vote_count }})</span></span>
-          <span v-if="unserSchnitt" class="ours" :title="`${unserSchnitt.n} Bewertungen aus eurer Gruppe`">Ihr: ★ {{ unserSchnitt.wert }}</span>
+          <span v-if="film.vote_average" class="gold" :title="$t('moviedetail.bewertungBeiTmdb')">★ {{ dezimal(film.vote_average) }} <span class="muted">({{ film.vote_count }})</span></span>
+          <span v-if="unserSchnitt" class="ours" :title="$t('moviedetail.nBewertungenAusEurer', { n: unserSchnitt.n })">{{ $t('moviedetail.ihrWert', { wert: unserSchnitt.wert }) }}</span>
           <span v-for="g in film.genres" :key="g" class="chip">{{ g }}</span>
         </div>
         <p v-if="regie.length" class="muted">
-          Regie:
+          {{ $t('moviedetail.regie') }}
           <template v-for="(p, i) in regie" :key="p.id">
             <a href="#" @click.prevent="person(p)">{{ p.name }}</a><span v-if="i < regie.length - 1">, </span>
           </template>
         </p>
 
         <div v-if="app.me" class="row actions">
-          <button v-if="!film.gesehen" class="primary" @click="alsGesehen(film)"><Icon name="gesehen" /> Gesehen</button>
-          <span v-else class="chip seen"><Icon name="gesehen" :size="14" /> Schon gesehen</span>
+          <button v-if="!film.gesehen" class="primary" @click="alsGesehen(film)"><Icon name="gesehen" /> {{ $t('moviedetail.gesehen') }}</button>
+          <span v-else class="chip seen"><Icon name="gesehen" :size="14" /> {{ $t('moviedetail.schonGesehen') }}</span>
           <button :class="{ on: film.gemerkt }" @click="toggleMerken(film)">
-            <Icon name="merken" /> {{ film.gemerkt ? 'Gemerkt' : 'Merken' }}
+            <Icon name="merken" /> {{ film.gemerkt ? $t('moviedetail.gemerkt') : $t('moviedetail.merken') }}
           </button>
           <button :class="{ on: istVorgeschlagen(film) }" @click="toggleVorschlag(film)">
-            <Icon name="hand" /> {{ istVorgeschlagen(film) ? 'Vorgeschlagen' : 'Vorschlagen' }}
+            <Icon name="hand" /> {{ istVorgeschlagen(film) ? $t('moviedetail.vorgeschlagen') : $t('moviedetail.vorschlagen') }}
           </button>
         </div>
-        <p v-else class="muted"><a href="#" @click.prevent="ui.loginOpen = true">Namen wählen</a>, um mitzumachen.</p>
+        <p v-else class="muted"><a href="#" @click.prevent="ui.loginOpen = true">{{ $t('moviedetail.namenWaehlen') }}</a>{{ $t('moviedetail.umMitzumachen') }}</p>
       </div>
     </div>
 
     <div class="sections">
-      <p class="overview">{{ film.overview || 'Keine Beschreibung vorhanden.' }}</p>
+      <p class="overview">{{ film.overview || $t('moviedetail.keineBeschreibungVorhanden') }}</p>
 
       <WoLaeuft v-if="anbieter" :anbieter="anbieter" />
 
       <WemGefaellts :movie-id="film.id" />
 
       <template v-if="abende.length">
-        <h3 class="section-title">Eure Bewertung</h3>
+        <h3 class="section-title">{{ $t('moviedetail.eureBewertung') }}</h3>
         <div class="abende">
           <WatchedEntry v-for="e in abende" :key="e.id" :entry="e" kompakt @update="ersetze" @removed="ladeAbende()" />
         </div>
       </template>
 
       <template v-if="credits.cast.length">
-        <h3 class="section-title">Besetzung</h3>
+        <h3 class="section-title">{{ $t('moviedetail.besetzung') }}</h3>
         <div class="cast">
           <button v-for="p in credits.cast" :key="p.id" class="person" @click="person(p)">
             <img v-if="p.bild" :src="p.bild" alt="" loading="lazy" />
@@ -166,7 +166,7 @@ function person(p) {
       </template>
 
       <template v-if="similar.length">
-        <h3 class="section-title">Ähnliche Filme</h3>
+        <h3 class="section-title">{{ $t('moviedetail.aehnlicheFilme') }}</h3>
         <div class="similar">
           <button v-for="s in similar" :key="s.id" class="sim" :title="s.title" @click="ui.open(s)">
             <span class="simposter"><Poster :movie="s" /></span>
