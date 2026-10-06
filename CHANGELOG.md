@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.14.0 – 2026-10-06
+
+### Geändert
+- **Am Filmabend nur noch eine Karte:** Am Tag des Termins ersetzt der Abendmodus die Planungskarte, statt
+  doppelt „Heute Abend“ und „Heute“ zu zeigen. Zusagen („Ich bin da“, „Kann nicht“) sitzen im Schritt
+  „Wer ist da?“, Einladen steht oben rechts, Termin ändern, Kalender und Gastgeber-Stab hinter „⋯“.
+- **Die Kopfzeile kennt die Uhr:** vorher „Heute Abend · 20:00 Uhr · in 2 Stunden“, ab Beginn
+  „● Läuft seit 20:00 Uhr“. Ist der Film als gesehen eingetragen, kommt wieder die Planung für den
+  nächsten Abend.
+
+### Neu
+- **„Gleich geht’s los“:** Fünf Minuten vor Beginn bekommt eine Benachrichtigung, wer zugesagt oder
+  „vielleicht“ gesagt hat und screenmates gerade nicht offen hat – auch bei geschlossener App, wenn
+  Benachrichtigungen auf dem Gerät an sind (Einstellung „Erinnerungen am Tag des Filmabends“).
+
 ## 0.13.1 – 2026-10-06
 
 ### Geändert

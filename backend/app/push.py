@@ -14,8 +14,9 @@ done by pywebpush). The service worker (`frontend/public/sw.js`) shows it.
 - Nobody is notified about what they did themselves; for things that happen
   live (the case, the Kino, a baton offer) only people without an open app are.
 
-The reminder on the day of the movie night comes from a background task
-(`erinnern`), ``ERINNERUNG`` before the date, for everyone who hasn't said no.
+The reminders on the day of the movie night come from a background task
+(`erinnern`): ``ERINNERUNG`` before the date for everyone who hasn't said no, and
+just before the start for whoever said yes or maybe but has no screenmates open.
 """
 
 from __future__ import annotations
@@ -48,7 +49,7 @@ log = logging.getLogger(__name__)
 ARTEN = {
     "termin": "Ein Termin wird festgelegt oder verschoben",
     "umfrage": "Jemand schlägt Termine zur Abstimmung vor",
-    "erinnerung": "Erinnerung am Tag des Filmabends",
+    "erinnerung": "Erinnerungen am Tag des Filmabends (vorher und kurz vor Beginn)",
     "kiste": "Die Kiste wird für alle geöffnet",
     "kino": "Das Kino geht live",
     "stab": "Dir wird der Gastgeber-Stab angeboten",
@@ -281,6 +282,52 @@ def faellige_erinnerungen(db: DBSession, jetzt: datetime | None = None) -> int:
     return n
 
 
+LOS_VORHER = timedelta(minutes=5)  # "it's starting" this long before the date …
+LOS_NACHHER = timedelta(minutes=30)  # … and not later than this after it (server was down)
+
+
+def los_meldungen(db: DBSession, jetzt: datetime | None = None) -> int:
+    """Just before the start: whoever said yes or maybe and has no screenmates open hears it's on (commits)."""
+    from .models import Ereignis
+
+    jetzt = jetzt or datetime.now(UTC)
+    n = 0
+    for a in db.exec(select(Abend).where(col(Abend.termin).is_not(None))).all():
+        termin = utc(a.termin)
+        if not termin - LOS_VORHER <= jetzt <= termin + LOS_NACHHER:
+            continue
+        bezug = f"{a.id}@{termin.isoformat()}"
+        if db.exec(select(Ereignis).where(Ereignis.typ == "los_gemeldet", Ereignis.bezug == bezug)).first():
+            continue
+        db.add(Ereignis(typ="los_gemeldet", bezug=bezug))
+        db.commit()
+        kommen = set(
+            db.exec(
+                select(Mitglied.user_id).where(
+                    Mitglied.gruppe_id == a.id,
+                    col(Mitglied.dabei) | (Mitglied.rueckmeldung == "vielleicht"),
+                )
+            ).all()
+        )
+        n += an(
+            db,
+            abwesend(a.id, kommen),
+            "erinnerung",
+            "🎬 Gleich geht’s los – {gruppe}",
+            "Der Filmabend beginnt um {zeit} Uhr{wo}. Komm dazu!",
+            url="/#/abend",
+            tag=f"los-{a.id}",
+            ttl=int(LOS_NACHHER.total_seconds()),
+            dringend=True,
+            werte={
+                "gruppe": gruppenname(db, a.id),
+                "zeit": f"{termin.astimezone(BERLIN):%H:%M}",
+                "wo": f" · {a.notiz}" if a.notiz else "",
+            },
+        )
+    return n
+
+
 BEWERTEN_AB, BEWERTEN_BIS = 10, 20  # hours (German time) for "how was it?"
 
 
@@ -328,6 +375,7 @@ async def erinnern() -> None:
     def einmal() -> None:
         with DBSession(engine) as db:
             faellige_erinnerungen(db)
+            los_meldungen(db)
             bewertungs_erinnerungen(db)
 
     while True:

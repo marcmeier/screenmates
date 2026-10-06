@@ -1,6 +1,8 @@
 // German – the original wording.
 export default {
   abendmodus: {
+    laeuftSeit: "Läuft seit {zeit}",
+    duBistDa: "Du bist da",
     gastgeberNichtDa: "{name} ist gerade nicht da.",
     keinGastgeber: "Noch hat niemand den Gastgeber-Stab.",
     uebernehmenUndOeffnen: "Stab übernehmen & Kiste öffnen",
