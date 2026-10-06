@@ -1,6 +1,6 @@
 <script setup>
 import { t as tr } from '../i18n'
-import { computed } from 'vue'
+import { computed, onBeforeUnmount, ref } from 'vue'
 import { api } from '../api'
 import { useApp } from '../stores/app'
 import { useKiste } from '../stores/kiste'
@@ -9,15 +9,18 @@ import { useKino } from '../stores/kino'
 import { useUi } from '../stores/ui'
 import { navigate } from '../composables/useRoute'
 import { terminText } from '../einladung'
+import { vorWann } from '../format'
+import GastgeberLeiste from './GastgeberLeiste.vue'
 import Icon from './Icon.vue'
 import { audioJetzt } from '../audio'
 import Poster from './Poster.vue'
 import UserAvatar from './UserAvatar.vue'
 
 // The evening itself, as three steps on the day of the date: who's here → what we watch → film on.
-// Everything here exists elsewhere on the page; this just puts it in order for tonight.
+// On that day it is the only card for the evening: the replies sit in step one, inviting and
+// the planning (change the date, calendar, the host's baton) behind "⋯" in the header.
 const props = defineProps({ termin: { type: Object, required: true }, pool: { type: Array, default: () => [] } })
-const emit = defineEmits(['geschaut'])
+const emit = defineEmits(['geschaut', 'termin', 'einladen'])
 const app = useApp()
 const kiste = useKiste()
 const kino = useKino()
@@ -34,6 +37,23 @@ async function uebernehmenUndOeffnen() {
 }
 
 const t = computed(() => terminText(props.termin))
+// The header follows the clock: "tonight 20:00 · in 2 hours", then "running since 20:00".
+const jetzt = ref(Date.now())
+const uhr = setInterval(() => (jetzt.value = Date.now()), 30_000)
+onBeforeUnmount(() => clearInterval(uhr))
+const laeuft = computed(() => new Date(props.termin.termin).getTime() <= jetzt.value)
+const bis = computed(() => (jetzt.value, vorWann(props.termin.termin)))
+const mehr = ref(false)
+const kalender = () => (window.location.href = '/api/termin.ics')
+const andere = computed(() =>
+  [
+    app.vielleicht.length && tr('naechsterabend.sum.vielleicht', { n: app.vielleicht.length }),
+    app.absagen.length && tr('naechsterabend.sum.absagen', { n: app.absagen.length }, app.absagen.length),
+  ]
+    .filter(Boolean)
+    .join(' · '),
+)
+const kannNicht = () => app.antworten(app.me.rueckmeldung === 'nein' ? null : 'nein')
 const gewinner = computed(() => kiste.aktuell?.gewinner ?? null)
 const schritte = computed(() => [
   { key: 'da', titel: tr('abendmodus.werIstDa'), fertig: app.dabei.length >= 2 },
@@ -57,9 +77,24 @@ async function eintragen() {
 <template>
   <section class="abendmodus" :aria-label="$t('abendmodus.heuteAbend')">
     <header>
-      <span class="heute">{{ $t('abendmodus.heuteAbend2') }}</span>
-      <strong>{{ t.zeit }}</strong><span v-if="t.notiz" class="muted"> · {{ t.notiz }}</span>
+      <span v-if="laeuft" class="heute live"><span class="punkt" aria-hidden="true"></span>{{ $t('abendmodus.laeuftSeit', { zeit: t.zeit }) }}</span>
+      <template v-else>
+        <span class="heute">{{ $t('abendmodus.heuteAbend2') }}</span>
+        <strong>{{ t.zeit }}</strong>
+        <span class="muted bis">· {{ bis }}</span>
+      </template>
+      <span v-if="t.notiz" class="muted notiz">· {{ t.notiz }}</span>
+      <span class="spacer"></span>
+      <button class="small ghost" @click="emit('einladen')"><Icon name="teilen" :size="14" /> {{ $t('naechsterabend.einladen') }}</button>
+      <button class="small ghost mehr" :aria-expanded="mehr" aria-controls="abend-mehr" :title="$t('naechsterabend.planung')" :aria-label="$t('naechsterabend.planung')" @click="mehr = !mehr">⋯</button>
     </header>
+    <div v-if="mehr" id="abend-mehr" class="mehr-panel">
+      <div class="row">
+        <button class="small ghost" @click="emit('termin', 'fest')"><Icon name="kalender" :size="14" /> {{ $t('naechsterabend.aendern') }}</button>
+        <button class="small ghost" :title="$t('naechsterabend.alsKalenderEintragHerunterladen')" @click="kalender"><Icon name="download" :size="14" /> {{ $t('naechsterabend.kalender') }}</button>
+      </div>
+      <GastgeberLeiste />
+    </div>
     <ol class="schritte">
       <li v-for="(s, i) in schritte" :key="s.key" :class="{ fertig: s.fertig, aktuell: aktuell === s.key }">
         <span class="nr" aria-hidden="true"><Icon v-if="s.fertig" name="gesehen" :size="14" /><template v-else>{{ i + 1 }}</template></span>
@@ -71,7 +106,15 @@ async function eintragen() {
               <span class="avatars"><UserAvatar v-for="u in app.dabei" :key="u.id" :user="u" /></span>
               <span class="muted klein">{{ app.dabei.length ? app.dabei.map((u) => u.name).join(', ') : $t('abendmodus.nochNiemand') }}</span>
             </div>
-            <button v-if="app.me && !app.me.dabei" class="small primary" @click="app.toggleDabei()">{{ $t('abendmodus.ichBinDa') }}</button>
+            <p v-if="andere" class="muted klein">{{ andere }}</p>
+            <div v-if="app.me" class="row antwort" role="group" :aria-label="$t('naechsterabend.bistDuDabei')">
+              <button :class="app.me.dabei ? 'small on' : 'small primary'" :aria-pressed="app.me.dabei" @click="app.toggleDabei()">
+                <Icon v-if="app.me.dabei" name="gesehen" :size="13" /> {{ app.me.dabei ? $t('abendmodus.duBistDa') : $t('abendmodus.ichBinDa') }}
+              </button>
+              <button class="small ghost nein" :class="{ on: app.me.rueckmeldung === 'nein' }" :aria-pressed="app.me.rueckmeldung === 'nein'" @click="kannNicht">
+                {{ $t('naechsterabend.kannNicht') }}
+              </button>
+            </div>
           </template>
 
           <template v-else-if="s.key === 'film'">
@@ -129,7 +172,18 @@ async function eintragen() {
   margin-bottom: 1rem; padding: 1rem 1.1rem; border-radius: 14px; border: 1px solid color-mix(in srgb, var(--accent) 45%, var(--line));
   background: radial-gradient(120% 140% at 0% 0%, color-mix(in srgb, var(--accent) 22%, transparent), transparent 60%), var(--bg-soft);
 }
-header { display: flex; align-items: center; gap: 0.6rem; margin-bottom: 0.9rem; font-size: 1.05rem; }
+header { display: flex; align-items: center; flex-wrap: wrap; gap: 0.4rem 0.6rem; margin-bottom: 0.9rem; font-size: 1.05rem; }
+header .bis, header .notiz { font-size: 0.95rem; }
+header button { font-size: 0.8rem; }
+header .mehr { font-size: 1.1rem; line-height: 1; padding: 0.25rem 0.55rem; }
+.live { display: inline-flex; align-items: center; gap: 0.4rem; }
+.punkt { width: 7px; height: 7px; border-radius: 50%; background: #fff; animation: puls 1.6s ease-in-out infinite; }
+@keyframes puls { 50% { opacity: 0.3; } }
+.mehr-panel { display: flex; flex-direction: column; gap: 0.6rem; margin: -0.3rem 0 0.9rem; padding: 0.7rem 0.8rem; border-radius: 10px; background: var(--bg); border: 1px solid var(--line); }
+.antwort { gap: 0.3rem; }
+.antwort .on { border-color: var(--ok); color: var(--text); }
+.antwort .nein.on { border-color: var(--accent); background: var(--accent-soft); }
+@media (prefers-reduced-motion: reduce) { .punkt { animation: none; } }
 .heute { font-size: 0.7rem; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; background: var(--accent); color: #fff; border-radius: 5px; padding: 3px 8px; }
 .schritte { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.8rem; }
 .schritte li { display: flex; gap: 0.7rem; padding: 0.8rem; border-radius: 10px; background: var(--bg); border: 1px solid var(--line); opacity: 0.6; transition: opacity 0.2s, border-color 0.2s; }

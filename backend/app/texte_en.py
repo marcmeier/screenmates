@@ -235,7 +235,6 @@ EN: dict[str, str] = {
     "Noch niemand hat seine Abos eingetragen (Einstellungen).": "Nobody has added their subscriptions yet (Settings).",
     "Ein Termin wird festgelegt oder verschoben": "A date is set or moved",
     "Jemand schlägt Termine zur Abstimmung vor": "Someone proposes dates for a vote",
-    "Erinnerung am Tag des Filmabends": "Reminder on the day of the movie night",
     "Die Kiste wird für alle geöffnet": "The case is opened for everyone",
     "Das Kino geht live": "The cinema goes live",
     "Dir wird der Gastgeber-Stab angeboten": "You're offered the host baton",
@@ -287,4 +286,7 @@ EN: dict[str, str] = {
     "Statistik & KI-Protokoll": "Stats & AI log",
     "Zähler der Seitenleiste (Kino-Traffic, Chat …) und das KI-Nutzungsprotokoll": "Sidebar counters (cinema traffic, chat …) and the AI usage log",
     "Unsere Gruppe": "Our group",
+    "Erinnerungen am Tag des Filmabends (vorher und kurz vor Beginn)": "Reminders on the day of the movie night (earlier, and just before it starts)",
+    "🎬 Gleich geht’s los – {gruppe}": "🎬 Starting soon – {gruppe}",
+    "Der Filmabend beginnt um {zeit} Uhr{wo}. Komm dazu!": "The movie night starts at {zeit}{wo}. Come and join!",
 }

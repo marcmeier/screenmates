@@ -229,3 +229,11 @@ def test_just_a_moment_reaches_the_others(paar):
     m = lena.post("/api/kino/moment").json()
     neu = marc.get(f"/api/kino/chat?seit={start['letzte']}&rseit={start['rletzte']}").json()["eintraege"]
     assert [(e["typ"], e["user_id"]) for e in neu] == [("moment", lena.me["id"])] and m["typ"] == "moment"
+
+
+def test_the_evening_is_done_once_its_film_is_logged(client):
+    login(client, "marc")
+    bald = (datetime.now(UTC) + timedelta(minutes=30)).isoformat()
+    assert client.put("/api/termin", json={"termin": bald}).json()["geschaut"] is False
+    client.post("/api/watched", json={"movie_id": 694})
+    assert client.get("/api/termin").json()["geschaut"] is True

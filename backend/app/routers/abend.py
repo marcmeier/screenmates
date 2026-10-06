@@ -173,17 +173,28 @@ def _abend(db: DBSession, gid: int) -> Abend:
     return db.get(Abend, gid) or Abend(id=gid)
 
 
-def _termin_dict(a: Abend) -> dict:
+GESCHAUT_UM = timedelta(hours=12)  # a film logged this close to the date was that evening's
+
+
+def _termin_dict(a: Abend, db: DBSession) -> dict:
     termin = _utc(a.termin)
     # A date that is long over doesn't belong on the next invitation.
     if termin is None or termin < datetime.now(UTC) - timedelta(hours=6):
-        return {"termin": None, "notiz": "", "gesetzt_von": None}
-    return {"termin": iso(termin), "notiz": a.notiz, "gesetzt_von": a.gesetzt_von}
+        return {"termin": None, "notiz": "", "gesetzt_von": None, "geschaut": False}
+    # Logged as watched around the date: the evening is done, the page plans the next one.
+    letzte = db.exec(
+        select(Watched.watched_at)
+        .where(Watched.gruppe_id == a.id, col(Watched.hidden).is_(False))
+        .order_by(col(Watched.watched_at).desc())
+        .limit(5)
+    ).all()
+    geschaut = any(abs(_utc(w) - termin) <= GESCHAUT_UM for w in letzte)
+    return {"termin": iso(termin), "notiz": a.notiz, "gesetzt_von": a.gesetzt_von, "geschaut": geschaut}
 
 
 @router.get("/termin")
 def get_termin(gid: int = Depends(aktive_gruppe), db: DBSession = Depends(get_session)):
-    return _termin_dict(_abend(db, gid))
+    return _termin_dict(_abend(db, gid), db)
 
 
 def pruefe_termin(termin: datetime, *, vergangenes: timedelta = timedelta(hours=6)) -> datetime:
@@ -239,7 +250,7 @@ def set_termin(
     gid: int = Depends(aktive_gruppe),
     db: DBSession = Depends(get_session),
 ):
-    return _termin_dict(termin_setzen(db, gid, user, body.termin, body.notiz))
+    return _termin_dict(termin_setzen(db, gid, user, body.termin, body.notiz), db)
 
 
 @router.delete("/termin")
@@ -248,7 +259,7 @@ def clear_termin(gid: int = Depends(aktive_gruppe), db: DBSession = Depends(get_
     a.termin, a.notiz, a.gesetzt_am = None, "", None
     db.add(a)
     db.commit()
-    return _termin_dict(a)
+    return _termin_dict(a, db)
 
 
 # --- Heute vor einem Jahr -----------------------------------------------------

@@ -170,6 +170,23 @@ def test_the_reminder_goes_out_once_and_not_to_those_who_said_no(runde):
     assert "bei Marc" in gesendet[0].daten["text"]
 
 
+def test_just_before_the_start_those_coming_but_not_in_the_app_hear_it(runde):
+    kim, lena, marc = runde["kim"], runde["lena"], runde["marc"]
+    marc.put("/api/termin", json={"termin": in_tagen(2), "notiz": "bei Marc"})
+    lena.put("/api/dabei", json={"antwort": "ja"})
+    kim.put("/api/dabei", json={"antwort": "vielleicht"})
+    marc.put("/api/dabei", json={"antwort": "nein"})
+    lena.get("/api/live")  # lena already has screenmates open
+    gesendet.clear()
+    with Session(engine) as s:
+        termin = s.get(Abend, 1).termin.replace(tzinfo=UTC)
+        assert push.los_meldungen(s, jetzt=termin - timedelta(minutes=20)) == 0  # too early
+        assert push.los_meldungen(s, jetzt=termin - timedelta(minutes=3)) == 1
+        assert push.los_meldungen(s, jetzt=termin) == 0  # once
+    assert empfaenger("los") == {"kim"}
+    assert gesendet[0].dringend is True and "bei Marc" in gesendet[0].daten["text"]
+
+
 def test_a_date_set_shortly_before_needs_no_extra_reminder(runde):
     marc = runde["marc"]
     bald = (datetime.now(UTC) + timedelta(hours=1)).replace(microsecond=0)

@@ -146,7 +146,12 @@ def test_termin_set_read_clear(client, browser):
     lena = browser()
     login(lena, "lena")
     r = client.put("/api/termin", json={"termin": morgen.isoformat(), "notiz": " bei Marc "}).json()
-    assert r == {"termin": morgen.isoformat().replace("+00:00", "Z"), "notiz": "bei Marc", "gesetzt_von": marc["id"]}
+    assert r == {
+        "termin": morgen.isoformat().replace("+00:00", "Z"),
+        "notiz": "bei Marc",
+        "gesetzt_von": marc["id"],
+        "geschaut": False,
+    }
     assert lena.get("/api/termin").json()["notiz"] == "bei Marc"
     events = client.get("/api/events").json()["events"]
     assert events[0]["typ"] == "termin" and events[0]["wer"] == "marc"
@@ -175,7 +180,7 @@ def test_a_past_termin_is_no_longer_shown(client, db):
     db.add(Abend(id=1, termin=datetime.now(UTC) - timedelta(hours=7), notiz="alt"))
     db.commit()
     login(client, "marc")
-    assert client.get("/api/termin").json() == {"termin": None, "notiz": "", "gesetzt_von": None}
+    assert client.get("/api/termin").json() == {"termin": None, "notiz": "", "gesetzt_von": None, "geschaut": False}
 
 
 # --- Heute vor einem Jahr -----------------------------------------------------

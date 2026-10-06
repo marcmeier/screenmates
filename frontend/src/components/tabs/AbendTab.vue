@@ -88,11 +88,14 @@ const chance = (m) => {
   return p ? p.gewicht / poolGesamt.value : null
 }
 
-// On the day itself the page leads through the evening (see AbendModus.vue).
+// On the day itself the page leads through the evening (see AbendModus.vue), and that card
+// replaces the planning one – until the film is logged as watched. A start before midnight still
+// counts after it; the server drops the date six hours after the start anyway.
 const tagFmt = new Intl.DateTimeFormat('sv-SE', { timeZone: 'Europe/Berlin' })
 const heuteAbend = computed(() => {
   const t = termin.value?.termin
-  return !!t && tagFmt.format(new Date(t)) === tagFmt.format(new Date())
+  if (!t || termin.value.geschaut) return false
+  return tagFmt.format(new Date(t)) === tagFmt.format(new Date()) || new Date(t) <= new Date()
 })
 
 async function rueckblickPruefen() {
@@ -179,9 +182,17 @@ const poolQuelle = computed(() => (vorschlaege.value.length ? 'vorschlaege' : 'm
     </a>
 
     <WieWars v-if="app.me" />
-    <AbendModus v-if="heuteAbend && app.me" :termin="termin" :pool="pool" @geschaut="load" />
+    <AbendModus
+      v-if="heuteAbend && app.me"
+      :termin="termin"
+      :pool="pool"
+      @geschaut="load"
+      @termin="(m) => (terminOffen = m)"
+      @einladen="einladungOffen = true"
+    />
 
     <NaechsterAbend
+      v-else
       :termin="termin"
       :umfrage="umfrage"
       @termin="(m) => (terminOffen = m)"

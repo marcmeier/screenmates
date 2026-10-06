@@ -225,7 +225,7 @@ def pick(
     erfolge.protokoll(db, "umfrage", von, termin.astimezone(BERLIN).date().isoformat())
     _schliessen(db, gid)
     db.commit()
-    return {"termin": _termin_dict(a), "umfrage": _zustand(db, gid, user, admin)}
+    return {"termin": _termin_dict(a, db), "umfrage": _zustand(db, gid, user, admin)}
 
 
 def feed(db: DBSession, gid: int, limit: int, names: dict[int, str]) -> list[dict]:

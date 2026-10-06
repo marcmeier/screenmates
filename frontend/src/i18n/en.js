@@ -1,6 +1,8 @@
 // English. Same keys as de.js (film data from TMDB stays German).
 export default {
   abendmodus: {
+    laeuftSeit: "Running since {zeit}",
+    duBistDa: "You're here",
     gastgeberNichtDa: "{name} isn't here right now.",
     keinGastgeber: "Nobody has the host baton yet.",
     uebernehmenUndOeffnen: "Take the baton & open the case",
