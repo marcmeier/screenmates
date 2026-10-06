@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.9.1 – 2026-10-06
+## 0.9.2 – 2026-10-06
 
 ### Neu
 - **Gefahrenzone** in der Verwaltung (nur Server-Admins): Chronik, Filmabend, Kino-Chat, Wünsche,
