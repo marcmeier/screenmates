@@ -55,12 +55,18 @@ const andere = computed(() =>
 )
 const kannNicht = () => app.antworten(app.me.rueckmeldung === 'nein' ? null : 'nein')
 const gewinner = computed(() => kiste.aktuell?.gewinner ?? null)
-const schritte = computed(() => [
-  { key: 'da', titel: tr('abendmodus.werIstDa'), fertig: app.dabei.length >= 2 },
-  { key: 'film', titel: tr('abendmodus.wasSchauenWir'), fertig: !!gewinner.value },
-  { key: 'los', titel: tr('abendmodus.filmAb'), fertig: false },
-])
+// One step at a time, in order: a later step done means the earlier ones are too (a film was drawn,
+// so whoever is here is here). Exactly one step is "now" – the band leads from left to right.
+const schritte = computed(() => {
+  const film = !!gewinner.value
+  return [
+    { key: 'da', titel: tr('abendmodus.werIstDa'), fertig: film || app.dabei.length >= 2 },
+    { key: 'film', titel: tr('abendmodus.wasSchauenWir'), fertig: film },
+    { key: 'los', titel: tr('abendmodus.filmAb'), fertig: false },
+  ]
+})
 const aktuell = computed(() => schritte.value.find((s) => !s.fertig)?.key ?? 'los')
+const stand = computed(() => schritte.value.findIndex((s) => s.key === aktuell.value))
 
 async function eintragen() {
   const w = await api.post('/api/watched', { movie_id: gewinner.value.id })
@@ -95,8 +101,11 @@ async function eintragen() {
       </div>
       <GastgeberLeiste />
     </div>
+    <div class="fortschritt" role="progressbar" :aria-valuenow="stand + 1" aria-valuemin="1" aria-valuemax="3" :aria-label="$t('abendmodus.schritt', { n: stand + 1 })">
+      <span :style="{ width: `${((stand + 0.5) / 3) * 100}%` }"></span>
+    </div>
     <ol class="schritte">
-      <li v-for="(s, i) in schritte" :key="s.key" :class="{ fertig: s.fertig, aktuell: aktuell === s.key }">
+      <li v-for="(s, i) in schritte" :key="s.key" :class="{ fertig: s.fertig, aktuell: aktuell === s.key }" :aria-current="aktuell === s.key ? 'step' : undefined">
         <span class="nr" aria-hidden="true"><Icon v-if="s.fertig" name="gesehen" :size="14" /><template v-else>{{ i + 1 }}</template></span>
         <div class="inhalt">
           <h3>{{ s.titel }}</h3>
@@ -151,12 +160,12 @@ async function eintragen() {
 
           <template v-else>
             <template v-if="kino.live">
-              <a href="#/kino" class="button small primary"><Icon name="kino" :size="14" /> {{ $t('abendmodus.zumKinoLaeuftSchon') }}</a>
+              <a href="#/kino" class="button kiste-knopf gross"><Icon name="kino" :size="18" /> {{ $t('abendmodus.zumKinoLaeuftSchon') }}</a>
             </template>
             <template v-else-if="gewinner">
               <div class="row">
-                <button v-if="kino.enabled" class="small" @click="navigate('kino')"><Icon name="kino" :size="14" /> {{ $t('abendmodus.imKinoSchauen') }}</button>
-                <button class="small" @click="eintragen"><Icon name="gesehen" :size="14" /> {{ $t('abendmodus.geschautEintragen') }}</button>
+                <button v-if="kino.enabled" class="kiste-knopf gross" @click="navigate('kino')"><Icon name="kino" :size="18" /> {{ $t('abendmodus.imKinoSchauen') }}</button>
+                <button class="small ghost" @click="eintragen"><Icon name="gesehen" :size="14" /> {{ $t('abendmodus.geschautEintragen') }}</button>
               </div>
             </template>
             <p v-else class="muted klein">{{ $t('abendmodus.sobaldDerFilmFeststeht') }}</p>
@@ -185,10 +194,23 @@ header .mehr { font-size: 1.1rem; line-height: 1; padding: 0.25rem 0.55rem; }
 .antwort .nein.on { border-color: var(--accent); background: var(--accent-soft); }
 @media (prefers-reduced-motion: reduce) { .punkt { animation: none; } }
 .heute { font-size: 0.7rem; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; background: var(--accent); color: #fff; border-radius: 5px; padding: 3px 8px; }
-.schritte { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.8rem; }
-.schritte li { display: flex; gap: 0.7rem; padding: 0.8rem; border-radius: 10px; background: var(--bg); border: 1px solid var(--line); opacity: 0.6; transition: opacity 0.2s, border-color 0.2s; }
-.schritte li.aktuell { opacity: 1; border-color: var(--accent); }
-.schritte li.fertig { opacity: 0.9; }
+.schritte { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1.4rem; }
+.schritte li {
+  position: relative; display: flex; gap: 0.7rem; padding: 0.8rem; border-radius: 10px; background: var(--bg);
+  border: 1px solid var(--line); opacity: 0.55; transition: opacity 0.25s, border-color 0.25s, box-shadow 0.25s;
+}
+/* Now: the one red step, gently lit. Done: green and calm. Later: dimmed. */
+.schritte li.aktuell { opacity: 1; border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent), 0 8px 26px color-mix(in srgb, var(--accent) 22%, transparent); }
+.schritte li.fertig { opacity: 0.85; border-color: color-mix(in srgb, var(--ok) 45%, var(--line)); }
+/* Arrows between the steps, coloured once the way is behind you. */
+.schritte li + li::before {
+  content: '›'; position: absolute; left: -1.15rem; top: 50%; transform: translateY(-50%);
+  font-size: 1.4rem; line-height: 1; color: var(--line);
+}
+.schritte li.aktuell::before, .schritte li.fertig + li::before { color: var(--ok); }
+.schritte li.aktuell::before { color: var(--accent); }
+.fortschritt { height: 3px; border-radius: 2px; background: var(--line); margin: -0.3rem 0 0.9rem; overflow: hidden; }
+.fortschritt span { display: block; height: 100%; background: linear-gradient(90deg, var(--ok), var(--accent)); transition: width 0.4s; }
 .nr { flex: none; width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; font-weight: 800; font-size: 0.82rem; background: var(--bg-raised); border: 1px solid var(--line); }
 .aktuell .nr { background: var(--accent); border-color: var(--accent); color: #fff; }
 .fertig .nr { background: color-mix(in srgb, var(--ok) 25%, transparent); border-color: var(--ok); color: var(--ok); }
@@ -203,7 +225,11 @@ button.selbst { padding: 0.2rem 0; font-size: 0.78rem; color: var(--muted); }
 button.selbst:hover { color: var(--text); }
 a.button.small { padding: 0.3rem 0.6rem; font-size: 0.8rem; }
 a.button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
-@media (max-width: 800px) { .schritte { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 800px) {
+  .schritte { grid-template-columns: minmax(0, 1fr); gap: 1.1rem; }
+  .schritte li + li::before { content: '⌄'; left: 50%; top: -1.05rem; transform: translateX(-50%); font-size: 1.1rem; }
+}
+@media (prefers-reduced-motion: reduce) { .schritte li, .fortschritt span { transition: none; } }
 .kiste-knopf.gross { width: 100%; padding: 0.7rem 0.9rem; font-size: 0.95rem; border-radius: 10px; }
 /* A step you can act on now is never dimmed – the case button must not look switched off. */
 .schritte li:has(.kiste-knopf) { opacity: 1; }

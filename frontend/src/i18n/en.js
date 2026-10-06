@@ -27,6 +27,7 @@ export default {
     wasSchauenWir: "What are we watching?",
     werIstDa: "Who's here?",
     zumKinoLaeuftSchon: "To the cinema – already showing",
+    schritt: "Step {n} of 3",
   },
   abendtab: {
     alleLeeren: "Clear all",
