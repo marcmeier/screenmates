@@ -480,7 +480,8 @@ test('wishes can be voted on', async () => {
 
 test('the admin creates an invitation link for the group', async () => {
   await nav('Verwaltung')
-  const gruppe = page.locator('.gruppe', { hasText: 'Unsere Gruppe' })
+  // Each group is its own card in the "Gruppen" tab.
+  const gruppe = page.getByRole('article', { name: 'Unsere Gruppe' })
   await gruppe.getByRole('button', { name: 'Neuer Link' }).click()
   await gruppe.getByPlaceholder('z. B. Gruppenchat').fill('Gruppenchat')
   await gruppe.getByRole('button', { name: 'Link erzeugen und kopieren' }).click()
@@ -699,6 +700,7 @@ test('a newcomer requests a name and an admin approves it', async ({ browser }) 
   await page.reload()
   await expect(page.locator('.antraege')).toHaveText('1')
   await nav('Verwaltung')
+  await page.getByRole('link', { name: /^Personen/ }).click()
   const antrag = page.locator('.panel', { has: page.getByRole('heading', { name: /Anträge/ }) })
   await expect(antrag).toContainText('Lena')
   await antrag.getByRole('button', { name: 'Freigeben' }).click()
@@ -735,7 +737,7 @@ test('admins rename someone and log them out everywhere', async () => {
 test('after clearing the evening, the case opens for everyone again', async () => {
   // A seen opening used to be remembered by its id – and ids start at 1 again after a reset.
   await page.evaluate(() => localStorage.setItem('screenmates.kisteGesehen', '999'))
-  await page.goto('/#/verwaltung')
+  await page.goto('/#/verwaltung/gefahr')
   const zone = page.getByRole('region', { name: 'Gefahrenzone' })
   await zone.getByRole('checkbox', { name: /Filmabend/ }).check()
   await zone.getByRole('button', { name: 'Ausgewähltes löschen' }).click()
@@ -757,7 +759,7 @@ test('after clearing the evening, the case opens for everyone again', async () =
 })
 
 test('the danger zone clears an area only after typing the word', async () => {
-  await page.goto('/#/verwaltung')
+  await page.goto('/#/verwaltung/gefahr')
   const zone = page.getByRole('region', { name: 'Gefahrenzone' })
   await zone.getByRole('checkbox', { name: /Wünsche & Ideen/ }).check()
   await zone.getByRole('button', { name: 'Ausgewähltes löschen' }).click()
@@ -775,12 +777,14 @@ test('the danger zone clears an area only after typing the word', async () => {
 
 test('a second group has its own movie night', async () => {
   await nav('Verwaltung')
-  await page.getByLabel('Neue Gruppe').fill('Horror-Crew')
+  await page.getByRole('tab', { name: 'Neue Gruppe' }).click()
+  await page.getByRole('textbox', { name: 'Neue Gruppe' }).fill('Horror-Crew')
   await page.getByRole('button', { name: 'Gruppe anlegen' }).click()
-  const crew = page.locator('.gruppe', { hasText: 'Horror-Crew' })
+  // The new group opens right away, as a card of its own.
+  const crew = page.getByRole('article', { name: 'Horror-Crew' })
   await crew.getByLabel('Mitglied für Horror-Crew wählen').selectOption({ label: 'Marc' })
   await crew.getByRole('button', { name: 'Aufnehmen' }).click()
-  await expect(crew).toContainText('1 Mitglied')
+  await expect(crew.locator('.mitglieder li')).toHaveCount(1)
   // Now in two groups: the sidebar offers to switch.
   await page.reload()
   const wahl = page.getByLabel('Gruppe wechseln')

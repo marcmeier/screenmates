@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.16.0 – 2026-10-06
+
+### Geändert
+- **Verwaltung mit Reitern:** Gruppen · Personen (mit Zahl offener Anträge) · System (KI-Nutzung,
+  Katalog) · Gefahrenzone. Gruppen-Admins sehen nur ihre Gruppen. Jeder Reiter hat eine eigene Adresse
+  (z. B. `#/verwaltung/gefahr`).
+- **Gruppen übersichtlich:** Oben eine Auswahl aller Gruppen, darunter immer nur die gewählte als eigene,
+  umrandete Karte – Kopf mit Name, Umbenennen und Löschen, darunter getrennt Mitglieder, Einladungslinks
+  und „Nächster Abend“. „Neue Gruppe“ steht als Eintrag in der Auswahl.
+
+### Behoben
+- „Noch in keiner Gruppe“ war in der englischen Ansicht noch deutsch.
+
 ## 0.15.0 – 2026-10-06
 
 ### Neu
