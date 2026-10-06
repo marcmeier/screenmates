@@ -17,7 +17,7 @@ const von = computed(() => app.userById(kiste.buehne?.von)?.name || '')
     :pool="kiste.buehne.pool"
     :gewinner="kiste.buehne.gewinner"
     :seed="kiste.buehne.seed"
-    :start="kiste.lokal(kiste.buehne.start)"
+    :start="kiste.buehne.lokalStart"
     :von="von"
     @fertig="kiste.fertig()"
   />

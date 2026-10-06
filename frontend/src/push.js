@@ -63,7 +63,18 @@ export async function einschalten(schluessel) {
     await abo.unsubscribe()
     abo = null
   }
-  abo ||= await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: key })
+  try {
+    abo ||= await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: key })
+  } catch (e) {
+    // Chromium without Google's push service (Brave by default, Linux distro builds) fails here.
+    if (e.name === 'AbortError' || /push service/i.test(e.message)) {
+      throw new Error(
+        'Dein Browser erreicht seinen Push-Dienst nicht. In Brave unter Einstellungen → Datenschutz „Google-Dienste für Push-Nachrichten verwenden“ einschalten und neu starten; Chromium ohne Google-Dienste kann kein Push – Firefox, Chrome, Edge und Safari gehen.',
+        { cause: e },
+      )
+    }
+    throw e
+  }
   const j = abo.toJSON()
   return api.post('/api/push/abo', { endpoint: j.endpoint, keys: j.keys, geraet: geraetName() })
 }

@@ -16,7 +16,7 @@ from .. import erfolge, push, tmdb
 from ..config import settings
 from ..db import get_session
 from ..gruppen import aktive_gruppe
-from ..models import Abend, Movie, User, Watched, WatchedRating, now
+from ..models import Abend, Mitglied, Movie, User, Watched, WatchedRating, now
 from ..prognose import MIN_BEWERTUNGEN, Film, vorhersage
 from ..serialize import iso
 from ..session import require_user
@@ -141,6 +141,12 @@ def termin_setzen(db: DBSession, gid: int, user: User, termin: datetime, notiz: 
     termin = pruefe_termin(termin)
     a = _abend(db, gid)
     vorher = _utc(a.termin)
+    if vorher is not None and vorher < datetime.now(UTC) - timedelta(hours=6):
+        # The last evening is over: who was in back then hasn't answered for this one yet.
+        for m in db.exec(select(Mitglied).where(Mitglied.gruppe_id == gid)).all():
+            if m.dabei or m.rueckmeldung:
+                m.dabei, m.rueckmeldung = False, ""
+                db.add(m)
     gastgeber.termin_gesetzt(db, a, user, a.termin)
     a.termin, a.notiz, a.gesetzt_von, a.gesetzt_am = termin, notiz.strip(), user.id, now()
     # A date this close needs no reminder on top of the news.

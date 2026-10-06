@@ -111,8 +111,11 @@ function ende() {
 
 // --- Timeline ---------------------------------------------------------------------
 
-// Fast start, very long slowdown – the part everyone stares at.
-const ease = (x) => 1 - Math.pow(1 - x, 4.2)
+// A soft pull-away (no jolt out of the countdown), then a very long slowdown – the part everyone stares at.
+const ANLAUF = 0.07 // share of the run spent getting up to speed
+const ease = (x) => (1 - Math.pow(1 - x, 4.2)) * Math.min(1, x / ANLAUF) ** 1.6
+// While counting down the strip already creeps along, so the start is one movement.
+const KRIECHEN = 18 // px per second
 
 function enthuellen() {
   cancelAnimationFrame(raf)
@@ -128,13 +131,15 @@ function schritt() {
   if (jetzt < props.start) {
     phase.value = 'countdown'
     rest.value = Math.ceil((props.start - jetzt) / 1000)
+    versatz.value = wenigerBewegung() ? 0 : -((props.start - jetzt) / 1000) * KRIECHEN
     raf = requestAnimationFrame(schritt)
     return
   }
   phase.value = 'laeuft'
   const x = Math.min(1, (jetzt - props.start) / dauer())
   const vorher = versatz.value
-  versatz.value = ende() * ease(x)
+  // From the creeping start (0) on, carrying its little speed into the run.
+  versatz.value = ende() * ease(x) + Math.min(jetzt - props.start, 400) * (KRIECHEN / 1000) * (1 - x)
   const w = itemBreite.value
   const mitte = breite() / 2
   if (Math.floor((vorher + mitte) / w) !== Math.floor((versatz.value + mitte) / w)) tick()
@@ -207,7 +212,11 @@ onBeforeUnmount(() => {
             <span class="name">{{ it.m.title }}</span>
           </div>
         </div>
-        <div v-if="phase === 'countdown'" class="countdown" aria-live="assertive">{{ rest }}</div>
+        <Transition name="countdown">
+          <div v-if="phase === 'countdown'" class="countdown" aria-live="assertive">
+            <span :key="rest" class="zahl">{{ rest }}</span>
+          </div>
+        </Transition>
       </div>
 
       <div class="fuss" aria-live="polite">
@@ -219,8 +228,9 @@ onBeforeUnmount(() => {
           </div>
           <button class="primary" @click="weiter">Weiter</button>
         </template>
-        <button v-else-if="phase === 'laeuft'" class="ghost" @click="weiter">Überspringen</button>
-        <p v-else class="muted">Gleich geht’s los …</p>
+        <button v-else class="ghost" :class="{ unsichtbar: phase === 'countdown' }" :disabled="phase === 'countdown'" @click="weiter">
+          {{ phase === 'countdown' ? 'Gleich geht’s los …' : 'Überspringen' }}
+        </button>
       </div>
     </div>
   </Teleport>
@@ -255,10 +265,24 @@ onBeforeUnmount(() => {
 .marke::before, .marke::after { content: ''; position: absolute; left: 50%; transform: translateX(-50%); border: 9px solid transparent; }
 .marke::before { top: 0; border-top-color: #f5c518; }
 .marke::after { bottom: 0; border-bottom-color: #f5c518; }
+/* The countdown sits over the strip without blacking it out, beats once a second and fades away. */
 .countdown {
-  position: absolute; inset: 0; z-index: 3; display: grid; place-items: center; font-size: 6rem; font-weight: 800;
-  color: #fff; text-shadow: 0 0 40px var(--accent); background: rgba(0, 0, 0, 0.45);
+  position: absolute; inset: 0; z-index: 3; display: grid; place-items: center; pointer-events: none;
+  background: radial-gradient(circle at center, rgba(0, 0, 0, 0.55) 0, rgba(0, 0, 0, 0.15) 45%, transparent 70%);
 }
+.zahl {
+  font-size: 5.5rem; font-weight: 800; color: #fff; line-height: 1; font-variant-numeric: tabular-nums;
+  text-shadow: 0 0 40px var(--accent), 0 2px 12px rgba(0, 0, 0, 0.6); animation: schlag 1s ease-out;
+}
+@keyframes schlag {
+  0% { transform: scale(1.35); opacity: 0; }
+  18% { transform: scale(1); opacity: 1; }
+  80% { opacity: 1; }
+  100% { transform: scale(0.92); opacity: 0.35; }
+}
+.countdown-leave-active { transition: opacity 0.45s ease-out; }
+.countdown-leave-to { opacity: 0; }
+.fuss .unsichtbar:disabled { opacity: 0.55; cursor: default; }
 
 .enthuellt .item:not(.sieger) { opacity: 0.25; }
 .enthuellt .item.sieger { transform: scale(1.08); box-shadow: 0 0 0 2px var(--farbe), 0 0 60px var(--farbe); z-index: 1; }
@@ -276,6 +300,6 @@ onBeforeUnmount(() => {
   .kopf { flex-wrap: wrap; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .item, .enthuellung { transition: none; animation: none; }
+  .item, .enthuellung, .zahl { transition: none; animation: none; }
 }
 </style>

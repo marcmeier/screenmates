@@ -1,8 +1,8 @@
 import { defineStore } from 'pinia'
 import { api } from '../api'
 
-// The Kino's chat and reactions (backend routers/kinochat.py): polled while the Kino page
-// is open. Messages stay in the list; reactions fly across the picture for a moment.
+// The Kino's chat (kept 30 days) and reactions (a moment) – backend routers/kinochat.py.
+// Polled while the Kino page is open; reactions fly across the picture for a moment.
 const SCHNELL = 1500
 const LANGSAM = 6000 // background tab
 const MAX_FLIEGEND = 30
@@ -11,10 +11,13 @@ let schluessel = 0
 
 export const useKinoChat = defineStore('kinochat', {
   state: () => ({
-    nachrichten: [], // [{ id, user_id, inhalt, at }]
+    nachrichten: [], // [{ id, user_id, inhalt, at }], oldest first
     fliegend: [], // reactions on their way up: [{ key, inhalt, user_id, links, dauer, kippen }]
     reaktionen: [],
-    letzte: null, // id of the newest entry seen; null: nothing fetched yet
+    letzte: null, // newest message id seen; null: nothing fetched yet
+    rletzte: 0, // newest reaction id seen
+    mehr: false, // older messages exist
+    tage: 30,
     offen: false,
   }),
   actions: {
@@ -22,21 +25,30 @@ export const useKinoChat = defineStore('kinochat', {
       const anfang = this.letzte === null
       let r
       try {
-        // The first call gets the conversation so far, later ones everything new.
-        r = await api.get(anfang ? '/api/kino/chat' : `/api/kino/chat?seit=${this.letzte}`, { quiet: true })
+        // The first call gets the latest messages, later ones everything new.
+        r = await api.get(anfang ? '/api/kino/chat' : `/api/kino/chat?seit=${this.letzte}&rseit=${this.rletzte}`, { quiet: true })
       } catch {
         return
       }
       this.reaktionen = r.reaktionen
-      for (const e of r.eintraege) this.aufnehmen(e, !anfang)
+      this.tage = r.tage
+      if (anfang) this.mehr = r.mehr
+      for (const e of r.eintraege) this.aufnehmen(e)
       this.letzte = Math.max(this.letzte ?? 0, r.letzte)
+      this.rletzte = Math.max(this.rletzte, r.rletzte)
     },
-    aufnehmen(e, frisch = true) {
+    async aelterLaden() {
+      const erste = this.nachrichten[0]
+      if (!erste) return
+      const r = await api.get(`/api/kino/chat/aelter?vor=${erste.id}`)
+      this.nachrichten = [...r.eintraege.filter((e) => !this.nachrichten.some((n) => n.id === e.id)), ...this.nachrichten]
+      this.mehr = r.mehr
+    },
+    aufnehmen(e) {
       if (e.typ === 'text') {
         if (this.nachrichten.some((n) => n.id === e.id)) return
         this.nachrichten.push(e)
-        if (this.nachrichten.length > 200) this.nachrichten.splice(0, this.nachrichten.length - 200)
-      } else if (frisch && !this.fliegend.some((f) => f.id === e.id)) {
+      } else if (!this.fliegend.some((f) => f.id === e.id)) {
         this.fliegen(e)
       }
     },
@@ -63,6 +75,7 @@ export const useKinoChat = defineStore('kinochat', {
       if (this.offen) return
       this.offen = true
       this.letzte = null
+      this.rletzte = 0
       this.nachrichten = []
       const schritt = async () => {
         await this.abrufen()

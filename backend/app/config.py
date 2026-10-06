@@ -39,7 +39,8 @@ class Settings(BaseSettings):
     # Uploaded files (profile pictures). Empty: backend/media. Docker: /data/media.
     media_dir: str = ""
 
-    # Web Push: a contact for the push services (mailto: or https: URL). The keys are made automatically.
+    # Web Push: a contact for the push services (mailto: or an https: URL; only its origin is sent).
+    # The keys are made automatically.
     push_kontakt: str = "https://github.com/marcmeier/screenmates"
 
     session_cookie: str = "screenmates_sid"

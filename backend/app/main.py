@@ -28,6 +28,7 @@ from .routers import (
     live,
     misc,
     profilbild,
+    reset,
     rueckblick,
     statistik,
     ueber,
@@ -40,7 +41,7 @@ from .routers import erfolge as erfolge_api
 from .routers import push as push_api
 from .seed import seed_if_empty
 
-__version__ = "0.9.0"
+__version__ = "0.9.2"
 
 
 @asynccontextmanager
@@ -111,6 +112,7 @@ for r in (
     kalender.router,
     push_api.router,
     rueckblick.router,
+    reset.router,
 ):
     app.include_router(r)
 

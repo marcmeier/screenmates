@@ -29,7 +29,7 @@ Drei Bereiche für die drei Dinge, für die man herkommt:
   Teilnehmende, Gästebuch mit Antworten und Herzen.
 - **Kino** – gemeinsam schauen, auch wenn alle in verschiedenen Wohnzimmern sitzen: Der Gastgeber (oder ein Admin)
   teilt seinen Bildschirm oder sendet aus OBS (eigene Filme, Spiele …), alle sehen live dasselbe
-  Bild mit unter einer Sekunde Verzögerung. Daneben ein **Chat**, und **Reaktionen** (😱 🍿 😂 …)
+  Bild mit unter einer Sekunde Verzögerung. Daneben ein **Chat** (30 Tage), und **Reaktionen** (😱 🍿 😂 …)
   fliegen für alle übers Bild – auch im Vollbild. Läuft etwas, leuchtet der Menüpunkt mit der Zahl
   der Zuschauenden. Danach trägt ein Klick den Film als gesehen ein, mit allen, die dabei waren.
 
@@ -138,6 +138,12 @@ docker compose exec screenmates python -m app.cli einladung       # Notfall-Link
 
 So kommt eine bestehende Installation zu ihrem ersten Admin, und so hilft man sich, wenn sich alle
 Admins ausgesperrt haben.
+
+**Aufräumen:** In der Verwaltung gibt es für Server-Admins eine **Gefahrenzone**: einzelne Bereiche
+(Chronik, Filmabend, Kino-Chat, Wünsche, Erfolge, Statistik) leeren oder mit „Alles neu“ zum
+Werkszustand zurück – nur der eigene Admin-Name, die Gruppen, der Katalog und die Einstellungen
+bleiben. Vor jedem Löschen legt screenmates eine Sicherung der Datenbank daneben
+(`backup-vor-reset-*.db`, die letzten fünf).
 
 ## Kino
 

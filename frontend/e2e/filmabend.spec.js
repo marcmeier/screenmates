@@ -23,6 +23,12 @@ test.afterAll(async () => {
 })
 
 const nav = (name) => page.getByRole('link', { name, exact: true }).click()
+// The planning folds away once nothing waits for you: open it where a step needs it.
+async function planung() {
+  const knopf = page.getByRole('button', { name: 'Planung' })
+  if ((await knopf.getAttribute('aria-expanded')) !== 'true') await knopf.click()
+  await expect(page.locator('#planung')).toBeVisible()
+}
 // The same person on a second device (its own browser, same session).
 const zweitesGeraet = async () => {
   const ctx = await page.context().browser().newContext({ storageState: await page.context().storageState() })
@@ -230,7 +236,19 @@ test('a date for the evening and an invitation card for the group chat', async (
   await page.unroute(/image\.tmdb\.org.*[?&]karte/)
 })
 
+test('once nothing waits for you, the planning folds into one line', async () => {
+  // Marc is in and the date is set: nothing to do, so it's folded – but the date stays in view.
+  await expect(page.getByRole('button', { name: 'Planung' })).toHaveAttribute('aria-expanded', 'false')
+  await expect(page.locator('#planung')).toBeHidden()
+  await expect(page.locator('.crew .termin')).toContainText('bei Marc')
+  await expect(page.locator('.crew .wer')).toContainText('Marc dabei')
+  await planung()
+  await page.getByRole('button', { name: 'Planung' }).click()
+  await expect(page.locator('#planung')).toBeHidden()
+})
+
 test('the date goes into the calendar as a file', async () => {
+  await planung()
   const [datei] = await Promise.all([page.waitForEvent('download'), page.getByRole('button', { name: 'Kalender' }).click()])
   expect(datei.suggestedFilename()).toBe('filmabend.ics')
   const text = await (await datei.createReadStream()).toArray().then((teile) => Buffer.concat(teile).toString())
@@ -239,6 +257,7 @@ test('the date goes into the calendar as a file', async () => {
 })
 
 test('the group votes on a date; picking one carries the answers over', async () => {
+  await planung()
   await page.getByRole('button', { name: 'Abstimmen' }).click()
   const dialog = page.getByRole('dialog', { name: 'Termin für den Filmabend' })
   await expect(dialog.getByRole('radio', { name: 'Abstimmen lassen' })).toHaveAttribute('aria-checked', 'true')
@@ -258,6 +277,7 @@ test('the group votes on a date; picking one carries the answers over', async ()
 })
 
 test('yes, maybe or no for the evening', async () => {
+  await planung()
   const rsvp = page.getByRole('group', { name: 'Bist du dabei?' })
   await rsvp.getByRole('button', { name: 'Vielleicht' }).click()
   await expect(page.locator('.crew .andere')).toContainText('Vielleicht:')
@@ -629,6 +649,23 @@ test('admins rename someone and log them out everywhere', async () => {
   await lena.reload().catch(() => {})
   await expect(lena.getByText('Nur mit Einladung')).toBeVisible({ timeout: 15_000 })
   await lena.close()
+})
+
+test('the danger zone clears an area only after typing the word', async () => {
+  await page.goto('/#/verwaltung')
+  const zone = page.getByRole('region', { name: 'Gefahrenzone' })
+  await zone.getByRole('checkbox', { name: /Wünsche & Ideen/ }).check()
+  await zone.getByRole('button', { name: 'Ausgewähltes löschen' }).click()
+  const dialog = page.getByRole('dialog', { name: 'Wirklich löschen?' })
+  const los = dialog.getByRole('button', { name: 'Endgültig löschen' })
+  await expect(los).toBeDisabled()
+  await dialog.getByLabel('Bestätigung').fill('löschen')
+  await los.click()
+  await expect(page.getByText(/Gelöscht – Sicherung: backup-vor-reset-/)).toBeVisible()
+  await page.waitForEvent('load') // the app starts afresh
+  await page.goto('/#/wuensche')
+  await expect(page.locator('main')).not.toContainText('Serien unterstützen')
+  await page.goto('/#/abend')
 })
 
 test('a second group has its own movie night', async () => {

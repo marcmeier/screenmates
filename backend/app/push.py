@@ -29,6 +29,7 @@ from collections.abc import Iterable
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
 from datetime import UTC, datetime, timedelta
+from urllib.parse import urlsplit
 
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import ec
@@ -98,6 +99,18 @@ def oeffentlicher_schluessel(db: DBSession) -> str:
     return base64.urlsafe_b64encode(raw).rstrip(b"=").decode()
 
 
+def kontakt() -> str:
+    """PUSH_KONTAKT as the push services want it: mailto:… or an https: origin without a path.
+
+    py_vapid refuses anything else (with a misleading "Missing 'sub'"), so a URL
+    like https://github.com/user/repo is cut down to https://github.com.
+    """
+    k = settings.push_kontakt.strip()
+    if k.lower().startswith("https://"):
+        return f"https://{urlsplit(k).hostname}"
+    return k
+
+
 # --- who wants what ------------------------------------------------------------------
 
 
@@ -137,10 +150,12 @@ def an(
     tag: str = "",
     ttl: int = 3600,
     dringend: bool = False,
+    warten: bool = False,
 ) -> int:
     """Notify these people on all their devices, if they want this kind. Returns the number of devices.
 
-    `art` is a key of ARTEN, or "test" (always on). Sending happens in the background.
+    `art` is a key of ARTEN, or "test" (always on). Sending happens in the background;
+    with `warten` right here, and the number is how many devices really got it.
     """
     uids = {u for u in uids if u is not None}
     if not uids:
@@ -154,9 +169,12 @@ def an(
         return 0
     schluessel = privater_schluessel(db)
     daten = {"titel": titel, "text": text, "url": url, "tag": tag or art}
-    for a in abos:
-        abschicken(Zustellung(a.endpoint, a.p256dh, a.auth, daten, ttl, dringend, schluessel))
-    return len(abos)
+    zustellungen = [Zustellung(a.endpoint, a.p256dh, a.auth, daten, ttl, dringend, schluessel) for a in abos]
+    if warten:
+        return sum(zustellen(z) for z in zustellungen)
+    for z in zustellungen:
+        abschicken(z)
+    return len(zustellungen)
 
 
 def abschicken(z: Zustellung) -> None:
@@ -164,7 +182,8 @@ def abschicken(z: Zustellung) -> None:
     _pool.submit(zustellen, z)
 
 
-def zustellen(z: Zustellung) -> None:
+def zustellen(z: Zustellung) -> bool:
+    """Deliver one message; False when the push service refused it (or wasn't reachable)."""
     from py_vapid import Vapid
     from pywebpush import WebPushException, webpush
 
@@ -173,7 +192,7 @@ def zustellen(z: Zustellung) -> None:
             {"endpoint": z.endpoint, "keys": {"p256dh": z.p256dh, "auth": z.auth}},
             json.dumps(z.daten, ensure_ascii=False),
             vapid_private_key=Vapid.from_pem(z.schluessel.encode()),
-            vapid_claims={"sub": settings.push_kontakt},  # a fresh dict: pywebpush adds the audience to it
+            vapid_claims={"sub": kontakt()},  # a fresh dict: pywebpush adds the audience to it
             ttl=z.ttl,
             timeout=10,
             headers={"Urgency": "high" if z.dringend else "normal"},
@@ -184,8 +203,11 @@ def zustellen(z: Zustellung) -> None:
             vergessen(z.endpoint)
         else:
             log.warning("Push an %s… fehlgeschlagen: %s", z.endpoint[:40], status or e)
+        return False
     except Exception:
         log.exception("Push an %s… fehlgeschlagen", z.endpoint[:40])
+        return False
+    return True
 
 
 def vergessen(endpoint: str) -> None:

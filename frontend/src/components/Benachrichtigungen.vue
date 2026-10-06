@@ -51,7 +51,9 @@ async function waehlen(art, wert) {
 
 async function testen() {
   const r = await api.post('/api/push/test')
-  ui.toast(`Test an ${r.geraete} ${r.geraete === 1 ? 'Gerät' : 'Geräte'} geschickt`, 'ok')
+  const geraete = `${r.geraete} ${r.geraete === 1 ? 'Gerät' : 'Geräte'}`
+  if (r.geraete < r.von) ui.toast(`Test an ${geraete} zugestellt, ${r.von - r.geraete} hat der Push-Dienst abgelehnt`, 'error', 6000)
+  else ui.toast(`Test an ${geraete} zugestellt`, 'ok')
 }
 
 const geraeteText = computed(() => {

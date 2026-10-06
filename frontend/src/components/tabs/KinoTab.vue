@@ -66,7 +66,7 @@ async function alsGesehen() {
       Details stehen in der README unter „Kino“.
     </div>
 
-    <div v-else class="layout" :class="{ withDesk: gast.darfModerieren, mitChat: app.me }">
+    <div v-else class="layout" :class="{ mitChat: app.me }">
       <section class="stage">
         <div v-if="kino.live" class="row onair">
           <span class="badge"><span class="dot"></span>LIVE</span>
@@ -94,7 +94,7 @@ async function alsGesehen() {
           <Icon name="kino" :size="44" />
           <p><strong>Gerade läuft nichts.</strong></p>
           <p class="muted">
-            {{ gast.darfModerieren ? 'Starte rechts eine Übertragung.' : 'Sobald jemand sendet, erscheint das Bild hier von selbst.' }}
+            {{ gast.darfModerieren ? 'Starte unten eine Übertragung.' : 'Sobald jemand sendet, erscheint das Bild hier von selbst.' }}
           </p>
         </div>
 
@@ -104,12 +104,11 @@ async function alsGesehen() {
           <span class="avatars"><UserAvatar v-for="id in kino.publikum" :key="id" :user-id="id" /></span>
           <button class="primary small" @click="alsGesehen"><Icon name="gesehen" :size="14" /> Eintragen</button>
         </div>
+
+        <KinoSenden v-if="gast.darfModerieren" />
       </section>
 
-      <div v-if="gast.darfModerieren || app.me" class="seite">
-        <KinoSenden v-if="gast.darfModerieren" />
-        <KinoChat v-if="app.me" />
-      </div>
+      <KinoChat v-if="app.me" class="seite" />
     </div>
   </div>
 </template>
@@ -117,8 +116,9 @@ async function alsGesehen() {
 <style scoped>
 .stableiste { margin-bottom: 1rem; padding: 0.6rem 0.9rem; }
 .layout { display: grid; gap: 1.6rem; align-items: start; }
-.layout.withDesk, .layout.mitChat { grid-template-columns: minmax(0, 1fr) 360px; }
-.seite { display: flex; flex-direction: column; gap: 1.2rem; min-width: 0; position: sticky; top: 1rem; }
+/* Screen (and the host's desk under it) on the left, the chat beside it – for everyone. */
+.layout.mitChat { grid-template-columns: minmax(0, 1fr) 340px; }
+.seite { position: sticky; top: 1rem; --chat-hoehe: min(calc(100svh - 9rem), 44rem); }
 .stage { display: flex; flex-direction: column; gap: 0.8rem; min-width: 0; }
 .onair h2 { margin: 0; font-size: 1.2rem; }
 .badge {
@@ -140,7 +140,7 @@ async function alsGesehen() {
 .movie { align-self: flex-start; }
 .done { display: flex; align-items: center; gap: 0.8rem; flex-wrap: wrap; }
 @media (max-width: 1100px) {
-  .layout.withDesk, .layout.mitChat { grid-template-columns: 1fr; }
-  .seite { position: static; }
+  .layout.mitChat { grid-template-columns: 1fr; }
+  .seite { position: static; --chat-hoehe: 26rem; }
 }
 </style>

@@ -163,10 +163,17 @@ Admin *dieser Gruppe* oder Server-Admin. Der Katalog bleibt für alle offen; sei
 | GET | `/kino/obs` · POST `/kino/obs/neu` | A | Server-URL und Stream-Key für OBS, Key erneuern |
 | DELETE | `/kino` | A | Übertragung für alle beenden (auch OBS) |
 | POST | `/kino/mtx-auth` | intern | Rechteprüfung, die MediaMTX bei jeder Aktion aufruft |
-| GET | `/kino/chat` | N | Chat und Reaktionen der Gruppe: ohne `seit` der bisherige Chat, mit `seit=<id>` alles Neue |
+| GET | `/kino/chat` | N | Chat (30 Tage gespeichert) und Reaktionen: ohne Cursor die letzten 50 Nachrichten und `letzte`/`rletzte`, mit `seit=<id>&rseit=<id>` alles Neue · `/kino/chat/aelter?vor=<id>` ältere |
 | POST | `/kino/chat` · `/kino/reaktion` | N | Nachricht (bis 300 Zeichen) bzw. Reaktion (`emoji` aus `reaktionen`) |
 
 **F** = darf festlegen: wer die Umfrage gestartet hat, der Gastgeber, ein Admin der Gruppe – oder jeder, solange niemand den Stab hält.
+
+## Gefahrenzone
+
+| Methode | Pfad | Recht | Zweck |
+|---|---|:-:|---|
+| GET | `/admin/reset` | A | Bereiche mit Anzahl (`chronik`, `filmabend`, `kino`, `wuensche`, `erfolge`, `statistik`), `neustart` (andere Namen + Einladungen), vorhandene Sicherungen |
+| POST | `/admin/reset` | A | `bereiche` leeren (für alle Gruppen) oder `["neustart"]`; `bestaetigung` muss `LÖSCHEN` sein. Sichert vorher die Datenbank |
 
 ## Benachrichtigungen
 

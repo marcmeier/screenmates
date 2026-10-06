@@ -115,6 +115,10 @@ def choose(body: Wahl, user: User = Depends(require_user), db: DBSession = Depen
 
 @router.post("/test")
 def test(user: User = Depends(require_user), db: DBSession = Depends(get_session)):
+    """Sends right away and says how many devices really got it (the push services answer)."""
+    geraete = _geraete(db, user)
+    if not geraete:
+        raise HTTPException(409, "Auf keinem Gerät sind Benachrichtigungen eingeschaltet.")
     n = push.an(
         db,
         [user.id],
@@ -122,7 +126,10 @@ def test(user: User = Depends(require_user), db: DBSession = Depends(get_session
         "🎬 screenmates",
         "So sehen Benachrichtigungen aus. Viel Spaß beim nächsten Filmabend!",
         url="/#/profil/einstellungen",
+        warten=True,
     )
     if not n:
-        raise HTTPException(409, "Auf keinem Gerät sind Benachrichtigungen eingeschaltet.")
-    return {"geraete": n}
+        raise HTTPException(
+            502, "Der Push-Dienst hat die Testnachricht nicht angenommen. Schalte das Gerät aus und wieder ein."
+        )
+    return {"geraete": n, "von": geraete}
