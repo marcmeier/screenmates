@@ -139,7 +139,7 @@ async function alsGesehen() {
 .movie { align-self: flex-start; }
 .done { display: flex; align-items: center; gap: 0.8rem; flex-wrap: wrap; }
 @media (max-width: 1100px) {
-  .layout.mitChat { grid-template-columns: 1fr; }
+  .layout.mitChat { grid-template-columns: minmax(0, 1fr); }
   .seite { position: static; --chat-hoehe: 26rem; }
 }
 </style>

@@ -57,4 +57,9 @@ const current = computed(() => (['gesehen', 'rueckblick'].includes(route.value.s
 .segments a:hover { color: var(--text); }
 .segments a.active { background: var(--bg-raised); color: var(--text); font-weight: 600; box-shadow: inset 0 -2px 0 var(--accent); }
 .count { font-size: 0.75rem; color: var(--muted); font-weight: 600; }
+/* Narrow phones: the three tabs share the width instead of pushing past it. */
+@media (max-width: 420px) {
+  .segments { display: flex; }
+  .segments a { flex: 1; justify-content: center; padding: 0.45rem 0.4rem; font-size: 0.85rem; gap: 0.3rem; }
+}
 </style>

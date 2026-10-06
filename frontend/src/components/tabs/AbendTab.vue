@@ -345,6 +345,8 @@ const poolQuelle = computed(() => (vorschlaege.value.length ? 'vorschlaege' : 'm
   border: 1px solid var(--line); color: var(--muted); white-space: nowrap;
 }
 .merkmal img { width: 14px; height: 14px; border-radius: 3px; }
+/* Long ones (a service with names) end in … instead of widening the page. */
+.merkmal { max-width: 100%; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
 .merkmal.chance { color: var(--text); border-color: color-mix(in srgb, var(--farbe) 60%, transparent); background: color-mix(in srgb, var(--farbe) 16%, transparent); }
 .merkmal.prognose { color: var(--gold); border-color: color-mix(in srgb, var(--gold) 45%, transparent); }
 .merkmal.weg.unser { color: var(--ok); border-color: color-mix(in srgb, var(--ok) 45%, transparent); }
@@ -372,11 +374,11 @@ h3 { margin: 0 0 0.6rem; font-size: 0.78rem; text-transform: uppercase; letter-s
 .fuss { margin-top: 2.6rem; padding-top: 1.2rem; border-top: 1px solid var(--line); display: grid; gap: 1.2rem; }
 .fuss.zwei { grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); align-items: start; }
 .fuss :deep(.info) { margin-top: 0; }
-@media (max-width: 900px) { .fuss.zwei { grid-template-columns: 1fr; } }
+@media (max-width: 900px) { .fuss.zwei { grid-template-columns: minmax(0, 1fr); } }
 .winner { margin-top: 1.2rem; border-top: 1px solid var(--line); padding-top: 1rem; display: flex; flex-direction: column; gap: 0.4rem; text-align: center; align-items: center; }
 .winner strong { font-size: 1.3rem; }
 @media (max-width: 1100px) {
-  .layout { grid-template-columns: 1fr; }
+  .layout { grid-template-columns: minmax(0, 1fr); }
   .side { order: -1; }
 }
 </style>
