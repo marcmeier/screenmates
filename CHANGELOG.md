@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.11.2 – 2026-10-06
+
+### Geändert
+- **Finden kompakt:** Unter der Suche steht nur noch eine Leiste – Stöbern/Alle Filme, **„Wo läuft’s?“**
+  (Dienste, „Läuft bei uns“ und „Kostenlos“ in einem Menü, der Knopf zeigt die Wahl) und **Genre**
+  (Chips im Menü, der Knopf zeigt z. B. „Horror, Thriller“), dazu Filter, Sortierung und die Trefferzahl.
+  Die Filme beginnen dadurch deutlich weiter oben.
+- **„Nach oben“:** Weit unten in der Liste erscheint unten rechts ein Knopf, der zurück an den Anfang bringt.
+
 ## 0.11.1 – 2026-10-06
 
 ### Behoben

@@ -23,6 +23,12 @@ test.afterAll(async () => {
 })
 
 const nav = (name) => page.getByRole('link', { name, exact: true }).click()
+// The genres sit in a small menu in the bar above the grid.
+async function genre(name) {
+  await page.getByRole('button', { name: 'Genres', exact: true }).click()
+  await page.getByRole('group', { name: 'Genres' }).getByRole('button', { name }).click()
+  await page.keyboard.press('Escape')
+}
 // The group's activity lives on the "Neuigkeiten" page (behind the bell), not on the evening page.
 async function inDerGruppe(text) {
   await page.getByRole('link', { name: /^Neuigkeiten/ }).click()
@@ -97,9 +103,9 @@ test('discover filters by extra genre', async () => {
   await nav('Finden')
   await expect(page.getByRole('tab', { name: 'Alle Filme' })).toHaveAttribute('aria-selected', 'true') // remembered
   await expect(page.locator('.card')).toHaveCount(12)
-  await page.getByRole('button', { name: 'Science Fiction' }).click()
+  await genre('Science Fiction')
   await expect(page.locator('.card')).toHaveCount(2)
-  await page.getByRole('button', { name: 'Science Fiction' }).click()
+  await genre('Science Fiction')
   await expect(page.locator('.card')).toHaveCount(12)
 })
 
@@ -111,17 +117,22 @@ test('the grid keeps loading TMDB-sized pages (20 films) while scrolling', async
     return { results, mehr: seite < 3, gesamt: 60 }
   }
   await page.route('**/api/discover?**', (r) => r.fulfill({ json: seiten(r.request().url()) }))
-  await page.getByRole('button', { name: 'Science Fiction' }).click() // any change reloads the grid
+  await genre('Science Fiction') // any change reloads the grid
   await expect(page.locator('.gesamt')).toHaveText('60 Filme')
-  await expect(page.locator('.grid .card')).toHaveCount(20)
+  // The first page (20) – and as many more as the screen has room for right away.
+  await expect.poll(() => page.locator('.grid .card').count()).toBeGreaterThanOrEqual(20)
   for (let i = 0; i < 12 && (await page.locator('.grid .card').count()) < 60; i++) {
     await page.mouse.wheel(0, 4000)
     await page.waitForTimeout(250)
   }
   await expect(page.locator('.grid .card')).toHaveCount(60)
   await expect(page.getByRole('button', { name: 'Mehr laden' })).toHaveCount(0)
+  // Far down the list a button leads back to the top.
+  await page.getByRole('button', { name: 'Nach oben' }).click()
+  await expect.poll(() => page.evaluate(() => window.scrollY)).toBeLessThan(50)
+  await expect(page.getByRole('button', { name: 'Nach oben' })).toHaveCount(0)
   await page.unroute('**/api/discover?**')
-  await page.getByRole('button', { name: 'Science Fiction' }).click()
+  await genre('Science Fiction')
   await expect(page.locator('.card')).toHaveCount(12)
   await page.evaluate(() => window.scrollTo(0, 0))
 })
