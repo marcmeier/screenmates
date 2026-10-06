@@ -42,7 +42,7 @@ from .routers import erfolge as erfolge_api
 from .routers import push as push_api
 from .seed import seed_if_empty
 
-__version__ = "0.10.0"
+__version__ = "0.10.1"
 
 
 @asynccontextmanager

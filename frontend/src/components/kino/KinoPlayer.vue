@@ -14,7 +14,13 @@ const app = useApp()
 const chat = useKinoChat()
 const box = ref(null)
 // Full screen hides the chat panel: the latest messages show on the picture instead.
-const vollbildAn = ref(false)
+// Full screen: the real one where the browser allows it for any element; on the iPhone
+// (Safari only gives the native video player full screen, without our reactions, break
+// sign and chat) the picture covers the screen itself – in the home-screen app that is
+// as good as the real thing.
+const nativ = ref(false)
+const ersatz = ref(false)
+const vollbildAn = computed(() => nativ.value || ersatz.value)
 const jetzt = ref(Date.now())
 let uhr = null
 const einblendungen = computed(() => chat.nachrichten.filter((n) => jetzt.value - n.at < 8000).slice(-4))
@@ -34,10 +40,15 @@ const pauseDauer = computed(() => {
   return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`
 })
 function vollbildGeaendert() {
-  vollbildAn.value = document.fullscreenElement === box.value
-  clearInterval(uhr)
-  if (vollbildAn.value) uhr = setInterval(() => (jetzt.value = Date.now()), 1000)
+  nativ.value = document.fullscreenElement === box.value
 }
+watch(vollbildAn, (an) => {
+  clearInterval(uhr)
+  if (an) uhr = setInterval(() => (jetzt.value = Date.now()), 1000)
+  // The page behind mustn't scroll while the picture covers it.
+  document.body.style.overflow = ersatz.value ? 'hidden' : ''
+})
+const escape = (e) => e.key === 'Escape' && ersatz.value && (ersatz.value = false)
 const video = ref(null)
 const state = ref('verbinde')
 const muted = ref(true) // browsers only autoplay muted video
@@ -87,10 +98,13 @@ function attach() {
 onMounted(() => {
   attach()
   document.addEventListener('fullscreenchange', vollbildGeaendert)
+  window.addEventListener('keydown', escape)
 })
 watch(() => [kino.live, kino.sende], attach)
 onBeforeUnmount(() => {
   document.removeEventListener('fullscreenchange', vollbildGeaendert)
+  window.removeEventListener('keydown', escape)
+  document.body.style.overflow = ''
   clearInterval(uhr)
   clearInterval(pauseTimer)
   stopWatching()
@@ -107,13 +121,18 @@ watch(volume, (v) => {
 })
 
 function vollbild() {
-  if (document.fullscreenElement) document.exitFullscreen()
-  else box.value.requestFullscreen?.()
+  if (document.fullscreenElement) return document.exitFullscreen()
+  if (ersatz.value) return (ersatz.value = false)
+  if (document.fullscreenEnabled && box.value.requestFullscreen) {
+    box.value.requestFullscreen().catch(() => (ersatz.value = true))
+  } else {
+    ersatz.value = true
+  }
 }
 </script>
 
 <template>
-  <div ref="box" class="screen" @dblclick="vollbild">
+  <div ref="box" class="screen" :class="{ ersatz }" @dblclick="vollbild">
     <video ref="video" autoplay playsinline :muted="muted || kino.sende" :volume="volume"></video>
 
     <div class="flug" aria-hidden="true">
@@ -159,7 +178,7 @@ function vollbild() {
       <span v-if="vollbildAn" class="schnell" role="group" aria-label="Reaktion ins Bild schicken">
         <button v-for="r in chat.reaktionen.slice(0, 6)" :key="r" class="ghost" :aria-label="`Reaktion ${r}`" @click="chat.reagieren(r)">{{ r }}</button>
       </span>
-      <button class="ghost" aria-label="Vollbild" @click="vollbild"><Icon name="vollbild" /></button>
+      <button class="ghost" :aria-label="vollbildAn ? 'Vollbild verlassen' : 'Vollbild'" @click="vollbild"><Icon :name="vollbildAn ? 'x' : 'vollbild'" /></button>
     </div>
   </div>
 </template>
@@ -170,6 +189,15 @@ function vollbild() {
   border-radius: var(--radius); overflow: hidden; border: 1px solid var(--line);
 }
 .screen:fullscreen { width: 100%; border-radius: 0; border: none; }
+/* No page zoom on a double tap (that toggles full screen). */
+.screen { touch-action: manipulation; }
+/* The stand-in full screen: over everything, around the notch, landscape fills it. */
+.screen.ersatz {
+  position: fixed; inset: 0; z-index: 150; width: 100vw; height: 100dvh; aspect-ratio: auto;
+  border: none; border-radius: 0;
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+}
+.screen.ersatz .controls { opacity: 1; padding-bottom: max(0.6rem, env(safe-area-inset-bottom)); }
 video { width: 100%; height: 100%; object-fit: contain; display: block; background: #000; }
 .overlay {
   position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; gap: 0.8rem;

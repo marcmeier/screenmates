@@ -279,13 +279,13 @@ const EVENT_TEXT = {
               <div class="muted small-text">{{ m.year }} · ★ {{ dezimal(m.vote_average) }}</div>
               <div class="avatars"><UserAvatar v-for="id in m.von" :key="id" :user-id="id" /></div>
               <div class="infos">
-                <span v-if="chance(m) != null" class="info chance" :style="{ '--farbe': seltenheitFuer(chance(m)).farbe }" :title="`${seltenheitFuer(chance(m)).name}: so wahrscheinlich zieht ihn die Kiste`">
+                <span v-if="chance(m) != null" class="merkmal chance" :style="{ '--farbe': seltenheitFuer(chance(m)).farbe }" :title="`${seltenheitFuer(chance(m)).name}: so wahrscheinlich zieht ihn die Kiste`">
                   <Icon name="kiste" :size="12" /> {{ Math.round(chance(m) * 100) }} %
                 </span>
-                <span v-if="prognosen[m.id]" class="info prognose" :title="prognoseTitel(prognosen[m.id])">
+                <span v-if="prognosen[m.id]" class="merkmal prognose" :title="prognoseTitel(prognosen[m.id])">
                   Für {{ prognoseFuer === 'dabei' ? 'euch heute' : 'euch' }} ≈ {{ dezimal(prognosen[m.id].wert) }} ★
                 </span>
-                <span v-if="anbieter[m.id]" class="info weg" :class="{ unser: anbieter[m.id].bei.length }">
+                <span v-if="anbieter[m.id]" class="merkmal weg" :class="{ unser: anbieter[m.id].bei.length }">
                   <img v-if="anbieter[m.id].logo" :src="anbieter[m.id].logo" alt="" />{{ wegText(anbieter[m.id]) }}
                 </span>
               </div>
@@ -384,14 +384,14 @@ const EVENT_TEXT = {
 .sugg.vetoed .linklike { text-decoration: line-through; }
 .veto-info { display: inline-flex; align-items: center; gap: 4px; font-size: 0.78rem; color: var(--accent); }
 .infos { display: flex; flex-wrap: wrap; gap: 0.3rem; margin-top: 2px; }
-.info {
+.merkmal {
   display: inline-flex; align-items: center; gap: 4px; font-size: 0.72rem; padding: 1px 7px; border-radius: 999px;
   border: 1px solid var(--line); color: var(--muted); white-space: nowrap;
 }
-.info img { width: 14px; height: 14px; border-radius: 3px; }
-.info.chance { color: var(--text); border-color: color-mix(in srgb, var(--farbe) 60%, transparent); background: color-mix(in srgb, var(--farbe) 16%, transparent); }
-.info.prognose { color: var(--gold); border-color: color-mix(in srgb, var(--gold) 45%, transparent); }
-.info.weg.unser { color: var(--ok); border-color: color-mix(in srgb, var(--ok) 45%, transparent); }
+.merkmal img { width: 14px; height: 14px; border-radius: 3px; }
+.merkmal.chance { color: var(--text); border-color: color-mix(in srgb, var(--farbe) 60%, transparent); background: color-mix(in srgb, var(--farbe) 16%, transparent); }
+.merkmal.prognose { color: var(--gold); border-color: color-mix(in srgb, var(--gold) 45%, transparent); }
+.merkmal.weg.unser { color: var(--ok); border-color: color-mix(in srgb, var(--ok) 45%, transparent); }
 .sugg.vetoed .infos { display: none; }
 .neu-zahl { margin-left: 0.6rem; text-transform: none; letter-spacing: 0; color: var(--accent); font-size: 0.75rem; }
 .feed li.neu span::before { content: ''; display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--accent); margin-right: 0.5rem; vertical-align: middle; }

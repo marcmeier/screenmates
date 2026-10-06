@@ -23,6 +23,12 @@ hls: false
 srt: false
 moq: false
 
+# UDP receive buffer per socket. The Linux default (208 KB) overflows when a 1080p
+# keyframe arrives as one burst while MediaMTX is busy for a moment: the kernel drops
+# packets (RcvbufErrors) and viewers see the picture break up and hear gaps.
+# Bigger values only take effect up to the host's net.core.rmem_max – see README "Kino".
+udpReadBufferSize: 0
+
 webrtc: true
 webrtcAddress: 127.0.0.1:8889
 webrtcLocalUDPAddress: :8189
