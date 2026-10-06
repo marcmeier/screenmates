@@ -203,5 +203,5 @@ button.selbst { padding: 0.2rem 0; font-size: 0.78rem; color: var(--muted); }
 button.selbst:hover { color: var(--text); }
 a.button.small { padding: 0.3rem 0.6rem; font-size: 0.8rem; }
 a.button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
-@media (max-width: 800px) { .schritte { grid-template-columns: 1fr; } }
+@media (max-width: 800px) { .schritte { grid-template-columns: minmax(0, 1fr); } }
 </style>

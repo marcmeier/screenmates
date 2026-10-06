@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.14.1 – 2026-10-06
+
+### Behoben
+- **Handy im Hochformat:** Auf schmalen Bildschirmen wurde der Inhalt rechts abgeschnitten (z. B. auf der
+  Filmabend-Seite „Zurückziehen“/„Veto“ und die Kiste), weil lange Anbieter-Chips wie „Amazon Prime Video ·
+  Marc, Matthias“ die einspaltige Ansicht breiter machten als den Bildschirm. Die Spalten passen sich jetzt
+  an, lange Chips werden gekürzt. Geprüft mit Safaris Engine bei 390 px (iPhone 13) und 320 px (Anzeigezoom).
+- Die Reiter in „Unsere Filme“ und die Kopfzeile (bei sehr schmalen Displays nur das Profilbild) passen
+  auch bei 320 px Breite.
+
 ## 0.14.0 – 2026-10-06
 
 ### Geändert

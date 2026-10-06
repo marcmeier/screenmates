@@ -385,7 +385,7 @@ nav { display: flex; flex-direction: column; gap: 4px; }
 /* Phone: brand and profile on top, the three main areas as tabs below. */
 @media (max-width: 860px) {
   /* Header row hugs its content; the page gets the rest of the height. */
-  .shell { grid-template-columns: 1fr; grid-template-rows: auto 1fr; }
+  .shell { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto 1fr; }
   .sidebar {
     z-index: 20; height: auto; padding: 0.7rem 1rem 0; gap: 0.4rem;
     display: grid; grid-template-columns: 1fr auto; align-items: center;
@@ -419,5 +419,13 @@ nav { display: flex; flex-direction: column; gap: 4px; }
   .nav.active { background: none; }
   .nav.active::before { left: 12px; right: 12px; top: auto; bottom: 0; width: auto; height: 3px; }
   .main { padding-top: 1.4rem; }
+  /* The header row never makes the page wider: logo and profile button give way. */
+  .brand { min-width: 0; }
+  .bottom { min-width: 0; }
+}
+/* Very narrow phones (or display zoom): the profile button shows only the picture. */
+@media (max-width: 380px) {
+  .me .name, .me .admin-badge { display: none; }
+  .brand { font-size: 1.15rem; }
 }
 </style>
