@@ -5,7 +5,7 @@
   --bg-raised: #1b1b22;
   --line: #26262e;
   --text: #ececf1;
-  --muted: #8b8b99;
+  --muted: #a3a3b0; /* about 7:1 on the dark background */
   --accent: #e50914;
   --accent-soft: rgba(229, 9, 20, 0.14);
   --accent-hover: #f6121e;
@@ -150,4 +150,10 @@ a.avatar:hover { box-shadow: 0 0 0 2px var(--accent); }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+}
+
+/* Phones: everything a touch larger – small grey hints stay readable outside, too. */
+@media (max-width: 600px) {
+  html { font-size: 106.25%; }
+  body { font-size: 16px; }
 }

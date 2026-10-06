@@ -248,15 +248,18 @@ const poolQuelle = computed(() => (vorschlaege.value.length ? 'vorschlaege' : 'm
               </button>
               <div class="what">
                 <button class="linklike" @click="ui.open(m)">{{ m.title }}</button>
-                <div class="muted small-text">{{ m.year }} · ★ {{ dezimal(m.vote_average) }}</div>
-                <div class="avatars"><UserAvatar v-for="id in m.von" :key="id" :user-id="id" /></div>
+                <!-- One quiet line of facts, then who suggested it and where it runs. -->
+                <div class="muted meta">
+                  {{ m.year }} · ★ {{ dezimal(m.vote_average) }}
+                  <template v-if="chance(m) != null">
+                    · <span class="chance-text" :style="{ '--farbe': seltenheitFuer(chance(m)).farbe }" :title="$t('abendtab.xSoWahrscheinlichZieht', { x: seltenheitFuer(chance(m)).name })"><Icon name="kiste" :size="12" /> {{ Math.round(chance(m) * 100) }} %</span>
+                  </template>
+                  <template v-if="prognosen[m.id]">
+                    · <span class="prognose-text" :title="prognoseTitel(prognosen[m.id])">{{ $t(prognoseFuer === 'dabei' ? 'abendtab.prognoseHeute' : 'abendtab.prognose', { wert: dezimal(prognosen[m.id].wert) }) }}</span>
+                  </template>
+                </div>
                 <div class="infos">
-                  <span v-if="chance(m) != null" class="merkmal chance" :style="{ '--farbe': seltenheitFuer(chance(m)).farbe }" :title="$t('abendtab.xSoWahrscheinlichZieht', { x: seltenheitFuer(chance(m)).name })">
-                    <Icon name="kiste" :size="12" /> {{ Math.round(chance(m) * 100) }} %
-                  </span>
-                  <span v-if="prognosen[m.id]" class="merkmal prognose" :title="prognoseTitel(prognosen[m.id])">
-                    {{ $t(prognoseFuer === 'dabei' ? 'abendtab.prognoseHeute' : 'abendtab.prognose', { wert: dezimal(prognosen[m.id].wert) }) }}
-                  </span>
+                  <span class="avatars"><UserAvatar v-for="id in m.von" :key="id" :user-id="id" /></span>
                   <span v-if="anbieter[m.id]" class="merkmal weg" :class="{ unser: anbieter[m.id].bei.length }">
                     <img v-if="anbieter[m.id].logo" :src="anbieter[m.id].logo" alt="" />{{ wegText(anbieter[m.id]) }}
                   </span>
@@ -264,8 +267,14 @@ const poolQuelle = computed(() => (vorschlaege.value.length ? 'vorschlaege' : 'm
                 <div v-if="m.veto_von.length" class="veto-info"><Icon name="veto" :size="13" /> {{ $t('abendtab.vetoVonX', { x: namen(m.veto_von) }) }}</div>
               </div>
               <div v-if="app.me" class="buttons">
-                <button class="small" :class="{ on: meinVorschlag(m) }" @click="toggle(m)">
-                  <Icon name="hand" :size="14" /> {{ meinVorschlag(m) ? $t('abendtab.zurueckziehen') : '+1' }}
+                <button
+                  class="small mit"
+                  :class="{ on: meinVorschlag(m) }"
+                  :aria-pressed="meinVorschlag(m)"
+                  :title="meinVorschlag(m) ? $t('abendtab.zurueckziehen') : '+1'"
+                  @click="toggle(m)"
+                >
+                  <Icon name="hand" :size="14" /> <span class="lbl">{{ meinVorschlag(m) ? $t('abendtab.zurueckziehen') : '+1' }}</span>
                 </button>
                 <button
                   class="small ghost veto"
@@ -274,7 +283,7 @@ const poolQuelle = computed(() => (vorschlaege.value.length ? 'vorschlaege' : 'm
                   :title="meinVeto(m) ? $t('abendtab.vetoZuruecknehmen') : vetoVerbraucht ? $t('abendtab.deinVetoHierherVerschieben') : $t('abendtab.nichtMitMirDer')"
                   @click="veto(m)"
                 >
-                  <Icon name="veto" :size="14" /> {{ meinVeto(m) ? $t('abendtab.vetoZurueck') : $t('abendtab.veto2') }}
+                  <Icon name="veto" :size="14" /> <span class="lbl">{{ meinVeto(m) ? $t('abendtab.vetoZurueck') : $t('abendtab.veto2') }}</span>
                 </button>
               </div>
             </li>
@@ -359,10 +368,26 @@ const poolQuelle = computed(() => (vorschlaege.value.length ? 'vorschlaege' : 'm
 .veto.on { color: #fff; }
 .sugg { display: flex; align-items: center; gap: 0.9rem; background: var(--bg-soft); border: 1px solid var(--line); border-radius: var(--radius); padding: 0.6rem 0.9rem 0.6rem 0.6rem; }
 .rank { width: 1.6rem; text-align: center; font-weight: 800; color: var(--muted); font-size: 1.1rem; }
-.sugg:first-child .rank { color: var(--accent); }
+.sugg:first-child .rank { color: var(--text); }
 .thumb { padding: 0; width: 46px; height: 69px; border-radius: 6px; overflow: hidden; flex: none; background: var(--bg-raised); }
 .what { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
-.linklike { padding: 0; border: none; background: none; font-weight: 600; font-size: 0.98rem; text-align: left; }
+.linklike {
+  padding: 0; border: none; background: none; font-weight: 600; font-size: 0.98rem; text-align: left; line-height: 1.3;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
+.meta { font-size: 0.82rem; display: flex; flex-wrap: wrap; align-items: center; gap: 0 0.3rem; }
+.chance-text { display: inline-flex; align-items: center; gap: 3px; color: color-mix(in srgb, var(--farbe) 55%, var(--text)); font-weight: 600; }
+.prognose-text { color: var(--gold); }
+.infos .avatars { display: inline-flex; margin-right: 0.2rem; }
+/* Suggested by me: a calm green tick-state – red is kept for what matters most. */
+.buttons .mit.on { border-color: color-mix(in srgb, var(--ok) 55%, var(--line)); background: color-mix(in srgb, var(--ok) 12%, transparent); color: var(--text); }
+@media (max-width: 600px) {
+  .sugg { gap: 0.6rem; padding: 0.55rem 0.6rem 0.55rem 0.4rem; }
+  .rank { width: 1.1rem; font-size: 0.95rem; }
+  .thumb { width: 40px; height: 60px; }
+  .buttons .lbl { display: none; }
+  .buttons button { width: 40px; height: 36px; padding: 0; justify-content: center; }
+}
 .linklike:hover { background: none; text-decoration: underline; }
 .small-text { font-size: 0.8rem; }
 .avatars .avatar { width: 22px; height: 22px; font-size: 0.6rem; }

@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.17.0 – 2026-10-06
+
+### Geändert
+- **Handy: Navigation unten.** Filmabend · Finden · Unsere Filme · Kino · **Mehr** sitzen in einer festen
+  Leiste am unteren Rand (Daumenhöhe, über der Home-Leiste des iPhones). Oben bleibt eine schmale Zeile mit
+  Logo, Gruppenwahl (nur bei mehreren Gruppen), Glocke und Profilbild. „Mehr“ öffnet Profil,
+  Einstellungen, Neuigkeiten, Wünsche, Verwaltung, Über und Abmelden; das Profilbild führt zum Profil.
+- **Ruhigere Vorschlagskarten:** Jahr, Bewertung, Chance und Prognose in einer Zeile, darunter wer
+  vorschlägt und wo der Film läuft; Titel höchstens zweizeilig. Auf dem Handy sind „+1/Zurückziehen“ und
+  „Veto“ kompakte Symbol-Knöpfe.
+- **Rot nur noch fürs Wichtigste:** Der eigene Vorschlag ist grün markiert, Admin-Kennzeichen und
+  Gruppenkarten sind neutral; Rot bleibt der Hauptaktion (z. B. „Für alle öffnen“) und Warnungen.
+- **Besser lesbar:** Graue Hinweistexte haben mehr Kontrast, auf dem Handy ist alles eine Spur größer.
+  Die lange Gruppen-Erklärung in der Verwaltung steckt jetzt hinter einem ⓘ.
+
 ## 0.16.0 – 2026-10-06
 
 ### Geändert

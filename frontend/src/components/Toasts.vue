@@ -27,4 +27,5 @@ const ui = useUi()
 .toast.error { border-left-color: var(--accent); }
 .toast-enter-from, .toast-leave-to { opacity: 0; transform: translateX(20px); }
 .toast-enter-active, .toast-leave-active { transition: all 0.2s ease; }
+@media (max-width: 860px) { .toasts { bottom: calc(5.2rem + env(safe-area-inset-bottom)); } }
 </style>

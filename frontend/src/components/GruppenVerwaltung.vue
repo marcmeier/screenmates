@@ -4,6 +4,7 @@ import { computed, onMounted, ref } from 'vue'
 import { api } from '../api'
 import { useApp } from '../stores/app'
 import { useUi } from '../stores/ui'
+import Erklaerung from './Erklaerung.vue'
 import Icon from './Icon.vue'
 import GruppenEinladungen from './GruppenEinladungen.vue'
 import UserAvatar from './UserAvatar.vue'
@@ -93,8 +94,7 @@ onMounted(laden)
 <template>
   <div class="gruppen">
     <p class="muted intro">
-      {{ $t('gruppenverwaltung.jedeGruppeHatIhren') }}
-      <strong>{{ $t('gruppenverwaltung.einladungslink') }}</strong> {{ $t('gruppenverwaltung.hereinDenErzeugtEin') }}
+      {{ $t('gruppenverwaltung.kurz') }}<Erklaerung :label="$t('gruppenverwaltung.gruppen')" :text="$t('erklaerung.gruppen')" />
     </p>
     <p v-if="ohneGruppe.length" class="notice warn">
       {{ $t('gruppenverwaltung.ohneGruppe', { namen: ohneGruppe.map((u) => u.name).join(', ') }) }}
@@ -191,15 +191,15 @@ p { margin: 0; font-size: 0.9rem; }
 .neu-knopf { border-style: dashed; color: var(--muted); }
 /* One group = one card: framed and set off from everything around it. */
 .karte {
-  border: 1px solid color-mix(in srgb, var(--accent) 40%, var(--line)); border-radius: 14px; overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--text) 22%, var(--line)); border-radius: 14px; overflow: hidden;
   background: var(--bg-soft);
 }
 .kopf {
   display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; padding: 0.8rem 1rem;
-  background: color-mix(in srgb, var(--accent) 10%, var(--bg-raised)); border-bottom: 1px solid var(--line);
+  background: var(--bg-raised); border-bottom: 1px solid var(--line);
 }
 .kopf h3 { margin: 0; font-size: 1.05rem; }
-.kopf .symbol { color: var(--accent); }
+.kopf .symbol { color: var(--muted); }
 .chip.klein { font-size: 0.7rem; padding: 1px 8px; }
 .abschnitt { padding: 0.9rem 1rem; }
 .abschnitt + .abschnitt { border-top: 1px solid var(--line); }
@@ -209,7 +209,7 @@ p { margin: 0; font-size: 0.9rem; }
 .count { margin-left: 0.3rem; color: var(--text); }
 .mitglieder { list-style: none; padding: 0; margin: 0; }
 .mitglieder li { padding: 0.3rem 0; }
-.chip.admin { color: var(--accent); border-color: var(--accent); }
+.chip.admin { color: var(--text); border-color: color-mix(in srgb, var(--text) 35%, var(--line)); }
 .hinzu { margin-top: 0.6rem; }
 .hinzu select { flex: 1; max-width: 18rem; }
 .neu { padding: 1rem; display: flex; flex-direction: column; gap: 0.7rem; }
