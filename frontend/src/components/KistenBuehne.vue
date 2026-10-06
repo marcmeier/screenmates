@@ -3,6 +3,7 @@ import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
 import { zufall } from '../zufall'
 import { SELTENHEIT, seltenheitFuer } from '../seltenheit'
 import Icon from './Icon.vue'
+import { audioJetzt, audioKontext } from '../audio'
 import Poster from './Poster.vue'
 
 // The case opening on stage, after Counter-Strike: a strip of posters races past a
@@ -66,8 +67,16 @@ try {
 } catch {
   /* private mode: sound stays on */
 }
-let audio = null
+// The app-wide audio context (see audio.js): unlocked by the first tap anywhere.
+let audio = audioKontext()
+const blockiert = ref(false) // sound is on, but the browser hasn't allowed it yet (iPhone without a tap)
 function tonUmschalten() {
+  // On but still blocked: the tap brings the sound instead of switching it off.
+  if (ton.value && blockiert.value) {
+    audio = audioJetzt()
+    blockiert.value = audio?.state !== 'running'
+    return
+  }
   ton.value = !ton.value
   try {
     localStorage.setItem(TON_KEY, ton.value ? 'an' : 'aus')
@@ -76,11 +85,13 @@ function tonUmschalten() {
   }
   // A click is what browsers need before they play sound.
   if (ton.value) {
-    audio ??= new (window.AudioContext || window.webkitAudioContext)()
-    audio.resume?.()
+    audio = audioJetzt()
+    blockiert.value = audio?.state !== 'running'
   }
 }
 function klang(freq, d, typ = 'square', lautst = 0.05, start = 0) {
+  audio = audioKontext() ?? audio // a tap elsewhere may have unlocked it meanwhile
+  blockiert.value = ton.value && (!audio || audio.state !== 'running')
   if (!ton.value || !audio || audio.state !== 'running') return
   const t = audio.currentTime + start
   const osc = audio.createOscillator()
@@ -158,9 +169,10 @@ onMounted(async () => {
     return
   }
   if (ton.value) {
-    // Starts suspended unless this device clicked recently (the host did); viewers tap the speaker.
-    audio = new (window.AudioContext || window.webkitAudioContext)()
-    audio.resume?.()
+    // Unlocked by an earlier tap in the app; otherwise one tap on the speaker brings it.
+    audio = audioKontext()
+    audio?.resume?.()
+    blockiert.value = !audio || audio.state !== 'running'
   }
   raf = requestAnimationFrame(schritt)
 })
@@ -183,7 +195,7 @@ window.addEventListener('keydown', taste)
 onBeforeUnmount(() => {
   cancelAnimationFrame(raf)
   window.removeEventListener('keydown', taste)
-  audio?.close?.()
+
 })
 </script>
 
@@ -195,7 +207,9 @@ onBeforeUnmount(() => {
         <span v-if="probe" class="probe">Probe – zählt nicht</span>
         <span v-else-if="von" class="wer">{{ von }} öffnet die Kiste für alle</span>
         <span class="spacer"></span>
-        <button class="ghost" :aria-label="ton ? 'Ton aus' : 'Ton an'" @click="tonUmschalten"><Icon :name="ton ? 'ton' : 'stumm'" /></button>
+        <button class="ghost" :class="{ blockiert }" :aria-label="blockiert ? 'Ton einschalten' : ton ? 'Ton aus' : 'Ton an'" @click="tonUmschalten">
+          <Icon :name="ton && !blockiert ? 'ton' : 'stumm'" /><span v-if="blockiert" class="ton-hinweis">Ton antippen</span>
+        </button>
       </div>
 
       <div ref="fenster" class="fenster" :style="{ '--w': `${itemBreite}px` }">
@@ -247,6 +261,8 @@ onBeforeUnmount(() => {
 .label { font-weight: 800; letter-spacing: 0.18em; text-transform: uppercase; color: var(--muted); font-size: 0.85rem; }
 .probe { font-size: 0.75rem; font-weight: 700; color: var(--gold); border: 1px solid var(--gold); border-radius: 999px; padding: 1px 8px; }
 .wer { font-size: 0.85rem; color: var(--text); }
+.blockiert { color: var(--gold); border: 1px solid color-mix(in srgb, var(--gold) 50%, transparent); }
+.ton-hinweis { font-size: 0.8rem; font-weight: 600; }
 
 .fenster {
   position: relative; overflow: hidden; width: 100%; min-width: 0; height: 270px; border-block: 1px solid rgba(255, 255, 255, 0.08);

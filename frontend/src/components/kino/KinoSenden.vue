@@ -3,13 +3,17 @@ import { computed, onMounted, ref, watch } from 'vue'
 import { api } from '../../api'
 import { useApp } from '../../stores/app'
 import { useKino } from '../../stores/kino'
+import { useKiste } from '../../stores/kiste'
 import { useUi } from '../../stores/ui'
 import { INHALT, QUALITAET } from '../../webrtc'
 import FilmPicker from '../FilmPicker.vue'
 import Icon from '../Icon.vue'
 
-// The host's desk: what's on, and how to send it – browser or OBS.
+// The host's desk, kept slim under the screen: what's on, and how to send it – browser or OBS.
+// Quality, content type and sound sit behind "Einstellungen"; the OBS steps show only for OBS.
 const kino = useKino()
+const kiste = useKiste()
+const mehr = ref(false)
 const ui = useUi()
 const quelle = ref('browser')
 const mitTon = ref(true)
@@ -61,6 +65,21 @@ async function programm(movie = film.value) {
   await api.post('/api/kino/programm', { titel: titel.value, movie_id: movie?.id ?? null })
   await kino.refresh()
 }
+
+// The film of the evening goes on the programme by itself, as long as nothing else is set.
+const ausKiste = computed(() => !!film.value && film.value.id === kiste.aktuell?.gewinner?.id)
+watch(
+  () => kiste.aktuell?.gewinner?.id,
+  () => {
+    const g = kiste.aktuell?.gewinner
+    if (g && !kino.live && !kino.titel && !kino.movie && !film.value) {
+      titel.value = g.title
+      film.value = g
+      programm(g)
+    }
+  },
+  { immediate: true },
+)
 
 function waehleFilm(m) {
   film.value = m
@@ -118,126 +137,111 @@ async function beenden() {
 
 <template>
   <section class="panel desk">
-    <header class="kopf">
-      <h2>Senden</h2>
-      <nav v-if="!kino.live" class="segments" aria-label="Quelle">
-        <button :class="{ active: quelle === 'browser' }" @click="quelle = 'browser'">Bildschirm teilen</button>
-        <button :class="{ active: quelle === 'obs' }" @click="quelle = 'obs'">OBS</button>
-      </nav>
-    </header>
-
     <div v-if="kino.live" class="onair">
       <span class="live-dot"></span>
       <strong>{{ liveText }}</strong>
       <span v-if="statsZeile" class="stats">{{ statsZeile }}</span>
       <span class="spacer"></span>
-      <button :class="{ on: kino.pause }" @click="pause">{{ kino.pause ? '▶ Weiter geht’s' : '⏸ Pause ansagen' }}</button>
-      <button class="danger" @click="beenden">Übertragung beenden</button>
+      <button class="small" :class="{ on: kino.pause }" @click="pause">{{ kino.pause ? '▶ Weiter geht’s' : '⏸ Pause' }}</button>
+      <button class="small danger" @click="beenden">Übertragung beenden</button>
       <span v-if="GRENZE[kino.sendStats?.grenze]" class="warn">{{ GRENZE[kino.sendStats.grenze] }}</span>
     </div>
 
-    <div class="spalten">
-      <div class="programme">
-        <label class="field">Was läuft?
-          <input v-model="titel" maxlength="120" placeholder="z. B. Shining, oder: Marc spielt Resident Evil" @change="programm()" />
-        </label>
-        <div class="row film">
-          <template v-if="film">
-            <span class="chip">🎬 {{ film.title }} <span class="muted">{{ film.year }}</span></span>
-            <button class="ghost small" @click="filmWeg">Verknüpfung lösen</button>
-          </template>
-          <button v-else class="ghost small" @click="filmWaehlen = !filmWaehlen">
-            <Icon name="plus" :size="14" /> Mit Film aus dem Katalog verknüpfen
-          </button>
-        </div>
-        <p v-if="film" class="muted small">Danach kannst du ihn mit einem Klick als gesehen eintragen – alle Zuschauenden als dabei.</p>
-        <FilmPicker v-if="filmWaehlen" placeholder="Film suchen …" @pick="waehleFilm" />
-      </div>
-
+    <div class="zeile">
+      <h2>Senden</h2>
+      <input v-model="titel" class="titel" maxlength="120" aria-label="Was läuft?" placeholder="Was läuft? z. B. Shining" @change="programm()" />
+      <span v-if="film" class="chip film">
+        🎬 {{ film.title }} <span class="muted">{{ film.year }}</span>
+        <span v-if="ausKiste" class="kiste">aus der Kiste</span>
+        <button class="ghost los" aria-label="Verknüpfung lösen" @click="filmWeg"><Icon name="x" :size="12" /></button>
+      </span>
+      <button v-else class="ghost small" aria-label="Mit Film aus dem Katalog verknüpfen" @click="filmWaehlen = !filmWaehlen">
+        <Icon name="plus" :size="14" /> <span class="lang">Mit Film aus dem Katalog verknüpfen</span>
+      </button>
       <template v-if="!kino.live">
-        <div v-if="quelle === 'browser'" class="source">
-          <p class="muted">
-            Teile einen Bildschirm, ein Fenster oder einen Browser-Tab – zum Beispiel deinen Videoplayer oder ein Spiel.
-            Am einfachsten für den Ton: einen Tab teilen und „Audio teilen“ anhaken.
-          </p>
-          <div class="choices">
-            <label class="field">Qualität
-              <select v-model="qualitaet">
-                <option v-for="(q, key) in QUALITAET" :key="key" :value="key">{{ q.label }}</option>
-              </select>
-            </label>
-            <label class="field">Inhalt
-              <select v-model="inhalt">
-                <option v-for="(m, key) in INHALT" :key="key" :value="key">{{ m.label }}</option>
-              </select>
-            </label>
-          </div>
-          <p class="muted small">Der Server braucht bis zu {{ upload }} Mbit/s Upload je zuschauender Person.</p>
-          <label class="check"><input v-model="mitTon" type="checkbox" /> Ton mitsenden</label>
-          <button class="primary go" @click="kino.startSending({ audio: mitTon, qualitaet, inhalt })"><Icon name="kino" :size="18" /> Übertragung starten</button>
-        </div>
-
-        <div v-else class="source">
-          <p class="muted">
-            Mit OBS (ab Version 30) bekommst du Szenen, Spielaufnahme, Filmdateien und vollen Ton.
-            In OBS unter <strong>Einstellungen → Stream</strong>:
-          </p>
-          <p v-if="obs?.persoenlich" class="notice klein">
-            Das ist dein persönlicher Schlüssel: Er funktioniert nur, solange du den Gastgeber-Stab hast.
-          </p>
-          <ol v-if="obs" class="steps">
-            <li>Dienst: <code>WHIP</code></li>
-            <li>
-              Server:
-              <span class="copy"><code>{{ obs.server }}</code><button class="ghost small" aria-label="Server kopieren" @click="kopiere(obs.server, 'Server')"><Icon name="kopieren" :size="14" /></button></span>
-            </li>
-            <li>
-              Bearer-Token:
-              <span class="copy">
-                <code>{{ zeigeKey ? obs.key : '•'.repeat(16) }}</code>
-                <button class="ghost small" @click="zeigeKey = !zeigeKey">{{ zeigeKey ? 'verbergen' : 'zeigen' }}</button>
-                <button class="ghost small" aria-label="Token kopieren" @click="kopiere(obs.key, 'Token')"><Icon name="kopieren" :size="14" /></button>
-              </span>
-            </li>
-            <li>
-              Unter <strong>Ausgabe</strong>: Encoder x264 (oder Hardware-H.264), Bitrate <strong>6000–8000 kbit/s</strong> für 1080p,
-              Keyframe-Intervall 1 s, B-Frames 0 (WebRTC kennt keine B-Frames)
-            </li>
-            <li>„Streaming starten“ – hier erscheint dann „Du bist live“.</li>
-          </ol>
-          <button class="ghost small" @click="neuerKey">Neuen Stream-Key erzeugen</button>
-        </div>
+        <span class="spacer"></span>
+        <nav class="segments" aria-label="Quelle">
+          <button :class="{ active: quelle === 'browser' }" @click="quelle = 'browser'">Bildschirm</button>
+          <button :class="{ active: quelle === 'obs' }" @click="quelle = 'obs'">OBS</button>
+        </nav>
+        <button v-if="quelle === 'browser'" class="ghost small" :aria-expanded="mehr" @click="mehr = !mehr">
+          <Icon name="verwaltung" :size="14" /> Einstellungen
+        </button>
+        <button v-if="quelle === 'browser'" class="primary go" @click="kino.startSending({ audio: mitTon, qualitaet, inhalt })">
+          <Icon name="kino" :size="16" /> Übertragung starten
+        </button>
       </template>
+    </div>
+    <FilmPicker v-if="filmWaehlen" placeholder="Film suchen …" @pick="waehleFilm" />
+
+    <div v-if="!kino.live && quelle === 'browser' && mehr" class="optionen">
+      <label class="field">Qualität
+        <select v-model="qualitaet">
+          <option v-for="(q, key) in QUALITAET" :key="key" :value="key">{{ q.label }}</option>
+        </select>
+      </label>
+      <label class="field">Inhalt
+        <select v-model="inhalt">
+          <option v-for="(m, key) in INHALT" :key="key" :value="key">{{ m.label }}</option>
+        </select>
+      </label>
+      <label class="check"><input v-model="mitTon" type="checkbox" /> Ton mitsenden</label>
+      <p class="muted klein">
+        Bis zu {{ upload }} Mbit/s Upload je Zuschauer. Für den Ton am einfachsten einen Browser-Tab teilen und „Audio teilen“ anhaken.
+      </p>
+    </div>
+
+    <div v-if="!kino.live && quelle === 'obs'" class="optionen obs">
+      <p v-if="obs?.persoenlich" class="notice klein">Dein persönlicher Schlüssel – er funktioniert nur, solange du den Gastgeber-Stab hast.</p>
+      <ol v-if="obs" class="steps">
+        <li>OBS ab Version 30: <strong>Einstellungen → Stream</strong>, Dienst <code>WHIP</code></li>
+        <li>
+          Server:
+          <span class="copy"><code>{{ obs.server }}</code><button class="ghost small" aria-label="Server kopieren" @click="kopiere(obs.server, 'Server')"><Icon name="kopieren" :size="14" /></button></span>
+        </li>
+        <li>
+          Bearer-Token:
+          <span class="copy">
+            <code>{{ zeigeKey ? obs.key : '•'.repeat(16) }}</code>
+            <button class="ghost small" @click="zeigeKey = !zeigeKey">{{ zeigeKey ? 'verbergen' : 'zeigen' }}</button>
+            <button class="ghost small" aria-label="Token kopieren" @click="kopiere(obs.key, 'Token')"><Icon name="kopieren" :size="14" /></button>
+          </span>
+        </li>
+        <li>Ausgabe: x264 oder Hardware-H.264, <strong>6000–8000 kbit/s</strong> für 1080p, Keyframe-Intervall 1 s, B-Frames 0</li>
+        <li>„Streaming starten“ – hier erscheint dann „Du bist live“.</li>
+      </ol>
+      <button class="ghost small" @click="neuerKey">Neuen Stream-Key erzeugen</button>
     </div>
   </section>
 </template>
 
 <style scoped>
-/* Lies under the screen: wide, in columns – what's on | how to send. */
-.desk { display: flex; flex-direction: column; gap: 1rem; }
-.kopf { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; }
-h2 { margin: 0; font-size: 1.05rem; }
-.spalten { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); gap: 1.2rem 2rem; align-items: start; }
-.programme { display: flex; flex-direction: column; gap: 0.5rem; }
-.film { min-height: 2rem; }
-.small { font-size: 0.8rem; margin: 0; }
-.onair { display: flex; flex-wrap: wrap; align-items: center; gap: 0.6rem; padding: 0.8rem 1rem; border-radius: 8px; background: var(--accent-soft); border: 1px solid rgba(229, 9, 20, 0.4); }
-.onair strong { white-space: nowrap; }
-.onair .stats { font-size: 0.8rem; color: var(--muted); font-variant-numeric: tabular-nums; }
-.onair .warn { flex-basis: 100%; font-size: 0.8rem; color: var(--gold); }
-.choices { display: flex; gap: 0.6rem; flex-wrap: wrap; }
-.choices select { width: auto; }
-.live-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--accent); animation: pulse 1.4s ease-in-out infinite; }
-@keyframes pulse { 50% { opacity: 0.35; } }
-.segments { display: inline-flex; gap: 2px; padding: 3px; background: var(--bg); border: 1px solid var(--line); border-radius: 9px; }
-.segments button { border: none; background: none; padding: 0.4rem 0.9rem; color: var(--muted); }
+/* One slim row under the screen: the picture and the chat are what matter. */
+.desk { display: flex; flex-direction: column; gap: 0.6rem; padding: 0.7rem 0.9rem; }
+h2 { margin: 0; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); font-weight: 700; }
+.zeile { display: flex; align-items: center; gap: 0.5rem 0.7rem; flex-wrap: wrap; }
+.titel { flex: 1 1 14rem; min-width: 10rem; max-width: 26rem; padding: 0.4rem 0.6rem; font-size: 0.88rem; }
+.film { display: inline-flex; align-items: center; gap: 0.35rem; font-size: 0.8rem; }
+.film .kiste { font-size: 0.66rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--gold); }
+.film .los { padding: 0 2px; }
+.go { padding: 0.45rem 0.9rem; }
+.segments { display: inline-flex; gap: 2px; padding: 2px; background: var(--bg); border: 1px solid var(--line); border-radius: 8px; }
+.segments button { border: none; background: none; padding: 0.3rem 0.7rem; color: var(--muted); font-size: 0.82rem; }
 .segments button.active { background: var(--bg-raised); color: var(--text); font-weight: 600; }
-.source { display: flex; flex-direction: column; gap: 0.7rem; align-items: flex-start; }
-.source p { margin: 0; font-size: 0.88rem; line-height: 1.5; }
-.check { display: flex; align-items: center; gap: 0.4rem; font-size: 0.88rem; }
+.onair { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 0.7rem; padding: 0.5rem 0.8rem; border-radius: 8px; background: var(--accent-soft); border: 1px solid rgba(229, 9, 20, 0.4); }
+.onair strong { white-space: nowrap; font-size: 0.9rem; }
+.onair .stats { font-size: 0.76rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+.onair .warn { flex-basis: 100%; font-size: 0.78rem; color: var(--gold); }
+.live-dot { width: 9px; height: 9px; border-radius: 50%; background: var(--accent); animation: pulse 1.4s ease-in-out infinite; }
+@keyframes pulse { 50% { opacity: 0.35; } }
+.optionen { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 0.6rem 1rem; padding-top: 0.6rem; border-top: 1px solid var(--line); }
+.optionen select { width: auto; }
+.optionen.obs { flex-direction: column; align-items: flex-start; }
+.check { display: flex; align-items: center; gap: 0.4rem; font-size: 0.85rem; }
 .check input { width: auto; }
-.go { padding: 0.65rem 1.2rem; }
-.steps { margin: 0; padding-left: 1.2rem; font-size: 0.88rem; display: flex; flex-direction: column; gap: 0.45rem; }
+.klein { font-size: 0.78rem; margin: 0; flex-basis: 100%; }
+.steps { margin: 0; padding-left: 1.2rem; font-size: 0.85rem; display: flex; flex-direction: column; gap: 0.4rem; }
 .copy { display: inline-flex; align-items: center; gap: 0.2rem; flex-wrap: wrap; }
-code { background: var(--bg); border: 1px solid var(--line); padding: 1px 6px; border-radius: 4px; font-size: 0.8rem; word-break: break-all; }
+code { background: var(--bg); border: 1px solid var(--line); padding: 1px 6px; border-radius: 4px; font-size: 0.78rem; word-break: break-all; }
+@media (max-width: 600px) { .lang { display: none; } }
 </style>

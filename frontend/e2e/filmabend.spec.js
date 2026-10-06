@@ -23,6 +23,13 @@ test.afterAll(async () => {
 })
 
 const nav = (name) => page.getByRole('link', { name, exact: true }).click()
+// The group's activity lives on the "Neuigkeiten" page (behind the bell), not on the evening page.
+async function inDerGruppe(text) {
+  await page.getByRole('link', { name: /^Neuigkeiten/ }).click()
+  await expect(page.getByRole('heading', { name: 'In der Gruppe' })).toBeVisible()
+  await expect(page.locator('.feed')).toContainText(text)
+  await nav('Filmabend')
+}
 // The planning folds away once nothing waits for you: open it where a step needs it.
 async function planung() {
   const knopf = page.getByRole('button', { name: 'Planung' })
@@ -237,7 +244,7 @@ test('a date for the evening and an invitation card for the group chat', async (
   await dialog.getByRole('button', { name: 'Speichern' }).click()
   await expect(dialog).toBeHidden()
   await expect(page.locator('.crew .termin')).toContainText(/Freitag, \d+\. \w+, 20:00 Uhr · bei Marc/)
-  await expect(page.locator('.feed')).toContainText('Marc legt den Termin fest: Freitag')
+  await inDerGruppe('Marc legt den Termin fest: Freitag')
 
   await page.getByRole('button', { name: 'Einladen' }).click()
   const einladung = page.getByRole('dialog', { name: 'Zum Filmabend einladen' })
@@ -286,7 +293,7 @@ test('the group votes on a date; picking one carries the answers over', async ()
   const samstag = optionen.filter({ hasText: 'Samstag' })
   await samstag.getByRole('button', { name: /^Vielleicht/ }).click()
   await expect(samstag.getByRole('button', { name: /^Vielleicht/ })).toHaveAttribute('aria-pressed', 'true')
-  await expect(page.locator('.feed')).toContainText('Marc schlägt einen Termin zur Abstimmung vor: Samstag')
+  await inDerGruppe('Marc schlägt einen Termin zur Abstimmung vor: Samstag')
   await optionen.filter({ hasText: 'Freitag' }).getByRole('button', { name: 'Festlegen' }).click()
   await expect(page.locator('.umfrage')).toBeHidden()
   await expect(page.locator('.crew .termin')).toContainText(/Freitag, \d+\. \w+, 20:00 Uhr · bei Marc/)

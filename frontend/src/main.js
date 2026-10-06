@@ -7,6 +7,7 @@ import App from './App.vue'
 import { ApiError } from './api'
 import { anwenden, gemerkt } from './design'
 import { registrieren } from './push'
+import { audioVorbereiten } from './audio'
 
 // This device's last theme and font right away – no flash of the default look.
 anwenden(gemerkt())
@@ -20,3 +21,5 @@ createApp(App).use(createPinia()).mount('#app')
 
 // Push notifications and the home-screen app.
 registrieren()
+// Sound (the case) on iPhones: unlocked by the first tap anywhere.
+audioVorbereiten()
