@@ -141,7 +141,7 @@ function vollbild() {
         :key="f.key"
         :style="{ left: `${f.links}%`, animationDuration: `${f.dauer}ms`, '--kippen': `${f.kippen}deg` }"
       >
-        {{ f.inhalt }}<small v-if="vollbildAn">{{ app.userById(f.user_id)?.name }}</small>
+        {{ f.inhalt }}<small>{{ app.userById(f.user_id)?.name }}</small>
       </span>
     </div>
     <div v-if="kino.pause" class="pause" role="status">
