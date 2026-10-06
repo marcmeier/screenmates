@@ -1,4 +1,4 @@
-"""The Kino's chat and reactions: in memory, per group, polled, and quiet for everyone else."""
+"""The Kino's chat (kept 30 days) and reactions (a moment), per group, polled, quiet for everyone else."""
 
 from datetime import UTC, datetime
 
@@ -20,17 +20,17 @@ def test_messages_and_reactions(client, browser):
     r = lena.post("/api/kino/reaktion", json={"emoji": "😱"}).json()
     assert lena.post("/api/kino/reaktion", json={"emoji": "💩"}).status_code == 422
     assert lena.post("/api/kino/chat", json={"text": "   "}).status_code == 422
-    # Opening the page: the conversation so far, no stale reactions.
+    # Opening the page: the conversation so far, no stale reactions, and both cursors.
     frisch = lena.get("/api/kino/chat").json()
     assert [e["inhalt"] for e in frisch["eintraege"]] == ["Popcorn ist fertig"]
-    assert frisch["letzte"] == r["id"]
+    assert (frisch["letzte"], frisch["rletzte"]) == (m["id"], r["id"])
     assert "😱" in frisch["reaktionen"]
     # Not to be mixed up with "everything after 0" (an empty chat's first poll).
-    assert len(lena.get("/api/kino/chat?seit=0").json()["eintraege"]) == 2
+    assert len(lena.get("/api/kino/chat?seit=0&rseit=0").json()["eintraege"]) == 2
     # Polling: everything after what it has.
-    neu = lena.get(f"/api/kino/chat?seit={m['id']}").json()["eintraege"]
+    neu = lena.get(f"/api/kino/chat?seit={m['id']}&rseit=0").json()["eintraege"]
     assert [(e["typ"], e["inhalt"]) for e in neu] == [("reaktion", "😱")]
-    assert lena.get(f"/api/kino/chat?seit={r['id']}").json()["eintraege"] == []
+    assert lena.get(f"/api/kino/chat?seit={m['id']}&rseit={r['id']}").json()["eintraege"] == []
 
 
 def test_a_message_does_not_make_every_app_reload(client, browser):
@@ -41,6 +41,27 @@ def test_a_message_does_not_make_every_app_reload(client, browser):
     client.post("/api/kino/chat", json={"text": "Hallo"})
     client.post("/api/kino/reaktion", json={"emoji": "🍿"})
     assert lena.get("/api/live").json()["stand"] == vorher
+
+
+def test_messages_stay_30_days_and_older_ones_page(client, browser, db):
+    from datetime import timedelta
+
+    from app.models import KinoNachricht, now
+
+    login(client, "marc")
+    for i in range(kinochat.SEITE + 3):
+        db.add(KinoNachricht(gruppe_id=1, user_id=None, text=f"alt {i}"))
+    db.add(KinoNachricht(gruppe_id=1, user_id=None, text="zu alt", am=now() - timedelta(days=31)))
+    db.commit()
+    kinochat._reaktionen.clear()  # a restart: reactions are gone, messages stay
+    r = client.get("/api/kino/chat").json()
+    texte = [e["inhalt"] for e in r["eintraege"]]
+    assert len(texte) == kinochat.SEITE and texte[-1] == f"alt {kinochat.SEITE + 2}" and r["mehr"] is True
+    assert r["tage"] == 30
+    aelter = client.get(f"/api/kino/chat/aelter?vor={r['eintraege'][0]['id']}").json()
+    assert [e["inhalt"] for e in aelter["eintraege"]] == ["alt 0", "alt 1", "alt 2"] and aelter["mehr"] is False
+    db.expire_all()
+    assert "zu alt" not in {n.text for n in db.exec(select(KinoNachricht)).all()}  # aged out
 
 
 def test_too_fast_is_slowed_down(client):

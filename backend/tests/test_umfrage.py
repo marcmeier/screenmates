@@ -172,6 +172,24 @@ def test_reply_yes_maybe_no_and_take_back(runde):
     assert set(rueckmeldungen(marc).values()) == {None}
 
 
+def test_a_new_date_after_the_last_evening_starts_with_fresh_replies(runde, db):
+    from app.models import Abend
+
+    kim, lena, marc = runde["kim"], runde["lena"], runde["marc"]
+    marc.put("/api/termin", json={"termin": in_tagen(2)})
+    kim.put("/api/dabei", json={"antwort": "ja"})
+    lena.put("/api/dabei", json={"antwort": "nein"})
+    marc.put("/api/termin", json={"termin": in_tagen(3)})  # moved: the replies stay
+    assert rueckmeldungen(marc) == {"marc": None, "lena": "nein", "kim": "ja"}
+    db.expire_all()
+    a = db.get(Abend, 1)
+    a.termin = datetime.now(UTC) - timedelta(days=1)  # the evening is over
+    db.add(a)
+    db.commit()
+    marc.put("/api/termin", json={"termin": in_tagen(7)})
+    assert set(rueckmeldungen(marc).values()) == {None}
+
+
 def test_a_kept_promise_counts_once_the_evening_took_place(runde):
     lena, kim, marc = runde["lena"], runde["kim"], runde["marc"]
     kim.put("/api/dabei", json={"antwort": "ja"})  # no date yet: nothing to keep

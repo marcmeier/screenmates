@@ -2,7 +2,26 @@
 
 ## 0.9.1 – 2026-10-06
 
+### Geändert
+- **Kino neu aufgeteilt:** Der Chat steht für alle – auch für den Gastgeber – rechts neben dem Bild,
+  mit fester Höhe zum Scrollen. „Senden“ liegt jetzt breit unter dem Bild.
+- **Kino-Chat bleibt 30 Tage:** Nachrichten werden gespeichert (vorher nur im Speicher, nach einem
+  Neustart weg) und altern nach 30 Tagen raus. Ältere Nachrichten lassen sich nachladen,
+  Tagestrenner zeigen, wann etwas geschrieben wurde. Reaktionen bleiben ein Moment im Bild.
+- **Filmabend-Seite aufgeräumt:** Die Planung ist eine Zeile – Termin, wer dabei ist, deine
+  Antwort, Einladen. Aufgeklappt wird sie von selbst nur, wenn etwas auf dich wartet (noch nicht
+  geantwortet, Umfrage zum Abstimmen oder Festlegen); sonst über „Planung“. Am Tag selbst steht
+  dort „Heute“.
+- Wird nach einem vergangenen Abend ein neuer Termin gesetzt, beginnen die Zusagen von vorn
+  (vorher stand „Dabei: …“ vom letzten Mal einfach weiter da).
+- **Kiste für alle:** Der Übergang vom Countdown zum Drehen ist jetzt eine Bewegung. Das Band
+  zieht schon während des Countdowns langsam an und beschleunigt weich, der Countdown blendet
+  aus, statt hart zu verschwinden.
+
 ### Behoben
+- Die Kiste ruckelte beim Drehen: Die Startzeit wurde bei jeder Live-Abfrage neu aus der
+  Server-Uhr umgerechnet und schwankte mit dem Netz. Jetzt steht sie beim Öffnen fest, und der
+  Uhrenabgleich nimmt die schnellste Messung.
 - **Push-Nachrichten kamen nicht an.** Die Kontaktadresse für die Push-Dienste
   (`https://github.com/marcmeier/screenmates`) hatte einen Pfad, den die Signatur nicht erlaubt –
   jede Zustellung scheiterte. Jetzt geht nur der Ursprung raus (`https://github.com`), ebenso bei
@@ -11,6 +30,9 @@
   zugestellt wurde (vorher hieß es „geschickt“, sobald sie in der Warteschlange lag).
 - Findet der Browser seinen Push-Dienst nicht (Brave ohne Google-Push, Chromium-Builds ohne
   Google-Dienste), erklärt screenmates jetzt auf Deutsch, was zu tun ist, statt „Registration failed“.
+
+### Betrieb
+- Migration `0011`: Tabelle `kinonachricht` (Kino-Chat, 30 Tage).
 
 ## 0.9.0 – 2026-10-06
 

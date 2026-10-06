@@ -29,7 +29,7 @@ Drei Bereiche für die drei Dinge, für die man herkommt:
   Teilnehmende, Gästebuch mit Antworten und Herzen.
 - **Kino** – gemeinsam schauen, auch wenn alle in verschiedenen Wohnzimmern sitzen: Der Gastgeber (oder ein Admin)
   teilt seinen Bildschirm oder sendet aus OBS (eigene Filme, Spiele …), alle sehen live dasselbe
-  Bild mit unter einer Sekunde Verzögerung. Daneben ein **Chat**, und **Reaktionen** (😱 🍿 😂 …)
+  Bild mit unter einer Sekunde Verzögerung. Daneben ein **Chat** (30 Tage), und **Reaktionen** (😱 🍿 😂 …)
   fliegen für alle übers Bild – auch im Vollbild. Läuft etwas, leuchtet der Menüpunkt mit der Zahl
   der Zuschauenden. Danach trägt ein Klick den Film als gesehen ein, mit allen, die dabei waren.
 

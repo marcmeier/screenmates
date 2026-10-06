@@ -45,7 +45,7 @@ def client():
     zugang._fehl_alle.clear()
     kino._saele.clear()
     kino._gemeldet.clear()
-    kinochat._verlauf.clear()
+    kinochat._reaktionen.clear()
     kinochat._takt.clear()
     kinochat._mitgeredet.clear()
     live._stand.clear()

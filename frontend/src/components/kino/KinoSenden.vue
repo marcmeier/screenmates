@@ -101,99 +101,106 @@ async function beenden() {
 
 <template>
   <section class="panel desk">
-    <h2>Senden</h2>
-
-    <div class="programme">
-      <label class="field">Was läuft?
-        <input v-model="titel" maxlength="120" placeholder="z. B. Shining, oder: Marc spielt Resident Evil" @change="programm()" />
-      </label>
-      <div class="row film">
-        <template v-if="film">
-          <span class="chip">🎬 {{ film.title }} <span class="muted">{{ film.year }}</span></span>
-          <button class="ghost small" @click="filmWeg">Verknüpfung lösen</button>
-        </template>
-        <button v-else class="ghost small" @click="filmWaehlen = !filmWaehlen">
-          <Icon name="plus" :size="14" /> Mit Film aus dem Katalog verknüpfen
-        </button>
-      </div>
-      <p v-if="film" class="muted small">Danach kannst du ihn mit einem Klick als gesehen eintragen – alle Zuschauenden als dabei.</p>
-      <FilmPicker v-if="filmWaehlen" placeholder="Film suchen …" @pick="waehleFilm" />
-    </div>
+    <header class="kopf">
+      <h2>Senden</h2>
+      <nav v-if="!kino.live" class="segments" aria-label="Quelle">
+        <button :class="{ active: quelle === 'browser' }" @click="quelle = 'browser'">Bildschirm teilen</button>
+        <button :class="{ active: quelle === 'obs' }" @click="quelle = 'obs'">OBS</button>
+      </nav>
+    </header>
 
     <div v-if="kino.live" class="onair">
       <span class="live-dot"></span>
       <strong>Du bist live</strong>
       <span v-if="!kino.sende" class="muted">(über OBS)</span>
       <span v-if="statsZeile" class="stats">{{ statsZeile }}</span>
-      <span v-if="GRENZE[kino.sendStats?.grenze]" class="warn">{{ GRENZE[kino.sendStats.grenze] }}</span>
+      <span class="spacer"></span>
       <button class="danger" @click="beenden">Übertragung beenden</button>
+      <span v-if="GRENZE[kino.sendStats?.grenze]" class="warn">{{ GRENZE[kino.sendStats.grenze] }}</span>
     </div>
 
-    <template v-else>
-      <nav class="segments" aria-label="Quelle">
-        <button :class="{ active: quelle === 'browser' }" @click="quelle = 'browser'">Bildschirm teilen</button>
-        <button :class="{ active: quelle === 'obs' }" @click="quelle = 'obs'">OBS</button>
-      </nav>
-
-      <div v-if="quelle === 'browser'" class="source">
-        <p class="muted">
-          Teile einen Bildschirm, ein Fenster oder einen Browser-Tab – zum Beispiel deinen Videoplayer oder ein Spiel.
-          Am einfachsten für den Ton: einen Tab teilen und „Audio teilen“ anhaken.
-        </p>
-        <div class="choices">
-          <label class="field">Qualität
-            <select v-model="qualitaet">
-              <option v-for="(q, key) in QUALITAET" :key="key" :value="key">{{ q.label }}</option>
-            </select>
-          </label>
-          <label class="field">Inhalt
-            <select v-model="inhalt">
-              <option v-for="(m, key) in INHALT" :key="key" :value="key">{{ m.label }}</option>
-            </select>
-          </label>
+    <div class="spalten">
+      <div class="programme">
+        <label class="field">Was läuft?
+          <input v-model="titel" maxlength="120" placeholder="z. B. Shining, oder: Marc spielt Resident Evil" @change="programm()" />
+        </label>
+        <div class="row film">
+          <template v-if="film">
+            <span class="chip">🎬 {{ film.title }} <span class="muted">{{ film.year }}</span></span>
+            <button class="ghost small" @click="filmWeg">Verknüpfung lösen</button>
+          </template>
+          <button v-else class="ghost small" @click="filmWaehlen = !filmWaehlen">
+            <Icon name="plus" :size="14" /> Mit Film aus dem Katalog verknüpfen
+          </button>
         </div>
-        <p class="muted small">Der Server braucht bis zu {{ upload }} Mbit/s Upload je zuschauender Person.</p>
-        <label class="check"><input v-model="mitTon" type="checkbox" /> Ton mitsenden</label>
-        <button class="primary go" @click="kino.startSending({ audio: mitTon, qualitaet, inhalt })"><Icon name="kino" :size="18" /> Übertragung starten</button>
+        <p v-if="film" class="muted small">Danach kannst du ihn mit einem Klick als gesehen eintragen – alle Zuschauenden als dabei.</p>
+        <FilmPicker v-if="filmWaehlen" placeholder="Film suchen …" @pick="waehleFilm" />
       </div>
 
-      <div v-else class="source">
-        <p class="muted">
-          Mit OBS (ab Version 30) bekommst du Szenen, Spielaufnahme, Filmdateien und vollen Ton.
-          In OBS unter <strong>Einstellungen → Stream</strong>:
-        </p>
-        <p v-if="obs?.persoenlich" class="notice klein">
-          Das ist dein persönlicher Schlüssel: Er funktioniert nur, solange du den Gastgeber-Stab hast.
-        </p>
-        <ol v-if="obs" class="steps">
-          <li>Dienst: <code>WHIP</code></li>
-          <li>
-            Server:
-            <span class="copy"><code>{{ obs.server }}</code><button class="ghost small" aria-label="Server kopieren" @click="kopiere(obs.server, 'Server')"><Icon name="kopieren" :size="14" /></button></span>
-          </li>
-          <li>
-            Bearer-Token:
-            <span class="copy">
-              <code>{{ zeigeKey ? obs.key : '•'.repeat(16) }}</code>
-              <button class="ghost small" @click="zeigeKey = !zeigeKey">{{ zeigeKey ? 'verbergen' : 'zeigen' }}</button>
-              <button class="ghost small" aria-label="Token kopieren" @click="kopiere(obs.key, 'Token')"><Icon name="kopieren" :size="14" /></button>
-            </span>
-          </li>
-          <li>
-            Unter <strong>Ausgabe</strong>: Encoder x264 (oder Hardware-H.264), Bitrate <strong>6000–8000 kbit/s</strong> für 1080p,
-            Keyframe-Intervall 1 s, B-Frames 0 (WebRTC kennt keine B-Frames)
-          </li>
-          <li>„Streaming starten“ – hier erscheint dann „Du bist live“.</li>
-        </ol>
-        <button class="ghost small" @click="neuerKey">Neuen Stream-Key erzeugen</button>
-      </div>
-    </template>
+      <template v-if="!kino.live">
+        <div v-if="quelle === 'browser'" class="source">
+          <p class="muted">
+            Teile einen Bildschirm, ein Fenster oder einen Browser-Tab – zum Beispiel deinen Videoplayer oder ein Spiel.
+            Am einfachsten für den Ton: einen Tab teilen und „Audio teilen“ anhaken.
+          </p>
+          <div class="choices">
+            <label class="field">Qualität
+              <select v-model="qualitaet">
+                <option v-for="(q, key) in QUALITAET" :key="key" :value="key">{{ q.label }}</option>
+              </select>
+            </label>
+            <label class="field">Inhalt
+              <select v-model="inhalt">
+                <option v-for="(m, key) in INHALT" :key="key" :value="key">{{ m.label }}</option>
+              </select>
+            </label>
+          </div>
+          <p class="muted small">Der Server braucht bis zu {{ upload }} Mbit/s Upload je zuschauender Person.</p>
+          <label class="check"><input v-model="mitTon" type="checkbox" /> Ton mitsenden</label>
+          <button class="primary go" @click="kino.startSending({ audio: mitTon, qualitaet, inhalt })"><Icon name="kino" :size="18" /> Übertragung starten</button>
+        </div>
+
+        <div v-else class="source">
+          <p class="muted">
+            Mit OBS (ab Version 30) bekommst du Szenen, Spielaufnahme, Filmdateien und vollen Ton.
+            In OBS unter <strong>Einstellungen → Stream</strong>:
+          </p>
+          <p v-if="obs?.persoenlich" class="notice klein">
+            Das ist dein persönlicher Schlüssel: Er funktioniert nur, solange du den Gastgeber-Stab hast.
+          </p>
+          <ol v-if="obs" class="steps">
+            <li>Dienst: <code>WHIP</code></li>
+            <li>
+              Server:
+              <span class="copy"><code>{{ obs.server }}</code><button class="ghost small" aria-label="Server kopieren" @click="kopiere(obs.server, 'Server')"><Icon name="kopieren" :size="14" /></button></span>
+            </li>
+            <li>
+              Bearer-Token:
+              <span class="copy">
+                <code>{{ zeigeKey ? obs.key : '•'.repeat(16) }}</code>
+                <button class="ghost small" @click="zeigeKey = !zeigeKey">{{ zeigeKey ? 'verbergen' : 'zeigen' }}</button>
+                <button class="ghost small" aria-label="Token kopieren" @click="kopiere(obs.key, 'Token')"><Icon name="kopieren" :size="14" /></button>
+              </span>
+            </li>
+            <li>
+              Unter <strong>Ausgabe</strong>: Encoder x264 (oder Hardware-H.264), Bitrate <strong>6000–8000 kbit/s</strong> für 1080p,
+              Keyframe-Intervall 1 s, B-Frames 0 (WebRTC kennt keine B-Frames)
+            </li>
+            <li>„Streaming starten“ – hier erscheint dann „Du bist live“.</li>
+          </ol>
+          <button class="ghost small" @click="neuerKey">Neuen Stream-Key erzeugen</button>
+        </div>
+      </template>
+    </div>
   </section>
 </template>
 
 <style scoped>
+/* Lies under the screen: wide, in columns – what's on | how to send. */
 .desk { display: flex; flex-direction: column; gap: 1rem; }
+.kopf { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; }
 h2 { margin: 0; font-size: 1.05rem; }
+.spalten { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); gap: 1.2rem 2rem; align-items: start; }
 .programme { display: flex; flex-direction: column; gap: 0.5rem; }
 .film { min-height: 2rem; }
 .small { font-size: 0.8rem; margin: 0; }
@@ -203,10 +210,9 @@ h2 { margin: 0; font-size: 1.05rem; }
 .onair .warn { flex-basis: 100%; font-size: 0.8rem; color: var(--gold); }
 .choices { display: flex; gap: 0.6rem; flex-wrap: wrap; }
 .choices select { width: auto; }
-.onair .danger { width: 100%; justify-content: center; }
 .live-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--accent); animation: pulse 1.4s ease-in-out infinite; }
 @keyframes pulse { 50% { opacity: 0.35; } }
-.segments { display: inline-flex; gap: 2px; padding: 3px; background: var(--bg); border: 1px solid var(--line); border-radius: 9px; align-self: flex-start; }
+.segments { display: inline-flex; gap: 2px; padding: 3px; background: var(--bg); border: 1px solid var(--line); border-radius: 9px; }
 .segments button { border: none; background: none; padding: 0.4rem 0.9rem; color: var(--muted); }
 .segments button.active { background: var(--bg-raised); color: var(--text); font-weight: 600; }
 .source { display: flex; flex-direction: column; gap: 0.7rem; align-items: flex-start; }

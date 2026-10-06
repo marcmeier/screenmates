@@ -395,6 +395,16 @@ class TerminStimme(SQLModel, table=True):
     antwort: str  # ja | vielleicht | nein
 
 
+class KinoNachricht(SQLModel, table=True):
+    """A message in a group's Kino chat; kept for 30 days (see routers/kinochat.py)."""
+
+    id: int | None = Field(default=None, primary_key=True)
+    gruppe_id: int = Field(foreign_key="gruppe.id", index=True, ondelete="CASCADE")
+    user_id: int | None = Field(default=None, foreign_key="user.id", ondelete="SET NULL")
+    text: str
+    am: datetime = Field(default_factory=now, index=True)
+
+
 class PushAbo(SQLModel, table=True):
     """One device that gets push notifications (a browser's PushSubscription)."""
 

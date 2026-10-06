@@ -215,13 +215,14 @@ def pick(
     antworten = {
         s.user_id: s.antwort for s in db.exec(select(TerminStimme).where(TerminStimme.vorschlag_id == vid)).all()
     }
+    a = termin_setzen(db, gid, user, termin, notiz)  # commits (and clears replies to an evening that is over)
     for m in db.exec(select(Mitglied).where(Mitglied.gruppe_id == gid)).all():
         if m.user_id in antworten:
             rueckmelden(db, m, antworten[m.user_id], termin)
     # The proposer found the date (counts once the evening took place).
     erfolge.protokoll(db, "umfrage", von, termin.astimezone(BERLIN).date().isoformat())
     _schliessen(db, gid)
-    a = termin_setzen(db, gid, user, termin, notiz)  # commits
+    db.commit()
     return {"termin": _termin_dict(a), "umfrage": _zustand(db, gid, user, admin)}
 
 
