@@ -253,7 +253,7 @@ const sichtbar = computed(() => (f.ohneGesehene ? items.value.filter((m) => !m.g
       </div>
 
       <p v-if="hinweis" class="notice hinweis">
-        {{ hinweis }} <a v-if="/Abos|subscriptions/.test(hinweis)" href="#/profil/einstellungen">{{ $t('entdeckenpanel.zuDenEinstellungen') }}</a>
+        {{ hinweis }} <a v-if="/Abos|subscriptions/.test(hinweis)" href="#/profil/einstellungen/dienste">{{ $t('entdeckenpanel.zuDenEinstellungen') }}</a>
       </p>
       <MovieGrid
         v-else

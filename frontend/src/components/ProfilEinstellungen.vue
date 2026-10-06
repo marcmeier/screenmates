@@ -1,5 +1,6 @@
 <script setup>
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
+import { useRoute } from '../composables/useRoute'
 import { api } from '../api'
 import { useApp } from '../stores/app'
 import { useUi } from '../stores/ui'
@@ -16,6 +17,17 @@ import ProfilBild from './ProfilBild.vue'
 const app = useApp()
 const ui = useUi()
 const pickSchutz = ref(false)
+// One topic at a time: #/profil/einstellungen/<reiter>.
+const route = useRoute()
+const REITER = computed(() =>
+  [
+    { id: 'profil', icon: 'profil' },
+    { id: 'darstellung', icon: 'funken' },
+    { id: 'benachrichtigungen', icon: 'glocke' },
+    app.status.tmdb && { id: 'dienste', icon: 'kino' },
+  ].filter(Boolean),
+)
+const aktiv = computed(() => REITER.value.find((r) => r.id === route.value.id)?.id ?? 'profil')
 
 async function setSchutz(movie) {
   await api.post(`/api/users/${app.me.id}/schutz`, { movie_id: movie?.id ?? null })
@@ -27,7 +39,19 @@ async function setSchutz(movie) {
 
 <template>
   <div class="spalte">
-    <section class="panel">
+    <nav class="reiter" :aria-label="$t('app.einstellungen')">
+      <a
+        v-for="r in REITER"
+        :key="r.id"
+        :href="`#/profil/einstellungen/${r.id}`"
+        :class="{ aktiv: aktiv === r.id }"
+        :aria-current="aktiv === r.id ? 'page' : undefined"
+      >
+        <Icon :name="r.icon" :size="15" /> {{ $t(`einst.reiter.${r.id}`) }}
+      </a>
+    </nav>
+
+    <section v-if="aktiv === 'profil'" class="panel">
       <h2>{{ $t('einst.profil') }}</h2>
       <div class="row">
         <strong class="ich">{{ app.me.name }}</strong>
@@ -53,13 +77,14 @@ async function setSchutz(movie) {
       <div v-if="pickSchutz" class="picker"><FilmPicker :placeholder="$t('einst.passwortFilm')" @pick="setSchutz" /></div>
     </section>
 
-    <Darstellung />
+    <Darstellung v-else-if="aktiv === 'darstellung'" />
 
-    <Benachrichtigungen />
+    <template v-else-if="aktiv === 'benachrichtigungen'">
+      <Benachrichtigungen />
+      <KalenderAbo />
+    </template>
 
-    <KalenderAbo />
-
-    <MeineAbos v-if="app.status.tmdb" />
+    <MeineAbos v-else-if="aktiv === 'dienste'" />
   </div>
 </template>
 

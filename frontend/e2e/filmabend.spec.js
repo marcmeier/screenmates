@@ -500,7 +500,7 @@ test('own name gets film protection', async () => {
 })
 
 test('settings: notifications by kind, and a calendar feed that works without login', async () => {
-  await page.goto('/#/profil/einstellungen')
+  await page.goto('/#/profil/einstellungen/benachrichtigungen')
   await expect(page.getByRole('heading', { name: 'Benachrichtigungen' })).toBeVisible()
   const kino = page.getByRole('checkbox', { name: 'Das Kino geht live' })
   await expect(kino).toBeChecked()
@@ -522,6 +522,7 @@ test('settings: notifications by kind, and a calendar feed that works without lo
 })
 
 test('a theme and a font of your own, kept with the profile', async () => {
+  await page.goto('/#/profil/einstellungen/darstellung')
   const akzent = () => page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue('--accent').trim())
   expect(await akzent()).toBe('#e50914')
   await page.getByRole('radio', { name: 'Nacht' }).click()
@@ -551,6 +552,7 @@ test('a profile picture replaces the initials everywhere', async () => {
     x.fill()
     return c.toDataURL('image/png').split(',')[1]
   })
+  await page.goto('/#/profil/einstellungen/profil')
   await page.getByLabel('Profilbild auswählen').setInputFiles({ name: 'ich.png', mimeType: 'image/png', buffer: Buffer.from(png, 'base64') })
   await expect(page.locator('.toast', { hasText: 'Profilbild gespeichert' })).toBeVisible()
   const avatar = page.locator('.me .avatar img')

@@ -269,6 +269,12 @@ export default {
     schutzText:
       "Ohne Schutz kann sich jeder als {name} ausgeben. Mit Schutz muss man beim Anmelden deinen Film anklicken – den Film verrät screenmates niemandem, auch dir nicht.",
     ungeschuetzt: "ungeschützt",
+    reiter: {
+      profil: "Profil",
+      darstellung: "Darstellung",
+      benachrichtigungen: "Benachrichtigungen",
+      dienste: "Dienste",
+    },
   },
   entdeckenpanel: {
     aelteste: "Älteste",

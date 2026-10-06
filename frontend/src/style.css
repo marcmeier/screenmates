@@ -88,6 +88,24 @@ label.field { display: flex; flex-direction: column; gap: 4px; font-size: 0.78re
 .page-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 1rem; margin-bottom: 1.4rem; flex-wrap: wrap; }
 .page-head h1 { margin: 0; font-size: 1.7rem; letter-spacing: -0.02em; }
 .page-head p { margin: 0.25rem 0 0; color: var(--muted); }
+/* Tabs inside a page (admin centre, settings): one bar, the current one underlined. */
+.reiter {
+  display: flex; gap: 2px; padding: 3px; overflow-x: auto; scrollbar-width: none;
+  background: var(--bg-soft); border: 1px solid var(--line); border-radius: 10px;
+}
+.reiter a {
+  flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: 0.4rem; white-space: nowrap;
+  padding: 0.5rem 0.8rem; border-radius: 7px; text-decoration: none; color: var(--muted); font-size: 0.9rem;
+}
+.reiter a:hover { color: var(--text); }
+.reiter a.aktiv { background: var(--bg-raised); color: var(--text); font-weight: 600; box-shadow: inset 0 -2px 0 var(--accent); }
+/* the danger zone stands out */
+.reiter a.gefahr { color: #ff8a8a; }
+.reiter a.gefahr.aktiv { box-shadow: inset 0 -2px 0 #ff6b6b; }
+.reiter .zahl { min-width: 18px; padding: 0 5px; border-radius: 9px; background: var(--accent); color: #fff; font-size: 0.7rem; font-weight: 700; text-align: center; }
+@media (max-width: 560px) {
+  .reiter a { flex-direction: column; gap: 0.15rem; padding: 0.45rem 0.4rem; font-size: 0.74rem; }
+}
 .section-title { font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin: 2rem 0 0.8rem; font-weight: 600; }
 
 .grid {
@@ -156,4 +174,8 @@ a.avatar:hover { box-shadow: 0 0 0 2px var(--accent); }
 @media (max-width: 600px) {
   html { font-size: 106.25%; }
   body { font-size: 16px; }
+  /* The bottom bar already says where you are: a smaller title, no subtitle. */
+  .page-head { margin-bottom: 0.9rem; }
+  .page-head h1 { font-size: 1.35rem; }
+  .page-head p { display: none; }
 }

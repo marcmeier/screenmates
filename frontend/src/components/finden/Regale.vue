@@ -48,7 +48,7 @@ const hatUns = () => regale.value?.some((r) => r.id === 'bei-uns')
   <div class="regale">
     <p v-if="regale && app.status.tmdb && !hatUns()" class="notice tipp">
       {{ $t('regale.tragtEureStreamingAbos') }}
-      <a href="#/profil/einstellungen">{{ $t('regale.zuDenEinstellungen') }}</a>
+      <a href="#/profil/einstellungen/dienste">{{ $t('regale.zuDenEinstellungen') }}</a>
     </p>
 
     <template v-if="!regale && !fehler">
