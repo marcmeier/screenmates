@@ -14,7 +14,7 @@ from sqlmodel import col, func, select
 
 from .. import erfolge, push, tmdb
 from ..config import settings
-from ..db import get_session
+from ..db import freigeben, get_session
 from ..gruppen import aktive_gruppe
 from ..models import Abend, Mitglied, Movie, User, Watched, WatchedRating, now
 from ..prognose import MIN_BEWERTUNGEN, Film, Modell, vorhersage
@@ -112,6 +112,7 @@ async def gruppen_prognose(db: DBSession, movie_ids: list[int], leute: list[int]
                 out[mid] = {"wert": round(wert * 2) / 2, "genau": round(wert, 2), "personen": personen}
         return out
 
+    freigeben(db)  # the maths needs no database
     ergebnis = await asyncio.to_thread(rechnen)
     if len(_gruppen_cache) > 50:
         _gruppen_cache.clear()

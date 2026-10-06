@@ -29,7 +29,7 @@ from sqlmodel import select
 
 from .. import erfolge, push
 from ..config import settings
-from ..db import get_session
+from ..db import freigeben, get_session
 from ..gruppen import _waehlen, aktive_gruppe, gruppen_admin, ist_gruppen_admin, mitgliedschaften
 from ..models import Abend, KinoState, Movie, Session, User, now
 from ..serialize import iso, movie_dict
@@ -117,6 +117,7 @@ async def status(gid: int | None = Depends(_gruppe_optional), db: DBSession = De
     if gid is None:  # no name or no group yet: nothing to show, but no error either (it's polled)
         return {"enabled": True, "live": False, "zuschauer": [], "publikum": []}
     st = _state(db, gid)
+    freigeben(db)
     path = await _mtx_path(gid)
     live = bool(path and path.get("ready"))
     movie = db.get(Movie, st.movie_id) if st.movie_id else None
@@ -350,6 +351,7 @@ async def _relay(
 ) -> Response:
     _require_enabled()
     headers = {"Authorization": f"Bearer {_state(db, gid).secret}"}
+    freigeben(db)
     for h in ("content-type", "if-match"):
         if h in request.headers:
             headers[h] = request.headers[h]

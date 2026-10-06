@@ -146,6 +146,15 @@ def test_dabei_toggle_and_reset(client):
     assert client.get("/api/users").json()["ich"]["dabei"] is False
 
 
+def test_the_welcome_is_seen_once_and_keeps_the_look(client):
+    login(client, "marc")
+    client.put("/api/users/me/design", json={"theme": "neon", "schrift": "serif"})
+    client.post("/api/users/me/willkommen")
+    assert client.get("/api/users").json()["ich"]["design"] == {"theme": "neon", "schrift": "serif", "willkommen": True}
+    client.put("/api/users/me/design", json={"theme": "wald", "schrift": "serif"})
+    assert client.get("/api/users").json()["ich"]["design"]["willkommen"] is True
+
+
 def test_feature_permissions(client, browser):
     login(client, "marc")
     fid = client.post("/api/features", json={"text": "Dark Mode"}).json()["id"]

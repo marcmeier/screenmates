@@ -187,8 +187,8 @@ def test_taste_twins_need_three_shared_films(paar, browser):
     for film, (a, b) in zip(FILME[:3], [(5, 5), (4, 3), (1, 1)], strict=True):
         gesehen(marc, film, [marc, lena], [a, b])
     r = marc.get(f"/api/users/{marc.me['id']}/geschmack").json()
-    # one star apart on one of three films: 1/3 star on average, of 4 possible
-    assert r["vergleiche"] == [{"user_id": lena.me["id"], "prozent": 92, "gemeinsam": 3}]
+    # one star apart on one of three films: 1/3 star on average; two stars apart would be 0 %
+    assert r["vergleiche"] == [{"user_id": lena.me["id"], "prozent": 83, "gemeinsam": 3}]
     # On marc's profile lena sees whom marc is close to, herself included.
     assert lena.get(f"/api/users/{marc.me['id']}/geschmack").json()["vergleiche"][0]["user_id"] == lena.me["id"]
     from app.models import Gruppe

@@ -1,4 +1,5 @@
 <script setup>
+import Geschmack from '../Geschmack.vue'
 import { computed, ref, watch } from 'vue'
 import { api } from '../../api'
 import { useApp } from '../../stores/app'
@@ -75,6 +76,7 @@ const name = (id) => app.userById(id)?.name || 'Jemand'
           <p class="muted">Level {{ profil.level }} · {{ profil.titel }} · {{ profil.freigeschaltet.length }} Erfolge</p>
         </div>
       </section>
+      <Geschmack v-if="app.me" :user-id="personId" />
 
       <section v-if="profil" class="panel">
         <h2>Vitrine</h2>
@@ -131,6 +133,7 @@ const name = (id) => app.userById(id)?.name || 'Jemand'
         </div>
         <button class="small" @click="navigate('profil', 'person', app.me.id)">Meine Vitrine</button>
       </section>
+      <Geschmack v-if="app.me && !personId" :user-id="app.me.id" />
 
       <section v-if="daten" class="panel">
         <h2>Die Gruppe</h2>

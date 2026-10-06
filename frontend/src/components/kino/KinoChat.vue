@@ -105,6 +105,7 @@ const farbe = (id) => app.userById(id)?.color || 'var(--muted)'
     <div class="reaktionen" role="group" aria-label="Reaktion ins Bild schicken">
       <button v-for="r in chat.reaktionen" :key="r" class="ghost" :aria-label="`Reaktion ${r}`" @click="chat.reagieren(r)">{{ r }}</button>
     </div>
+    <button class="ghost small moment" @click="chat.moment()">✋ Moment, bin gleich da</button>
     <form class="eingabe" @submit.prevent="senden">
       <input v-model="text" maxlength="300" placeholder="Nachricht an alle …" aria-label="Nachricht an alle" autocomplete="off" />
       <button class="primary small" :disabled="!text.trim() || sendet" aria-label="Senden"><Icon name="play" :size="14" /></button>
@@ -134,6 +135,7 @@ time { font-size: 0.7rem; }
 .reaktionen { display: flex; flex-wrap: wrap; gap: 0; justify-content: space-between; }
 .reaktionen button { font-size: 1.15rem; padding: 0.2rem 0.25rem; line-height: 1; }
 .reaktionen button:hover { transform: scale(1.15); }
+.moment { align-self: flex-start; font-size: 0.78rem; }
 .eingabe { display: flex; gap: 0.4rem; }
 .eingabe input { flex: 1; min-width: 0; }
 </style>

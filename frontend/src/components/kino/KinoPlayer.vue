@@ -18,6 +18,21 @@ const vollbildAn = ref(false)
 const jetzt = ref(Date.now())
 let uhr = null
 const einblendungen = computed(() => chat.nachrichten.filter((n) => jetzt.value - n.at < 8000).slice(-4))
+// The host's break: how long it's been, ticking while it lasts.
+const uhrPause = ref(Date.now())
+let pauseTimer = null
+watch(
+  () => kino.pause,
+  (p) => {
+    clearInterval(pauseTimer)
+    if (p) pauseTimer = setInterval(() => (uhrPause.value = Date.now()), 1000)
+  },
+  { immediate: true },
+)
+const pauseDauer = computed(() => {
+  const s = Math.max(0, Math.floor((uhrPause.value - (kino.pause || 0)) / 1000))
+  return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`
+})
 function vollbildGeaendert() {
   vollbildAn.value = document.fullscreenElement === box.value
   clearInterval(uhr)
@@ -77,6 +92,7 @@ watch(() => [kino.live, kino.sende], attach)
 onBeforeUnmount(() => {
   document.removeEventListener('fullscreenchange', vollbildGeaendert)
   clearInterval(uhr)
+  clearInterval(pauseTimer)
   stopWatching()
   api.del('/api/kino/da', { quiet: true }).catch(() => {})
 })
@@ -109,6 +125,14 @@ function vollbild() {
         {{ f.inhalt }}<small v-if="vollbildAn">{{ app.userById(f.user_id)?.name }}</small>
       </span>
     </div>
+    <div v-if="kino.pause" class="pause" role="status">
+      <span class="symbol" aria-hidden="true">⏸</span>
+      <strong>Kurze Pause – gleich geht’s weiter</strong>
+      <small>seit {{ pauseDauer }}</small>
+    </div>
+    <ol v-if="chat.momente.length" class="momente" aria-live="polite">
+      <li v-for="m in chat.momente" :key="m.id">✋ <strong>{{ app.userById(m.user_id)?.name ?? 'Jemand' }}</strong>: Moment, bin gleich da</li>
+    </ol>
     <ol v-if="vollbildAn && einblendungen.length" class="einblendungen" aria-live="polite">
       <li v-for="n in einblendungen" :key="n.id">
         <strong :style="{ color: app.userById(n.user_id)?.color }">{{ app.userById(n.user_id)?.name ?? 'Jemand' }}</strong> {{ n.inhalt }}
@@ -192,6 +216,15 @@ video { width: 100%; height: 100%; object-fit: contain; display: block; backgrou
   animation: auftauchen 0.25s ease-out; overflow-wrap: anywhere;
 }
 @keyframes auftauchen { from { opacity: 0; transform: translateY(6px); } }
+.pause {
+  position: absolute; inset: 0; z-index: 2; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.4rem;
+  background: rgba(0, 0, 0, 0.72); color: #fff; text-align: center; backdrop-filter: blur(4px); pointer-events: none;
+}
+.pause .symbol { font-size: 3rem; line-height: 1; }
+.pause strong { font-size: clamp(1.1rem, 2.4vw, 1.6rem); }
+.pause small { opacity: 0.75; font-variant-numeric: tabular-nums; }
+.momente { position: absolute; top: 0.8rem; left: 50%; transform: translateX(-50%); z-index: 3; margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 0.3rem; pointer-events: none; }
+.momente li { background: rgba(0, 0, 0, 0.7); color: #fff; padding: 0.4rem 0.8rem; border-radius: 999px; font-size: 0.9rem; white-space: nowrap; animation: auftauchen 0.25s ease-out; }
 .schnell { display: inline-flex; }
 .schnell button { font-size: 1.15rem; padding: 0.2rem 0.3rem; }
 </style>

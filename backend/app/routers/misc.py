@@ -12,7 +12,7 @@ from sqlmodel import col, func, select
 
 from .. import erfolge, ki, tmdb
 from ..config import settings
-from ..db import get_session
+from ..db import freigeben, get_session
 from ..gruppen import aktive_gruppe, aktuelle_gruppe, mitglieder, require_gruppen_admin
 from ..models import (
     Abend,
@@ -249,6 +249,7 @@ async def ki_suche(body: KiSuche, db: DBSession = Depends(get_session), user: Us
         list(db.exec(select(Movie.title).where(col(Movie.id).in_(gesehen_ids))).all()) if body.ohne_gesehene else []
     )
     nutzung = ki.Nutzung()
+    freigeben(db)  # the LLM takes seconds
     fehler = ""
     try:
         ideen = await ki.vorschlaege(body.beschreibung, body.limit + 4, vermeiden, nutzung)

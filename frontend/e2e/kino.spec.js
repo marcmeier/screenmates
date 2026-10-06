@@ -129,6 +129,8 @@ async function join(browser, name, ctx = null, { asAdmin = false } = {}) {
     await page.reload()
     await page.locator('.users .user', { hasText: name }).click()
   }
+  // New here: the welcome cards come first.
+  await page.getByRole('dialog', { name: 'Willkommen bei screenmates' }).getByRole('button', { name: 'Überspringen' }).click()
   await expect(page.getByRole('dialog')).toBeHidden()
   if (asAdmin && !(await page.locator('.admin-badge').count())) {
     // Kim sends in the Kino: an admin makes her admin.

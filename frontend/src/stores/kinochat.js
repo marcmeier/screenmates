@@ -13,6 +13,7 @@ export const useKinoChat = defineStore('kinochat', {
   state: () => ({
     nachrichten: [], // [{ id, user_id, inhalt, at }], oldest first
     fliegend: [], // reactions on their way up: [{ key, inhalt, user_id, links, dauer, kippen }]
+    momente: [], // "Moment, bin gleich da" on the picture for a moment: [{ id, user_id }]
     reaktionen: [],
     letzte: null, // newest message id seen; null: nothing fetched yet
     rletzte: 0, // newest reaction id seen
@@ -48,9 +49,17 @@ export const useKinoChat = defineStore('kinochat', {
       if (e.typ === 'text') {
         if (this.nachrichten.some((n) => n.id === e.id)) return
         this.nachrichten.push(e)
+      } else if (e.typ === 'moment') {
+        if (this.momente.some((m) => m.id === e.id)) return
+        this.momente.push(e)
+        setTimeout(() => (this.momente = this.momente.filter((m) => m.id !== e.id)), 7000)
       } else if (!this.fliegend.some((f) => f.id === e.id)) {
         this.fliegen(e)
       }
+    },
+    async moment() {
+      const e = await api.post('/api/kino/moment', undefined, { quiet: true }).catch(() => null)
+      if (e) this.aufnehmen(e)
     },
     fliegen(e) {
       const f = {

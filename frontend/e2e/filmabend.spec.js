@@ -39,10 +39,23 @@ test('first visit asks for a name', async () => {
   await expect(page.getByRole('dialog', { name: 'Namen wählen' })).toBeVisible()
   await page.getByPlaceholder('Neuer Name').fill('Marc')
   await page.getByRole('button', { name: 'Anlegen' }).click()
-  await expect(page.getByRole('dialog')).toBeHidden()
+  await expect(page.getByRole('dialog', { name: 'Namen wählen' })).toBeHidden()
   await expect(page.locator('.me')).toContainText('Marc')
   // The first name of a fresh install administrates the group.
   await expect(page.locator('.admin-badge')).toBeVisible()
+})
+
+test('someone new is welcomed once, with three cards', async () => {
+  const willkommen = page.getByRole('dialog', { name: 'Willkommen bei screenmates' })
+  await expect(willkommen).toContainText('Willkommen, Marc!')
+  await willkommen.getByRole('button', { name: 'Weiter' }).click()
+  await expect(willkommen).toContainText('Die Kiste entscheidet')
+  await willkommen.getByRole('button', { name: 'Weiter' }).click()
+  await willkommen.getByRole('button', { name: 'Los geht’s' }).click()
+  await expect(willkommen).toBeHidden()
+  await page.reload()
+  await expect(page.locator('.me')).toContainText('Marc')
+  await expect(willkommen).toHaveCount(0) // once, not on every visit
 })
 
 test('joining the next evening', async () => {
@@ -151,15 +164,19 @@ test('a veto keeps a film out of the case', async () => {
   await alien.getByRole('button', { name: 'Veto', exact: true }).click()
   await expect(alien).toHaveClass(/vetoed/)
   await expect(alien.locator('.veto-info')).toContainText('Veto von Marc')
-  await expect(page.getByRole('list', { name: 'Kiste mit 1 Film' })).toContainText('Shining')
+  // Out of the case: only Shining is left in it.
+  await expect(alien.locator('.info.chance')).toBeHidden()
+  await expect(page.locator('.sugg', { hasText: 'Shining' }).locator('.info.chance')).toHaveText('100 %')
   await alien.getByRole('button', { name: 'Veto zurück' }).click()
   await expect(alien).not.toHaveClass(/vetoed/)
-  await expect(page.getByRole('list', { name: 'Kiste mit 2 Filmen' }).getByRole('listitem')).toHaveCount(2)
 })
 
-test('the case shows each film with its odds', async () => {
-  const inhalt = page.getByRole('list', { name: 'Kiste mit 2 Filmen' })
-  await expect(inhalt.getByRole('listitem')).toHaveText([/Alien.*50 %/, /Shining.*50 %/])
+test('each suggestion shows its odds in the case; the case itself stays slim', async () => {
+  for (const film of ['Alien', 'Shining']) {
+    await expect(page.locator('.sugg', { hasText: film }).locator('.info.chance')).toHaveText('50 %')
+  }
+  await expect(page.getByRole('list', { name: /^Kiste mit/ })).toHaveCount(0)
+  await expect(page.locator('.wheelbox')).toContainText('Die Chancen stehen bei den Vorschlägen')
 })
 
 test('a practice spin: Escape skips the animation, the reveal names the winner, nothing counts', async () => {
@@ -627,6 +644,7 @@ test('a newcomer requests a name and an admin approves it', async ({ browser }) 
 
   await lena.reload()
   await lena.getByRole('button', { name: 'Lena' }).click()
+  await lena.getByRole('dialog', { name: 'Willkommen bei screenmates' }).getByRole('button', { name: 'Überspringen' }).click()
   await expect(lena.locator('.me')).toContainText('Lena')
   await expect(lena.locator('.admin-badge')).toHaveCount(0)
   page.lena = lena

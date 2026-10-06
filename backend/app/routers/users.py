@@ -368,7 +368,8 @@ def taste(
 ):
     """ "Lena tickt zu 87 % wie du": how close this person's stars are to everyone's they share a group with.
 
-    100 % means the same stars on every film both rated, 0 % always four stars apart.
+    100 % means the same stars on every film both rated, 0 % two stars apart on average
+    (ratings rarely differ by more, so a scale up to four stars would put everyone at 80 %).
     Only people who share a group with the asker are compared.
     """
     from ..models import Watched, WatchedRating
@@ -394,7 +395,7 @@ def taste(
         if len(gemeinsam) < GEMEINSAM_MIN:
             continue
         abstand = sum(abs(meine[m] - deine[m]) for m in gemeinsam) / len(gemeinsam)
-        out.append({"user_id": uid, "prozent": round(100 * (1 - abstand / 4)), "gemeinsam": len(gemeinsam)})
+        out.append({"user_id": uid, "prozent": max(0, round(100 * (1 - abstand / 2))), "gemeinsam": len(gemeinsam)})
     out.sort(key=lambda v: (-v["prozent"], -v["gemeinsam"]))
     return {"vergleiche": out, "min": GEMEINSAM_MIN}
 
@@ -413,7 +414,16 @@ def set_design(body: Design, user: User = Depends(require_user), db: DBSession =
     """How screenmates looks for you: colour theme and font (stays dark either way)."""
     if body.theme not in THEMES or body.schrift not in SCHRIFTEN:
         raise HTTPException(422, "Unbekanntes Farbschema oder Schrift.")
-    user.design = json.dumps({"theme": body.theme, "schrift": body.schrift})
+    user.design = json.dumps(json.loads(user.design or "{}") | {"theme": body.theme, "schrift": body.schrift})
+    db.add(user)
+    db.commit()
+    return {"design": json.loads(user.design)}
+
+
+@router.post("/users/me/willkommen")
+def welcomed(user: User = Depends(require_user), db: DBSession = Depends(get_session)):
+    """The welcome cards were seen: not again, on no device."""
+    user.design = json.dumps(json.loads(user.design or "{}") | {"willkommen": True})
     db.add(user)
     db.commit()
     return {"design": json.loads(user.design)}

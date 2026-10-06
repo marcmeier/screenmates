@@ -12,7 +12,7 @@ from sqlmodel import col, select
 
 from .. import tmdb
 from ..config import settings
-from ..db import get_session
+from ..db import freigeben, get_session
 from ..gruppen import aktive_gruppe, require_gruppen_admin
 from ..models import Abo, Mitglied, Movie, Suggestion, User, Veto, Wishlist
 from ..serialize import iso, movie_dict, with_flags
@@ -104,6 +104,7 @@ async def suggestions_where(gid: int = Depends(aktive_gruppe), db: DBSession = D
             except tmdb.TMDBError:
                 return mid, None
 
+    freigeben(db)  # TMDB takes a moment
     ergebnis = await asyncio.gather(*(laden(mid) for mid in filme))
     return {"verfuegbar": True, "anbieter": {str(mid): bester_weg(data, wer) for mid, data in ergebnis}}
 
