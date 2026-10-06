@@ -2,6 +2,7 @@
 import { computed, ref } from 'vue'
 import { useApp } from '../stores/app'
 import { useGastgeber } from '../stores/gastgeber'
+import Erklaerung from './Erklaerung.vue'
 import UserAvatar from './UserAvatar.vue'
 
 // Who runs the evening, and how the baton changes hands. On the evening page and in the Kino.
@@ -26,7 +27,7 @@ async function geben() {
     <template v-if="g.gastgeber">
       <UserAvatar :user-id="g.gastgeber" link />
       <span>
-        <strong>{{ ich ? $t('gastgeberleiste.duBist') : name }}</strong> {{ ich ? $t('gastgeberleiste.gastgeber') : $t('gastgeberleiste.istGastgeber') }}
+        <strong>{{ ich ? $t('gastgeberleiste.duBist') : name }}</strong> {{ ich ? $t('gastgeberleiste.gastgeber') : $t('gastgeberleiste.istGastgeber') }}<Erklaerung :label="$t('gastgeberleiste.gastgeber')" :text="$t('erklaerung.gastgeber')" />
         <small v-if="!ich" class="muted" :class="{ weg: !g.da }">· {{ g.da ? $t('gastgeberleiste.geradeDa') : $t('gastgeberleiste.geradeNichtDa') }}</small>
       </span>
     </template>

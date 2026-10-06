@@ -1311,6 +1311,10 @@ export default {
     wuensche: "Wünsche",
     wuenschen: "Wünschen",
     wunschBearbeiten: "Wunsch bearbeiten",
+    gruppe: {
+      offen: "Offen",
+      erledigt: "Erledigt",
+    },
   },
   zeit: {
     uhr: "{zeit} Uhr",
@@ -1322,5 +1326,41 @@ export default {
     rein: "Rein",
     text: "Frag in deiner Filmgruppe nach dem Link. Hast du einen Link oder Code? Dann füg ihn hier ein.",
     titel: "Hier kommt man nur mit einem Einladungslink hinein.",
+  },
+  erklaerung: {
+    wasIst: "Was ist „{was}“?",
+    vorschlaege:
+      "Mit ✋ schlägt jede Person Filme für den nächsten Abend vor. Die Prozentzahl ist die Chance, dass die Kiste den Film zieht – je mehr Leute ihn vorschlagen, desto höher.",
+    veto: "Jede Person hat genau ein Veto. Ein Film mit Veto kommt nicht in die Kiste. Legst du es auf einen anderen Film, wandert es mit.",
+    kiste:
+      "Am Abend öffnet der Gastgeber die Kiste für alle: Sie zieht zufällig einen Film aus den Vorschlägen, mit den Chancen von links. Probedrehen geht nur für dich und zählt nicht.",
+    gastgeber:
+      "Der Gastgeber öffnet die Kiste für alle und überträgt im Kino. Wer den Termin festlegt, bekommt den Stab. Ist der Gastgeber nicht da, kann ihn jemand anderes übernehmen.",
+  },
+  ersteSchritte: {
+    titel: "Erste Schritte",
+    stand: "{fertig} von {alle} erledigt",
+    ausblenden: "Ausblenden",
+    antwort: {
+      titel: "Sag zum nächsten Abend zu",
+      text: "Dann wissen alle, mit wem sie rechnen können.",
+      ja: "Ich bin dabei",
+      nein: "Kann nicht",
+    },
+    vorschlag: {
+      titel: "Schlag einen Film vor",
+      text: "In „Finden“ mit ✋ – er landet in der Kiste für den Abend.",
+      los: "Filme finden",
+    },
+    abos: {
+      titel: "Trag deine Streamingdienste ein",
+      text: "Dann zeigt screenmates, was bei euch ohne Aufpreis läuft.",
+      los: "Zu den Diensten",
+    },
+    push: {
+      titel: "Schalte Benachrichtigungen ein",
+      text: "Für Termine, die Kiste und „Gleich geht’s los“ – auch bei geschlossener App.",
+      los: "Einschalten",
+    },
   },
 };

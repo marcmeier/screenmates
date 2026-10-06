@@ -85,3 +85,10 @@ def test_language_is_personal_and_keeps_the_look(client, browser):
     client.put("/api/users/me/design", json={"theme": "wald", "schrift": "grotesk"})
     assert client.get("/api/users").json()["ich"]["design"]["sprache"] == "en"
     assert client.put("/api/users/me/sprache", json={"sprache": "fr"}).status_code == 422
+
+
+def test_the_first_steps_card_can_be_put_away(client):
+    login(client, "marc")
+    assert "schritte_aus" not in client.get("/api/users").json()["ich"]["design"]
+    assert client.post("/api/users/me/erste-schritte").json()["design"]["schritte_aus"] is True
+    assert client.get("/api/users").json()["ich"]["design"]["schritte_aus"] is True

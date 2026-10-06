@@ -85,8 +85,8 @@ const erledigt = computed(() => features.value.filter((f) => f.done))
     <div v-if="loading" class="list"><div v-for="i in 3" :key="i" class="skeleton" style="height: 64px"></div></div>
     <div v-else-if="!features.length" class="empty"><strong>{{ $t('wuenschetab.nochKeineWuensche') }}</strong>{{ $t('wuenschetab.derErsteWunschIst') }}</div>
 
-    <template v-for="[title, list] in [['Offen', offen], ['Erledigt', erledigt]]" :key="title">
-      <h2 v-if="list.length" class="section-title">{{ title }} · {{ list.length }}</h2>
+    <template v-for="[title, list] in [['offen', offen], ['erledigt', erledigt]]" :key="title">
+      <h2 v-if="list.length" class="section-title">{{ $t(`wuenschetab.gruppe.${title}`) }} · {{ list.length }}</h2>
       <ul class="list">
         <li v-for="f in list" :key="f.id" class="wish" :class="{ done: f.done }">
           <button

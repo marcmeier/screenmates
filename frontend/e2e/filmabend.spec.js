@@ -49,7 +49,8 @@ const zweitesGeraet = async () => {
 }
 
 test('first visit asks for a name', async () => {
-  await expect(page.getByRole('dialog', { name: 'Namen wählen' })).toBeVisible()
+  // The very first request of a freshly started stack can take a while (seeding, cold caches).
+  await expect(page.getByRole('dialog', { name: 'Namen wählen' })).toBeVisible({ timeout: 20_000 })
   await page.getByPlaceholder('Neuer Name').fill('Marc')
   await page.getByRole('button', { name: 'Anlegen' }).click()
   await expect(page.getByRole('dialog', { name: 'Namen wählen' })).toBeHidden()
@@ -83,6 +84,24 @@ test('someone new picks language and colours, then gets three cards – once', a
   await page.reload()
   await expect(page.locator('.me')).toContainText('Marc')
   await expect(willkommen).toHaveCount(0) // once, not on every visit
+})
+
+test('newcomers get a first-steps checklist and short explanations', async () => {
+  await page.goto('/#/abend')
+  const schritte = page.getByRole('region', { name: 'Erste Schritte' })
+  await expect(schritte).toBeVisible()
+  await expect(schritte.getByRole('link', { name: 'Filme finden' })).toHaveAttribute('href', '#/finden')
+  // A tap on ⓘ explains our own words.
+  await page.getByRole('button', { name: 'Was ist „Filmabend-Kiste“?' }).click()
+  await expect(page.getByRole('tooltip')).toContainText('zieht zufällig einen Film')
+  await page.keyboard.press('Escape')
+  await expect(page.getByRole('tooltip')).toHaveCount(0)
+  // Put away: gone, also after a reload.
+  await schritte.getByRole('button', { name: 'Ausblenden' }).click()
+  await expect(schritte).toHaveCount(0)
+  await page.reload()
+  await expect(page.locator('.me')).toContainText('Marc')
+  await expect(schritte).toHaveCount(0)
 })
 
 test('joining the next evening', async () => {
