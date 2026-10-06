@@ -5,7 +5,7 @@ import UeberInhalt from '../UeberInhalt.vue'
 <template>
   <div class="page">
     <header class="page-head">
-      <h1>Über screenmates</h1>
+      <h1>{{ $t('uebertab.ueberScreenmates') }}</h1>
     </header>
     <UeberInhalt />
   </div>

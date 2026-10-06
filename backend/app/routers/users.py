@@ -420,6 +420,24 @@ def set_design(body: Design, user: User = Depends(require_user), db: DBSession =
     return {"design": json.loads(user.design)}
 
 
+SPRACHEN = ("de", "en")
+
+
+class Sprache(BaseModel):
+    sprache: str
+
+
+@router.put("/users/me/sprache")
+def set_language(body: Sprache, user: User = Depends(require_user), db: DBSession = Depends(get_session)):
+    """The language screenmates speaks to you, on all your devices (film data stays German)."""
+    if body.sprache not in SPRACHEN:
+        raise HTTPException(422, "Unbekannte Sprache.")
+    user.design = json.dumps(json.loads(user.design or "{}") | {"sprache": body.sprache})
+    db.add(user)
+    db.commit()
+    return {"design": json.loads(user.design)}
+
+
 @router.post("/users/me/willkommen")
 def welcomed(user: User = Depends(require_user), db: DBSession = Depends(get_session)):
     """The welcome cards were seen: not again, on no device."""

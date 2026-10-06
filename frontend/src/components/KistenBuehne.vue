@@ -203,14 +203,14 @@ onBeforeUnmount(() => {
 
 <template>
   <Teleport to="body">
-    <div class="buehne" role="dialog" aria-modal="true" aria-label="Kiste öffnen" :class="phase">
+    <div class="buehne" role="dialog" aria-modal="true" :aria-label="$t('kistenbuehne.kisteOeffnen')" :class="phase">
       <div class="kopf">
-        <span class="label">Filmabend-Kiste</span>
-        <span v-if="probe" class="probe">Probe – zählt nicht</span>
-        <span v-else-if="von" class="wer">{{ von }} öffnet die Kiste für alle</span>
+        <span class="label">{{ $t('abendtab.filmabendKiste') }}</span>
+        <span v-if="probe" class="probe">{{ $t('kistenbuehne.probeZaehltNicht') }}</span>
+        <span v-else-if="von" class="wer">{{ $t('kistenbuehne.vonOeffnetDieKiste', { von }) }}</span>
         <span class="spacer"></span>
-        <button class="ghost" :class="{ blockiert }" :aria-label="blockiert ? 'Ton einschalten' : ton ? 'Ton aus' : 'Ton an'" @click="tonUmschalten">
-          <Icon :name="ton && !blockiert ? 'ton' : 'stumm'" /><span v-if="blockiert" class="ton-hinweis">Ton antippen</span>
+        <button class="ghost" :class="{ blockiert }" :aria-label="blockiert ? $t('kistenbuehne.tonEinschalten') : ton ? $t('kistenbuehne.tonAus') : $t('kistenbuehne.tonAn')" @click="tonUmschalten">
+          <Icon :name="ton && !blockiert ? 'ton' : 'stumm'" /><span v-if="blockiert" class="ton-hinweis">{{ $t('kistenbuehne.tonAntippen') }}</span>
         </button>
       </div>
 
@@ -240,12 +240,12 @@ onBeforeUnmount(() => {
           <div class="enthuellung" :style="{ '--farbe': seltenheit(gewinner).farbe }">
             <span class="stufe">{{ seltenheit(gewinner).name }} · {{ prozent(gewinner) }}</span>
             <strong>{{ gewinner.title }}</strong>
-            <span v-if="!probe" class="muted">Film des Abends</span>
+            <span v-if="!probe" class="muted">{{ $t('abendtab.filmDesAbends') }}</span>
           </div>
-          <button class="primary" @click="weiter">Weiter</button>
+          <button class="primary" @click="weiter">{{ $t('kistenbuehne.weiter') }}</button>
         </template>
         <button v-else class="ghost" :class="{ unsichtbar: phase === 'countdown' }" :disabled="phase === 'countdown'" @click="weiter">
-          {{ phase === 'countdown' ? 'Gleich geht’s los …' : 'Überspringen' }}
+          {{ phase === 'countdown' ? $t('kistenbuehne.gleichGehtSLos') : $t('kistenbuehne.ueberspringen') }}
         </button>
       </div>
     </div>

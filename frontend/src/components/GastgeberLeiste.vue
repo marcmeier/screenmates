@@ -21,32 +21,32 @@ async function geben() {
 </script>
 
 <template>
-  <div v-if="app.me" class="gastgeber row" aria-label="Gastgeber des Abends">
+  <div v-if="app.me" class="gastgeber row" :aria-label="$t('gastgeberleiste.gastgeberDesAbends')">
     <span class="stab" aria-hidden="true">🎬</span>
     <template v-if="g.gastgeber">
       <UserAvatar :user-id="g.gastgeber" link />
       <span>
-        <strong>{{ ich ? 'Du bist' : name }}</strong> {{ ich ? 'Gastgeber' : 'ist Gastgeber' }}
-        <small v-if="!ich" class="muted" :class="{ weg: !g.da }">· {{ g.da ? 'gerade da' : 'gerade nicht da' }}</small>
+        <strong>{{ ich ? $t('gastgeberleiste.duBist') : name }}</strong> {{ ich ? $t('gastgeberleiste.gastgeber') : $t('gastgeberleiste.istGastgeber') }}
+        <small v-if="!ich" class="muted" :class="{ weg: !g.da }">· {{ g.da ? $t('gastgeberleiste.geradeDa') : $t('gastgeberleiste.geradeNichtDa') }}</small>
       </span>
     </template>
-    <span v-else class="muted">Niemand hat den Gastgeber-Stab</span>
+    <span v-else class="muted">{{ $t('gastgeberleiste.niemandHatDenGastgeber') }}</span>
     <span class="spacer"></span>
 
     <template v-if="g.darfUebergeben && andere.length">
       <form v-if="waehlen" class="row" @submit.prevent="geben">
-        <select v-model="an" aria-label="Stab weitergeben an" required>
-          <option value="" disabled>An wen?</option>
+        <select v-model="an" :aria-label="$t('gastgeberleiste.stabWeitergebenAn')" required>
+          <option value="" disabled>{{ $t('gastgeberleiste.anWen') }}</option>
           <option v-for="u in andere" :key="u.id" :value="u.id">{{ u.name }}</option>
         </select>
-        <button class="small primary" :disabled="!an">Anbieten</button>
-        <button type="button" class="small ghost" @click="waehlen = false">Abbrechen</button>
+        <button class="small primary" :disabled="!an">{{ $t('gastgeberleiste.anbieten') }}</button>
+        <button type="button" class="small ghost" @click="waehlen = false">{{ $t('gastgeberleiste.abbrechen') }}</button>
       </form>
-      <button v-else class="small" @click="waehlen = true">Stab weitergeben</button>
+      <button v-else class="small" @click="waehlen = true">{{ $t('gastgeberleiste.stabWeitergeben') }}</button>
     </template>
-    <button v-if="g.uebernehmen === 'sofort'" class="small" @click="g.nehmen()">Stab übernehmen</button>
-    <button v-else-if="g.uebernehmen === 'abstimmung'" class="small" title="Die Anwesenden stimmen ab – 60 Sekunden" @click="g.nehmen()">
-      Übernehmen? Abstimmen lassen
+    <button v-if="g.uebernehmen === 'sofort'" class="small" @click="g.nehmen()">{{ $t('gastgeberleiste.stabUebernehmen') }}</button>
+    <button v-else-if="g.uebernehmen === 'abstimmung'" class="small" :title="$t('gastgeberleiste.dieAnwesendenStimmenAb')" @click="g.nehmen()">
+      {{ $t('gastgeberleiste.uebernehmenAbstimmenLassen') }}
     </button>
   </div>
 </template>

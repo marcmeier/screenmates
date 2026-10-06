@@ -1,4 +1,5 @@
 import { api } from './api'
+import { t } from './i18n'
 
 // Push notifications on this device: the browser side of backend/app/push.py.
 // The service worker (public/sw.js) shows what arrives.
@@ -50,8 +51,8 @@ export async function einschalten(schluessel) {
   if (erlaubnis !== 'granted') {
     throw new Error(
       erlaubnis === 'denied'
-        ? 'Benachrichtigungen sind für screenmates blockiert – erlaube sie in den Website-Einstellungen des Browsers.'
-        : 'Ohne deine Erlaubnis gibt es keine Benachrichtigungen.',
+        ? t('push.benachrichtigungenSindFuerScreenmates')
+        : t('push.ohneDeineErlaubnisGibt'),
     )
   }
   const reg = (await navigator.serviceWorker.getRegistration()) || (await navigator.serviceWorker.register('/sw.js'))
@@ -69,7 +70,7 @@ export async function einschalten(schluessel) {
     // Chromium without Google's push service (Brave by default, Linux distro builds) fails here.
     if (e.name === 'AbortError' || /push service/i.test(e.message)) {
       throw new Error(
-        'Dein Browser erreicht seinen Push-Dienst nicht. In Brave unter Einstellungen → Datenschutz „Google-Dienste für Push-Nachrichten verwenden“ einschalten und neu starten; Chromium ohne Google-Dienste kann kein Push – Firefox, Chrome, Edge und Safari gehen.',
+        t('push.deinBrowserErreichtSeinen'),
         { cause: e },
       )
     }

@@ -9,14 +9,14 @@ const hover = ref(0)
 </script>
 
 <template>
-  <div class="stars" role="radiogroup" aria-label="Bewertung" @mouseleave="hover = 0">
+  <div class="stars" role="radiogroup" :aria-label="$t('starrating.bewertung')" @mouseleave="hover = 0">
     <button
       v-for="n in 5"
       :key="n"
       type="button"
       role="radio"
       :aria-checked="props.modelValue === n"
-      :aria-label="`${n} von 5 Sternen`"
+      :aria-label="$t('starrating.von5', { n })"
       :disabled="disabled"
       :class="{ lit: n <= (hover || props.modelValue) }"
       @mouseenter="hover = n"

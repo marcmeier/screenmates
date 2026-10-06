@@ -28,18 +28,18 @@ watch(() => [props.frage, opts.ohne_gesehene, opts.mit_sammlung], ask, { immedia
 <template>
   <section>
     <div class="row opts">
-      <span class="muted">Die KI schlägt vor zu „{{ frage }}“</span>
+      <span class="muted">{{ $t('kiergebnisse.dieKiSchlaegtVor', { frage }) }}</span>
       <span class="spacer"></span>
-      <label class="check"><input v-model="opts.ohne_gesehene" type="checkbox" /> ohne Gesehene</label>
-      <label class="check"><input v-model="opts.mit_sammlung" type="checkbox" /> nur aus unserem Katalog</label>
+      <label class="check"><input v-model="opts.ohne_gesehene" type="checkbox" /> {{ $t('kiergebnisse.ohneGesehene') }}</label>
+      <label class="check"><input v-model="opts.mit_sammlung" type="checkbox" /> {{ $t('kiergebnisse.nurAusUnseremKatalog') }}</label>
     </div>
-    <p v-if="loading" class="muted thinking">Die KI denkt nach … das dauert ein paar Sekunden.</p>
+    <p v-if="loading" class="muted thinking">{{ $t('kiergebnisse.dieKiDenktNach') }}</p>
     <MovieGrid
       :movies="results"
       :loading="loading"
       :failed="failed"
-      empty-title="Keine passenden Filme gefunden"
-      empty-text="Formulier es anders oder lockere die Optionen."
+      :empty-title="$t('kiergebnisse.keinePassendenFilmeGefunden')"
+      :empty-text="$t('kiergebnisse.formulierEsAndersOder')"
       @retry="ask"
     >
       <template #card="{ movie }">

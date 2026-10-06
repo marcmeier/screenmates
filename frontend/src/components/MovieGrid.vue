@@ -7,7 +7,7 @@ const props = defineProps({
   loading: Boolean,
   failed: Boolean,
   more: Boolean,
-  emptyTitle: { type: String, default: 'Nichts gefunden' },
+  emptyTitle: { type: String, default: null },
   emptyText: { type: String, default: '' },
 })
 const emit = defineEmits(['more', 'retry'])
@@ -49,16 +49,16 @@ onBeforeUnmount(() => beobachter?.disconnect())
       <div v-for="i in 12" :key="i" class="skeleton" style="aspect-ratio: 2 / 3"></div>
     </div>
     <div v-else-if="failed" class="empty">
-      <strong>Das hat nicht geklappt</strong>
-      <button class="small" style="margin-top: 0.6rem" @click="$emit('retry')">Nochmal versuchen</button>
+      <strong>{{ $t('moviegrid.dasHatNichtGeklappt') }}</strong>
+      <button class="small" style="margin-top: 0.6rem" @click="$emit('retry')">{{ $t('moviegrid.nochmalVersuchen') }}</button>
     </div>
     <div v-else-if="!movies.length" class="empty">
-      <strong>{{ emptyTitle }}</strong>
+      <strong>{{ emptyTitle ?? $t('moviegrid.nichtsGefunden') }}</strong>
       <span v-if="emptyText">{{ emptyText }}</span>
     </div>
 
     <div v-if="more && !loading" ref="knopf" class="more">
-      <button @click="$emit('more')">Mehr laden</button>
+      <button @click="$emit('more')">{{ $t('moviegrid.mehrLaden') }}</button>
     </div>
   </div>
 </template>

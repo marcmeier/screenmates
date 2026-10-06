@@ -1,4 +1,5 @@
 <script setup>
+import { t } from '../i18n'
 import { computed, onMounted, ref } from 'vue'
 import DOMPurify from 'dompurify'
 import { marked } from 'marked'
@@ -35,7 +36,7 @@ async function save() {
   try {
     text.value = (await api.put('/api/info', { text: draft.value })).text
     editing.value = false
-    ui.toast('Infos gespeichert', 'ok')
+    ui.toast(t('infocard.infosGespeichert'), 'ok')
   } finally {
     saving.value = false
   }
@@ -45,23 +46,23 @@ async function save() {
 <template>
   <section v-if="loaded && (text || app.gruppenAdmin)" class="panel info">
     <div class="row head">
-      <h2 class="section-title">Hausregeln & Infos</h2>
+      <h2 class="section-title">{{ $t('infocard.titel') }}</h2>
       <span class="spacer"></span>
-      <button v-if="app.gruppenAdmin && !editing" class="ghost small" :aria-label="text ? 'Infos bearbeiten' : 'Infos hinzufügen'" @click="edit">
-        <Icon :name="text ? 'stift' : 'plus'" :size="14" /> {{ text ? '' : 'Hinzufügen' }}
+      <button v-if="app.gruppenAdmin && !editing" class="ghost small" :aria-label="text ? $t('infocard.infosBearbeiten') : $t('infocard.infosHinzufuegen')" @click="edit">
+        <Icon :name="text ? 'stift' : 'plus'" :size="14" /> {{ text ? '' : $t('infocard.hinzufuegen') }}
       </button>
     </div>
 
     <template v-if="editing">
-      <textarea v-model="draft" rows="10" maxlength="20000" autofocus aria-label="Infos (Markdown)" placeholder="# Hausregeln&#10;- Handys in die Schale …"></textarea>
+      <textarea v-model="draft" rows="10" maxlength="20000" autofocus :aria-label="$t('infocard.infosMarkdown')" placeholder="# Hausregeln&#10;- Handys in die Schale …"></textarea>
       <div v-if="draft" class="prose preview" v-html="html"></div>
       <div class="row actions">
-        <button class="primary small" :disabled="saving" @click="save">Speichern</button>
-        <button class="ghost small" @click="editing = false">Abbrechen</button>
+        <button class="primary small" :disabled="saving" @click="save">{{ $t('infocard.speichern') }}</button>
+        <button class="ghost small" @click="editing = false">{{ $t('infocard.abbrechen') }}</button>
       </div>
     </template>
     <div v-else-if="text" class="prose" v-html="html"></div>
-    <p v-else class="muted">Hier können Regeln, Termine oder der Snack-Plan stehen.</p>
+    <p v-else class="muted">{{ $t('infocard.hierKoennenRegelnTermine') }}</p>
   </section>
 </template>
 

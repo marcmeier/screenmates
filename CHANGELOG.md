@@ -1,5 +1,21 @@
 # Changelog
 
+## 0.12.0 – 2026-10-06
+
+### Neu
+- **Deutsch und Englisch:** screenmates spricht jetzt beide Sprachen. Neue Leute wählen im Willkommen
+  zuerst **Sprache und Farbschema**; später geht beides unter Einstellungen → Darstellung. Die Sprache
+  hängt am Profil und gilt auf allen Geräten; vor der Anmeldung entscheidet die Browsersprache
+  (umschaltbar auf der Einladungsseite).
+- Übersetzt sind alle Hauptseiten: Filmabend (samt Kiste, Gastgeber-Stab, Terminplanung, Einladung),
+  Finden, Unsere Filme mit Rückblick, Kino, Profil, Erfolge, Einstellungen, Neuigkeiten und Wünsche.
+  Datum, Uhrzeit und Zahlen folgen der Sprache.
+
+### Hinweise
+- Filmdaten (Titel, Beschreibungen, Genres) kommen weiter auf Deutsch von TMDB.
+- Noch deutsch (nächste Etappe): Texte vom Server (Erfolgs-Katalog, Regal-Namen, Fakten in der
+  Seitenleiste, Push-Nachrichten, Fehlermeldungen), Verwaltung, Gefahrenzone und die Über-Seite.
+
 ## 0.11.2 – 2026-10-06
 
 ### Geändert

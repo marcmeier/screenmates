@@ -1,4 +1,5 @@
 <script setup>
+import { t as tr } from '../i18n'
 import { computed, ref, watch } from 'vue'
 import { useApp } from '../stores/app'
 import { terminText } from '../einladung'
@@ -37,8 +38,8 @@ watch(stand, () => (manuell.value = null))
 const offen = computed(() => manuell.value ?? brauchtDich.value)
 
 const ANTWORTEN = [
-  { key: 'vielleicht', label: 'Vielleicht', icon: 'fragezeichen' },
-  { key: 'nein', label: 'Kann nicht', icon: 'x' },
+  { key: 'vielleicht', label: tr('naechsterabend.vielleicht'), icon: 'fragezeichen' },
+  { key: 'nein', label: tr('naechsterabend.kannNicht'), icon: 'x' },
 ]
 const antworten = (key) => app.antworten(app.me.rueckmeldung === key ? null : key)
 const kalender = () => (window.location.href = '/api/termin.ics')
@@ -46,9 +47,9 @@ const namen = (us) => us.map((u) => u.name).join(', ')
 const zusammenfassung = computed(() =>
   [
     // A few names say more than a number.
-    app.dabei.length && `${app.dabei.length <= 3 ? namen(app.dabei) : app.dabei.length} dabei`,
-    app.vielleicht.length && `${app.vielleicht.length} vielleicht`,
-    app.absagen.length && `${app.absagen.length} ${app.absagen.length === 1 ? 'kann' : 'können'} nicht`,
+    app.dabei.length && tr('naechsterabend.sum.dabei', { wer: app.dabei.length <= 3 ? namen(app.dabei) : app.dabei.length }),
+    app.vielleicht.length && tr('naechsterabend.sum.vielleicht', { n: app.vielleicht.length }),
+    app.absagen.length && tr('naechsterabend.sum.absagen', { n: app.absagen.length }, app.absagen.length),
   ]
     .filter(Boolean)
     .join(' · '),
@@ -56,25 +57,25 @@ const zusammenfassung = computed(() =>
 </script>
 
 <template>
-  <section class="panel crew" :class="{ offen, heute }" aria-label="Nächster Filmabend">
+  <section class="panel crew" :class="{ offen, heute }" :aria-label="$t('naechsterabend.naechsterFilmabend')">
     <div class="zeile">
       <div class="wann">
-        <span v-if="heute" class="heute-badge">Heute</span>
+        <span v-if="heute" class="heute-badge">{{ $t('naechsterabend.heute') }}</span>
         <Icon v-else name="kalender" :size="17" class="muted" />
         <span v-if="t" class="termin"><strong>{{ t.tag }}</strong>, {{ t.zeit }}<span v-if="t.notiz" class="muted"> · {{ t.notiz }}</span></span>
-        <span v-else-if="umfrageOffen" class="muted">Termin wird abgestimmt</span>
-        <span v-else class="muted">Noch nichts geplant</span>
-        <span v-if="t && umfrageOffen" class="chip klein">Umfrage läuft</span>
+        <span v-else-if="umfrageOffen" class="muted">{{ $t('naechsterabend.terminWirdAbgestimmt') }}</span>
+        <span v-else class="muted">{{ $t('naechsterabend.nochNichtsGeplant') }}</span>
+        <span v-if="t && umfrageOffen" class="chip klein">{{ $t('naechsterabend.umfrageLaeuft') }}</span>
       </div>
       <span v-if="zusammenfassung" class="wer" :title="namen(app.dabei)">
         <span class="avatars"><UserAvatar v-for="u in app.dabei.slice(0, 6)" :key="u.id" :user="u" /></span>
         <span class="muted">{{ zusammenfassung }}</span>
       </span>
       <span class="spacer"></span>
-      <div v-if="app.me" class="rsvp" role="group" aria-label="Bist du dabei?">
+      <div v-if="app.me" class="rsvp" role="group" :aria-label="$t('naechsterabend.bistDuDabei')">
         <button :class="app.me.dabei ? 'on' : 'primary'" :aria-pressed="app.me.dabei" @click="app.toggleDabei()">
           <Icon :name="app.me.dabei ? 'gesehen' : 'plus'" :size="16" />
-          {{ app.me.dabei ? 'Ich bin dabei' : 'Ich bin dabei!' }}
+          {{ app.me.dabei ? $t('naechsterabend.ichBinDabei') : $t('naechsterabend.ichBinDabei2') }}
         </button>
         <button
           v-for="a in ANTWORTEN"
@@ -88,40 +89,40 @@ const zusammenfassung = computed(() =>
         </button>
       </div>
       <div class="aktionen">
-        <button class="small" @click="emit('einladen')"><Icon name="teilen" :size="14" /> Einladen</button>
+        <button class="small" @click="emit('einladen')"><Icon name="teilen" :size="14" /> {{ $t('naechsterabend.einladen') }}</button>
         <button v-if="app.me" class="small ghost auf" :aria-expanded="offen" aria-controls="planung" @click="manuell = !offen">
-          Planung <Icon name="pfeil" :size="14" class="pfeil" />
+          {{ $t('naechsterabend.planung') }} <Icon name="pfeil" :size="14" class="pfeil" />
         </button>
       </div>
     </div>
 
     <div v-if="app.me && !t && !umfrageOffen && !offen" class="row leer">
-      <button class="small" @click="emit('termin', 'fest')"><Icon name="kalender" :size="14" /> Termin festlegen</button>
-      <button class="small ghost" @click="emit('termin', 'umfrage')"><Icon name="umfrage" :size="14" /> Abstimmen</button>
+      <button class="small" @click="emit('termin', 'fest')"><Icon name="kalender" :size="14" /> {{ $t('naechsterabend.terminFestlegen') }}</button>
+      <button class="small ghost" @click="emit('termin', 'umfrage')"><Icon name="umfrage" :size="14" /> {{ $t('naechsterabend.abstimmen') }}</button>
     </div>
 
     <div v-if="offen" id="planung" class="details">
       <div class="row">
-        <span class="muted">Dabei:</span>
+        <span class="muted">{{ $t('naechsterabend.dabei') }}</span>
         <template v-if="app.dabei.length">
           <span v-for="u in app.dabei" :key="u.id" class="chip who"><UserAvatar :user="u" link /> {{ u.name }}</span>
         </template>
-        <span v-else class="muted">noch niemand</span>
+        <span v-else class="muted">{{ $t('naechsterabend.nochNiemand') }}</span>
       </div>
       <div v-if="app.vielleicht.length || app.absagen.length" class="row andere muted">
         <template v-if="app.vielleicht.length">
-          <span>Vielleicht:</span>
+          <span>{{ $t('naechsterabend.vielleicht2') }}</span>
           <span class="namen">{{ namen(app.vielleicht) }}</span>
         </template>
         <template v-if="app.absagen.length">
-          <span>Kann nicht:</span>
+          <span>{{ $t('naechsterabend.kannNicht2') }}</span>
           <span class="namen">{{ namen(app.absagen) }}</span>
         </template>
       </div>
       <div class="row knoepfe">
-        <button class="small ghost" @click="emit('termin', 'fest')"><Icon name="kalender" :size="14" /> {{ t ? 'Ändern' : 'Termin festlegen' }}</button>
-        <button v-if="!umfrageOffen" class="small ghost" @click="emit('termin', 'umfrage')"><Icon name="umfrage" :size="14" /> Abstimmen</button>
-        <button v-if="t" class="small ghost" title="Als Kalender-Eintrag herunterladen" @click="kalender"><Icon name="download" :size="14" /> Kalender</button>
+        <button class="small ghost" @click="emit('termin', 'fest')"><Icon name="kalender" :size="14" /> {{ t ? $t('naechsterabend.aendern') : $t('naechsterabend.terminFestlegen') }}</button>
+        <button v-if="!umfrageOffen" class="small ghost" @click="emit('termin', 'umfrage')"><Icon name="umfrage" :size="14" /> {{ $t('naechsterabend.abstimmen') }}</button>
+        <button v-if="t" class="small ghost" :title="$t('naechsterabend.alsKalenderEintragHerunterladen')" @click="kalender"><Icon name="download" :size="14" /> {{ $t('naechsterabend.kalender') }}</button>
       </div>
       <TerminUmfrage v-if="umfrageOffen" :umfrage="umfrage" @update="(u) => emit('umfrage', u)" @festgelegt="(r) => emit('festgelegt', r)" />
       <GastgeberLeiste />

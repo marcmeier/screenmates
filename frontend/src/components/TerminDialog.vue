@@ -1,4 +1,5 @@
 <script setup>
+import { t as tr } from '../i18n'
 import { ref } from 'vue'
 import { api } from '../api'
 import { useUi } from '../stores/ui'
@@ -41,7 +42,7 @@ async function speichern() {
   try {
     if (art.value === 'fest') {
       const t = await api.put('/api/termin', { termin: `${wann.value}:00`, notiz: notiz.value })
-      ui.toast('Termin gespeichert', 'ok')
+      ui.toast(tr('termindialog.terminGespeichert'), 'ok')
       ui.changed()
       emit('saved', t)
     } else {
@@ -49,7 +50,7 @@ async function speichern() {
       for (const o of [...new Set(optionen.value.filter(Boolean))]) {
         u = await api.post('/api/termin/umfrage', { termin: `${o}:00`, notiz: notiz.value })
       }
-      ui.toast('Umfrage gestartet – jetzt können alle abstimmen', 'ok')
+      ui.toast(tr('termindialog.umfrageGestartetJetztKoennen'), 'ok')
       ui.changed()
       emit('umfrage', u)
     }
@@ -66,46 +67,46 @@ async function entfernen() {
 </script>
 
 <template>
-  <Modal label="Termin für den Filmabend" @close="emit('close')">
+  <Modal :label="$t('termindialog.terminFuerDenFilmabend')" @close="emit('close')">
     <form class="termin" @submit.prevent="speichern">
-      <h2><Icon name="kalender" /> Termin</h2>
-      <div class="arten" role="radiogroup" aria-label="Wie finden wir den Termin?">
+      <h2><Icon name="kalender" /> {{ $t('termindialog.termin') }}</h2>
+      <div class="arten" role="radiogroup" :aria-label="$t('termindialog.wieFindenWirDen')">
         <button type="button" role="radio" :aria-checked="art === 'fest'" :class="{ aktiv: art === 'fest' }" @click="art = 'fest'">
-          <Icon name="kalender" :size="15" /> Fester Termin
+          <Icon name="kalender" :size="15" /> {{ $t('termindialog.festerTermin') }}
         </button>
         <button type="button" role="radio" :aria-checked="art === 'umfrage'" :class="{ aktiv: art === 'umfrage' }" @click="art = 'umfrage'">
-          <Icon name="umfrage" :size="15" /> Abstimmen lassen
+          <Icon name="umfrage" :size="15" /> {{ $t('termindialog.abstimmenLassen') }}
         </button>
       </div>
 
       <label v-if="art === 'fest'">
-        <span>Wann? <em class="muted">(deutsche Zeit)</em></span>
+        <span>{{ $t('termindialog.wann') }} <em class="muted">{{ $t('termindialog.deutscheZeit') }}</em></span>
         <input v-model="wann" type="datetime-local" required />
       </label>
       <fieldset v-else class="optionen">
-        <legend>Welche Termine stehen zur Wahl? <em class="muted">(deutsche Zeit)</em></legend>
+        <legend>{{ $t('termindialog.welcheTermineStehenZur') }} <em class="muted">{{ $t('termindialog.deutscheZeit2') }}</em></legend>
         <div v-for="(o, i) in optionen" :key="i" class="option">
-          <input v-model="optionen[i]" type="datetime-local" :aria-label="`Termin ${i + 1}`" required />
-          <button v-if="optionen.length > 1" type="button" class="ghost small" :aria-label="`Termin ${i + 1} entfernen`" @click="optionen.splice(i, 1)">
+          <input v-model="optionen[i]" type="datetime-local" :aria-label="$t('termindialog.terminX', { x: i + 1 })" required />
+          <button v-if="optionen.length > 1" type="button" class="ghost small" :aria-label="$t('termindialog.terminXEntfernen', { x: i + 1 })" @click="optionen.splice(i, 1)">
             <Icon name="x" :size="14" />
           </button>
         </div>
         <button v-if="optionen.length < 8" type="button" class="small ghost mehr" @click="optionen.push(naechster(optionen.length % 2 ? 6 : 5))">
-          <Icon name="plus" :size="14" /> Weiterer Termin
+          <Icon name="plus" :size="14" /> {{ $t('termindialog.weitererTermin') }}
         </button>
-        <p class="muted hinweis">Alle stimmen mit Ja, Vielleicht oder Nein ab. Wer festlegt, übernimmt die Antworten als Zusagen.</p>
+        <p class="muted hinweis">{{ $t('termindialog.alleStimmenMitJa') }}</p>
       </fieldset>
 
       <label>
-        <span>Wo? <em class="muted">(optional)</em></span>
-        <input v-model="notiz" maxlength="80" placeholder="z. B. bei Marc oder online im Kino" />
+        <span>{{ $t('termindialog.wo') }} <em class="muted">{{ $t('termindialog.optional') }}</em></span>
+        <input v-model="notiz" maxlength="80" :placeholder="$t('termindialog.zBBeiMarc')" />
       </label>
       <div class="row">
-        <button v-if="art === 'fest' && termin?.termin" type="button" class="ghost danger" @click="entfernen">Termin entfernen</button>
+        <button v-if="art === 'fest' && termin?.termin" type="button" class="ghost danger" @click="entfernen">{{ $t('termindialog.terminEntfernen') }}</button>
         <span class="spacer"></span>
-        <button type="button" @click="emit('close')">Abbrechen</button>
+        <button type="button" @click="emit('close')">{{ $t('termindialog.abbrechen') }}</button>
         <button class="primary" :disabled="busy || (art === 'fest' ? !wann : !optionen.some(Boolean))">
-          {{ art === 'fest' ? 'Speichern' : 'Umfrage starten' }}
+          {{ art === 'fest' ? $t('termindialog.speichern') : $t('termindialog.umfrageStarten') }}
         </button>
       </div>
     </form>

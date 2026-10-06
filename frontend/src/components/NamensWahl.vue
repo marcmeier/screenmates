@@ -1,6 +1,7 @@
 <script setup>
 import { ref } from 'vue'
 import { useApp } from '../stores/app'
+import { t } from '../i18n'
 import { useUi } from '../stores/ui'
 import FilmPicker from './FilmPicker.vue'
 import Icon from './Icon.vue'
@@ -26,7 +27,7 @@ async function attempt(fn) {
   busy.value = true
   try {
     await fn()
-    ui.toast(`Hallo ${app.me.name}!`, 'ok')
+    ui.toast(t('namen.hallo', { name: app.me.name }), 'ok')
     ui.changed()
     close()
   } catch (e) {
@@ -55,7 +56,7 @@ async function create() {
   try {
     const u = await app.createUser(name)
     if (u.freigegeben) {
-      ui.toast(`Hallo ${u.name}!`, 'ok')
+      ui.toast(t('namen.hallo', { name: u.name }), 'ok')
       ui.changed()
       close()
     } else {
@@ -71,24 +72,24 @@ async function create() {
 </script>
 
 <template>
-  <Modal label="Namen wählen" @close="close">
+  <Modal :label="$t('namen.dialog')" @close="close">
     <div class="wrap">
       <div class="brand">screen<span>mates</span></div>
 
       <template v-if="beantragt">
-        <h2>Antrag gestellt</h2>
+        <h2>{{ $t('namen.antragGestellt') }}</h2>
         <p class="muted center">
-          „{{ beantragt.name }}“ wartet jetzt auf die Freigabe durch einen Admin{{ app.zugang.einladung ? ` von „${app.zugang.einladung.gruppe}“` : '' }}.
-          Danach findest du deinen Namen hier in der Liste und kannst ihn mit einem Klick wählen.
+          {{ app.zugang.einladung ? $t('namen.wartetGruppe', { name: beantragt.name, gruppe: app.zugang.einladung.gruppe }) : $t('namen.wartet', { name: beantragt.name }) }}
+          {{ $t('namen.danach') }}
         </p>
-        <div class="center"><button @click="close">Alles klar</button></div>
+        <div class="center"><button @click="close">{{ $t('namen.allesKlar') }}</button></div>
       </template>
 
       <template v-else-if="!guarded">
-        <h2>Wer schaut mit?</h2>
+        <h2>{{ $t('namen.wer') }}</h2>
         <p v-if="app.zugang.einladung" class="einladung center">
-          Du bist eingeladen in <strong>„{{ app.zugang.einladung.gruppe }}“</strong>.
-          {{ app.zugang.einladung.direkt ? 'Leg deinen Namen an, dann bist du direkt dabei.' : 'Leg deinen Namen an; ein Admin der Gruppe schaltet ihn frei.' }}
+          {{ $t('namen.eingeladen') }} <strong>„{{ app.zugang.einladung.gruppe }}“</strong>.
+          {{ app.zugang.einladung.direkt ? $t('namen.direkt') : $t('namen.mitFreigabe') }}
         </p>
         <div v-if="app.users.length" class="users">
           <button v-for="u in app.users" :key="u.id" class="user" :disabled="busy" @click="pick(u)">
@@ -97,21 +98,21 @@ async function create() {
             <Icon v-if="u.hat_schutz" name="schloss" :size="14" class="lock" />
           </button>
         </div>
-        <p v-else class="muted center">Noch niemand da – leg den ersten Namen an. Er wird Admin.</p>
+        <p v-else class="muted center">{{ $t('namen.erster') }}</p>
 
-        <p v-if="app.users.length && !app.zugang.einladung" class="muted center hint">Neu hier? Beantrag deinen Namen, ein Admin schaltet ihn frei.</p>
+        <p v-if="app.users.length && !app.zugang.einladung" class="muted center hint">{{ $t('namen.neuHier') }}</p>
         <form class="create" @submit.prevent="create">
-          <input v-model="newName" maxlength="30" placeholder="Neuer Name …" aria-label="Neuer Name" />
+          <input v-model="newName" maxlength="30" :placeholder="$t('namen.neuPlatzhalter')" :aria-label="$t('namen.neu')" />
           <button class="primary" :disabled="busy || !newName.trim()">
-            <Icon name="plus" :size="16" /> {{ !app.users.length || app.zugang.einladung?.direkt ? 'Anlegen' : 'Beantragen' }}
+            <Icon name="plus" :size="16" /> {{ !app.users.length || app.zugang.einladung?.direkt ? $t('namen.anlegen') : $t('namen.beantragen') }}
           </button>
         </form>
       </template>
 
       <template v-else>
-        <button class="ghost small back" @click="guarded = null"><Icon name="pfeil" :size="14" /> Zurück</button>
-        <h2>Film-Passwort für {{ guarded.name }}</h2>
-        <p class="muted center">Such den Film, den {{ guarded.name }} als Passwort gewählt hat, und klick ihn an.</p>
+        <button class="ghost small back" @click="guarded = null"><Icon name="pfeil" :size="14" /> {{ $t('allg.zurueck') }}</button>
+        <h2>{{ $t('namen.passwortFuer', { name: guarded.name }) }}</h2>
+        <p class="muted center">{{ $t('namen.passwortText', { name: guarded.name }) }}</p>
         <FilmPicker :busy="busy" @pick="unlock" />
       </template>
 

@@ -1,4 +1,5 @@
 <script setup>
+import { t } from '../../i18n'
 import { computed, onMounted, ref, watch } from 'vue'
 import { api } from '../../api'
 import { useApp } from '../../stores/app'
@@ -46,7 +47,7 @@ async function save(f, text) {
 }
 
 async function remove(f) {
-  if (!confirm('Diesen Wunsch löschen?')) return
+  if (!confirm(t('wuenschetab.diesenWunschLoeschen'))) return
   await api.del(`/api/features/${f.id}`)
   features.value = features.value.filter((x) => x.id !== f.id)
 }
@@ -71,18 +72,18 @@ const erledigt = computed(() => features.value.filter((f) => f.done))
   <div class="page">
     <header class="page-head">
       <div>
-        <h1>Wünsche</h1>
-        <p>Ideen für screenmates – abstimmen, was als Nächstes kommt.</p>
+        <h1>{{ $t('wuenschetab.wuensche') }}</h1>
+        <p>{{ $t('wuenschetab.ideenFuerScreenmatesAbstimmen') }}</p>
       </div>
     </header>
 
     <form v-if="app.me" class="add" @submit.prevent="add">
-      <input v-model="draft" maxlength="500" placeholder="Was soll screenmates noch können?" aria-label="Neuer Wunsch" />
-      <button class="primary" :disabled="!draft.trim()"><Icon name="plus" :size="16" /> Wünschen</button>
+      <input v-model="draft" maxlength="500" :placeholder="$t('wuenschetab.wasSollScreenmatesNoch')" :aria-label="$t('wuenschetab.neuerWunsch')" />
+      <button class="primary" :disabled="!draft.trim()"><Icon name="plus" :size="16" /> {{ $t('wuenschetab.wuenschen') }}</button>
     </form>
 
     <div v-if="loading" class="list"><div v-for="i in 3" :key="i" class="skeleton" style="height: 64px"></div></div>
-    <div v-else-if="!features.length" class="empty"><strong>Noch keine Wünsche</strong>Der erste Wunsch ist der schönste.</div>
+    <div v-else-if="!features.length" class="empty"><strong>{{ $t('wuenschetab.nochKeineWuensche') }}</strong>{{ $t('wuenschetab.derErsteWunschIst') }}</div>
 
     <template v-for="[title, list] in [['Offen', offen], ['Erledigt', erledigt]]" :key="title">
       <h2 v-if="list.length" class="section-title">{{ title }} · {{ list.length }}</h2>
@@ -93,7 +94,7 @@ const erledigt = computed(() => features.value.filter((f) => f.done))
             :class="{ on: f.voted }"
             :disabled="!app.me"
             :aria-pressed="f.voted"
-            :aria-label="`Abstimmen, ${f.votes} Stimmen`"
+            :aria-label="$t('wuenschetab.abstimmenVotesStimmen', { votes: f.votes })"
             @click="vote(f)"
           >▲<span>{{ f.votes }}</span></button>
 
@@ -103,7 +104,7 @@ const erledigt = computed(() => features.value.filter((f) => f.done))
               :value="f.text"
               maxlength="500"
               autofocus
-              aria-label="Wunsch bearbeiten"
+              :aria-label="$t('wuenschetab.wunschBearbeiten')"
               @keydown.enter="save(f, $event.target.value)"
               @keydown.escape="editing = null"
               @blur="save(f, $event.target.value)"
@@ -113,7 +114,7 @@ const erledigt = computed(() => features.value.filter((f) => f.done))
               <UserAvatar v-if="f.user_id" :user-id="f.user_id" />
               <span>{{ vorWann(f.created_at) }}</span>
               <button class="ghost small" @click="open = open === f.id ? null : f.id">
-                {{ f.notes.length ? `${f.notes.length} Anmerkung${f.notes.length > 1 ? 'en' : ''}` : 'Anmerken' }}
+                {{ f.notes.length ? `${f.notes.length} Anmerkung${f.notes.length > 1 ? 'en' : ''}` : $t('wuenschetab.anmerken') }}
               </button>
             </div>
 
@@ -121,23 +122,23 @@ const erledigt = computed(() => features.value.filter((f) => f.done))
               <div v-for="n in f.notes" :key="n.id" class="note">
                 <UserAvatar :user-id="n.user_id" />
                 <span>{{ n.text }}</span>
-                <button v-if="mine(n) || app.admin" class="ghost small" aria-label="Anmerkung löschen" @click="removeNote(f, n)">
+                <button v-if="mine(n) || app.admin" class="ghost small" :aria-label="$t('wuenschetab.anmerkungLoeschen')" @click="removeNote(f, n)">
                   <Icon name="x" :size="12" />
                 </button>
               </div>
               <form v-if="app.me" class="add small-add" @submit.prevent="addNote(f)">
-                <input v-model="noteDraft" maxlength="1000" placeholder="Anmerkung …" aria-label="Anmerkung" />
-                <button class="small" :disabled="!noteDraft.trim()">Senden</button>
+                <input v-model="noteDraft" maxlength="1000" :placeholder="$t('wuenschetab.anmerkung')" :aria-label="$t('wuenschetab.anmerkung2')" />
+                <button class="small" :disabled="!noteDraft.trim()">{{ $t('wuenschetab.senden') }}</button>
               </form>
             </div>
           </div>
 
           <div class="actions">
-            <button v-if="app.admin" class="ghost small" :title="f.done ? 'Wieder öffnen' : 'Als erledigt markieren'" @click="done(f)">
+            <button v-if="app.admin" class="ghost small" :title="f.done ? $t('wuenschetab.wiederOeffnen') : $t('wuenschetab.alsErledigtMarkieren')" @click="done(f)">
               <Icon :name="f.done ? 'antwort' : 'gesehen'" :size="15" />
             </button>
-            <button v-if="mine(f) || app.admin" class="ghost small" aria-label="Bearbeiten" @click="editing = f.id"><Icon name="stift" :size="15" /></button>
-            <button v-if="mine(f) || app.admin" class="ghost small danger" aria-label="Löschen" @click="remove(f)"><Icon name="muell" :size="15" /></button>
+            <button v-if="mine(f) || app.admin" class="ghost small" :aria-label="$t('wuenschetab.bearbeiten')" @click="editing = f.id"><Icon name="stift" :size="15" /></button>
+            <button v-if="mine(f) || app.admin" class="ghost small danger" :aria-label="$t('wuenschetab.loeschen')" @click="remove(f)"><Icon name="muell" :size="15" /></button>
           </div>
         </li>
       </ul>

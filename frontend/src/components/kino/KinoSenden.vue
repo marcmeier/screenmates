@@ -1,4 +1,5 @@
 <script setup>
+import { t } from '../../i18n'
 import { computed, onMounted, ref, watch } from 'vue'
 import { api } from '../../api'
 import { useApp } from '../../stores/app'
@@ -52,8 +53,8 @@ const statsZeile = computed(() => {
   return `${s.breite}×${s.hoehe} · ${s.fps} fps${mbit} · ${s.codec}${ton}`
 })
 const GRENZE = {
-  cpu: 'Dein Rechner kommt beim Kodieren nicht hinterher – „Mittel“ wählen oder andere Programme schließen.',
-  bandwidth: 'Die Verbindung zum Server bremst gerade – das Bild wird kurz weicher.',
+  cpu: t('kinosenden.deinRechnerKommtBeim'),
+  bandwidth: t('kinosenden.dieVerbindungZumServer'),
 }
 
 watch(() => [kino.titel, kino.movie?.id], () => {
@@ -99,7 +100,7 @@ async function ladeObs() {
 onMounted(ladeObs)
 
 async function neuerKey() {
-  if (!confirm('Neuen Stream-Key erzeugen? Der alte funktioniert dann in OBS nicht mehr.')) return
+  if (!confirm(t('kinosenden.neuenStreamKeyErzeugen'))) return
   obs.value.key = (await api.post('/api/kino/obs/neu')).key
   zeigeKey.value = true
 }
@@ -109,18 +110,18 @@ async function kopiere(text, was) {
     await navigator.clipboard.writeText(text)
     ui.toast(`${was} kopiert`, 'ok')
   } catch {
-    ui.toast('Kopieren ging nicht – bitte markieren und kopieren.', 'error')
+    ui.toast(t('kinosenden.kopierenGingNichtBitte'), 'error')
   }
 }
 
 // Who is on air: this browser, the same person on another device, someone else's browser, or OBS.
 const app = useApp()
 const liveText = computed(() => {
-  if (kino.sende) return 'Du bist live'
-  if (kino.quelle === 'obs') return 'Live über OBS'
-  if (kino.sender && kino.sender === app.me?.id) return 'Du sendest von einem anderen Gerät'
+  if (kino.sende) return t('kinosenden.duBistLive')
+  if (kino.quelle === 'obs') return t('kinosenden.liveUeberObs')
+  if (kino.sender && kino.sender === app.me?.id) return t('kinosenden.duSendestVonEinem')
   const wer = app.userById(kino.sender)?.name
-  return wer ? `${wer} sendet aus dem Browser` : 'Live'
+  return wer ? t('kinosenden.werSendetAusDem', { wer }) : t('kinosenden.live')
 })
 
 // "Kurze Pause": a sign over everyone's picture until the host goes on.
@@ -130,7 +131,7 @@ async function pause() {
 }
 
 async function beenden() {
-  if (!confirm('Übertragung für alle beenden?')) return
+  if (!confirm(t('kinosenden.uebertragungFuerAlleBeenden'))) return
   await kino.endShow()
 }
 </script>
@@ -142,75 +143,75 @@ async function beenden() {
       <strong>{{ liveText }}</strong>
       <span v-if="statsZeile" class="stats">{{ statsZeile }}</span>
       <span class="spacer"></span>
-      <button class="small" :class="{ on: kino.pause }" @click="pause">{{ kino.pause ? '▶ Weiter geht’s' : '⏸ Pause' }}</button>
-      <button class="small danger" @click="beenden">Übertragung beenden</button>
+      <button class="small" :class="{ on: kino.pause }" @click="pause">{{ kino.pause ? $t('kinosenden.weiterGehtS') : $t('kinosenden.pause') }}</button>
+      <button class="small danger" @click="beenden">{{ $t('kinosenden.uebertragungBeenden') }}</button>
       <span v-if="GRENZE[kino.sendStats?.grenze]" class="warn">{{ GRENZE[kino.sendStats.grenze] }}</span>
     </div>
 
     <div class="zeile">
-      <h2>Senden</h2>
-      <input v-model="titel" class="titel" maxlength="120" aria-label="Was läuft?" placeholder="Was läuft? z. B. Shining" @change="programm()" />
+      <h2>{{ $t('kinosenden.senden') }}</h2>
+      <input v-model="titel" class="titel" maxlength="120" :aria-label="$t('kinosenden.wasLaeuft')" :placeholder="$t('kinosenden.wasLaeuftZB')" @change="programm()" />
       <span v-if="film" class="chip film">
         🎬 {{ film.title }} <span class="muted">{{ film.year }}</span>
-        <span v-if="ausKiste" class="kiste">aus der Kiste</span>
-        <button class="ghost los" aria-label="Verknüpfung lösen" @click="filmWeg"><Icon name="x" :size="12" /></button>
+        <span v-if="ausKiste" class="kiste">{{ $t('kinosenden.ausDerKiste') }}</span>
+        <button class="ghost los" :aria-label="$t('kinosenden.verknuepfungLoesen')" @click="filmWeg"><Icon name="x" :size="12" /></button>
       </span>
-      <button v-else class="ghost small" aria-label="Mit Film aus dem Katalog verknüpfen" @click="filmWaehlen = !filmWaehlen">
-        <Icon name="plus" :size="14" /> <span class="lang">Mit Film aus dem Katalog verknüpfen</span>
+      <button v-else class="ghost small" :aria-label="$t('kinosenden.mitFilmAusDem')" @click="filmWaehlen = !filmWaehlen">
+        <Icon name="plus" :size="14" /> <span class="lang">{{ $t('kinosenden.mitFilmAusDem2') }}</span>
       </button>
       <template v-if="!kino.live">
         <span class="spacer"></span>
-        <nav class="segments" aria-label="Quelle">
-          <button :class="{ active: quelle === 'browser' }" @click="quelle = 'browser'">Bildschirm</button>
+        <nav class="segments" :aria-label="$t('kinosenden.quelle')">
+          <button :class="{ active: quelle === 'browser' }" @click="quelle = 'browser'">{{ $t('kinosenden.bildschirm') }}</button>
           <button :class="{ active: quelle === 'obs' }" @click="quelle = 'obs'">OBS</button>
         </nav>
         <button v-if="quelle === 'browser'" class="ghost small" :aria-expanded="mehr" @click="mehr = !mehr">
-          <Icon name="verwaltung" :size="14" /> Einstellungen
+          <Icon name="verwaltung" :size="14" /> {{ $t('kinosenden.einstellungen') }}
         </button>
         <button v-if="quelle === 'browser'" class="primary go" @click="kino.startSending({ audio: mitTon, qualitaet, inhalt })">
-          <Icon name="kino" :size="16" /> Übertragung starten
+          <Icon name="kino" :size="16" /> {{ $t('kinosenden.uebertragungStarten') }}
         </button>
       </template>
     </div>
-    <FilmPicker v-if="filmWaehlen" placeholder="Film suchen …" @pick="waehleFilm" />
+    <FilmPicker v-if="filmWaehlen" :placeholder="$t('kinosenden.filmSuchen')" @pick="waehleFilm" />
 
     <div v-if="!kino.live && quelle === 'browser' && mehr" class="optionen">
-      <label class="field">Qualität
+      <label class="field">{{ $t('kinosenden.qualitaet') }}
         <select v-model="qualitaet">
           <option v-for="(q, key) in QUALITAET" :key="key" :value="key">{{ q.label }}</option>
         </select>
       </label>
-      <label class="field">Inhalt
+      <label class="field">{{ $t('kinosenden.inhalt') }}
         <select v-model="inhalt">
           <option v-for="(m, key) in INHALT" :key="key" :value="key">{{ m.label }}</option>
         </select>
       </label>
-      <label class="check"><input v-model="mitTon" type="checkbox" /> Ton mitsenden</label>
+      <label class="check"><input v-model="mitTon" type="checkbox" /> {{ $t('kinosenden.tonMitsenden') }}</label>
       <p class="muted klein">
-        Bis zu {{ upload }} Mbit/s Upload je Zuschauer. Für den Ton am einfachsten einen Browser-Tab teilen und „Audio teilen“ anhaken.
+        {{ $t('kinosenden.bisZuUploadMbit', { upload }) }}
       </p>
     </div>
 
     <div v-if="!kino.live && quelle === 'obs'" class="optionen obs">
-      <p v-if="obs?.persoenlich" class="notice klein">Dein persönlicher Schlüssel – er funktioniert nur, solange du den Gastgeber-Stab hast.</p>
+      <p v-if="obs?.persoenlich" class="notice klein">{{ $t('kinosenden.deinPersoenlicherSchluesselEr') }}</p>
       <ol v-if="obs" class="steps">
-        <li>OBS ab Version 30: <strong>Einstellungen → Stream</strong>, Dienst <code>WHIP</code></li>
+        <li>{{ $t('kinosenden.obsAbVersion30') }} <strong>{{ $t('kinosenden.einstellungenStream') }}</strong>{{ $t('kinosenden.dienst') }} <code>WHIP</code></li>
         <li>
-          Server:
-          <span class="copy"><code>{{ obs.server }}</code><button class="ghost small" aria-label="Server kopieren" @click="kopiere(obs.server, 'Server')"><Icon name="kopieren" :size="14" /></button></span>
+          {{ $t('kinosenden.server') }}
+          <span class="copy"><code>{{ obs.server }}</code><button class="ghost small" :aria-label="$t('kinosenden.serverKopieren')" @click="kopiere(obs.server, 'Server')"><Icon name="kopieren" :size="14" /></button></span>
         </li>
         <li>
-          Bearer-Token:
+          {{ $t('kinosenden.bearerToken') }}
           <span class="copy">
             <code>{{ zeigeKey ? obs.key : '•'.repeat(16) }}</code>
             <button class="ghost small" @click="zeigeKey = !zeigeKey">{{ zeigeKey ? 'verbergen' : 'zeigen' }}</button>
-            <button class="ghost small" aria-label="Token kopieren" @click="kopiere(obs.key, 'Token')"><Icon name="kopieren" :size="14" /></button>
+            <button class="ghost small" :aria-label="$t('kinosenden.tokenKopieren')" @click="kopiere(obs.key, 'Token')"><Icon name="kopieren" :size="14" /></button>
           </span>
         </li>
-        <li>Ausgabe: x264 oder Hardware-H.264, <strong>6000–8000 kbit/s</strong> für 1080p, Keyframe-Intervall 1 s, B-Frames 0</li>
-        <li>„Streaming starten“ – hier erscheint dann „Du bist live“.</li>
+        <li>{{ $t('kinosenden.ausgabeX264OderHardware') }} <strong>6000–8000 kbit/s</strong> {{ $t('kinosenden.fuer1080pKeyframeIntervall') }}</li>
+        <li>{{ $t('kinosenden.streamingStartenHierErscheint') }}</li>
       </ol>
-      <button class="ghost small" @click="neuerKey">Neuen Stream-Key erzeugen</button>
+      <button class="ghost small" @click="neuerKey">{{ $t('kinosenden.neuenStreamKeyErzeugen2') }}</button>
     </div>
   </section>
 </template>

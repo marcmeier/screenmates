@@ -1,4 +1,5 @@
 <script setup>
+import { t } from '../i18n'
 import { onBeforeUnmount, onMounted, ref } from 'vue'
 import { useUi } from '../stores/ui'
 import { einladungsBild, einladungsText } from '../einladung'
@@ -32,41 +33,41 @@ async function teilen() {
     if (blob.value && navigator.canShare?.({ files: [datei()] })) await navigator.share({ files: [datei()], text })
     else await navigator.share({ text })
   } catch (e) {
-    if (e.name !== 'AbortError') ui.toast('Teilen hat nicht geklappt – kopier den Text', 'error')
+    if (e.name !== 'AbortError') ui.toast(t('einladung.teilenHatNichtGeklappt'), 'error')
   }
 }
 
 async function kopieren() {
   try {
     await navigator.clipboard.writeText(text)
-    ui.toast('Einladung kopiert', 'ok')
+    ui.toast(t('einladung.einladungKopiert'), 'ok')
   } catch {
-    ui.toast('Kopieren nicht erlaubt – markier den Text', 'error')
+    ui.toast(t('einladung.kopierenNichtErlaubtMarkier'), 'error')
   }
 }
 </script>
 
 <template>
-  <Modal label="Zum Filmabend einladen" width="560px" @close="emit('close')">
+  <Modal :label="$t('einladung.zumFilmabendEinladen')" width="560px" @close="emit('close')">
     <div class="einladung">
       <header class="row">
-        <h2>Einladen</h2>
+        <h2>{{ $t('einladung.einladen') }}</h2>
         <span class="spacer"></span>
-        <button class="ghost" aria-label="Schließen" @click="emit('close')"><Icon name="x" /></button>
+        <button class="ghost" :aria-label="$t('einladung.schliessen')" @click="emit('close')"><Icon name="x" /></button>
       </header>
 
       <div class="karte">
-        <img v-if="vorschau" :src="vorschau" alt="Einladungskarte" />
+        <img v-if="vorschau" :src="vorschau" :alt="$t('einladung.einladungskarte')" />
         <div v-else class="skeleton"></div>
       </div>
       <pre class="text">{{ text }}</pre>
 
       <div class="aktionen">
-        <button v-if="kannTeilen" class="primary" :disabled="!blob" @click="teilen"><Icon name="teilen" :size="16" /> Teilen</button>
+        <button v-if="kannTeilen" class="primary" :disabled="!blob" @click="teilen"><Icon name="teilen" :size="16" /> {{ $t('einladung.teilen') }}</button>
         <a class="button" :class="{ disabled: !vorschau }" :href="vorschau || undefined" download="filmabend.png">
-          <Icon name="download" :size="16" /> Bild speichern
+          <Icon name="download" :size="16" /> {{ $t('einladung.bildSpeichern') }}
         </a>
-        <button @click="kopieren"><Icon name="kopieren" :size="16" /> Text kopieren</button>
+        <button @click="kopieren"><Icon name="kopieren" :size="16" /> {{ $t('einladung.textKopieren') }}</button>
       </div>
     </div>
   </Modal>

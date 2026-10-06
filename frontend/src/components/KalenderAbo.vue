@@ -1,4 +1,5 @@
 <script setup>
+import { t } from '../i18n'
 import { computed, onMounted, ref } from 'vue'
 import { api } from '../api'
 import { useUi } from '../stores/ui'
@@ -14,46 +15,44 @@ const https = computed(() => (pfad.value ? `${location.origin}${pfad.value}` : '
 const webcal = computed(() => https.value.replace(/^https?:/, 'webcal:'))
 
 async function erstellen(neu = false) {
-  if (neu && !confirm('Neuen Link erstellen? Der alte hört sofort auf zu funktionieren.')) return
+  if (neu && !confirm(t('kalenderabo.neuenLinkErstellenDer'))) return
   pfad.value = (await api.post('/api/kalender')).pfad
 }
 async function abschalten() {
-  if (!confirm('Kalender-Abo abschalten? Der Link hört sofort auf zu funktionieren.')) return
+  if (!confirm(t('kalenderabo.kalenderAboAbschaltenDer'))) return
   pfad.value = (await api.del('/api/kalender')).pfad
 }
 async function kopieren() {
   try {
     await navigator.clipboard.writeText(https.value)
-    ui.toast('Link kopiert', 'ok')
+    ui.toast(t('kalenderabo.linkKopiert'), 'ok')
   } catch {
-    ui.toast('Kopieren nicht erlaubt – markier den Link', 'error')
+    ui.toast(t('kalenderabo.kopierenNichtErlaubtMarkier'), 'error')
   }
 }
 </script>
 
 <template>
   <section class="panel">
-    <h2><Icon name="kalender" :size="18" /> Kalender-Abo</h2>
+    <h2><Icon name="kalender" :size="18" /> {{ $t('kalenderabo.kalenderAbo') }}</h2>
     <p class="muted">
-      Die nächsten Filmabende all deiner Gruppen automatisch im Kalender – mit Ort, Filmen zur Wahl und Erinnerung.
-      Ändert sich der Termin, zieht dein Kalender nach.
+      {{ $t('kalenderabo.dieNaechstenFilmabendeAll') }}
     </p>
     <template v-if="pfad">
       <div class="row link">
-        <input :value="https" readonly aria-label="Kalender-Link" @focus="$event.target.select()" />
-        <button class="small" @click="kopieren"><Icon name="kopieren" :size="14" /> Kopieren</button>
-        <a class="button small" :href="webcal"><Icon name="extern" :size="14" /> Im Kalender öffnen</a>
+        <input :value="https" readonly :aria-label="$t('kalenderabo.kalenderLink')" @focus="$event.target.select()" />
+        <button class="small" @click="kopieren"><Icon name="kopieren" :size="14" /> {{ $t('kalenderabo.kopieren') }}</button>
+        <a class="button small" :href="webcal"><Icon name="extern" :size="14" /> {{ $t('kalenderabo.imKalenderOeffnen') }}</a>
       </div>
       <p class="muted klein">
-        Google Kalender: „Weitere Kalender → Per URL“ und den Link einfügen. Apple und Outlook: „Im Kalender öffnen“.
-        Der Link ist persönlich – wer ihn hat, sieht eure Termine.
+        {{ $t('kalenderabo.googleKalenderWeitereKalender') }}
       </p>
       <div class="row">
-        <button class="small ghost" @click="erstellen(true)"><Icon name="sync" :size="14" /> Neuer Link</button>
-        <button class="small ghost danger" @click="abschalten">Abschalten</button>
+        <button class="small ghost" @click="erstellen(true)"><Icon name="sync" :size="14" /> {{ $t('kalenderabo.neuerLink') }}</button>
+        <button class="small ghost danger" @click="abschalten">{{ $t('kalenderabo.abschalten') }}</button>
       </div>
     </template>
-    <button v-else-if="pfad === null" class="small" @click="erstellen()"><Icon name="plus" :size="14" /> Kalender-Link erstellen</button>
+    <button v-else-if="pfad === null" class="small" @click="erstellen()"><Icon name="plus" :size="14" /> {{ $t('kalenderabo.kalenderLinkErstellen') }}</button>
   </section>
 </template>
 

@@ -1,4 +1,5 @@
 <script setup>
+import { t } from '../i18n'
 import { ref, watch } from 'vue'
 import { useMovieList } from '../composables/useMovieList'
 import { debounce } from '../format'
@@ -7,7 +8,7 @@ import Poster from './Poster.vue'
 // Search-and-click a film. Used wherever a film serves as a password
 // (access question, name protection), so nothing secret is ever typed or shown.
 const props = defineProps({
-  placeholder: { type: String, default: 'Film suchen …' },
+  placeholder: { type: String, default: t('filmpicker.filmSuchen') },
   busy: Boolean,
   endpoint: { type: String, default: '/api/search' },
 })
@@ -21,7 +22,7 @@ watch(q, run)
 
 <template>
   <div class="picker">
-    <input v-model="q" :placeholder="placeholder" autofocus aria-label="Film suchen" />
+    <input v-model="q" :placeholder="placeholder" autofocus :aria-label="$t('filmpicker.filmSuchen2')" />
     <ul v-if="items.length" class="results">
       <li v-for="m in items" :key="m.id">
         <button :disabled="busy" @click="emit('pick', m)">
@@ -31,7 +32,7 @@ watch(q, run)
         </button>
       </li>
     </ul>
-    <p v-else-if="q && !loading" class="muted hint">Kein Treffer.</p>
+    <p v-else-if="q && !loading" class="muted hint">{{ $t('filmpicker.keinTreffer') }}</p>
   </div>
 </template>
 

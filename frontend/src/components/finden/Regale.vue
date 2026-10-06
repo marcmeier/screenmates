@@ -47,8 +47,8 @@ const hatUns = () => regale.value?.some((r) => r.id === 'bei-uns')
 <template>
   <div class="regale">
     <p v-if="regale && app.status.tmdb && !hatUns()" class="notice tipp">
-      Tragt eure Streaming-Abos ein, dann zeigt screenmates hier zuerst, was bei euch ohne Aufpreis läuft.
-      <a href="#/profil/einstellungen">Zu den Einstellungen</a>
+      {{ $t('regale.tragtEureStreamingAbos') }}
+      <a href="#/profil/einstellungen">{{ $t('regale.zuDenEinstellungen') }}</a>
     </p>
 
     <template v-if="!regale && !fehler">
@@ -59,8 +59,8 @@ const hatUns = () => regale.value?.some((r) => r.id === 'bei-uns')
     </template>
 
     <div v-else-if="fehler" class="empty">
-      <strong>Die Regale ließen sich nicht laden</strong>
-      <button class="small" @click="laden">Nochmal</button>
+      <strong>{{ $t('regale.dieRegaleLiessenSich') }}</strong>
+      <button class="small" @click="laden">{{ $t('regale.nochmal') }}</button>
     </div>
 
     <section v-for="r in regale" v-else :key="r.id" class="regal" :aria-label="r.titel">
@@ -68,20 +68,20 @@ const hatUns = () => regale.value?.some((r) => r.id === 'bei-uns')
         <img v-if="r.anbieter?.logo" :src="r.anbieter.logo" alt="" class="logo" />
         <Icon v-else-if="r.id === 'bei-uns'" name="gesehen" class="symbol uns" />
         <div class="titel">
-          <h2>{{ r.titel }} <span v-if="r.unser" class="euer">Euer Abo</span></h2>
+          <h2>{{ r.titel }} <span v-if="r.unser" class="euer">{{ $t('regale.euerAbo') }}</span></h2>
           <span class="muted">{{ r.untertitel }}</span>
         </div>
         <span class="spacer"></span>
-        <button class="ghost small" @click="emit('alle', r)">Alle zeigen <Icon name="pfeil" :size="13" class="rechts" /></button>
+        <button class="ghost small" @click="emit('alle', r)">{{ $t('regale.alleZeigen') }} <Icon name="pfeil" :size="13" class="rechts" /></button>
       </header>
       <div class="rahmen">
-        <button v-if="rand[r.id]?.links" class="pfeil links" aria-label="Zurückblättern" @click="blaettern(r.id, -1)">
+        <button v-if="rand[r.id]?.links" class="pfeil links" :aria-label="$t('regale.zurueckblaettern')" @click="blaettern(r.id, -1)">
           <Icon name="pfeil" />
         </button>
         <ul :ref="(el) => merke(r.id, el)" class="reihe" @scroll.passive="pruefe(r.id)">
           <li v-for="m in r.filme" :key="m.id"><MovieCard :movie="m" /></li>
         </ul>
-        <button v-if="rand[r.id]?.rechts" class="pfeil rechts" aria-label="Weiterblättern" @click="blaettern(r.id, 1)">
+        <button v-if="rand[r.id]?.rechts" class="pfeil rechts" :aria-label="$t('regale.weiterblaettern')" @click="blaettern(r.id, 1)">
           <Icon name="pfeil" />
         </button>
       </div>

@@ -1,4 +1,5 @@
 <script setup>
+import { t } from '../../i18n'
 import { computed, defineAsyncComponent } from 'vue'
 import { useApp } from '../../stores/app'
 import { useRoute } from '../../composables/useRoute'
@@ -10,9 +11,9 @@ const RueckblickView = defineAsyncComponent(() => import('../sammlung/Rueckblick
 const app = useApp()
 const route = useRoute()
 const VIEWS = [
-  { id: 'merkliste', label: 'Merkliste', count: () => app.status.wishlist_count },
-  { id: 'gesehen', label: 'Gesehen', count: () => app.status.watched_count },
-  { id: 'rueckblick', label: 'Rückblick', count: () => null },
+  { id: 'merkliste', label: t('sammlungtab.merkliste'), count: () => app.status.wishlist_count },
+  { id: 'gesehen', label: t('sammlungtab.gesehen'), count: () => app.status.watched_count },
+  { id: 'rueckblick', label: t('sammlungtab.rueckblick'), count: () => null },
 ]
 const current = computed(() => (['gesehen', 'rueckblick'].includes(route.value.sub) ? route.value.sub : 'merkliste'))
 </script>
@@ -21,12 +22,12 @@ const current = computed(() => (['gesehen', 'rueckblick'].includes(route.value.s
   <div>
     <header class="page-head">
       <div>
-        <h1>Unsere Filme</h1>
-        <p>Was wir sehen wollen – und was wir schon gesehen haben.</p>
+        <h1>{{ $t('nav.sammlung') }}</h1>
+        <p>{{ $t('sammlungtab.wasWirSehenWollen') }}</p>
       </div>
     </header>
 
-    <nav class="segments" aria-label="Liste">
+    <nav class="segments" :aria-label="$t('sammlungtab.liste')">
       <a
         v-for="v in VIEWS"
         :key="v.id"

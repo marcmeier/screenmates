@@ -34,24 +34,24 @@ watch(
 <template>
   <section>
     <div class="row head">
-      <h2>{{ person?.name || 'Filmografie' }}</h2>
+      <h2>{{ person?.name || $t('personview.filmografie') }}</h2>
       <span class="spacer"></span>
-      <select v-model="genre" aria-label="Genre" class="genre">
-        <option value="">Alle Genres</option>
+      <select v-model="genre" :aria-label="$t('personview.genre')" class="genre">
+        <option value="">{{ $t('personview.alleGenres') }}</option>
         <option v-for="g in genres" :key="g.id" :value="String(g.id)">{{ g.name }}</option>
       </select>
     </div>
     <MovieGrid
       :movies="films"
       :loading="loading"
-      :empty-title="genre ? `Keine Filme im Genre ${genreName()} mit ${person?.name || 'dieser Person'}` : 'Keine Filme gefunden'"
+      :empty-title="genre ? $t('personview.keineImGenre', { genre: genreName(), person: person?.name || $t('personview.dieserPerson') }) : $t('personview.keineFilme')"
     >
       <template #card="{ movie }">
         <div class="roles">{{ movie.rollen.join(', ') }}</div>
       </template>
     </MovieGrid>
     <p v-if="!loading && !films.length && genre" class="center">
-      <button class="small" @click="genre = ''">Alle Genres zeigen</button>
+      <button class="small" @click="genre = ''">{{ $t('personview.alleGenresZeigen') }}</button>
     </p>
   </section>
 </template>

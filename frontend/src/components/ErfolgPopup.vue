@@ -29,8 +29,8 @@ function oeffnen() {
     <button v-if="aktuell" :key="aktuell.key" class="popup" :class="`stufe-${aktuell.stufe || 3}`" role="status" @click="oeffnen">
       <span class="medaille">{{ aktuell.zusammenfassung ? '🏆' : aktuell.emoji }}</span>
       <span class="text">
-        <small>{{ aktuell.zusammenfassung ? 'Willkommen bei den Erfolgen' : 'Erfolg freigeschaltet' }}</small>
-        <strong v-if="aktuell.zusammenfassung">{{ aktuell.zusammenfassung }} Erfolge für alles, was du schon gemacht hast</strong>
+        <small>{{ aktuell.zusammenfassung ? $t('erfolgpopup.willkommenBeiDenErfolgen') : $t('erfolgpopup.erfolgFreigeschaltet') }}</small>
+        <strong v-if="aktuell.zusammenfassung">{{ $t('erfolgpopup.zusammenfassungErfolgeFuerAlles', { zusammenfassung: aktuell.zusammenfassung }) }}</strong>
         <strong v-else>{{ aktuell.name }}</strong>
       </span>
       <span class="punkte">{{ aktuell.punkte }} P</span>

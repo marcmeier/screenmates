@@ -1,5 +1,6 @@
 <script setup>
 import { ref } from 'vue'
+import { SPRACHEN, sprache, spracheSetzen } from '../i18n'
 import { useApp } from '../stores/app'
 import Icon from './Icon.vue'
 import UeberInhalt from './UeberInhalt.vue'
@@ -38,16 +39,19 @@ const ueber = ref(location.hash.startsWith('#/ueber'))
   <main class="door">
     <div class="card panel">
       <div class="brand">screen<span>mates</span></div>
-      <p class="lock"><Icon name="schloss" :size="15" /> Nur mit Einladung</p>
-      <h1>Hier kommt man nur mit einem Einladungslink hinein.</h1>
-      <p class="muted">Frag in deiner Filmgruppe nach dem Link. Hast du einen Link oder Code? Dann füg ihn hier ein.</p>
+      <p class="lock"><Icon name="schloss" :size="15" /> {{ $t('zugang.nurMitEinladung') }}</p>
+      <h1>{{ $t('zugang.titel') }}</h1>
+      <p class="muted">{{ $t('zugang.text') }}</p>
       <form class="row" @submit.prevent="rein">
-        <input v-model="eingabe" placeholder="Einladungslink oder Code" aria-label="Einladungslink oder Code" />
-        <button class="primary" :disabled="busy || !eingabe.trim()">Rein</button>
+        <input v-model="eingabe" :placeholder="$t('zugang.feld')" :aria-label="$t('zugang.feld')" />
+        <button class="primary" :disabled="busy || !eingabe.trim()">{{ $t('zugang.rein') }}</button>
       </form>
       <p v-if="app.einladungFehler || error" class="error" role="alert">{{ error || app.einladungFehler }}</p>
     </div>
-    <button class="ghost small rechtliches" :aria-expanded="ueber" @click="ueber = !ueber">Über · Impressum · Datenschutz</button>
+    <button class="ghost small rechtliches" :aria-expanded="ueber" @click="ueber = !ueber">{{ $t('zugang.rechtliches') }}</button>
+    <div class="sprachen" role="group" :aria-label="$t('sprache.wahl')">
+      <button v-for="(name, key) in SPRACHEN" :key="key" class="ghost small" :class="{ on: sprache() === key }" :aria-pressed="sprache() === key" @click="spracheSetzen(key)">{{ name }}</button>
+    </div>
     <UeberInhalt v-if="ueber" class="ueber" />
   </main>
 </template>
@@ -55,6 +59,8 @@ const ueber = ref(location.hash.startsWith('#/ueber'))
 <style scoped>
 .door { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1rem; padding: 1.5rem; }
 .rechtliches { color: var(--muted); }
+.sprachen { display: flex; gap: 0.2rem; }
+.sprachen .on { color: var(--text); }
 .ueber { width: min(760px, 100%); text-align: left; }
 .card { width: min(480px, 100%); padding: 2rem; text-align: center; }
 .brand { font-weight: 800; font-size: 1.6rem; letter-spacing: -0.03em; }

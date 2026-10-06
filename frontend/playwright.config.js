@@ -59,6 +59,8 @@ export default defineConfig({
     trace: 'retain-on-failure',
     ...devices['Desktop Chrome'],
     viewport: { width: 1400, height: 900 },
+    // The app follows the browser language; the suite reads German (one test checks English).
+    locale: 'de-DE',
   },
   webServer: EXTERNAL ? [] : KINO ? [backend, mediamtx] : [backend],
 })

@@ -29,11 +29,11 @@ function send() {
     <UserAvatar v-else :user-id="note.user_id" link />
     <div class="content">
       <p v-if="note.geloescht" class="platzhalter">
-        {{ note.geloescht === 'admin' ? 'Von einem Admin entfernt' : 'Vom Ersteller gelöscht' }}
+        {{ note.geloescht === 'admin' ? $t('kommentar.vonEinemAdminEntfernt') : $t('kommentar.vomErstellerGeloescht') }}
       </p>
       <template v-else>
         <div class="head">
-          <strong>{{ app.userById(note.user_id)?.name || 'Gelöscht' }}</strong>
+          <strong>{{ app.userById(note.user_id)?.name || $t('kommentar.geloescht') }}</strong>
           <time class="muted" :datetime="note.created_at">{{ vorWann(note.created_at) }}</time>
         </div>
         <p>{{ note.text }}</p>
@@ -42,12 +42,12 @@ function send() {
         <button class="ghost small" :class="{ hearted: hearted() }" :disabled="!app.me" :aria-pressed="hearted()" @click="emit('heart', note.id)">
           <Icon name="herz" :size="14" /> {{ note.hearts.length || '' }}
         </button>
-        <button v-if="app.me && depth < 3" class="ghost small" @click="replying = !replying"><Icon name="antwort" :size="14" /> Antworten</button>
-        <button v-if="mine() || app.gruppenAdmin" class="ghost small" aria-label="Kommentar löschen" @click="emit('remove', note.id)"><Icon name="muell" :size="14" /></button>
+        <button v-if="app.me && depth < 3" class="ghost small" @click="replying = !replying"><Icon name="antwort" :size="14" /> {{ $t('kommentar.antworten') }}</button>
+        <button v-if="mine() || app.gruppenAdmin" class="ghost small" :aria-label="$t('kommentar.kommentarLoeschen')" @click="emit('remove', note.id)"><Icon name="muell" :size="14" /></button>
       </div>
       <form v-if="replying" class="reply" @submit.prevent="send">
-        <input v-model="text" maxlength="2000" placeholder="Antwort …" autofocus aria-label="Antwort" />
-        <button class="small" :disabled="!text.trim()">Senden</button>
+        <input v-model="text" maxlength="2000" :placeholder="$t('kommentar.antwort')" autofocus :aria-label="$t('kommentar.antwort2')" />
+        <button class="small" :disabled="!text.trim()">{{ $t('kommentar.senden') }}</button>
       </form>
       <Kommentar
         v-for="r in note.replies"

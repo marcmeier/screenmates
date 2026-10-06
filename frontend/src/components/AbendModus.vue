@@ -1,4 +1,5 @@
 <script setup>
+import { t as tr } from '../i18n'
 import { computed } from 'vue'
 import { api } from '../api'
 import { useApp } from '../stores/app'
@@ -24,9 +25,9 @@ const ui = useUi()
 const t = computed(() => terminText(props.termin))
 const gewinner = computed(() => kiste.aktuell?.gewinner ?? null)
 const schritte = computed(() => [
-  { key: 'da', titel: 'Wer ist da?', fertig: app.dabei.length >= 2 },
-  { key: 'film', titel: 'Was schauen wir?', fertig: !!gewinner.value },
-  { key: 'los', titel: 'Film ab!', fertig: false },
+  { key: 'da', titel: tr('abendmodus.werIstDa'), fertig: app.dabei.length >= 2 },
+  { key: 'film', titel: tr('abendmodus.wasSchauenWir'), fertig: !!gewinner.value },
+  { key: 'los', titel: tr('abendmodus.filmAb'), fertig: false },
 ])
 const aktuell = computed(() => schritte.value.find((s) => !s.fertig)?.key ?? 'los')
 
@@ -35,7 +36,7 @@ async function eintragen() {
   // Everyone who said yes was there – the chronicle can be corrected later.
   const leute = app.dabei.map((u) => u.id)
   if (leute.length) await api.post(`/api/watched/${w.id}/dabei`, { user_ids: [...new Set([app.me.id, ...leute])] })
-  ui.toast(`„${gewinner.value.title}“ eingetragen – viel Spaß beim Bewerten!`, 'ok')
+  ui.toast(tr('abendmodus.titleEingetragenVielSpass', { title: gewinner.value.title }), 'ok')
   kiste.aktuell = null
   ui.changed()
   emit('geschaut')
@@ -43,9 +44,9 @@ async function eintragen() {
 </script>
 
 <template>
-  <section class="abendmodus" aria-label="Heute Abend">
+  <section class="abendmodus" :aria-label="$t('abendmodus.heuteAbend')">
     <header>
-      <span class="heute">Heute Abend</span>
+      <span class="heute">{{ $t('abendmodus.heuteAbend2') }}</span>
       <strong>{{ t.zeit }}</strong><span v-if="t.notiz" class="muted"> · {{ t.notiz }}</span>
     </header>
     <ol class="schritte">
@@ -57,36 +58,36 @@ async function eintragen() {
           <template v-if="s.key === 'da'">
             <div class="row">
               <span class="avatars"><UserAvatar v-for="u in app.dabei" :key="u.id" :user="u" /></span>
-              <span class="muted klein">{{ app.dabei.length ? app.dabei.map((u) => u.name).join(', ') : 'Noch niemand' }}</span>
+              <span class="muted klein">{{ app.dabei.length ? app.dabei.map((u) => u.name).join(', ') : $t('abendmodus.nochNiemand') }}</span>
             </div>
-            <button v-if="app.me && !app.me.dabei" class="small primary" @click="app.toggleDabei()">Ich bin da</button>
+            <button v-if="app.me && !app.me.dabei" class="small primary" @click="app.toggleDabei()">{{ $t('abendmodus.ichBinDa') }}</button>
           </template>
 
           <template v-else-if="s.key === 'film'">
             <div v-if="gewinner" class="film">
               <span class="plakat"><Poster :movie="gewinner" :title="false" /></span>
-              <span><strong>{{ gewinner.title }}</strong><small class="muted">aus der Kiste</small></span>
+              <span><strong>{{ gewinner.title }}</strong><small class="muted">{{ $t('abendmodus.ausDerKiste') }}</small></span>
             </div>
             <template v-else-if="pool.length">
               <button v-if="kiste.darfOeffnen" class="small primary" :disabled="!!kiste.buehne" @click="audioJetzt(), kiste.oeffnen()">
-                <Icon name="kiste" :size="14" /> Kiste für alle öffnen
+                <Icon name="kiste" :size="14" /> {{ $t('abendmodus.kisteFuerAlleOeffnen') }}
               </button>
-              <p v-else class="muted klein">Der Gastgeber öffnet gleich die Kiste – du siehst es live.</p>
+              <p v-else class="muted klein">{{ $t('abendmodus.derGastgeberOeffnetGleich') }}</p>
             </template>
-            <p v-else class="muted klein">Noch nichts vorgeschlagen – schnell noch etwas unter „Finden“ aussuchen.</p>
+            <p v-else class="muted klein">{{ $t('abendmodus.nochNichtsVorgeschlagenSchnell') }}</p>
           </template>
 
           <template v-else>
             <template v-if="kino.live">
-              <a href="#/kino" class="button small primary"><Icon name="kino" :size="14" /> Zum Kino – läuft schon</a>
+              <a href="#/kino" class="button small primary"><Icon name="kino" :size="14" /> {{ $t('abendmodus.zumKinoLaeuftSchon') }}</a>
             </template>
             <template v-else-if="gewinner">
               <div class="row">
-                <button v-if="kino.enabled" class="small" @click="navigate('kino')"><Icon name="kino" :size="14" /> Im Kino schauen</button>
-                <button class="small" @click="eintragen"><Icon name="gesehen" :size="14" /> Geschaut – eintragen</button>
+                <button v-if="kino.enabled" class="small" @click="navigate('kino')"><Icon name="kino" :size="14" /> {{ $t('abendmodus.imKinoSchauen') }}</button>
+                <button class="small" @click="eintragen"><Icon name="gesehen" :size="14" /> {{ $t('abendmodus.geschautEintragen') }}</button>
               </div>
             </template>
-            <p v-else class="muted klein">Sobald der Film feststeht.</p>
+            <p v-else class="muted klein">{{ $t('abendmodus.sobaldDerFilmFeststeht') }}</p>
           </template>
         </div>
       </li>

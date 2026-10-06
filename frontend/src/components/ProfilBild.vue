@@ -1,4 +1,5 @@
 <script setup>
+import { t } from '../i18n'
 import { ref } from 'vue'
 import { api } from '../api'
 import { useApp } from '../stores/app'
@@ -24,7 +25,7 @@ async function verkleinern(file) {
   try {
     bmp = await createImageBitmap(file, { imageOrientation: 'from-image' })
   } catch {
-    throw new Error('Dieses Bildformat kennt dein Browser nicht – bitte ein JPG oder PNG nehmen.')
+    throw new Error(t('profilbild.diesesBildformatKenntDein'))
   }
   const f = Math.min(1, MAX / Math.max(bmp.width, bmp.height))
   const canvas = document.createElement('canvas')
@@ -47,7 +48,7 @@ async function gewaehlt(e) {
     await api.put(`/api/users/${props.user.id}/bild`, blob, { quiet: true })
     await app.refreshUsers()
     emit('changed')
-    ui.toast('Profilbild gespeichert', 'ok')
+    ui.toast(t('profilbild.profilbildGespeichert'), 'ok')
   } catch (err) {
     error.value = err.message
   } finally {
@@ -59,7 +60,7 @@ async function entfernen() {
   await api.del(`/api/users/${props.user.id}/bild`)
   await app.refreshUsers()
   emit('changed')
-  ui.toast('Profilbild entfernt')
+  ui.toast(t('profilbild.profilbildEntfernt'))
 }
 </script>
 
@@ -69,14 +70,14 @@ async function entfernen() {
     <div class="aktionen">
       <div class="row">
         <button class="small" :disabled="busy" @click="input.click()">
-          <Icon name="plus" :size="14" /> {{ busy ? 'Lade hoch …' : user.bild ? 'Bild ändern' : 'Bild hochladen' }}
+          <Icon name="plus" :size="14" /> {{ busy ? $t('profilbild.ladeHoch') : user.bild ? $t('profilbild.bildAendern') : $t('profilbild.bildHochladen') }}
         </button>
-        <button v-if="user.bild && !busy" class="ghost small" @click="entfernen">Entfernen</button>
+        <button v-if="user.bild && !busy" class="ghost small" @click="entfernen">{{ $t('profilbild.entfernen') }}</button>
       </div>
-      <p class="muted hint">JPG, PNG, WebP oder GIF. Wird quadratisch zugeschnitten; Ortsangaben aus Handyfotos werden entfernt.</p>
+      <p class="muted hint">{{ $t('profilbild.jpgPngWebpOder') }}</p>
       <p v-if="error" class="error" role="alert">{{ error }}</p>
     </div>
-    <input ref="input" type="file" accept="image/jpeg,image/png,image/webp,image/gif" hidden aria-label="Profilbild auswählen" @change="gewaehlt" />
+    <input ref="input" type="file" accept="image/jpeg,image/png,image/webp,image/gif" hidden :aria-label="$t('profilbild.profilbildAuswaehlen')" @change="gewaehlt" />
   </div>
 </template>
 

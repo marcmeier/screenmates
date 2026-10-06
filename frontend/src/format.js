@@ -1,15 +1,26 @@
-const einsNachKomma = new Intl.NumberFormat('de-DE', { minimumFractionDigits: 1, maximumFractionDigits: 1 })
+import { locale } from './i18n'
 
-/** 4.66 -> "4,7": ratings everywhere look the same, with a German decimal comma. */
+// Formatters follow the app's language (German or English); made once per language.
+const cache = new Map()
+function fmt(art, optionen) {
+  const key = `${art}|${locale()}|${JSON.stringify(optionen)}`
+  if (!cache.has(key)) cache.set(key, new Intl[art](locale(), optionen))
+  return cache.get(key)
+}
+export const zahlFmt = (optionen = {}) => fmt('NumberFormat', optionen)
+export const datumFmt = (optionen = {}) => fmt('DateTimeFormat', optionen)
+
+/** 4.66 -> "4,7" (or "4.7"): ratings everywhere look the same. */
 export function dezimal(x) {
-  return x == null || Number.isNaN(x) ? '–' : einsNachKomma.format(x)
+  return x == null || Number.isNaN(x) ? '–' : zahlFmt({ minimumFractionDigits: 1, maximumFractionDigits: 1 }).format(x)
 }
 
-const dateFmt = new Intl.DateTimeFormat('de-DE', { day: 'numeric', month: 'short', year: 'numeric' })
-const rel = new Intl.RelativeTimeFormat('de-DE', { numeric: 'auto' })
+export function zahl(x) {
+  return zahlFmt().format(x ?? 0)
+}
 
 export function datum(iso) {
-  return iso ? dateFmt.format(new Date(iso)) : ''
+  return iso ? datumFmt({ day: 'numeric', month: 'short', year: 'numeric' }).format(new Date(iso)) : ''
 }
 
 export function vorWann(iso) {
@@ -26,7 +37,7 @@ export function vorWann(iso) {
   ]
   let value = sec
   for (const [size, unit] of steps) {
-    if (Math.abs(value) < size) return rel.format(Math.round(value), unit)
+    if (Math.abs(value) < size) return fmt('RelativeTimeFormat', { numeric: 'auto' }).format(Math.round(value), unit)
     value /= size
   }
   return ''

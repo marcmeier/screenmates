@@ -21,13 +21,13 @@ const prozent = computed(() => (props.wert == null ? null : Math.min(100, Math.r
     <div class="info">
       <strong>{{ erfolg.name }}</strong>
       <span class="muted text">{{ erfolg.text }}</span>
-      <div v-if="!offen && prozent !== null && erfolg.ziel > 1" class="fortschritt" :title="`${wert} von ${erfolg.ziel}`">
+      <div v-if="!offen && prozent !== null && erfolg.ziel > 1" class="fortschritt" :title="$t('erfolgkachel.vonZiel', { wert, ziel: erfolg.ziel })">
         <span class="balken"><span :style="{ width: `${prozent}%` }"></span></span>
         <small>{{ Math.min(wert, erfolg.ziel) }}/{{ erfolg.ziel }}</small>
       </div>
       <span class="meta muted">
         {{ erfolg.punkte }} P
-        <template v-if="erfolg.selten != null"> · {{ erfolg.selten }} % der Gruppe</template>
+        <template v-if="erfolg.selten != null"> {{ $t('erfolgkachel.seltenDerGruppe', { selten: erfolg.selten }) }}</template>
         <template v-if="am"> · {{ datum(am) }}</template>
       </span>
     </div>
@@ -36,8 +36,8 @@ const prozent = computed(() => (props.wert == null ? null : Math.min(100, Math.r
       class="ghost stern"
       :class="{ an: vitrine }"
       :aria-pressed="vitrine"
-      :aria-label="vitrine ? `${erfolg.name} aus der Vitrine nehmen` : `${erfolg.name} in die Vitrine`"
-      :title="vitrine ? 'Aus der Vitrine nehmen' : 'In die Vitrine (bis zu drei)'"
+      :aria-label="vitrine ? $t('erfolgkachel.nameAusDerVitrine', { name: erfolg.name }) : $t('erfolgkachel.nameInDieVitrine', { name: erfolg.name })"
+      :title="vitrine ? $t('erfolgkachel.ausDerVitrineNehmen') : $t('erfolgkachel.inDieVitrineBis')"
       @click="$emit('vitrine', erfolg.key)"
     >★</button>
   </div>

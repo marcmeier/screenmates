@@ -1,4 +1,5 @@
 <script setup>
+import { t as tr } from '../i18n'
 import { computed, ref } from 'vue'
 import { api } from '../api'
 import { useApp } from '../stores/app'
@@ -17,9 +18,9 @@ const neu = ref('')
 const busy = ref(false)
 
 const ANTWORTEN = [
-  { key: 'ja', label: 'Ja', icon: 'gesehen' },
-  { key: 'vielleicht', label: 'Vielleicht', icon: 'fragezeichen' },
-  { key: 'nein', label: 'Nein', icon: 'x' },
+  { key: 'ja', label: tr('terminumfrage.ja'), icon: 'gesehen' },
+  { key: 'vielleicht', label: tr('terminumfrage.vielleicht'), icon: 'fragezeichen' },
+  { key: 'nein', label: tr('terminumfrage.nein'), icon: 'x' },
 ]
 const leute = (v, antwort) =>
   Object.entries(v.stimmen)
@@ -44,7 +45,7 @@ const stimmen = (v, antwort) =>
   machen(() => api.put(`/api/termin/umfrage/${v.id}/stimme`, { antwort: v.meine === antwort ? null : antwort }))
 const loeschen = (v) => machen(() => api.del(`/api/termin/umfrage/${v.id}`))
 async function beenden() {
-  if (!confirm('Die Umfrage beenden, ohne einen Termin festzulegen?')) return
+  if (!confirm(tr('terminumfrage.dieUmfrageBeendenOhne'))) return
   await machen(() => api.del('/api/termin/umfrage'))
 }
 async function festlegen(v) {
@@ -52,7 +53,7 @@ async function festlegen(v) {
   try {
     const r = await api.post(`/api/termin/umfrage/${v.id}/festlegen`)
     const t = terminText(r.termin)
-    ui.toast(`Termin steht: ${t.tag}, ${t.zeit}`, 'ok', 5000)
+    ui.toast(tr('terminumfrage.terminStehtTagZeit', { tag: t.tag, zeit: t.zeit }), 'ok', 5000)
     ui.changed()
     emit('festgelegt', r)
   } finally {
@@ -67,23 +68,23 @@ async function vorschlagen() {
 </script>
 
 <template>
-  <div class="umfrage" aria-label="Terminumfrage">
+  <div class="umfrage" :aria-label="$t('terminumfrage.terminumfrage')">
     <div class="kopf">
       <Icon name="umfrage" :size="16" class="muted" />
-      <strong>Wann habt ihr Zeit?</strong>
-      <span v-if="noch.length" class="muted klein">Noch offen: {{ noch.map((u) => u.name).join(', ') }}</span>
+      <strong>{{ $t('terminumfrage.wannHabtIhrZeit') }}</strong>
+      <span v-if="noch.length" class="muted klein">{{ $t('terminumfrage.nochOffen', { namen: noch.map((u) => u.name).join(', ') }) }}</span>
     </div>
     <ul>
       <li v-for="v in umfrage.vorschlaege" :key="v.id" class="option" :class="{ favorit: umfrage.favorit === v.id }">
         <div class="wann">
           <strong>{{ terminText(v).tag }}</strong>
           <span class="muted">{{ terminText(v).zeit }}<template v-if="v.notiz"> · {{ v.notiz }}</template></span>
-          <span v-if="umfrage.favorit === v.id" class="badge">Favorit</span>
+          <span v-if="umfrage.favorit === v.id" class="badge">{{ $t('terminumfrage.favorit') }}</span>
         </div>
         <div class="avatars" :title="leute(v, 'ja').map((id) => app.userById(id)?.name).join(', ')">
           <UserAvatar v-for="id in leute(v, 'ja')" :key="id" :user-id="id" />
         </div>
-        <div class="antworten" role="group" :aria-label="`Deine Antwort für ${terminText(v).tag}`">
+        <div class="antworten" role="group" :aria-label="$t('terminumfrage.deineAntwortFuerX', { x: terminText(v).tag })">
           <button
             v-for="a in ANTWORTEN"
             :key="a.key"
@@ -99,19 +100,19 @@ async function vorschlagen() {
         </div>
         <div class="aktionen">
           <button v-if="umfrage.darf_festlegen" class="small" :class="{ primary: umfrage.favorit === v.id }" :disabled="busy" @click="festlegen(v)">
-            Festlegen
+            {{ $t('terminumfrage.festlegen') }}
           </button>
-          <button v-if="v.darf_loeschen" class="small ghost" :disabled="busy" :aria-label="`Vorschlag ${terminText(v).tag} entfernen`" @click="loeschen(v)">
+          <button v-if="v.darf_loeschen" class="small ghost" :disabled="busy" :aria-label="$t('terminumfrage.vorschlagXEntfernen', { x: terminText(v).tag })" @click="loeschen(v)">
             <Icon name="x" :size="13" />
           </button>
         </div>
       </li>
     </ul>
     <form v-if="umfrage.vorschlaege.length < umfrage.max" class="row neu" @submit.prevent="vorschlagen">
-      <input v-model="neu" type="datetime-local" aria-label="Weiteren Termin vorschlagen" />
-      <button class="small" :disabled="!neu || busy"><Icon name="plus" :size="13" /> Vorschlagen</button>
+      <input v-model="neu" type="datetime-local" :aria-label="$t('terminumfrage.weiterenTerminVorschlagen')" />
+      <button class="small" :disabled="!neu || busy"><Icon name="plus" :size="13" /> {{ $t('terminumfrage.vorschlagen') }}</button>
       <span class="spacer"></span>
-      <button v-if="umfrage.darf_festlegen" type="button" class="small ghost" :disabled="busy" @click="beenden">Umfrage beenden</button>
+      <button v-if="umfrage.darf_festlegen" type="button" class="small ghost" :disabled="busy" @click="beenden">{{ $t('terminumfrage.umfrageBeenden') }}</button>
     </form>
   </div>
 </template>

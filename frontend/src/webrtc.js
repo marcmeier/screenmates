@@ -1,3 +1,4 @@
+import { t, t as tr } from './i18n'
 // WHIP (send) and WHEP (watch) over plain fetch + RTCPeerConnection.
 // Signalling goes through screenmates (/api/kino/...), media straight to MediaMTX.
 
@@ -39,7 +40,7 @@ async function negotiate(pc, url, mungeOffer = (sdp) => sdp) {
     body: pc.localDescription.sdp,
   })
   if (!res.ok) {
-    const err = new Error((await res.json().catch(() => null))?.detail || `Verbindung fehlgeschlagen (${res.status})`)
+    const err = new Error((await res.json().catch(() => null))?.detail || tr('webrtc.verbindungFehlgeschlagenStatus', { status: res.status }))
     err.status = res.status
     throw err
   }
@@ -116,13 +117,14 @@ export function createViewer(video, onState = () => {}) {
 // keeping the resolution and giving Chrome a start bitrate puts 1080p on screen from
 // the first second instead of ramping up from 480x270 over ~15 s.
 export const QUALITAET = {
-  hoch: { label: 'Hoch – 1080p', height: 1080, maxBitrate: 8_000_000, startKbps: 4000, audioKbps: 192 },
-  mittel: { label: 'Mittel – 720p', height: 720, maxBitrate: 4_000_000, startKbps: 2500, audioKbps: 128 },
-  sparsam: { label: 'Sparsam – 480p', height: 480, maxBitrate: 2_000_000, startKbps: 1200, audioKbps: 96 },
+  hoch: { key: 'hoch', height: 1080, maxBitrate: 8_000_000, startKbps: 4000, audioKbps: 192 },
+  mittel: { key: 'mittel', height: 720, maxBitrate: 4_000_000, startKbps: 2500, audioKbps: 128 },
+  sparsam: { key: 'sparsam', height: 480, maxBitrate: 2_000_000, startKbps: 1200, audioKbps: 96 },
 }
+for (const q of Object.values(QUALITAET)) Object.defineProperty(q, 'label', { get: () => t(`kino.qualitaet.${q.key}`) })
 export const INHALT = {
-  film: { label: 'Film – Schärfe zuerst', fps: 30, degradation: 'maintain-resolution' },
-  spiel: { label: 'Spiel – flüssig, bis 60 fps', fps: 60, degradation: 'maintain-framerate' },
+  film: { key: 'film', fps: 30, degradation: 'maintain-resolution' },
+  spiel: { key: 'spiel', fps: 60, degradation: 'maintain-framerate' },
 }
 
 /** Ask the user what to share. Throws if they cancel. */
@@ -254,3 +256,4 @@ export async function publish(stream, onEnded = () => {}, { qualitaet = 'hoch', 
   }
   return { stop: end, stats }
 }
+for (const c of Object.values(INHALT)) Object.defineProperty(c, 'label', { get: () => t(`kino.inhalt.${c.key}`) })

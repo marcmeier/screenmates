@@ -75,3 +75,13 @@ def test_donation_accounts_are_names_turned_into_links(client, browser):
         assert client.put("/api/admin/seiten/kofi", json={"text": boese}).status_code == 422
     assert client.put("/api/admin/seiten/kofi", json={"text": ""}).status_code == 200  # empty removes it
     assert "kofi" not in client.get("/api/ueber").json()["konten"]
+
+
+def test_language_is_personal_and_keeps_the_look(client, browser):
+    login(client, "marc")
+    client.put("/api/users/me/design", json={"theme": "neon", "schrift": "grotesk"})
+    assert client.put("/api/users/me/sprache", json={"sprache": "en"}).status_code == 200
+    assert client.get("/api/users").json()["ich"]["design"] == {"theme": "neon", "schrift": "grotesk", "sprache": "en"}
+    client.put("/api/users/me/design", json={"theme": "wald", "schrift": "grotesk"})
+    assert client.get("/api/users").json()["ich"]["design"]["sprache"] == "en"
+    assert client.put("/api/users/me/sprache", json={"sprache": "fr"}).status_code == 422

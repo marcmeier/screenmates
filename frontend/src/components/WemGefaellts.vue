@@ -1,4 +1,5 @@
 <script setup>
+import { t } from '../i18n'
 import { computed, ref, watch } from 'vue'
 import { api } from '../api'
 import { useApp } from '../stores/app'
@@ -24,10 +25,10 @@ watch(() => props.movieId, laden, { immediate: true })
 watch(() => ui.changes, laden) // a new rating changes everyone's estimate
 
 function urteil(sterne) {
-  if (sterne >= 4) return 'wird’s mögen'
-  if (sterne >= 3) return 'eher gut'
-  if (sterne >= 2) return 'eher nicht'
-  return 'lieber nicht'
+  if (sterne >= 4) return t('wemgefaellts.wirdSMoegen')
+  if (sterne >= 3) return t('wemgefaellts.eherGut')
+  if (sterne >= 2) return t('wemgefaellts.eherNicht')
+  return t('wemgefaellts.lieberNicht')
 }
 const name = (id) => app.userById(id)?.name ?? '?'
 const fehlend = computed(() => daten.value?.zu_wenig ?? [])
@@ -35,23 +36,23 @@ const fehlend = computed(() => daten.value?.zu_wenig ?? [])
 
 <template>
   <section v-if="daten && (daten.prognosen.length || fehlend.length)" class="wem">
-    <h3 class="section-title">Wem gefällt’s?</h3>
+    <h3 class="section-title">{{ $t('wemgefaellts.wemGefaelltS') }}</h3>
     <ul v-if="daten.prognosen.length" class="liste">
       <li v-for="p in daten.prognosen" :key="p.user_id">
         <UserAvatar :user-id="p.user_id" />
         <span class="name">{{ name(p.user_id) }}</span>
-        <span class="sterne" :aria-label="`etwa ${dezimal(p.sterne)} von 5 Sternen`">
+        <span class="sterne" :aria-label="$t('wemgefaellts.etwaXVon5', { x: dezimal(p.sterne) })">
           <span v-for="n in 5" :key="n" class="s" :class="{ voll: n <= p.sterne, halb: n - 0.5 === p.sterne }">★</span>
         </span>
         <span class="urteil" :class="{ gut: p.sterne >= 3.5, schlecht: p.sterne < 2.5 }">{{ urteil(p.sterne) }}</span>
         <span class="warum muted">
-          <template v-if="p.weil">wie „{{ p.weil.titel }}“ (★ {{ dezimal(p.weil.sterne) }})</template>
-          <template v-if="p.sicherheit === 'erste tendenz'"><template v-if="p.weil"> · </template>erste Tendenz</template>
+          <template v-if="p.weil">{{ $t('wemgefaellts.wieTitelX', { titel: p.weil.titel, x: dezimal(p.weil.sterne) }) }}</template>
+          <template v-if="p.sicherheit === 'erste tendenz'"><template v-if="p.weil"> · </template>{{ $t('wemgefaellts.ersteTendenz2') }}</template>
         </span>
       </li>
     </ul>
     <p v-if="fehlend.length" class="muted hinweis">
-      Ab {{ daten.min }} Bewertungen schätzt screenmates, wem ein Film gefällt. Noch zu wenig:
+      {{ $t('wemgefaellts.ab', { n: daten.min }) }}
       {{ fehlend.map((z) => `${name(z.user_id)} (${z.bewertungen}/${daten.min})`).join(', ') }}.
     </p>
   </section>

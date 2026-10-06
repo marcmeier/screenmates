@@ -4,7 +4,8 @@ import { api } from '../../api'
 import { useApp } from '../../stores/app'
 import { useUi } from '../../stores/ui'
 import { navigate, useRoute } from '../../composables/useRoute'
-import { FILME, TITEL, n, sterne, stunden } from '../../rueckblick'
+import { FILME, TITEL, monatName, n, sterne, stunden, wochentagName } from '../../rueckblick'
+import { t as tr } from '../../i18n'
 import Icon from '../Icon.vue'
 import Poster from '../Poster.vue'
 import UserAvatar from '../UserAvatar.vue'
@@ -27,19 +28,19 @@ onMounted(async () => (jahre.value = (await api.get('/api/rueckblick')).jahre))
 watch(jahr, async (j) => (daten.value = j ? await api.get(`/api/rueckblick/${j}`) : null), { immediate: true })
 watch(() => ui.changes, async () => jahr.value && (daten.value = await api.get(`/api/rueckblick/${jahr.value}`)))
 
-const name = (id) => app.userById(id)?.name ?? 'Jemand'
+const name = (id) => app.userById(id)?.name ?? tr('allg.jemand')
 const kacheln = computed(() => {
   const d = daten.value
   if (!d?.filme) return []
   return [
-    { wert: n(d.filme), text: d.filme === 1 ? 'Film' : 'Filme' },
-    { wert: n(d.abende), text: d.abende === 1 ? 'Filmabend' : 'Filmabende' },
-    { wert: n(stunden(d.minuten)), text: 'Stunden Film' },
-    { wert: n(d.leute), text: d.leute === 1 ? 'Person dabei' : 'Leute dabei' },
-    { wert: n(d.bewertungen), text: 'Bewertungen', klein: d.schnitt ? `Ø ${sterne(d.schnitt)}` : '' },
-    { wert: n(d.kommentare), text: 'Kommentare', klein: d.herzen ? `${n(d.herzen)} Herzen` : '' },
-    { wert: n(d.serie), text: d.serie === 1 ? 'Woche am Stück' : 'Wochen am Stück' },
-    { wert: n(d.kisten), text: d.kisten === 1 ? 'Kiste geöffnet' : 'Kisten geöffnet' },
+    { wert: n(d.filme), text: tr('rueckblickview.k.filme', d.filme) },
+    { wert: n(d.abende), text: tr('rueckblickview.k.abende', d.abende) },
+    { wert: n(stunden(d.minuten)), text: tr('rueckblickview.k.stunden') },
+    { wert: n(d.leute), text: tr('rueckblickview.k.leute', d.leute) },
+    { wert: n(d.bewertungen), text: tr('rueckblickview.k.bewertungen'), klein: d.schnitt ? `Ø ${sterne(d.schnitt)}` : '' },
+    { wert: n(d.kommentare), text: tr('rueckblickview.k.kommentare'), klein: d.herzen ? tr('rueckblickview.k.herzen', { n: n(d.herzen) }) : '' },
+    { wert: n(d.serie), text: tr('rueckblickview.k.serie', d.serie) },
+    { wert: n(d.kisten), text: tr('rueckblickview.k.kisten', d.kisten) },
   ]
 })
 const filme = computed(() => FILME.filter((f) => daten.value?.[f.key]))
@@ -51,11 +52,11 @@ const maxGenre = computed(() => Math.max(1, ...(daten.value?.genres ?? []).map((
   <div class="rueckblick">
     <div v-if="jahre === null" class="skeleton" style="height: 220px"></div>
     <div v-else-if="!jahre.length" class="empty">
-      <strong>Noch nichts zurückzublicken</strong>
-      Sobald ihr Filme als gesehen eintragt, entsteht hier euer Filmjahr.
+      <strong>{{ $t('rueckblickview.nochNichtsZurueckzublicken') }}</strong>
+      {{ $t('rueckblickview.sobaldIhrFilmeAls') }}
     </div>
     <template v-else>
-      <nav v-if="jahre.length > 1" class="jahre" aria-label="Jahr">
+      <nav v-if="jahre.length > 1" class="jahre" :aria-label="$t('rueckblickview.jahr')">
         <button v-for="j in jahre" :key="j" class="chip" :class="{ on: j === jahr }" @click="navigate('sammlung', 'rueckblick', j)">{{ j }}</button>
       </nav>
 
@@ -63,14 +64,13 @@ const maxGenre = computed(() => Math.max(1, ...(daten.value?.genres ?? []).map((
       <template v-else-if="daten.filme">
         <header class="hero">
           <div>
-            <span class="vorzeile">{{ app.gruppe?.name }} · Rückblick</span>
-            <h2>Euer Filmjahr {{ daten.jahr }}</h2>
+            <span class="vorzeile">{{ $t('rueckblickview.nameRueckblick', { name: app.gruppe?.name }) }}</span>
+            <h2>{{ $t('rueckblickview.euerFilmjahrJahr', { jahr: daten.jahr }) }}</h2>
             <p class="muted">
-              Am liebsten {{ daten.wochentag.name }}s, am meisten im {{ daten.monat.name }}<template v-if="daten.jahrzehnt">,
-                und am liebsten Filme aus den {{ String(daten.jahrzehnt.jahrzehnt).slice(2) }}ern</template>.
+              {{ $t('rueckblickview.lieblings', { tag: wochentagName(daten.wochentag), monat: monatName(daten.monat) }) }}<template v-if="daten.jahrzehnt">{{ $t('rueckblickview.jahrzehnt', { x: String(daten.jahrzehnt.jahrzehnt).slice(2) }) }}</template>.
             </p>
           </div>
-          <button class="primary" @click="story = true"><Icon name="play" :size="16" /> Als Story ansehen</button>
+          <button class="primary" @click="story = true"><Icon name="play" :size="16" /> {{ $t('rueckblickview.alsStoryAnsehen') }}</button>
         </header>
 
         <div class="kacheln">
@@ -83,7 +83,7 @@ const maxGenre = computed(() => Math.max(1, ...(daten.value?.genres ?? []).map((
 
         <div class="spalten">
           <section class="panel">
-            <h3>Genres</h3>
+            <h3>{{ $t('rueckblickview.genres') }}</h3>
             <ol class="genres">
               <li v-for="g in daten.genres" :key="g.name">
                 <span class="name">{{ g.name }}</span>
@@ -93,7 +93,7 @@ const maxGenre = computed(() => Math.max(1, ...(daten.value?.genres ?? []).map((
             </ol>
           </section>
           <section v-if="titel.length" class="panel">
-            <h3>Auszeichnungen</h3>
+            <h3>{{ $t('rueckblickview.auszeichnungen') }}</h3>
             <ul class="titel">
               <li v-for="t in titel" :key="t.key">
                 <span class="emoji" aria-hidden="true">{{ t.emoji }}</span>
@@ -107,7 +107,7 @@ const maxGenre = computed(() => Math.max(1, ...(daten.value?.genres ?? []).map((
           </section>
         </div>
 
-        <h3 class="section-title">Filme des Jahres</h3>
+        <h3 class="section-title">{{ $t('rueckblickview.filmeDesJahres') }}</h3>
         <div class="filme">
           <button v-for="f in filme" :key="f.key" class="film" @click="ui.open(daten[f.key].movie)">
             <span class="plakat"><Poster :movie="daten[f.key].movie" /></span>
@@ -117,7 +117,7 @@ const maxGenre = computed(() => Math.max(1, ...(daten.value?.genres ?? []).map((
           </button>
         </div>
       </template>
-      <div v-else class="empty"><strong>{{ jahr }}</strong> In diesem Jahr habt ihr nichts eingetragen.</div>
+      <div v-else class="empty"><strong>{{ jahr }}</strong> {{ $t('rueckblickview.inDiesemJahrHabt') }}</div>
     </template>
 
     <RueckblickStory v-if="story && daten?.filme" :daten="daten" @close="story = false" />

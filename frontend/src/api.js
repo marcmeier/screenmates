@@ -1,4 +1,5 @@
 import { useUi } from './stores/ui'
+import { t } from './i18n'
 
 /** Error thrown for every failed request. It has already been shown to the user. */
 export class ApiError extends Error {
@@ -12,11 +13,11 @@ function describe(status, body) {
   const detail = body?.detail
   if (Array.isArray(detail)) {
     // FastAPI validation errors: [{loc, msg, ...}]
-    return 'Ungültige Eingabe: ' + detail.map((d) => d.msg).join(', ')
+    return t('api.ungueltigeEingabe') + detail.map((d) => d.msg).join(', ')
   }
   if (typeof detail === 'string') return detail
-  if (status >= 500) return 'Der Server hat ein Problem. Bitte später nochmal versuchen.'
-  return `Anfrage fehlgeschlagen (${status}).`
+  if (status >= 500) return t('api.derServerHatEin')
+  return t('api.anfrageFehlgeschlagenStatus', { status })
 }
 
 // Called after every successful write (achievements check whether something unlocked).
@@ -42,7 +43,7 @@ async function req(method, path, body, { signal, quiet = false } = {}) {
     res = await fetch(path, opts)
   } catch (e) {
     if (e.name === 'AbortError') throw e
-    const err = new ApiError(0, 'Keine Verbindung zum Server.')
+    const err = new ApiError(0, t('api.keineVerbindungZumServer'))
     if (!quiet) useUi().toast(err.message, 'error')
     throw err
   }

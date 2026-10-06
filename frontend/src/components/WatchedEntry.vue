@@ -1,4 +1,5 @@
 <script setup>
+import { t } from '../i18n'
 import { computed, ref } from 'vue'
 import { api } from '../api'
 import { useApp } from '../stores/app'
@@ -52,7 +53,7 @@ async function heart(noteId) {
 
 async function removeNote(noteId) {
   // With replies the thread stays and a placeholder remains – say so.
-  if (!confirm('Kommentar löschen? Hat schon jemand geantwortet, bleibt an seiner Stelle „gelöscht“ stehen.')) return
+  if (!confirm(t('watchedentry.kommentarLoeschenHatSchon'))) return
   await api.del(`/api/watched-notes/${noteId}`)
   ui.changed()
 }
@@ -75,7 +76,7 @@ async function hide() {
 }
 
 async function remove() {
-  if (!confirm(`„${m.value?.title}“ samt Bewertungen und Kommentaren löschen?`)) return
+  if (!confirm(t('watchedentry.titleSamtBewertungenUnd', { title: m.value?.title }))) return
   await api.del(`/api/watched/${props.entry.id}`)
   emit('removed', props.entry.id)
 }
@@ -83,7 +84,7 @@ async function remove() {
 
 <template>
   <article class="entry" :class="{ hidden: entry.hidden, kompakt }">
-    <button v-if="!kompakt" class="cover" :aria-label="`${m?.title} – Details`" @click="m && ui.open(m)">
+    <button v-if="!kompakt" class="cover" :aria-label="$t('allg.detailsVon', { title: m?.title })" @click="m && ui.open(m)">
       <Poster v-if="m" :movie="m" />
     </button>
 
@@ -92,9 +93,9 @@ async function remove() {
         <div>
           <h3 v-if="!kompakt">{{ m?.title }} <span class="muted year">{{ m?.year }}</span></h3>
           <div class="row sub">
-            <span v-if="kompakt" class="muted">Geschaut am</span>
-            <input v-if="editDate" type="date" :value="dateValue" autofocus aria-label="Datum" @change="setDate" @blur="editDate = false" />
-            <button v-else class="ghost small date" :disabled="!app.me" title="Datum ändern" @click="editDate = true">
+            <span v-if="kompakt" class="muted">{{ $t('watchedentry.geschautAm') }}</span>
+            <input v-if="editDate" type="date" :value="dateValue" autofocus :aria-label="$t('watchedentry.datum')" @change="setDate" @blur="editDate = false" />
+            <button v-else class="ghost small date" :disabled="!app.me" :title="$t('watchedentry.datumAendern')" @click="editDate = true">
               {{ datum(entry.watched_at) }}
             </button>
             <span class="avatars">
@@ -102,14 +103,14 @@ async function remove() {
             </span>
           </div>
         </div>
-        <div v-if="entry.rating_avg" class="avg" :title="`${entry.ratings.length} Bewertungen`">
+        <div v-if="entry.rating_avg" class="avg" :title="$t('watchedentry.lengthBewertungen', { length: entry.ratings.length })">
           <span class="num">{{ dezimal(entry.rating_avg) }}</span><span class="muted">/5</span>
         </div>
       </header>
 
       <div class="row rating">
         <template v-if="app.me">
-          <span class="muted label">Deine Wertung</span>
+          <span class="muted label">{{ $t('watchedentry.deineWertung') }}</span>
           <StarRating :model-value="myRating" @update:model-value="rate" />
         </template>
         <span v-for="r in others" :key="r.id" class="chip">
@@ -118,7 +119,7 @@ async function remove() {
       </div>
 
       <details v-if="app.me" class="dabei">
-        <summary class="muted">Wer war dabei?</summary>
+        <summary class="muted">{{ $t('watchedentry.werWarDabei') }}</summary>
         <div class="row">
           <button
             v-for="u in app.mitglieder"
@@ -141,14 +142,14 @@ async function remove() {
           @remove="removeNote"
         />
         <form v-if="app.me" class="add" @submit.prevent="send">
-          <input v-model="note" maxlength="2000" placeholder="Ins Gästebuch schreiben …" aria-label="Kommentar" />
-          <button class="small" :disabled="!note.trim()">Senden</button>
+          <input v-model="note" maxlength="2000" :placeholder="$t('watchedentry.insGaestebuchSchreiben')" :aria-label="$t('watchedentry.kommentar')" />
+          <button class="small" :disabled="!note.trim()">{{ $t('watchedentry.senden') }}</button>
         </form>
       </div>
 
       <footer v-if="app.gruppenAdmin" class="row host">
-        <button class="ghost small" @click="hide">{{ entry.hidden ? 'Wieder anzeigen' : 'Ausblenden' }}</button>
-        <button class="ghost small danger" @click="remove"><Icon name="muell" :size="14" /> Löschen</button>
+        <button class="ghost small" @click="hide">{{ entry.hidden ? $t('watchedentry.wiederAnzeigen') : $t('watchedentry.ausblenden') }}</button>
+        <button class="ghost small danger" @click="remove"><Icon name="muell" :size="14" /> {{ $t('watchedentry.loeschen') }}</button>
       </footer>
     </div>
   </article>

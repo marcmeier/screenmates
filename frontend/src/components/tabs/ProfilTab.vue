@@ -21,8 +21,8 @@ const seite = computed(() => (route.value.sub === 'einstellungen' ? 'einstellung
   <ErfolgeTab v-if="fremd" />
   <div v-else class="page">
     <div v-if="!app.me" class="empty">
-      <strong>Erst Namen wählen</strong>
-      <button class="primary" style="margin-top: 0.8rem" @click="ui.loginOpen = true">Namen wählen</button>
+      <strong>{{ $t('app.erstNamen') }}</strong>
+      <button class="primary" style="margin-top: 0.8rem" @click="ui.loginOpen = true">{{ $t('namen.dialog') }}</button>
     </div>
     <template v-else>
       <header class="kopf">
@@ -30,13 +30,13 @@ const seite = computed(() => (route.value.sub === 'einstellungen' ? 'einstellung
         <div>
           <h1>{{ app.me.name }}</h1>
           <p class="muted">
-            Level {{ app.me.level || 1 }}<template v-if="app.admin"> · Admin</template><template v-if="app.gruppe"> · {{ app.gruppe.name }}</template>
+            {{ $t('profiltab.levelX', { x: app.me.level || 1 }) }}<template v-if="app.admin"> {{ $t('profiltab.admin') }}</template><template v-if="app.gruppe"> · {{ app.gruppe.name }}</template>
           </p>
         </div>
       </header>
-      <nav class="unter" aria-label="Profil">
-        <a href="#/profil" :class="{ active: seite === 'erfolge' }" :aria-current="seite === 'erfolge' ? 'page' : undefined">Erfolge</a>
-        <a href="#/profil/einstellungen" :class="{ active: seite === 'einstellungen' }" :aria-current="seite === 'einstellungen' ? 'page' : undefined">Einstellungen</a>
+      <nav class="unter" :aria-label="$t('profiltab.profil')">
+        <a href="#/profil" :class="{ active: seite === 'erfolge' }" :aria-current="seite === 'erfolge' ? 'page' : undefined">{{ $t('profiltab.erfolge') }}</a>
+        <a href="#/profil/einstellungen" :class="{ active: seite === 'einstellungen' }" :aria-current="seite === 'einstellungen' ? 'page' : undefined">{{ $t('app.einstellungen') }}</a>
       </nav>
       <ProfilEinstellungen v-if="seite === 'einstellungen'" />
       <ErfolgeTab v-else eingebettet />
