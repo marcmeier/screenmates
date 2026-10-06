@@ -676,6 +676,30 @@ test('admins rename someone and log them out everywhere', async () => {
   await lena.close()
 })
 
+test('after clearing the evening, the case opens for everyone again', async () => {
+  // A seen opening used to be remembered by its id – and ids start at 1 again after a reset.
+  await page.evaluate(() => localStorage.setItem('screenmates.kisteGesehen', '999'))
+  await page.goto('/#/verwaltung')
+  const zone = page.getByRole('region', { name: 'Gefahrenzone' })
+  await zone.getByRole('checkbox', { name: /Filmabend/ }).check()
+  await zone.getByRole('button', { name: 'Ausgewähltes löschen' }).click()
+  const dialog = page.getByRole('dialog', { name: 'Wirklich löschen?' })
+  await dialog.getByLabel('Bestätigung').fill('LÖSCHEN')
+  await dialog.getByRole('button', { name: 'Endgültig löschen' }).click()
+  await page.waitForEvent('load')
+  expect((await page.request.post('/api/suggestions', { data: { movie_id: 694 } })).ok()).toBeTruthy()
+  await page.goto('/#/abend')
+  await page.getByRole('button', { name: 'Für alle öffnen' }).click()
+  const buehne = page.getByRole('dialog', { name: 'Kiste öffnen' })
+  await expect(buehne).toBeVisible()
+  await page.keyboard.press('Escape')
+  await page.keyboard.press('Enter')
+  await expect(buehne).toBeHidden()
+  // Take the film of the evening down again: later steps (and the Kino's newcomers) start clean.
+  const { aktuell } = await (await page.request.get('/api/kiste')).json()
+  expect((await page.request.delete(`/api/kiste/${aktuell.id}`)).ok()).toBeTruthy()
+})
+
 test('the danger zone clears an area only after typing the word', async () => {
   await page.goto('/#/verwaltung')
   const zone = page.getByRole('region', { name: 'Gefahrenzone' })
