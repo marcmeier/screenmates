@@ -17,6 +17,7 @@ from sqlmodel import Session as DBSession
 from ..db import get_session
 from ..models import Seitentext, now
 from ..session import require_admin
+from ..sprache import tr
 
 router = APIRouter(prefix="/api", tags=["ueber"])
 
@@ -51,7 +52,7 @@ def kontoname(key: str, eingabe: str) -> str:
     """'marc', '@marc' or a pasted link -> 'marc'; anything else is refused."""
     name = re.sub(rf"^{KONTEN[key][2]}", "", eingabe.strip(), flags=re.I).strip("/@ ")
     if name and not NAME.fullmatch(name):
-        raise HTTPException(422, f"Das sieht nicht nach einem {KONTEN[key][0]}-Namen aus.")
+        raise HTTPException(422, tr("Das sieht nicht nach einem {konto}-Namen aus.", konto=KONTEN[key][0]))
     return name
 
 

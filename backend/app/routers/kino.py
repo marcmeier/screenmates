@@ -309,12 +309,13 @@ def _live_melden(db: DBSession, st: KinoState) -> None:
         db,
         push.abwesend(gid, push.mitglieder(db, gid, ausser=sender)),
         "kino",
-        f"🎬 Das Kino ist live – {push.gruppenname(db, gid)}",
-        f"{wer.name if wer else 'Jemand'} sendet{f' „{st.titel}“' if st.titel else ' gerade'}. Komm dazu!",
+        "🎬 Das Kino ist live – {gruppe}",
+        "{name} sendet „{titel}“. Komm dazu!" if st.titel else "{name} sendet gerade. Komm dazu!",
         url="/#/kino",
         tag=f"kino-{gid}",
         ttl=1800,
         dringend=True,
+        werte={"gruppe": push.gruppenname(db, gid), "name": wer.name if wer else "?", "titel": st.titel},
     )
 
 

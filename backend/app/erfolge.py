@@ -51,6 +51,7 @@ from .models import (
     WatchedRating,
     now,
 )
+from .sprache import tr
 
 BERLIN = ZoneInfo("Europe/Berlin")
 PUNKTE = {1: 10, 2: 25, 3: 50, 4: 100}  # bronze, silver, gold, platinum
@@ -76,6 +77,14 @@ class Def:
     def punkte(self) -> int:
         return PUNKTE[self.stufe]
 
+    @property
+    def anzeige_name(self) -> str:
+        return tr(self.name)
+
+    @property
+    def anzeige_text(self) -> str:
+        return tr(self.text, n=self.ziel)
+
 
 def _reihe(familie, emoji, kategorie, texte, stufen):
     """A tiered family: [(name, goal), …] → bronze, silver, gold (, platinum).
@@ -88,7 +97,7 @@ def _reihe(familie, emoji, kategorie, texte, stufen):
             f"{familie}-{i}",
             familie,
             name,
-            eins if ziel == 1 else viele.format(n=ziel),
+            eins if ziel == 1 else viele,  # {n}: the goal, filled in by Def.anzeige_text
             emoji,
             i,
             ziel,
@@ -284,7 +293,7 @@ def level_ab(n: int) -> int:
 
 
 def titel(lvl: int) -> str:
-    return [t for ab, t in TITEL if lvl >= ab][-1]
+    return tr([t for ab, t in TITEL if lvl >= ab][-1])
 
 
 # --- what everyone has done ------------------------------------------------------

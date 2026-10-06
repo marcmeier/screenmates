@@ -21,6 +21,7 @@ from ..db import get_session
 from ..gruppen import aktive_gruppe, mitgliedschaften
 from ..models import Abend, Gruppe, Kistenoeffnung, Mitglied, Movie, Suggestion, User
 from ..session import require_user
+from ..sprache import als, tr, von
 from ..util import utc
 
 router = APIRouter(prefix="/api", tags=["kalender"])
@@ -66,7 +67,7 @@ def _beschreibung(db: DBSession, gid: int) -> list[str]:
     if k and utc(k.start) <= datetime.now(UTC):
         m = db.get(Movie, k.movie_id)
         if m:
-            zeilen.append(f"Film des Abends: {m.title}")
+            zeilen.append(tr("Film des Abends: {titel}", titel=m.title))
     else:
         top = db.exec(
             select(Movie.title)
@@ -77,21 +78,21 @@ def _beschreibung(db: DBSession, gid: int) -> list[str]:
             .limit(5)
         ).all()
         if top:
-            zeilen.append(f"Zur Wahl: {', '.join(top)}")
+            zeilen.append(tr("Zur Wahl: {filme}", filme=", ".join(top)))
     dabei = db.exec(
         select(User.name)
         .join(Mitglied, col(Mitglied.user_id) == User.id)
         .where(Mitglied.gruppe_id == gid, col(Mitglied.dabei))
     ).all()
     if dabei:
-        zeilen.append(f"Dabei: {', '.join(sorted(dabei))}")
+        zeilen.append(tr("Dabei: {namen}", namen=", ".join(sorted(dabei))))
     return zeilen
 
 
 def _ereignis(db: DBSession, a: Abend, gruppe: str, basis: str, mit_gruppe: bool) -> list[str]:
     termin = utc(a.termin)
     link = f"{basis}/#/abend"
-    text = "\n".join([*_beschreibung(db, a.id), f"Bist du dabei? {link}"])
+    text = "\n".join([*_beschreibung(db, a.id), tr("Bist du dabei? {link}", link=link)])
     zeilen = [
         "BEGIN:VEVENT",
         f"UID:filmabend-{a.id}-{termin.date().isoformat()}@screenmates",
@@ -99,7 +100,7 @@ def _ereignis(db: DBSession, a: Abend, gruppe: str, basis: str, mit_gruppe: bool
         f"SEQUENCE:{int(utc(a.gesetzt_am).timestamp()) if a.gesetzt_am else 0}",
         f"DTSTART:{_zeit(termin)}",
         f"DTEND:{_zeit(termin + DAUER)}",
-        f"SUMMARY:{_esc('🎬 Filmabend' + (f' · {gruppe}' if mit_gruppe else ''))}",
+        f"SUMMARY:{_esc('🎬 ' + tr('Filmabend') + (f' · {gruppe}' if mit_gruppe else ''))}",
         f"DESCRIPTION:{_esc(text)}",
         f"URL:{link}",
     ]
@@ -108,7 +109,7 @@ def _ereignis(db: DBSession, a: Abend, gruppe: str, basis: str, mit_gruppe: bool
     zeilen += [
         "BEGIN:VALARM",
         "ACTION:DISPLAY",
-        f"DESCRIPTION:{_esc('Gleich ist Filmabend')}",
+        f"DESCRIPTION:{_esc(tr('Gleich ist Filmabend'))}",
         f"TRIGGER:{ERINNERN}",
         "END:VALARM",
         "END:VEVENT",
@@ -155,7 +156,8 @@ def termin_datei(
         raise HTTPException(404, "Es gibt noch keinen Termin.")
     g = db.get(Gruppe, gid)
     mehrere = len(mitgliedschaften(db, user.id)) > 1
-    antwort = _kalender([_ereignis(db, a, g.name if g else "", _basis(request), mehrere)], "Filmabend")
+    with als(von(user)):
+        antwort = _kalender([_ereignis(db, a, g.name if g else "", _basis(request), mehrere)], tr("Filmabend"))
     antwort.headers["Content-Disposition"] = 'attachment; filename="filmabend.ics"'
     return antwort
 
@@ -168,11 +170,12 @@ def feed(datei: str, request: Request, db: DBSession = Depends(get_session)):
         raise HTTPException(404, "Diesen Kalender gibt es nicht (mehr).")
     gruppen = mitgliedschaften(db, user.id)
     namen = {g.id: g.name for g in db.exec(select(Gruppe).where(col(Gruppe.id).in_(gruppen))).all()}
-    ereignisse = [
-        _ereignis(db, a, namen.get(gid, ""), _basis(request), len(gruppen) > 1)
-        for gid in sorted(gruppen)
-        if (a := _naechster(db, gid)) is not None
-    ]
+    with als(von(user)):  # a calendar app asks without the app's language: the owner's choice
+        ereignisse = [
+            _ereignis(db, a, namen.get(gid, ""), _basis(request), len(gruppen) > 1)
+            for gid in sorted(gruppen)
+            if (a := _naechster(db, gid)) is not None
+        ]
     return _kalender(ereignisse, "screenmates")
 
 

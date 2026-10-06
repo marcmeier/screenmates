@@ -1,4 +1,5 @@
 <script setup>
+import { t } from '../i18n'
 import { computed, onMounted, ref, watch } from 'vue'
 import { api } from '../api'
 import { useApp } from '../stores/app'
@@ -36,7 +37,7 @@ async function anlegen() {
   if (!n) return
   await api.post('/api/admin/users', { name: n })
   neuerName.value = ''
-  await fertig(`„${n}“ angelegt`)
+  await fertig(t('adminbereich.nAngelegt', { n }))
 }
 async function aendern(u, felder, text) {
   await api.patch(`/api/admin/users/${u.id}`, felder)
@@ -49,33 +50,33 @@ function umbenennen(u) {
 async function namenSpeichern(u) {
   const n = name.value.trim()
   bearbeiten.value = null
-  if (n && n !== u.name) await aendern(u, { name: n }, `Umbenannt in „${n}“`)
+  if (n && n !== u.name) await aendern(u, { name: n }, t('adminbereich.umbenanntInN', { n }))
 }
 async function ablehnen(u) {
-  if (!confirm(`Antrag von „${u.name}“ ablehnen?`)) return
+  if (!confirm(t('adminbereich.antragVonNameAblehnen', { name: u.name }))) return
   await api.del(`/api/users/${u.id}`)
-  await fertig('Antrag abgelehnt')
+  await fertig(t('adminbereich.antragAbgelehnt'))
 }
 async function loeschen(u) {
-  if (!confirm(`„${u.name}“ löschen? Bewertungen und Stimmen gehen verloren, Kommentare bleiben anonym erhalten.`)) return
+  if (!confirm(t('adminbereich.nameLoeschenBewertungenUnd', { name: u.name }))) return
   await api.del(`/api/users/${u.id}`)
-  await fertig(`„${u.name}“ gelöscht`)
+  await fertig(t('adminbereich.nameGeloescht', { name: u.name }))
 }
 async function schutzWeg(u) {
-  if (!confirm(`Film-Passwort von „${u.name}“ zurücksetzen? Danach kann jeder den Namen wählen, bis ${u.name} ein neues festlegt.`)) return
+  if (!confirm(t('adminbereich.filmPasswortVonName', { name: u.name, name2: u.name }))) return
   await api.post(`/api/users/${u.id}/schutz`, { movie_id: null })
-  await fertig(`Film-Passwort von ${u.name} zurückgesetzt`)
+  await fertig(t('adminbereich.filmPasswortVonName2', { name: u.name }))
 }
 async function bildWeg(u) {
-  if (!confirm(`Profilbild von „${u.name}“ entfernen?`)) return
+  if (!confirm(t('adminbereich.profilbildVonNameEntfernen', { name: u.name }))) return
   await api.del(`/api/users/${u.id}/bild`)
-  await fertig(`Profilbild von ${u.name} entfernt`)
+  await fertig(t('adminbereich.profilbildVonNameEntfernt', { name: u.name }))
 }
 async function abmelden(u) {
-  if (!confirm(`„${u.name}“ auf allen Geräten abmelden? Diese Geräte brauchen danach eine neue Einladung.`)) return
+  if (!confirm(t('adminbereich.nameAufAllenGeraeten', { name: u.name }))) return
   const r = await api.post(`/api/admin/users/${u.id}/abmelden`)
   if (u.id === app.me?.id) return window.location.reload()
-  await fertig(`${u.name}: ${r.beendet} ${r.beendet === 1 ? 'Gerät' : 'Geräte'} abgemeldet`)
+  await fertig(t('adminbereich.abgemeldet', { name: u.name, n: r.beendet }, r.beendet))
 }
 
 onMounted(laden)
@@ -86,52 +87,52 @@ watch(() => app.antraege, laden)
 <template>
 
   <section v-if="antraege.length" class="panel">
-    <h2>Anträge <span class="count">{{ antraege.length }}</span></h2>
+    <h2>{{ $t('adminbereich.antraege') }} <span class="count">{{ antraege.length }}</span></h2>
     <ul class="people">
       <li v-for="u in antraege" :key="u.id" class="row">
         <UserAvatar :user="u" />
         <strong>{{ u.name }}</strong>
-        <span class="muted small">beantragt {{ datum(u.seit) }}</span>
+        <span class="muted small">{{ $t('adminbereich.beantragt', { am: datum(u.seit) }) }}</span>
         <span class="spacer"></span>
-        <button class="small primary" @click="aendern(u, { freigegeben: true }, `„${u.name}“ freigegeben`)">Freigeben</button>
-        <button class="ghost small danger" @click="ablehnen(u)">Ablehnen</button>
+        <button class="small primary" @click="aendern(u, { freigegeben: true }, `„${u.name}“ freigegeben`)">{{ $t('adminbereich.freigeben') }}</button>
+        <button class="ghost small danger" @click="ablehnen(u)">{{ $t('adminbereich.ablehnen') }}</button>
       </li>
     </ul>
   </section>
 
   <section class="panel">
-    <h2>Benutzer</h2>
+    <h2>{{ $t('adminbereich.benutzer') }}</h2>
     <ul class="people">
       <li v-for="u in aktive" :key="u.id" class="person">
         <div class="row">
-          <label class="farbe" :title="`Farbe von ${u.name}`">
+          <label class="farbe" :title="$t('adminbereich.farbeVonName', { name: u.name })">
             <UserAvatar :user="u" />
-            <input type="color" :value="u.color || '#555555'" :aria-label="`Farbe von ${u.name}`" @change="aendern(u, { color: $event.target.value })" />
+            <input type="color" :value="u.color || '#555555'" :aria-label="$t('adminbereich.farbeVonName2', { name: u.name })" @change="aendern(u, { color: $event.target.value })" />
           </label>
           <form v-if="bearbeiten === u.id" class="rename" @submit.prevent="namenSpeichern(u)">
-            <input v-model="name" maxlength="30" :aria-label="`Neuer Name für ${u.name}`" autofocus @keydown.esc="bearbeiten = null" />
+            <input v-model="name" maxlength="30" :aria-label="$t('adminbereich.neuerNameFuerName', { name: u.name })" autofocus @keydown.esc="bearbeiten = null" />
             <button class="small primary">OK</button>
           </form>
           <strong v-else>{{ u.name }}</strong>
-          <span v-if="u.admin" class="chip admin">Admin</span>
-          <span v-if="u.hat_schutz" class="chip" title="Name mit Film-Passwort geschützt"><Icon name="schloss" :size="12" /></span>
-          <span class="muted small">{{ u.sitzungen ? `${u.sitzungen} ${u.sitzungen === 1 ? 'Gerät' : 'Geräte'}` : 'nicht angemeldet' }} · seit {{ datum(u.seit) }}</span>
+          <span v-if="u.admin" class="chip admin">{{ $t('adminbereich.admin') }}</span>
+          <span v-if="u.hat_schutz" class="chip" :title="$t('adminbereich.nameMitFilmPasswort')"><Icon name="schloss" :size="12" /></span>
+          <span class="muted small">{{ u.sitzungen ? $t('adminbereich.geraete', { n: u.sitzungen }, u.sitzungen) : $t('adminbereich.nichtAngemeldet') }} · {{ $t('adminbereich.seit', { am: datum(u.seit) }) }}</span>
         </div>
         <div class="row tools">
-          <button class="ghost small" @click="umbenennen(u)"><Icon name="stift" :size="13" /> Umbenennen</button>
-          <button v-if="!(u.admin && einzigerAdmin)" class="ghost small" @click="aendern(u, { admin: !u.admin }, u.admin ? `${u.name} ist kein Admin mehr` : `${u.name} ist jetzt Admin`)">
-            {{ u.admin ? 'Admin entziehen' : 'Zum Admin machen' }}
+          <button class="ghost small" @click="umbenennen(u)"><Icon name="stift" :size="13" /> {{ $t('adminbereich.umbenennen') }}</button>
+          <button v-if="!(u.admin && einzigerAdmin)" class="ghost small" @click="aendern(u, { admin: !u.admin }, u.admin ? $t('adminbereich.keinAdminMehr', { name: u.name }) : $t('adminbereich.jetztAdmin', { name: u.name }))">
+            {{ u.admin ? $t('adminbereich.adminEntziehen') : $t('adminbereich.zumAdminMachen') }}
           </button>
-          <button v-if="u.hat_schutz" class="ghost small" @click="schutzWeg(u)">Film-Passwort zurücksetzen</button>
-          <button v-if="u.bild" class="ghost small" @click="bildWeg(u)">Bild entfernen</button>
-          <button v-if="u.sitzungen" class="ghost small" @click="abmelden(u)"><Icon name="logout" :size="13" /> Überall abmelden</button>
-          <button v-if="u.id !== app.me?.id" class="ghost small danger" :aria-label="`${u.name} löschen`" @click="loeschen(u)"><Icon name="muell" :size="14" /></button>
+          <button v-if="u.hat_schutz" class="ghost small" @click="schutzWeg(u)">{{ $t('adminbereich.filmPasswortZuruecksetzen') }}</button>
+          <button v-if="u.bild" class="ghost small" @click="bildWeg(u)">{{ $t('adminbereich.bildEntfernen') }}</button>
+          <button v-if="u.sitzungen" class="ghost small" @click="abmelden(u)"><Icon name="logout" :size="13" /> {{ $t('adminbereich.ueberallAbmelden') }}</button>
+          <button v-if="u.id !== app.me?.id" class="ghost small danger" :aria-label="$t('adminbereich.nameLoeschen', { name: u.name })" @click="loeschen(u)"><Icon name="muell" :size="14" /></button>
         </div>
       </li>
     </ul>
     <form class="row create" @submit.prevent="anlegen">
-      <input v-model="neuerName" maxlength="30" placeholder="Namen direkt anlegen …" aria-label="Namen direkt anlegen" />
-      <button :disabled="!neuerName.trim()"><Icon name="plus" :size="15" /> Anlegen</button>
+      <input v-model="neuerName" maxlength="30" :placeholder="$t('adminbereich.namenDirektAnlegen')" :aria-label="$t('adminbereich.namenDirektAnlegen2')" />
+      <button :disabled="!neuerName.trim()"><Icon name="plus" :size="15" /> {{ $t('adminbereich.anlegen') }}</button>
     </form>
   </section>
 </template>

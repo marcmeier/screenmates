@@ -1,4 +1,5 @@
 <script setup>
+import { locale, t } from '../i18n'
 import { computed, onMounted, ref } from 'vue'
 import { api } from '../api'
 import { useApp } from '../stores/app'
@@ -8,40 +9,40 @@ import { vorWann } from '../format'
 const app = useApp()
 const daten = ref(null)
 const zeitraum = ref('30_tage')
-const ZEITRAEUME = { heute: 'Heute', '7_tage': '7 Tage', '30_tage': '30 Tage', gesamt: 'Gesamt' }
+const ZEITRAEUME = { heute: t('allg.heute'), '7_tage': t('kinutzung.7Tage'), '30_tage': t('kinutzung.30Tage'), gesamt: t('kinutzung.gesamt') }
 
 onMounted(async () => (daten.value = await api.get('/api/admin/ki-nutzung')))
 const s = computed(() => daten.value?.summen[zeitraum.value])
-const zahl = (n) => (n ?? 0).toLocaleString('de-DE')
+const zahl = (n) => (n ?? 0).toLocaleString(locale())
 const dollar = (k) =>
-  k == null ? '–' : k.toLocaleString('de-DE', { style: 'currency', currency: 'USD', maximumFractionDigits: k < 1 ? 4 : 2 })
-const name = (id) => app.userById(id)?.name || 'Gelöscht'
+  k == null ? '–' : k.toLocaleString(locale(), { style: 'currency', currency: 'USD', maximumFractionDigits: k < 1 ? 4 : 2 })
+const name = (id) => app.userById(id)?.name || t('kinutzung.geloescht')
 </script>
 
 <template>
   <section class="panel">
-    <h2>KI-Suche</h2>
+    <h2>{{ $t('kinutzung.kiSuche') }}</h2>
     <template v-if="daten">
       <p class="muted">
-        <template v-if="daten.aktiv">Modell <code>{{ daten.modell }}</code> über {{ daten.anbieter === 'openrouter' ? 'OpenRouter' : 'Anthropic' }}.</template>
-        <template v-else>Nicht eingerichtet (<code>LLM_API_KEY</code> fehlt).</template>
+        <template v-if="daten.aktiv">{{ $t('kinutzung.modell') }} <code>{{ daten.modell }}</code> über {{ daten.anbieter === 'openrouter' ? 'OpenRouter' : 'Anthropic' }}.</template>
+        <template v-else>{{ $t('kinutzung.nichtEingerichtet') }}<code>LLM_API_KEY</code> {{ $t('kinutzung.fehlt') }}</template>
       </p>
-      <div class="zeitraum" role="group" aria-label="Zeitraum">
+      <div class="zeitraum" role="group" :aria-label="$t('kinutzung.zeitraum')">
         <button v-for="(label, k) in ZEITRAEUME" :key="k" class="small" :class="{ primary: zeitraum === k }" @click="zeitraum = k">{{ label }}</button>
       </div>
       <div class="kacheln">
-        <div><strong>{{ zahl(s.anfragen) }}</strong><span class="muted">Anfragen<template v-if="s.fehler"> · {{ s.fehler }} fehlgeschlagen</template></span></div>
-        <div><strong>{{ zahl(s.tokens_ein + s.tokens_aus) }}</strong><span class="muted">Tokens ({{ zahl(s.tokens_ein) }} rein · {{ zahl(s.tokens_aus) }} raus)</span></div>
+        <div><strong>{{ zahl(s.anfragen) }}</strong><span class="muted">{{ $t('kinutzung.anfragen') }}<template v-if="s.fehler"> {{ $t('kinutzung.fehlerFehlgeschlagen', { fehler: s.fehler }) }}</template></span></div>
+        <div><strong>{{ zahl(s.tokens_ein + s.tokens_aus) }}</strong><span class="muted">{{ $t('kinutzung.tokensXReinX2', { x: zahl(s.tokens_ein), x2: zahl(s.tokens_aus) }) }}</span></div>
         <div>
           <strong>{{ dollar(s.kosten) }}</strong>
-          <span class="muted">Kosten<template v-if="s.ohne_kosten && s.anfragen"> · {{ s.ohne_kosten }} ohne Preisangabe</template></span>
+          <span class="muted">{{ $t('kinutzung.kosten') }}<template v-if="s.ohne_kosten && s.anfragen"> {{ $t('kinutzung.ohneKostenOhnePreisangabe', { ohne_kosten: s.ohne_kosten }) }}</template></span>
         </div>
       </div>
 
       <template v-if="daten.pro_person.length">
-        <h3>Pro Person (gesamt)</h3>
+        <h3>{{ $t('kinutzung.proPersonGesamt') }}</h3>
         <table>
-          <thead><tr><th>Wer</th><th>Anfragen</th><th>Tokens</th><th>Kosten</th></tr></thead>
+          <thead><tr><th>{{ $t('kinutzung.wer') }}</th><th>{{ $t('kinutzung.anfragen2') }}</th><th>{{ $t('kinutzung.tokens') }}</th><th>{{ $t('kinutzung.kosten2') }}</th></tr></thead>
           <tbody>
             <tr v-for="p in daten.pro_person" :key="p.user_id ?? 'x'">
               <td>{{ name(p.user_id) }}</td><td>{{ zahl(p.anfragen) }}</td><td>{{ zahl(p.tokens_ein + p.tokens_aus) }}</td><td>{{ dollar(p.kosten) }}</td>
@@ -49,19 +50,19 @@ const name = (id) => app.userById(id)?.name || 'Gelöscht'
           </tbody>
         </table>
 
-        <h3>Letzte Anfragen</h3>
+        <h3>{{ $t('kinutzung.letzteAnfragen') }}</h3>
         <table>
-          <thead><tr><th>Wann</th><th>Wer</th><th>Tokens</th><th>Kosten</th></tr></thead>
+          <thead><tr><th>{{ $t('kinutzung.wann') }}</th><th>{{ $t('kinutzung.wer2') }}</th><th>{{ $t('kinutzung.tokens2') }}</th><th>{{ $t('kinutzung.kosten3') }}</th></tr></thead>
           <tbody>
             <tr v-for="(a, i) in daten.letzte" :key="i" :class="{ fehler: !a.ok }" :title="a.fehler || a.modell">
               <td>{{ vorWann(a.at) }}</td><td>{{ name(a.user_id) }}</td>
-              <td>{{ a.ok ? zahl(a.tokens_ein + a.tokens_aus) : 'Fehler' }}</td><td>{{ dollar(a.kosten) }}</td>
+              <td>{{ a.ok ? zahl(a.tokens_ein + a.tokens_aus) : $t('kinutzung.fehler') }}</td><td>{{ dollar(a.kosten) }}</td>
             </tr>
           </tbody>
         </table>
       </template>
-      <p v-else class="muted">Noch keine Anfragen.</p>
-      <p class="muted klein">Kosten meldet nur OpenRouter (in US-Dollar). Anfragen von vor diesem Update sind nicht erfasst.</p>
+      <p v-else class="muted">{{ $t('kinutzung.nochKeineAnfragen') }}</p>
+      <p class="muted klein">{{ $t('kinutzung.kostenMeldetNurOpenrouter') }}</p>
     </template>
   </section>
 </template>

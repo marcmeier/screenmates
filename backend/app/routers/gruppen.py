@@ -12,6 +12,7 @@ from ..db import get_session
 from ..gruppen import gruppe_oder_404, ist_gruppen_admin, mitgliedschaften
 from ..models import Abend, Gruppe, Info, KinoState, Mitglied, Session, User
 from ..session import current_session, current_user, ensure_session, is_admin, require_admin, require_user
+from ..sprache import tr
 from .users import clean_name
 
 router = APIRouter(prefix="/api", tags=["gruppen"])
@@ -104,7 +105,7 @@ def create_group(body: GruppeAnlegen, db: DBSession = Depends(get_session)):
         db.commit()
     except IntegrityError:
         db.rollback()
-        raise HTTPException(409, f"Eine Gruppe „{g.name}“ gibt es schon.") from None
+        raise HTTPException(409, tr("Eine Gruppe „{name}“ gibt es schon.", name=g.name)) from None
     db.refresh(g)
     return _gruppe_dict(db, g)
 
@@ -124,7 +125,7 @@ def rename_group(
         db.commit()
     except IntegrityError:
         db.rollback()
-        raise HTTPException(409, f"Eine Gruppe „{g.name}“ gibt es schon.") from None
+        raise HTTPException(409, tr("Eine Gruppe „{name}“ gibt es schon.", name=g.name)) from None
     return _gruppe_dict(db, g)
 
 

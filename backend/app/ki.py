@@ -15,14 +15,20 @@ from typing import Any
 import httpx
 
 from .config import settings
+from .sprache import aktuell, tr
 
 SYSTEM = (
     "Du bist ein Filmkenner und hilfst einer Freundesgruppe, den nächsten Filmabend "
     "auszuwählen. Antworte ausschließlich mit einem JSON-Array, ohne Fließtext davor oder "
     'danach. Jedes Element hat die Form {"titel": string, "originaltitel": string, '
-    '"jahr": number, "warum": string}. "warum" ist ein kurzer deutscher Satz, warum der Film '
+    '"jahr": number, "warum": string}. "warum" ist ein kurzer {sprache} Satz, warum der Film '
     "zur Beschreibung passt. Schlage nur Filme vor, die es wirklich gibt."
 )
+
+
+def system() -> str:
+    """The instructions, with "warum" in the language of whoever asks."""
+    return SYSTEM.replace("{sprache}", "englischer" if aktuell() == "en" else "deutscher")
 
 
 class KIError(Exception):
@@ -79,7 +85,7 @@ async def _anthropic(client: httpx.AsyncClient, prompt: str, nutzung: Nutzung) -
         json={
             "model": settings.llm_model_name,
             "max_tokens": 2000,
-            "system": SYSTEM,
+            "system": system(),
             "messages": [{"role": "user", "content": prompt}],
         },
     )
@@ -103,7 +109,7 @@ async def _openrouter(client: httpx.AsyncClient, prompt: str, nutzung: Nutzung) 
         json={
             "model": settings.llm_model_name,
             "max_tokens": 2000,
-            "messages": [{"role": "system", "content": SYSTEM}, {"role": "user", "content": prompt}],
+            "messages": [{"role": "system", "content": system()}, {"role": "user", "content": prompt}],
             # Reasoning models would think first and often use up max_tokens before the
             # list is written. A list of titles needs knowledge, not thought: off is faster
             # and cheaper. Models that cannot switch it off ignore the setting.
@@ -135,4 +141,4 @@ def _check(r: httpx.Response) -> None:
     if r.status_code == 429:
         raise KIError("Die KI ist gerade überlastet – bitte gleich noch einmal versuchen.")
     if r.status_code >= 400:
-        raise KIError(f"Die KI antwortete mit Fehler {r.status_code}.")
+        raise KIError(tr("Die KI antwortete mit Fehler {status}.", status=r.status_code))

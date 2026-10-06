@@ -34,13 +34,14 @@ from ..models import (
     Wishlist,
     Zaehler,
 )
+from ..sprache import aktuell, tr
 
 router = APIRouter(prefix="/api", tags=["statistik"])
 log = logging.getLogger(__name__)
 
 INTERVALL = 15  # seconds between two looks at MediaMTX
 _zuletzt: dict[str, tuple[int, int, int]] = {}  # session id -> (bytes, packets, lost) already counted
-_cache: tuple[float, list[dict]] = (0.0, [])
+_cache: dict[str, tuple[float, list[dict]]] = {}
 
 
 def _anzahl(db: DBSession, modell, *bedingungen) -> int:
@@ -93,7 +94,10 @@ async def kino_mitzaehlen() -> None:
 
 
 def _de(n: float, stellen: int = 0) -> str:
+    """1234.5 -> "1.234,5" (German) or "1,234.5" (English)."""
     text = f"{n:,.{stellen}f}"
+    if aktuell() == "en":
+        return text
     return text.replace(",", "X").replace(".", ",").replace("X", ".")
 
 
@@ -122,26 +126,28 @@ def fakten(db: DBSession) -> list[dict]:
         (_anzahl(db, Erfolg, col(Erfolg.entzogen).is_(False)), "Erfolg freigeschaltet", "Erfolge freigeschaltet"),
         (_anzahl(db, Movie), "Film im Katalog", "Filme im Katalog"),
     ]
-    liste = [{"wert": _de(n), "text": eins if n == 1 else viele} for n, eins, viele in eintraege if n]
+    liste = [{"wert": _de(n), "text": tr(eins if n == 1 else viele)} for n, eins, viele in eintraege if n]
     if sterne:
-        liste.append({"wert": f"{_de(sterne, 1)} ★", "text": "Durchschnitt aller Bewertungen"})
+        liste.append({"wert": f"{_de(sterne, 1)} ★", "text": tr("Durchschnitt aller Bewertungen")})
     for key, eins, viele in (
         ("kino_chat", "Nachricht im Kino-Chat", "Nachrichten im Kino-Chat"),
         ("kino_reaktionen", "Reaktion im Kino", "Reaktionen im Kino"),
     ):
         if n := zaehler(db, key):
-            liste.append({"wert": _de(n), "text": eins if n == 1 else viele})
+            liste.append({"wert": _de(n), "text": tr(eins if n == 1 else viele)})
     if kino_bytes:
-        liste.append({"wert": _bytes(kino_bytes), "text": "im Kino gestreamt"})
+        liste.append({"wert": _bytes(kino_bytes), "text": tr("im Kino gestreamt")})
     if pakete:
         quote = 100 * verloren / (pakete + verloren)
-        liste.append({"wert": _de(verloren), "text": f"Pakete beim Streamen verloren ({_de(quote, 2)} %)"})
+        text = tr("Pakete beim Streamen verloren ({quote} %)", quote=_de(quote, 2))
+        liste.append({"wert": _de(verloren), "text": text})
     return liste
 
 
 @router.get("/statistik")
 def statistik(db: DBSession = Depends(get_session)):
-    global _cache
-    if time.monotonic() - _cache[0] > 60:
-        _cache = (time.monotonic(), fakten(db))
-    return {"fakten": _cache[1]}
+    # One cache per language: the facts are written out in words.
+    alt = _cache.get(aktuell())
+    if alt is None or time.monotonic() - alt[0] > 60:
+        _cache[aktuell()] = alt = (time.monotonic(), fakten(db))
+    return {"fakten": alt[1]}

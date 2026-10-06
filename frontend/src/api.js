@@ -1,5 +1,5 @@
 import { useUi } from './stores/ui'
-import { t } from './i18n'
+import { sprache, t } from './i18n'
 
 /** Error thrown for every failed request. It has already been shown to the user. */
 export class ApiError extends Error {
@@ -29,7 +29,7 @@ export function beiAenderung(fn) {
 const STILL = ['/api/kino/da', '/api/kino/chat', '/api/kino/reaktion', '/api/erfolge', '/api/zugang', '/api/push', '/api/kalender']
 
 async function req(method, path, body, { signal, quiet = false } = {}) {
-  const opts = { method, credentials: 'same-origin', headers: {}, signal }
+  const opts = { method, credentials: 'same-origin', headers: { 'X-Sprache': sprache() }, signal }
   if (body instanceof Blob) {
     opts.headers['Content-Type'] = body.type || 'application/octet-stream'
     opts.body = body

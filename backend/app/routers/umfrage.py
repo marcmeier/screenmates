@@ -25,6 +25,7 @@ from ..gruppen import aktive_gruppe, gruppen_admin
 from ..models import Mitglied, TerminStimme, TerminVorschlag, User
 from ..serialize import iso
 from ..session import require_user
+from ..sprache import tr
 from ..util import BERLIN, termin_text, utc
 from . import gastgeber
 from .abend import _termin_dict, pruefe_termin, termin_setzen
@@ -115,7 +116,7 @@ def propose(
     termin = pruefe_termin(body.termin, vergangenes=timedelta(0))
     vs = offene(db, gid)
     if len(vs) >= MAX_VORSCHLAEGE:
-        raise HTTPException(409, f"Mehr als {MAX_VORSCHLAEGE} Vorschläge auf einmal werden unübersichtlich.")
+        raise HTTPException(409, tr("Mehr als {n} Vorschläge auf einmal werden unübersichtlich.", n=MAX_VORSCHLAEGE))
     if any(utc(v.termin) == termin for v in vs):
         raise HTTPException(409, "Diesen Termin gibt es schon in der Umfrage.")
     v = TerminVorschlag(gruppe_id=gid, termin=termin, notiz=body.notiz.strip(), von_id=user.id)
@@ -127,9 +128,10 @@ def propose(
         db,
         push.mitglieder(db, gid, ausser=user.id),
         "umfrage",
-        f"🗳️ Wann habt ihr Zeit? – {push.gruppenname(db, gid)}",
-        f"{user.name} schlägt {termin_text(termin)} vor. Stimm ab!",
+        "🗳️ Wann habt ihr Zeit? – {gruppe}",
+        "{name} schlägt {wann} vor. Stimm ab!",
         tag=f"umfrage-{gid}",
+        werte={"gruppe": push.gruppenname(db, gid), "name": user.name, "wann": lambda: termin_text(termin)},
     )
     return _zustand(db, gid, user, admin)
 

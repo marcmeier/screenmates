@@ -14,6 +14,7 @@ from .. import push
 from ..db import get_session
 from ..models import PushAbo, User
 from ..session import require_user
+from ..sprache import tr
 
 router = APIRouter(prefix="/api/push", tags=["push"])
 
@@ -66,7 +67,7 @@ def _zustand(db: DBSession, user: User) -> dict:
     wahl = push.wahl(user)
     return {
         "schluessel": push.oeffentlicher_schluessel(db),
-        "arten": [{"key": k, "text": t, "an": wahl[k]} for k, t in push.ARTEN.items()],
+        "arten": [{"key": k, "text": tr(t), "an": wahl[k]} for k, t in push.ARTEN.items()],
         "geraete": _geraete(db, user),
     }
 
@@ -106,7 +107,7 @@ def unsubscribe(body: Abmelden, user: User = Depends(require_user), db: DBSessio
 def choose(body: Wahl, user: User = Depends(require_user), db: DBSession = Depends(get_session)):
     unbekannt = set(body.arten) - set(push.ARTEN)
     if unbekannt:
-        raise HTTPException(422, f"Unbekannte Benachrichtigung: {', '.join(sorted(unbekannt))}")
+        raise HTTPException(422, tr("Unbekannte Benachrichtigung: {arten}", arten=", ".join(sorted(unbekannt))))
     user.push = json.dumps(push.wahl(user) | body.arten)
     db.add(user)
     db.commit()

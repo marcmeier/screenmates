@@ -14,6 +14,7 @@ from ..db import get_session
 from ..models import Erfolg, User
 from ..serialize import iso
 from ..session import current_user, require_admin, require_user
+from ..sprache import tr
 
 router = APIRouter(prefix="/api", tags=["erfolge"])
 
@@ -32,8 +33,8 @@ def _def(d: erfolge.Def, sichtbar: bool, selten: float | None = None) -> dict:
     return {
         "key": d.key,
         "familie": d.familie,
-        "name": "???" if verdeckt else d.name,
-        "text": "Geheimer Erfolg – wird beim Freischalten enthüllt." if verdeckt else d.text,
+        "name": "???" if verdeckt else d.anzeige_name,
+        "text": tr("Geheimer Erfolg – wird beim Freischalten enthüllt.") if verdeckt else d.anzeige_text,
         "emoji": "❔" if verdeckt else d.emoji,
         "stufe": d.stufe,
         "punkte": d.punkte,

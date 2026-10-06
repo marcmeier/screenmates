@@ -1,4 +1,5 @@
 <script setup>
+import { t } from '../i18n'
 import DOMPurify from 'dompurify'
 import { marked } from 'marked'
 import { computed, onMounted, ref, watch } from 'vue'
@@ -16,13 +17,13 @@ const bearbeiten = ref(null) // key being edited
 const entwurf = ref('')
 const konto = ref({ kofi: '', paypal: '' }) // account names while editing the donation section
 const qr = ref({}) // key -> SVG of the account link, drawn here in the browser
-const TITEL = { spenden: 'Unterstützen', impressum: 'Impressum', datenschutz: 'Datenschutz' }
+const TITEL = { spenden: t('ueberinhalt.unterstuetzen'), impressum: t('ueberinhalt.impressum'), datenschutz: t('ueberinhalt.datenschutz') }
 const HINWEIS = {
-  spenden: 'Wofür das Geld gedacht ist (Server, Domain …).',
-  impressum: 'Name und ladungsfähige Anschrift, Kontakt (E-Mail). Leer lassen, wenn keins nötig ist.',
-  datenschutz: 'Welche Daten screenmates speichert, wer sie sieht, wie man sie löschen lässt.',
+  spenden: t('ueberinhalt.wofuerDasGeldGedacht'),
+  impressum: t('ueberinhalt.nameUndLadungsfaehigeAnschrift'),
+  datenschutz: t('ueberinhalt.welcheDatenScreenmatesSpeichert'),
 }
-const KONTO = { kofi: 'Ko-fi-Name', paypal: 'PayPal.me-Name' }
+const KONTO = { kofi: t('ueberinhalt.koFiName'), paypal: t('ueberinhalt.paypalMeName') }
 
 async function laden() {
   daten.value = await api.get('/api/ueber')
@@ -54,34 +55,34 @@ async function speichern() {
   }
   bearbeiten.value = null
   await laden()
-  ui.toast('Gespeichert', 'ok')
+  ui.toast(t('ueberinhalt.gespeichert'), 'ok')
 }
 </script>
 
 <template>
   <div v-if="daten" class="ueber">
     <section class="panel">
-      <h2>screen<span class="akzent">mates</span> <small class="muted">Version {{ daten.version }}</small></h2>
-      <p>Filmabende mit Freunden planen, gemeinsam schauen und darüber reden. Freie Software – der Quellcode liegt offen.</p>
-      <a :href="daten.repo" target="_blank" rel="noopener" class="button small"><Icon name="extern" :size="14" /> Quellcode auf GitHub</a>
+      <h2>screen<span class="akzent">mates</span> <small class="muted">{{ $t('ueberinhalt.versionVersion', { version: daten.version }) }}</small></h2>
+      <p>{{ $t('ueberinhalt.filmabendeMitFreundenPlanen') }}</p>
+      <a :href="daten.repo" target="_blank" rel="noopener" class="button small"><Icon name="extern" :size="14" /> {{ $t('ueberinhalt.quellcodeAufGithub') }}</a>
     </section>
     <section v-for="k in sichtbar" :id="k" :key="k" class="panel">
       <div class="kopf">
         <h2>{{ TITEL[k] }}</h2>
-        <button v-if="app.admin && bearbeiten !== k" class="ghost small" @click="start(k)"><Icon name="stift" :size="14" /> Bearbeiten</button>
+        <button v-if="app.admin && bearbeiten !== k" class="ghost small" @click="start(k)"><Icon name="stift" :size="14" /> {{ $t('ueberinhalt.bearbeiten') }}</button>
       </div>
       <form v-if="bearbeiten === k" @submit.prevent="speichern">
-        <p class="muted">{{ HINWEIS[k] }} Markdown geht.</p>
-        <textarea v-model="entwurf" rows="10" :aria-label="`${TITEL[k]} (Markdown)`"></textarea>
+        <p class="muted">{{ $t('ueberinhalt.xMarkdownGeht', { x: HINWEIS[k] }) }}</p>
+        <textarea v-model="entwurf" rows="10" :aria-label="$t('ueberinhalt.xMarkdown', { x: TITEL[k] })"></textarea>
         <div v-if="k === 'spenden'" class="row konto-felder">
           <label v-for="(label, key) in KONTO" :key="key" class="field">
             {{ label }}
-            <input v-model="konto[key]" placeholder="Name oder Link, leer = aus" />
+            <input v-model="konto[key]" :placeholder="$t('ueberinhalt.nameOderLinkLeer')" />
           </label>
         </div>
         <div class="row">
-          <button class="primary small">Speichern</button>
-          <button type="button" class="ghost small" @click="bearbeiten = null">Abbrechen</button>
+          <button class="primary small">{{ $t('ueberinhalt.speichern') }}</button>
+          <button type="button" class="ghost small" @click="bearbeiten = null">{{ $t('ueberinhalt.abbrechen') }}</button>
         </div>
       </form>
       <template v-else-if="gefuellt(k)">
@@ -90,13 +91,13 @@ async function speichern() {
         <div v-if="k === 'spenden' && konten.length" class="konten">
           <div v-for="[key, c] in konten" :key="key" class="konto">
             <!-- eslint-disable-next-line vue/no-v-html -- SVG drawn by the qrcode library from our own link -->
-            <div v-if="qr[key]" class="qr" role="img" :aria-label="`QR-Code für ${c.label}`" v-html="qr[key]"></div>
+            <div v-if="qr[key]" class="qr" role="img" :aria-label="$t('ueberinhalt.qrCodeFuerLabel', { label: c.label })" v-html="qr[key]"></div>
             <a :href="c.url" target="_blank" rel="noopener" class="button small"><Icon name="herz" :size="14" /> {{ c.label }}</a>
             <small class="muted">{{ c.url.replace('https://', '') }}</small>
           </div>
         </div>
       </template>
-      <p v-else class="muted">Noch leer – nur Admins sehen diesen Abschnitt.</p>
+      <p v-else class="muted">{{ $t('ueberinhalt.nochLeerNurAdmins') }}</p>
     </section>
   </div>
 </template>

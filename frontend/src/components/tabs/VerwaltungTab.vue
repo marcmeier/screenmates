@@ -1,4 +1,5 @@
 <script setup>
+import { t } from '../../i18n'
 import { ref } from 'vue'
 import { api } from '../../api'
 import { useApp } from '../../stores/app'
@@ -19,7 +20,7 @@ async function sync() {
   busy.value = true
   try {
     const r = await api.post('/api/sync')
-    ui.toast(`Katalog aktualisiert: ${r.neu} neue Filme, ${r.gesamt} insgesamt`, 'ok')
+    ui.toast(t('verwaltungtab.katalogAktualisiertNeuNeue', { neu: r.neu, gesamt: r.gesamt }), 'ok')
     await app.refreshStatus()
     ui.changed()
   } finally {
@@ -30,7 +31,7 @@ async function sync() {
 async function resetDabei() {
   await api.del('/api/dabei')
   await app.refreshUsers()
-  ui.toast('Teilnahme zurückgesetzt')
+  ui.toast(t('verwaltungtab.teilnahmeZurueckgesetzt'))
 }
 </script>
 
@@ -38,22 +39,22 @@ async function resetDabei() {
   <div class="page">
     <header class="page-head">
       <div>
-        <h1>Verwaltung</h1>
-        <p>{{ app.admin ? 'Zugang, Gruppen, Katalog und KI – nur für Admins sichtbar.' : 'Deine Gruppen – nur für Gruppen-Admins sichtbar.' }}</p>
+        <h1>{{ $t('nav.verwaltung') }}</h1>
+        <p>{{ app.admin ? $t('verwaltungtab.zugangGruppenKatalogUnd') : $t('verwaltungtab.deineGruppenNurFuer') }}</p>
       </div>
     </header>
 
     <div v-if="!app.verwaltetGruppen" class="empty">
-      <strong>Nur für Admins</strong>
-      <p class="muted">Dein eigenes Profil findest du unter <a href="#/profil/einstellungen">Profil → Einstellungen</a>.</p>
+      <strong>{{ $t('verwaltungtab.nurFuerAdmins') }}</strong>
+      <p class="muted">{{ $t('verwaltungtab.deinEigenesProfilFindest') }} <a href="#/profil/einstellungen">{{ $t('verwaltungtab.profilEinstellungen') }}</a>.</p>
     </div>
     <template v-else>
 
       <GruppenVerwaltung v-if="app.verwaltetGruppen" />
       <section v-if="app.gruppenAdmin && app.gruppe" class="panel">
-        <h2>Nächster Abend{{ app.gruppe ? ` – ${app.gruppe.name}` : '' }}</h2>
+        <h2>{{ $t('verwaltungtab.naechsterAbend') }}{{ app.gruppe ? ` – ${app.gruppe.name}` : '' }}</h2>
         <div class="row">
-          <button class="small" @click="resetDabei">Teilnahme für den nächsten Abend zurücksetzen</button>
+          <button class="small" @click="resetDabei">{{ $t('verwaltungtab.teilnahmeFuerDenNaechsten') }}</button>
         </div>
       </section>
       <template v-if="app.admin">
@@ -62,15 +63,15 @@ async function resetDabei() {
         <KiNutzung />
 
         <section class="panel">
-          <h2>Katalog</h2>
+          <h2>{{ $t('verwaltungtab.katalog') }}</h2>
           <p class="muted">
-            {{ app.status.movie_count }} Filme, davon {{ app.status.canon_count }} aus dem TMDB-Abgleich.
-            <template v-if="app.status.last_sync">Letzter Abgleich {{ vorWann(app.status.last_sync) }}.</template>
+            {{ $t('verwaltungtab.movieCountFilmeDavon', { movie_count: app.status.movie_count, canon_count: app.status.canon_count }) }}
+            <template v-if="app.status.last_sync">{{ $t('verwaltungtab.letzterAbgleichX', { x: vorWann(app.status.last_sync) }) }}</template>
           </p>
           <button v-if="app.status.tmdb" :disabled="busy" @click="sync">
-            <Icon name="sync" :size="16" /> {{ busy ? 'Gleiche ab …' : 'Mit TMDB abgleichen' }}
+            <Icon name="sync" :size="16" /> {{ busy ? $t('verwaltungtab.gleicheAb') : $t('verwaltungtab.mitTmdbAbgleichen') }}
           </button>
-          <p v-else class="notice">Ohne <code>TMDB_API_KEY</code> läuft screenmates auf dem mitgelieferten Seed-Katalog.</p>
+          <p v-else class="notice">{{ $t('verwaltungtab.ohne') }} <code>TMDB_API_KEY</code> {{ $t('verwaltungtab.laeuftScreenmatesAufDem') }}</p>
         </section>
 
         <Gefahrenzone />

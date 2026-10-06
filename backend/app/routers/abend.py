@@ -219,9 +219,15 @@ def termin_setzen(db: DBSession, gid: int, user: User, termin: datetime, notiz: 
             db,
             push.mitglieder(db, gid, ausser=user.id),
             "termin",
-            f"📅 Filmabend {'verschoben' if verschoben else 'steht'} – {push.gruppenname(db, gid)}",
-            f"{user.name}: {termin_text(termin)}{f' · {a.notiz}' if a.notiz else ''}",
+            "📅 Filmabend verschoben – {gruppe}" if verschoben else "📅 Filmabend steht – {gruppe}",
+            "{name}: {wann}{notiz}",
             tag=f"termin-{gid}",
+            werte={
+                "gruppe": push.gruppenname(db, gid),
+                "name": user.name,
+                "wann": lambda: termin_text(termin),
+                "notiz": f" · {a.notiz}" if a.notiz else "",
+            },
         )
     return a
 
