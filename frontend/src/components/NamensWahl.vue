@@ -89,7 +89,7 @@ async function create() {
       <template v-else-if="!mitCode">
         <h2>{{ $t('namen.wer') }}</h2>
         <p v-if="app.zugang.einladung" class="einladung center">
-          {{ $t('namen.eingeladen') }} <strong>„{{ app.zugang.einladung.gruppe }}“</strong>.
+          {{ $t('namen.eingeladen') }} <strong>{{ $t('allg.zitat', { text: app.zugang.einladung.gruppe }) }}</strong>.
           {{ app.zugang.einladung.direkt ? $t('namen.direkt') : $t('namen.mitFreigabe') }}
         </p>
         <div v-if="app.meineNamen.length" class="users">

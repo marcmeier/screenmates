@@ -33,7 +33,7 @@ from ..models import (
     WatchedRating,
 )
 from ..serialize import iso, movie_dict
-from ..util import MONATE, WOCHENTAGE, utc
+from ..util import utc
 from ..zeitzone import zone
 
 router = APIRouter(prefix="/api/rueckblick", tags=["rueckblick"])
@@ -198,8 +198,8 @@ def year_in_review(jahr: int, gid: int = Depends(aktive_gruppe), db: DBSession =
         "minuten": minuten,
         "genres": [{"name": g, "anzahl": n} for g, n in genres.most_common(5)],
         "jahrzehnt": {"jahrzehnt": top_jahrzehnt[0][0], "anzahl": top_jahrzehnt[0][1]} if top_jahrzehnt else None,
-        "monat": {"name": MONATE[top_monat[0] - 1], "nr": top_monat[0], "anzahl": top_monat[1]},
-        "wochentag": {"name": WOCHENTAGE[top_tag[0]], "nr": top_tag[0], "anzahl": top_tag[1]},
+        "monat": {"nr": top_monat[0], "anzahl": top_monat[1]},  # the app names them in its language
+        "wochentag": {"nr": top_tag[0], "anzahl": top_tag[1]},
         "serie": _serie(tage),
         "kisten": kisten,
         "bewertungen": len(alle_sterne),

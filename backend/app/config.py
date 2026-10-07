@@ -20,8 +20,8 @@ class Settings(BaseSettings):
 
     # TMDB — leave empty to run on seed data only.
     tmdb_api_key: str = ""
-    tmdb_language: str = "de-DE"
-    tmdb_region: str = "DE"
+    tmdb_language: str = "en-US"
+    tmdb_region: str = "US"
     tmdb_image_base: str = "https://image.tmdb.org/t/p"
     tmdb_timeout: float = 10.0
 

@@ -61,7 +61,7 @@ jobs:
       - uses: actions/checkout@v4
       - name: Build and start the stack
         run: |
-          printf 'SETUP_TOKEN=E2E-SETUP-CODE\nTIMEZONE=Europe/Berlin\n' > backend/.env
+          printf 'SETUP_TOKEN=E2E-SETUP-CODE\nTIMEZONE=Europe/Berlin\nTMDB_LANGUAGE=de-DE\nTMDB_REGION=DE\n' > backend/.env
           docker compose up --detach --build --wait --wait-timeout 120
         env: { KINO_PUBLIC_HOST: 127.0.0.1 }
       - name: Stack answers

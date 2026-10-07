@@ -177,6 +177,12 @@ def test_the_first_name_runs_the_first_group(client, db):
     r = client.post("/api/users", json={"name": "Marc", "setup": SETUP}).json()
     m = db.exec(select(Mitglied).where(Mitglied.user_id == r["id"])).one()
     assert (m.gruppe_id, m.ist_admin) == (1, True)
+    assert db.get(Gruppe, 1).name == "Unsere Gruppe"
+
+
+def test_the_first_group_is_named_in_the_first_admins_language(client, db):
+    client.post("/api/users", json={"name": "Mia", "setup": SETUP}, headers={"X-Sprache": "en"})
+    assert db.get(Gruppe, 1).name == "Our group"
 
 
 # --- what one group rated stays in that group ------------------------------------------------------

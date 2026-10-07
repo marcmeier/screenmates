@@ -149,8 +149,8 @@ All settings are optional and go into `backend/.env` or the environment.
 |---|---|---|
 | `TIMEZONE` (or `TZ`) | | The group's time zone, e.g. `Europe/Berlin`. "20:00" means 20:00 there on every device. Empty: the first admin's browser zone, else UTC. |
 | `TMDB_API_KEY` | | TMDB v3 key or v4 token. Enables the full catalog, posters, people, trailers and streaming offers. |
-| `TMDB_LANGUAGE` | `de-DE` | Language for film data, e.g. `en-US`. |
-| `TMDB_REGION` | `DE` | Region for streaming offers, e.g. `US`. |
+| `TMDB_LANGUAGE` | `en-US` | Language for film data (titles, plots, genres; also the demo catalog), e.g. `de-DE`. |
+| `TMDB_REGION` | `US` | Region for streaming offers, e.g. `DE`. |
 | `LLM_API_KEY` | | Anthropic or OpenRouter (`sk-or-…`) key for the AI search. |
 | `LLM_MODEL`, `LLM_PROVIDER`, `LLM_BASE_URL` | | Model, provider override, or any OpenAI-compatible endpoint. OpenRouter defaults to `deepseek/deepseek-v4.1-flash`. |
 | `LLM_LIMIT_PER_DAY` | `30` | AI searches per person within 24 hours. |
