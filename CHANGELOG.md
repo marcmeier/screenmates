@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.20.2 – 2026-10-07
+
+### Behoben
+- **Kino zeigt den gezogenen Film:** Der Film aus der Kiste kam nur ins Kino-Programm, wenn dort noch nichts
+  stand – ein Titel von einer früheren Vorstellung blieb also stehen (z. B. „Der Astronaut“ statt des
+  gezogenen „Deadpool & Wolverine“). Jetzt setzt jede neu gezogene Kiste ihren Film einmal ins Programm,
+  solange nicht gesendet wird; wer ihn danach von Hand ändert, behält seine Wahl.
+
 ## 0.20.1 – 2026-10-07
 
 ### Geändert
