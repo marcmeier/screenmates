@@ -168,7 +168,7 @@ defineExpose({ laden })
 h4 { margin: 0; font-size: 0.88rem; display: flex; align-items: center; gap: 0.4rem; }
 ul { list-style: none; padding: 0; margin: 0.5rem 0 0; }
 li { padding: 0.3rem 0; }
-.count { font-size: 0.7rem; background: var(--accent); color: #fff; border-radius: 999px; padding: 0 7px; }
+.count { font-size: 0.7rem; background: var(--accent); color: var(--on-accent); border-radius: 999px; padding: 0 7px; }
 .neu { display: flex; flex-direction: column; gap: 0.6rem; margin: 0.7rem 0; }
 .neu .row { align-items: flex-end; }
 .notiz { flex: 1; min-width: 12rem; }

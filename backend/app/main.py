@@ -44,7 +44,7 @@ from .routers import push as push_api
 from .seed import seed_if_empty
 from .sprache import SprachMiddleware, tr
 
-__version__ = "0.21.1"
+__version__ = "0.21.2"
 
 
 @asynccontextmanager

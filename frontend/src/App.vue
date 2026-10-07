@@ -346,9 +346,9 @@ nav { display: flex; flex-direction: column; gap: 4px; }
 .nav.active svg { color: var(--accent); }
 .live {
   margin-left: auto; display: inline-flex; align-items: center; gap: 5px;
-  font-size: 0.72rem; font-weight: 700; color: #fff; background: var(--accent); padding: 2px 7px; border-radius: 999px;
+  font-size: 0.72rem; font-weight: 700; color: var(--on-accent); background: var(--accent); padding: 2px 7px; border-radius: 999px;
 }
-.live .dot { width: 6px; height: 6px; border-radius: 50%; background: #fff; animation: pulse 1.4s ease-in-out infinite; }
+.live .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--on-accent); animation: pulse 1.4s ease-in-out infinite; }
 .collapse { width: 100%; border: none; background: none; text-align: left; font: inherit; cursor: pointer; }
 .collapse svg { transition: transform 0.2s; }
 .collapse .gedreht { transform: rotate(180deg); }
@@ -367,7 +367,7 @@ nav { display: flex; flex-direction: column; gap: 4px; }
 .schmal .me.admin :deep(.avatar) { box-shadow: 0 0 0 2px var(--bg-soft), 0 0 0 4px var(--accent); }
 .schmal .pick { padding: 0; }
 .nav.small { font-size: 0.85rem; padding: 0 0.8rem; gap: 0.7rem; height: 34px; }
-.antraege { margin-left: auto; font-size: 0.68rem; font-weight: 700; color: #fff; background: var(--accent); border-radius: 999px; padding: 0 6px; }
+.antraege { margin-left: auto; font-size: 0.68rem; font-weight: 700; color: var(--on-accent); background: var(--accent); border-radius: 999px; padding: 0 6px; }
 
 .bottom { margin-top: auto; display: flex; flex-direction: column; gap: 0.9rem; }
 .secondary-nav { gap: 0; padding-bottom: 0.9rem; border-bottom: 1px solid var(--line); }

@@ -344,8 +344,8 @@ async function gewinnerGesehen() {
   border-radius: var(--radius); background: linear-gradient(90deg, color-mix(in srgb, var(--accent) 22%, transparent), color-mix(in srgb, var(--accent) 6%, transparent)); border: 1px solid rgba(229, 9, 20, 0.45);
 }
 .onair:hover { border-color: var(--accent); }
-.onair .badge { display: inline-flex; align-items: center; gap: 6px; background: var(--accent); color: #fff; font-size: 0.72rem; font-weight: 800; letter-spacing: 0.08em; padding: 3px 8px; border-radius: 5px; }
-.onair .dot { width: 7px; height: 7px; border-radius: 50%; background: #fff; animation: blink 1.4s ease-in-out infinite; }
+.onair .badge { display: inline-flex; align-items: center; gap: 6px; background: var(--accent); color: var(--on-accent); font-size: 0.72rem; font-weight: 800; letter-spacing: 0.08em; padding: 3px 8px; border-radius: 5px; }
+.onair .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--on-accent); animation: blink 1.4s ease-in-out infinite; }
 @keyframes blink { 50% { opacity: 0.3; } }
 .onair .go { display: inline-flex; align-items: center; gap: 0.4rem; font-weight: 600; }
 .layout { display: grid; grid-template-columns: minmax(0, 1fr) 380px; gap: 2rem; align-items: start; }

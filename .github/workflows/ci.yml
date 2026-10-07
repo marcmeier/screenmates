@@ -78,6 +78,9 @@ jobs:
         run: npx playwright test
         working-directory: frontend
         env: { E2E_BASE_URL: "http://127.0.0.1:8000", E2E_KINO: "1" }
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with: { name: playwright-report-docker, path: frontend/test-results, retention-days: 7 }
       - name: Container logs
         if: failure()
         run: docker compose logs --no-color

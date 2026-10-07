@@ -117,7 +117,7 @@ p { margin: 0 0 0.8rem; font-size: 0.9rem; }
 .zahl { font-size: 0.72rem; font-weight: 700; color: var(--muted); border: 1px solid var(--line); border-radius: 999px; padding: 0 6px; margin-left: 0.2rem; }
 button.rot { border-color: var(--accent); color: #ff6b6b; background: transparent; }
 button.rot:hover:not(:disabled) { background: var(--accent-soft); color: #fff; }
-button.rot.voll { background: var(--accent); color: #fff; }
+button.rot.voll { background: var(--accent); color: var(--on-accent); }
 button.rot.voll:hover:not(:disabled) { background: var(--accent-hover); }
 .neustart { display: flex; gap: 1rem; align-items: center; justify-content: space-between; flex-wrap: wrap; margin-top: 1.2rem; padding-top: 1rem; border-top: 1px solid color-mix(in srgb, var(--accent) 35%, var(--line)); }
 .neustart > div { flex: 1; min-width: 16rem; }

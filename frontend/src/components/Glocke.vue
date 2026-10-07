@@ -26,7 +26,7 @@ const route = useRoute()
 <style scoped>
 .glocke { position: relative; display: flex; align-items: center; gap: 0.7rem; height: 34px; padding: 0 0.8rem; border-radius: 9px; color: var(--muted); text-decoration: none; font-size: 0.85rem; }
 .glocke:hover, .glocke.active { background: var(--bg-soft); color: var(--text); }
-.zahl { margin-left: auto; font-size: 0.68rem; font-weight: 700; color: #fff; background: var(--accent); border-radius: 999px; padding: 0 6px; }
+.zahl { margin-left: auto; font-size: 0.68rem; font-weight: 700; color: var(--on-accent); background: var(--accent); border-radius: 999px; padding: 0 6px; }
 .schmal { justify-content: center; padding: 0; }
 .schmal .label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
 .schmal .zahl { position: absolute; top: 0; right: 10px; margin: 0; }

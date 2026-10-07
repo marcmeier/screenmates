@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.21.2 – 2026-10-07
+
+### Behoben
+- **Farbschemata mit hellem Akzent:** Im Theme „Schwarz“ (und weniger stark bei „Wald“ und „Bernstein“) war
+  weiße Schrift auf der Akzentfarbe kaum lesbar – etwa „Für alle öffnen“, die LIVE-/HEUTE-Abzeichen, Zähler,
+  Schrittnummern und der Trailer-Knopf. Diese Stellen nehmen jetzt die Textfarbe, die zum Farbschema passt.
+
 ## 0.21.1 – 2026-10-07
 
 ### Geändert

@@ -140,7 +140,7 @@ watch(() => app.antraege, laden)
 <style scoped>
 section h2 { margin: 0 0 1rem; font-size: 1.1rem; display: flex; align-items: center; gap: 0.5rem; }
 section p { margin: 0 0 0.8rem; font-size: 0.9rem; }
-.count { font-size: 0.75rem; background: var(--accent); color: #fff; border-radius: 999px; padding: 1px 8px; }
+.count { font-size: 0.75rem; background: var(--accent); color: var(--on-accent); border-radius: 999px; padding: 1px 8px; }
 .people { list-style: none; padding: 0; margin: 0 0 1rem; }
 .people > li { padding: 0.6rem 0; border-top: 1px solid var(--line); }
 .person .tools { margin: 0.35rem 0 0 2.6rem; gap: 0.2rem; }
