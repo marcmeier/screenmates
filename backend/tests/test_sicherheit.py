@@ -21,6 +21,26 @@ def test_security_headers_everywhere(client):
         assert "frame-src https://www.youtube-nocookie.com" in csp
 
 
+def test_every_response_has_a_fresh_nonce_for_proxies_that_inject_scripts(client):
+    import re
+
+    nonces = [
+        re.search(r"script-src 'self' 'nonce-([\w-]+)'", client.get("/api/health").headers["content-security-policy"])[
+            1
+        ]
+        for _ in range(2)
+    ]
+    assert len(nonces[0]) >= 16 and nonces[0] != nonces[1]
+
+
+def test_the_policy_can_be_replaced_or_switched_off(client, monkeypatch):
+    monkeypatch.setattr(settings, "content_security_policy", "default-src 'self'")
+    assert client.get("/api/health").headers["content-security-policy"] == "default-src 'self'"
+    monkeypatch.setattr(settings, "content_security_policy", "off")
+    h = client.get("/api/health").headers
+    assert "content-security-policy" not in h and h["x-content-type-options"] == "nosniff"
+
+
 def test_the_api_docs_keep_working(client):
     h = client.get("/docs").headers
     assert "content-security-policy" not in h  # Swagger UI comes from a CDN

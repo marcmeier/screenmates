@@ -26,7 +26,8 @@ the database: migrations 0013–0016 run on the first start.
   `SETUP_TOKEN` sets the code in advance.
 - Responses carry a Content-Security-Policy (only the app's own scripts, trailers only from
   youtube-nocookie.com, no framing) and `X-Content-Type-Options`, `Referrer-Policy`, `X-Frame-Options`,
-  `Permissions-Policy`.
+  `Permissions-Policy`. A fresh nonce in the policy lets Cloudflare's bot protection run its injected
+  script; `CONTENT_SECURITY_POLICY` replaces the policy or switches it off.
 - The AI search needs a name and has a daily allowance per person (`LLM_LIMIT_PER_DAY`, default 30), so
   nobody can run up the provider bill.
 - A browser that came with an invitation but has no name loses its access when the invitation expires or is
