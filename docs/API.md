@@ -231,8 +231,8 @@ The wishes board is optional: while it's off (the default on a new install), `/f
 
 | Method | Path | Access | Purpose |
 |---|---|:-:|---|
-| GET | `/admin/reset` | A | Areas with counts (`chronik`, `filmabend`, `kino`, `wuensche`, `erfolge`, `statistik`), `neustart` (other names + invitations), existing backups |
-| POST | `/admin/reset` | A | Clear `bereiche` (for all groups) or `["neustart"]`; `bestaetigung` must be `LÖSCHEN` or `DELETE`. Backs up the database first |
+| GET | `/admin/reset` | A | The active group and its areas with counts (`chronik`, `filmabend`, `kino`), existing backups |
+| POST | `/admin/reset` | A | Clear `bereiche` of the active group; `bestaetigung` must be `LÖSCHEN` or `DELETE`. Backs up the database first. Server-wide areas: `python -m app.cli reset` |
 
 ## Notifications
 

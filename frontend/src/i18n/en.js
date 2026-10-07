@@ -420,9 +420,6 @@ export default {
   },
   gefahrenzone: {
     abbrechen: "Cancel",
-    alleAnderenNamenEinladungen: "all other names, invitations and requests",
-    allesNeu: "Start over",
-    allesNeuStarten: "Start everything over",
     ausgewaehltesLoeschen: "Delete selected",
     bestaetigenMit: "Type “{wort}” to confirm",
     bestaetigung: "Confirmation",
@@ -430,14 +427,14 @@ export default {
     gefahrenzone: "Danger zone",
     geloescht: "Deleted",
     geloeschtMit: "Deleted – backup: {datei}",
-    geloeschtWirdFuerAlle: "Deleted for all groups:",
-    leertAllesObenUnd:
-      "Empties everything above and also deletes all other names ({neustart} names and invitations), with their pictures, subscriptions and sessions. What stays: you as admin, the groups, the film catalogue, the About page and the settings. Ideal before you show screenmates to your friends.",
+    geloeschtWirdIn: "Deleted in the group “{gruppe}”:",
+    serverweit:
+      "What concerns the whole server – wishes, awards, statistics, or starting over with only you as admin – is done on the command line:",
     sicherungenImDatenordner: "Backups in the data folder:",
     wirklichLoeschen: "Really delete?",
     wirklichLoeschen2: "Really delete?",
-    zumAufraeumenNachDem:
-      "For tidying up after testing, for all groups. Before every deletion the server backs up the database (the last five are kept) – undoing is only possible via that backup.",
+    zumAufraeumen:
+      "For tidying up after testing, in the group “{gruppe}”; other groups stay as they are. Before every deletion the server backs up the database (the last five are kept) – undoing is only possible via that backup.",
   },
   geschmack: {
     ausGemeinsamGemeinsamBewerteten: "from {gemeinsam} films you both rated",

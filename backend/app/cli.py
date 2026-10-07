@@ -5,6 +5,12 @@
     python -m app.cli invite [<group id>] # a one-time link that lets you straight in (24 h)
     python -m app.cli login "<name>"      # a login code for that name on a new device (24 h)
     python -m app.cli setup               # the setup code for the first name of a fresh install
+    python -m app.cli reset <area>… [--keep "<name>"] [--yes]
+                                          # clear areas for all groups, backing up the database first
+
+Areas for `reset`: chronicle, evening, cinema (every group's), wishes, awards, stats, and
+everything (all of these plus every name but the one given with --keep, every invitation
+and request). Without --yes it only shows what would go.
 
 The way in when nobody can administrate any more: an existing database that
 predates admins, the last admin who lost their device, or no valid invitation
@@ -87,6 +93,64 @@ def setup_code(db: Session) -> int:
     return 0
 
 
+BEREICHE = {
+    "chronicle": "chronik",
+    "evening": "filmabend",
+    "cinema": "kino",
+    "wishes": "wuensche",
+    "awards": "erfolge",
+    "stats": "statistik",
+}
+
+
+def reset(db: Session, args: list[str]) -> int:
+    from .routers import reset as danger
+
+    ja = "--yes" in args
+    args = [a for a in args if a != "--yes"]
+    behalten = None
+    if "--keep" in args:
+        i = args.index("--keep")
+        if i + 1 >= len(args):
+            print("--keep needs a name.", file=sys.stderr)
+            return 2
+        behalten = args[i + 1]
+        del args[i : i + 2]
+    alles = "everything" in args
+    bereiche = list(BEREICHE.values()) if alles else [BEREICHE.get(a, a) for a in args]
+    unbekannt = [a for a in bereiche if a not in BEREICHE.values()]
+    if not bereiche or unbekannt:
+        print(
+            f"Unknown or no area: {' '.join(unbekannt) or '-'}. Areas: {', '.join([*BEREICHE, 'everything'])}.",
+            file=sys.stderr,
+        )
+        return 2
+    bleibt = None
+    if alles:
+        bleibt = db.exec(select(User).where(User.name == behalten)).first() if behalten else None
+        if bleibt is None:
+            print('"everything" needs --keep "<name>": the one admin who stays.', file=sys.stderr)
+            return 2
+    zahlen = danger.zaehlen(db, None)
+    namen = {v: k for k, v in BEREICHE.items()}
+    for b in bereiche:
+        print(f"{namen[b]:<10} {zahlen[b]:>6}")
+    if alles:
+        andere = len(db.exec(select(User).where(User.id != bleibt.id)).all())
+        print(f"{'names':<10} {andere:>6}  (all but “{bleibt.name}”, plus every invitation and request)")
+    if not ja:
+        print("Nothing deleted. Add --yes to do it.")
+        return 0
+    backup = danger.sichern()
+    for b in bereiche:
+        danger.leeren(db, b, None)
+    if alles:
+        danger.alle_anderen_weg(db, bleibt)
+    db.commit()
+    print(f"Deleted. Backup: {backup}" if backup else "Deleted.")
+    return 0
+
+
 COMMANDS = {
     "names": (names, 0),
     "namen": (names, 0),
@@ -101,6 +165,10 @@ COMMANDS = {
 
 def main(argv: list[str]) -> int:
     befehl, args = (argv[0], argv[1:]) if argv else ("", [])
+    if befehl == "reset":
+        init_db()
+        with Session(engine) as db:
+            return reset(db, args)
     fn, n = COMMANDS.get(befehl, (None, 0))
     if fn is None or (n is not None and len(args) != n) or (n is None and len(args) > 1):
         print(__doc__, file=sys.stderr)
