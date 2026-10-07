@@ -1,14 +1,15 @@
 <script setup>
 import { useUi } from '../stores/ui'
 import { datum, dezimal } from '../format'
+import { t } from '../i18n'
 import Poster from './Poster.vue'
 import UserAvatar from './UserAvatar.vue'
 
-// "Heute vor einem Jahr": what the group watched around this date in earlier years.
+// "On this day a year ago": what the group watched around this date in earlier years.
 defineProps({ erinnerungen: { type: Array, required: true } })
 const ui = useUi()
 
-const wann = (e) => `${e.tage === 0 ? 'Heute' : 'Diese Woche'} vor ${e.jahre === 1 ? 'einem Jahr' : `${e.jahre} Jahren`}`
+const wann = (e) => t(e.tage === 0 ? 'erinnerungen.heute' : 'erinnerungen.dieseWoche', { n: e.jahre }, e.jahre)
 // The comment people liked most, else the first one.
 const zitat = (eintrag) => [...eintrag.notes].sort((a, b) => b.hearts.length - a.hearts.length)[0]
 </script>
