@@ -14,6 +14,13 @@ All notable changes to screenmates are documented here. The format is based on
 - Licensed under the GNU AGPL v3.0; added contributing guide, security policy, code of conduct, issue and
   pull request templates, and Dependabot.
 
+## 0.21.4 – 2026-10-07
+
+### Changed
+- **Trailer on the film details:** the big red play circle in the middle of the backdrop is replaced by a small
+  glass pill "▶ Trailer" in the top-left corner, styled like the close button. The whole backdrop starts the
+  trailer, and on hover it brightens and the pill takes the accent color.
+
 ## 0.21.3 – 2026-10-07
 
 ### Fixed
