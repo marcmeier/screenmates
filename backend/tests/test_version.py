@@ -20,6 +20,7 @@ def test_nothing_else_carries_its_own_version_number():
     assert 'dynamic = ["version"]' in (ROOT / "backend/pyproject.toml").read_text()
 
 
-def test_the_api_reports_it(client):
+def test_the_api_reports_it(client, recwarn):
     assert client.get("/api/ueber").json()["version"] == __version__
     assert client.get("/openapi.json").json()["info"]["version"] == __version__
+    assert not [w for w in recwarn if "Duplicate Operation ID" in str(w.message)]
