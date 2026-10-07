@@ -445,7 +445,7 @@ test('detail sheet shows the trailer and where to watch (TMDB answers mocked)', 
   await expect(sheet.locator('.logos li.unser')).toHaveCount(1)
   await expect(sheet.getByText('Daten: JustWatch')).toBeVisible()
   expect(youtube).toEqual([]) // nothing loads from YouTube before you press play
-  await sheet.getByRole('button', { name: 'Trailer' }).click()
+  await sheet.getByRole('button', { name: 'Trailer ansehen' }).click()
   await expect(sheet.locator('iframe')).toHaveAttribute('src', /youtube-nocookie\.com\/embed\/abc123XYZ/)
   await page.keyboard.press('Escape')
   await page.unroute('**/api/movies/**')

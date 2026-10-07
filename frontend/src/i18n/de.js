@@ -813,6 +813,7 @@ export default {
     umMitzumachen: ", um mitzumachen.",
     vorgeschlagen: "Vorgeschlagen",
     vorschlagen: "Vorschlagen",
+    trailerAnsehen: "Trailer ansehen",
   },
   moviegrid: {
     dasHatNichtGeklappt: "Das hat nicht geklappt",

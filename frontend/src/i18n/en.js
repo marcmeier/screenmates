@@ -798,6 +798,7 @@ export default {
     umMitzumachen: " to join in.",
     vorgeschlagen: "Suggested",
     vorschlagen: "Suggest",
+    trailerAnsehen: "Watch trailer",
   },
   moviegrid: {
     dasHatNichtGeklappt: "That didn't work",
