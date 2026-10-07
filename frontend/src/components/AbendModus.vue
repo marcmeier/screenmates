@@ -189,14 +189,14 @@ header .bis, header .notiz { font-size: 0.95rem; }
 header button { font-size: 0.8rem; }
 header .mehr { font-size: 1.1rem; line-height: 1; padding: 0.25rem 0.55rem; }
 .live { display: inline-flex; align-items: center; gap: 0.4rem; }
-.punkt { width: 7px; height: 7px; border-radius: 50%; background: #fff; animation: puls 1.6s ease-in-out infinite; }
+.punkt { width: 7px; height: 7px; border-radius: 50%; background: var(--on-accent); animation: puls 1.6s ease-in-out infinite; }
 @keyframes puls { 50% { opacity: 0.3; } }
 .mehr-panel { display: flex; flex-direction: column; gap: 0.6rem; margin: -0.3rem 0 0.9rem; padding: 0.7rem 0.8rem; border-radius: 10px; background: var(--bg); border: 1px solid var(--line); }
 .antwort { gap: 0.3rem; }
 .antwort .on { border-color: var(--ok); color: var(--text); }
 .antwort .nein.on { border-color: var(--accent); background: var(--accent-soft); }
 @media (prefers-reduced-motion: reduce) { .punkt { animation: none; } }
-.heute { font-size: 0.7rem; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; background: var(--accent); color: #fff; border-radius: 5px; padding: 3px 8px; }
+.heute { font-size: 0.7rem; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; background: var(--accent); color: var(--on-accent); border-radius: 5px; padding: 3px 8px; }
 .schritte { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1.4rem; }
 .schritte li {
   position: relative; display: flex; gap: 0.7rem; padding: 0.8rem; border-radius: 10px; background: var(--bg);
@@ -215,7 +215,7 @@ header .mehr { font-size: 1.1rem; line-height: 1; padding: 0.25rem 0.55rem; }
 .fortschritt { height: 3px; border-radius: 2px; background: var(--line); margin: -0.3rem 0 0.9rem; overflow: hidden; }
 .fortschritt span { display: block; height: 100%; background: linear-gradient(90deg, var(--ok), var(--accent)); transition: width 0.4s; }
 .nr { flex: none; width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; font-weight: 800; font-size: 0.82rem; background: var(--bg-raised); border: 1px solid var(--line); }
-.aktuell .nr { background: var(--accent); border-color: var(--accent); color: #fff; }
+.aktuell .nr { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
 .fertig .nr { background: color-mix(in srgb, var(--ok) 25%, transparent); border-color: var(--ok); color: var(--ok); }
 .inhalt { display: flex; flex-direction: column; gap: 0.5rem; align-items: flex-start; min-width: 0; }
 h3 { margin: 0.15rem 0 0; font-size: 0.95rem; }
@@ -227,7 +227,7 @@ h3 { margin: 0.15rem 0 0; font-size: 0.95rem; }
 button.selbst { padding: 0.2rem 0; font-size: 0.78rem; color: var(--muted); }
 button.selbst:hover { color: var(--text); }
 a.button.small { padding: 0.3rem 0.6rem; font-size: 0.8rem; }
-a.button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+a.button.primary { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
 @media (max-width: 800px) {
   .schritte { grid-template-columns: minmax(0, 1fr); gap: 1.1rem; }
   .schritte li + li::before { content: '⌄'; left: 50%; top: -1.05rem; transform: translateX(-50%); font-size: 1.1rem; }

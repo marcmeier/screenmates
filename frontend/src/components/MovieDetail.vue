@@ -199,6 +199,7 @@ function person(p) {
 .play-kreis {
   width: 68px; height: 68px; border-radius: 50%; display: grid; place-items: center; padding-left: 4px;
   background: color-mix(in srgb, var(--accent) 85%, transparent); border: 2px solid rgba(255, 255, 255, 0.85);
+  color: var(--on-accent);
   box-shadow: 0 0 0 6px rgba(0, 0, 0, 0.25), 0 8px 30px color-mix(in srgb, var(--accent) 60%, transparent);
   transition: transform 0.15s, background 0.15s;
 }

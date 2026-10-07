@@ -136,7 +136,7 @@ const zusammenfassung = computed(() =>
 .zeile { display: flex; align-items: center; gap: 0.6rem 1rem; flex-wrap: wrap; }
 .wann { display: flex; align-items: center; gap: 0.5rem; font-size: 0.95rem; min-width: 0; }
 .heute-badge {
-  font-size: 0.68rem; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; color: #fff;
+  font-size: 0.68rem; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; color: var(--on-accent);
   background: var(--accent); border-radius: 5px; padding: 2px 7px;
 }
 .chip.klein { font-size: 0.72rem; padding: 1px 8px; }

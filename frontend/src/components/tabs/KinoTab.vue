@@ -123,10 +123,10 @@ async function alsGesehen() {
 .stage { display: flex; flex-direction: column; gap: 0.8rem; min-width: 0; }
 .onair h2 { margin: 0; font-size: 1.2rem; }
 .badge {
-  display: inline-flex; align-items: center; gap: 6px; background: var(--accent); color: #fff;
+  display: inline-flex; align-items: center; gap: 6px; background: var(--accent); color: var(--on-accent);
   font-size: 0.72rem; font-weight: 800; letter-spacing: 0.08em; padding: 3px 8px; border-radius: 5px;
 }
-.dot { width: 7px; height: 7px; border-radius: 50%; background: #fff; animation: pulse 1.4s ease-in-out infinite; }
+.dot { width: 7px; height: 7px; border-radius: 50%; background: var(--on-accent); animation: pulse 1.4s ease-in-out infinite; }
 @keyframes pulse { 50% { opacity: 0.3; } }
 .since { font-size: 0.85rem; }
 .viewers { display: inline-flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; color: var(--muted); }
