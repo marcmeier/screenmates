@@ -5,14 +5,23 @@ The app only runs its own scripts. Pictures may come from anywhere over HTTPS
 Inline styles stay allowed: Vue's style bindings and sanitised markdown use them.
 FastAPI's /docs page loads Swagger UI from a CDN, so it gets no CSP.
 HSTS is left to the reverse proxy that terminates HTTPS.
+
+Every response carries a fresh nonce in `script-src`. The app doesn't need it, but
+a proxy that injects scripts does: Cloudflare (bot protection's "JavaScript
+detections") reads the nonce from this header and puts it on its own scripts.
+CONTENT_SECURITY_POLICY replaces the whole policy, or switches it off with "off".
 """
 
 from __future__ import annotations
 
+import secrets
+
+from .config import settings
+
 CSP = "; ".join(
     [
         "default-src 'self'",
-        "script-src 'self'",
+        "script-src 'self' 'nonce-{nonce}'",
         "style-src 'self' 'unsafe-inline'",
         "img-src 'self' data: blob: https:",
         "font-src 'self' data:",  # Vite inlines small font files
@@ -36,6 +45,13 @@ IMMER = [
 OHNE_CSP = ("/docs", "/redoc", "/openapi.json")
 
 
+def _csp() -> bytes | None:
+    eigene = settings.content_security_policy.strip()
+    if eigene.lower() == "off":
+        return None
+    return (eigene or CSP.format(nonce=secrets.token_urlsafe(16))).encode()
+
+
 class SecurityHeaders:
     """Pure ASGI middleware: adds the headers unless a response already set them."""
 
@@ -45,7 +61,8 @@ class SecurityHeaders:
     async def __call__(self, scope, receive, send):
         if scope["type"] != "http":
             return await self.app(scope, receive, send)
-        extra = IMMER if scope["path"].startswith(OHNE_CSP) else [*IMMER, (b"content-security-policy", CSP.encode())]
+        csp = None if scope["path"].startswith(OHNE_CSP) else _csp()
+        extra = [*IMMER, (b"content-security-policy", csp)] if csp else IMMER
 
         async def senden(message):
             if message["type"] == "http.response.start":

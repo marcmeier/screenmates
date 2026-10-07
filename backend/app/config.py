@@ -59,6 +59,9 @@ class Settings(BaseSettings):
     # Setup code for the first name (it becomes admin). Empty: one is made and written to the log.
     setup_token: str = ""
 
+    # Replaces the built-in Content-Security-Policy (see headers.py); "off" sends none.
+    content_security_policy: str = ""
+
     # Public address, e.g. https://movies.example.org. Used for links the server writes
     # (calendar feeds); empty: the address the request came to.
     public_url: str = ""
