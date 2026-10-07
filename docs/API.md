@@ -38,7 +38,7 @@ calendar feeds – follow that person's profile language.
 | POST | `/ki-suche` | N | Free text → film suggestions (needs `LLM_API_KEY`). At most `LLM_LIMIT_PER_DAY` searches per person within 24 h, then `429` |
 | GET | `/movies/{id}/anbieter` | – | "Where's it on?": subscription/free/rent/buy in the configured region (JustWatch via TMDB), the group's subscriptions first with `bei` |
 | GET | `/movies/{id}/trailer` | – | Best YouTube trailer (configured language before English) or `null` |
-| GET | `/movies/{id}/prognose` | – | "Who'll like it?": estimated stars per person with a reason, from 8 ratings on ([PREDICTION.md](PREDICTION.md)) |
+| GET | `/movies/{id}/prognose` | N | "Who'll like it?": estimated stars per member of the active group with a reason, from 8 ratings in this group on ([PREDICTION.md](PREDICTION.md)) |
 | GET | `/anbieter` | – | Subscription services for the picker (without rental shops) |
 
 `/discover` also filters by streaming: `abos=true` (the group's subscriptions), `anbieter=8,9`
@@ -220,7 +220,7 @@ as nobody holds the baton.
 | GET | `/suggestions/prognose` | N | Per suggestion `wert` (half stars), `genau` and `personen` (real stars or prediction); `fuer`: `dabei` (from two yeses) or `gruppe` |
 | GET | `/suggestions/anbieter` | N | Per suggestion the best way to watch: `art` (`abo`/`kostenlos`/`leihen`/`kaufen`), `name`, `logo`, `bei` (whose subscription) |
 | GET | `/glocke` · POST `/glocke/gelesen` | N | The last 30 notifications with `neu`, count `ungelesen` (also in the live poll as `glocke`) · mark all read |
-| GET | `/users/{id}/geschmack` | N | Rating similarity to everyone who shares a group with you (from 3 films in common) |
+| GET | `/users/{id}/geschmack` | N | Rating similarity to the other members of the active group, from its evenings (from 3 films in common) |
 
 ## Danger zone
 
