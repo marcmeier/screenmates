@@ -1394,6 +1394,9 @@ export default {
       titel: "Schalte Benachrichtigungen ein",
       text: "Für Termine, die Kiste und „Gleich geht’s los“ – auch bei geschlossener App.",
       los: "Einschalten",
+      nein: "Nein danke",
     },
+    uebersprungen:
+      "Übersprungen – geht jederzeit unter Einstellungen → Benachrichtigungen.",
   },
 };

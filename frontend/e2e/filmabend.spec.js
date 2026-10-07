@@ -91,6 +91,10 @@ test('newcomers get a first-steps checklist and short explanations', async () =>
   const schritte = page.getByRole('region', { name: 'Erste Schritte' })
   await expect(schritte).toBeVisible()
   await expect(schritte.getByRole('link', { name: 'Filme finden' })).toHaveAttribute('href', '#/finden')
+  // Notifications can be declined – the step counts as done.
+  await schritte.getByRole('button', { name: 'Nein danke' }).click()
+  await expect(schritte).toContainText('Übersprungen')
+  await expect(schritte.getByRole('button', { name: 'Nein danke' })).toHaveCount(0)
   // A tap on ⓘ explains our own words.
   await page.getByRole('button', { name: 'Was ist „Filmabend-Kiste“?' }).click()
   await expect(page.getByRole('tooltip')).toContainText('zieht zufällig einen Film')

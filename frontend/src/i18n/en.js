@@ -1369,6 +1369,9 @@ export default {
       titel: "Turn on notifications",
       text: "For dates, the case and “starting soon” – even with the app closed.",
       los: "Turn on",
+      nein: "No thanks",
     },
+    uebersprungen:
+      "Skipped – you can turn it on any time in Settings → Notifications.",
   },
 };

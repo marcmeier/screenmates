@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.21.1 – 2026-10-07
+
+### Geändert
+- **Erste Schritte:** Bei „Benachrichtigungen einschalten“ gibt es jetzt ein zurückhaltendes „Nein danke“.
+  Der Schritt zählt dann als erledigt (mit Hinweis, wo es später geht) – die Checkliste lässt sich auch ohne
+  Benachrichtigungen abschließen.
+
 ## 0.21.0 – 2026-10-07
 
 ### Geändert
