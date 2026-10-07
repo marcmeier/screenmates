@@ -60,7 +60,6 @@ class User(SQLModel, table=True):
     color: str = ""
     design: str = ""  # JSON {"theme", "schrift"}: how screenmates looks for this person
     obs_key: str = ""  # personal OBS stream key; only works while holding the host's baton
-    schutz_movie_id: int | None = None  # "film as PIN" — never sent to clients
     is_admin: bool = False
     freigegeben: bool = True  # False: a name request waiting for an admin
     antrag_gruppe_id: int | None = Field(default=None, foreign_key="gruppe.id", ondelete="SET NULL")  # requested via
@@ -78,6 +77,28 @@ class Session(SQLModel, table=True):
     einladung_id: int | None = Field(default=None, foreign_key="einladung.id", ondelete="SET NULL")  # with which
     gruppe_id: int | None = Field(default=None, foreign_key="gruppe.id", ondelete="SET NULL")  # active group
     created_at: datetime = Field(default_factory=now)
+
+
+class SessionName(SQLModel, table=True):
+    """A name this browser may use: it created the name or redeemed a login code for it (see routers/login.py)."""
+
+    __table_args__ = (UniqueConstraint("sid", "user_id"),)
+
+    id: int | None = Field(default=None, primary_key=True)
+    sid: str = Field(foreign_key="session.sid", index=True, ondelete="CASCADE")
+    user_id: int = Field(foreign_key="user.id", index=True, ondelete="CASCADE")
+    created_at: datetime = Field(default_factory=now)
+
+
+class LoginCode(SQLModel, table=True):
+    """A one-time code that connects another browser to a name. Only its hash is stored."""
+
+    id: int | None = Field(default=None, primary_key=True)
+    code_hash: str = Field(unique=True)
+    user_id: int = Field(foreign_key="user.id", index=True, ondelete="CASCADE")
+    created_by: int | None = Field(default=None, foreign_key="user.id", ondelete="SET NULL")  # the owner or an admin
+    valid_until: datetime
+    used: bool = False
 
 
 class Gruppe(SQLModel, table=True):

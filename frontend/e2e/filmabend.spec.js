@@ -495,14 +495,6 @@ test('the admin creates an invitation link for the group', async () => {
   page.einladung = einladungen.find((e) => e.notiz === 'Gruppenchat').token
 })
 
-test('own name gets film protection', async () => {
-  await nav('Profil & Erfolge')
-  await nav('Einstellungen')
-  await page.getByRole('button', { name: 'Schutz einrichten' }).click()
-  await page.getByPlaceholder('Deinen Passwort-Film').fill('midsommar')
-  await page.locator('.picker .results button', { hasText: 'Midsommar' }).click()
-  await expect(page.locator('.chip.ok', { hasText: 'geschützt' })).toBeVisible()
-})
 
 test('settings: notifications by kind, and a calendar feed that works without login', async () => {
   await page.goto('/#/profil/einstellungen/benachrichtigungen')
@@ -567,12 +559,12 @@ test('a profile picture replaces the initials everywhere', async () => {
 })
 
 test('achievements: the unlock pops up, and the showcase shows it', async () => {
-  // Unlocks are shown one after another; the picture's may queue behind the film protection's.
+  // Unlocks are shown one after another; the picture's may queue behind another one.
   await expect(page.locator('.popup', { hasText: 'Gesicht zeigen' })).toBeVisible({ timeout: 15_000 })
   await nav('Profil & Erfolge')
   await expect(page.getByRole('heading', { name: 'Marc', exact: true })).toBeVisible()
   await expect(page.locator('.stand')).toContainText('Level 1')
-  await expect(page.locator('.kachel', { hasText: 'Sicher ist sicher' })).toHaveClass(/offen/)
+  await expect(page.locator('.kachel', { hasText: 'Gesicht zeigen' })).toHaveClass(/offen/)
   // The catalogue is folded by category; secret ones stay hidden even when opened.
   await page.locator('details.kategorie', { hasText: 'Geheim' }).locator('summary').click()
   await expect(page.locator('.kachel', { hasText: '???' }).first()).toBeVisible()
@@ -659,7 +651,7 @@ async function throughTheDoor(p) {
   await expect(p.getByRole('dialog')).toContainText('Du bist eingeladen in „Unsere Gruppe“')
 }
 
-test('a second device must know the film to use the name', async ({ browser }) => {
+test('a second device needs a login code to use the name', async ({ browser }) => {
   const phone = await browser.newPage({ viewport: { width: 390, height: 844 } })
   await phone.goto('/#/abend')
   // First the door: nothing of the group is visible, a made-up code doesn't open it.
@@ -668,16 +660,28 @@ test('a second device must know the film to use the name', async ({ browser }) =
   await phone.getByLabel('Einladungslink oder Code').fill('ausgedachter-code')
   await phone.getByRole('button', { name: 'Rein' }).click()
   await expect(phone.getByRole('alert')).toContainText('gilt nicht')
+  // An invitation lets you in – but nobody else's name can simply be picked.
   await throughTheDoor(phone)
-  await phone.getByRole('button', { name: 'Marc' }).click()
-  await expect(phone.getByRole('heading', { name: 'Film-Passwort für Marc' })).toBeVisible()
-  await phone.getByLabel('Film suchen').fill('alien')
-  await phone.locator('.results button', { hasText: 'Alien' }).click()
-  await expect(phone.getByRole('alert')).toContainText('nicht der richtige Film')
-  await phone.getByLabel('Film suchen').fill('midsommar')
-  await phone.locator('.results button', { hasText: 'Midsommar' }).click()
-  await expect(phone.getByRole('dialog')).toBeHidden()
+  const dialog = phone.getByRole('dialog', { name: 'Namen wählen' })
+  await expect(dialog.getByRole('button', { name: 'Marc' })).toHaveCount(0)
+  await dialog.getByRole('button', { name: 'Ich habe schon einen Namen' }).click()
+  await dialog.getByLabel('Anmeldecode').fill('AAAA-BBBB')
+  await dialog.getByRole('button', { name: 'Anmelden', exact: true }).click()
+  await expect(dialog.getByRole('alert')).toContainText('gilt nicht')
+  // Marc makes a code on his laptop …
+  await page.goto('/#/profil/einstellungen')
+  await expect(page.getByText('Auf 1 Gerät angemeldet')).toBeVisible()
+  await page.getByRole('button', { name: 'Anderes Gerät verbinden' }).click()
+  await expect(page.getByRole('img', { name: 'QR-Code mit dem Anmeldelink' })).toBeVisible()
+  const code = await page.locator('.anmeldecode output').textContent()
+  expect(code).toMatch(/^[A-Z2-9]{4}-[A-Z2-9]{4}$/)
+  // … and types it on the phone (capitals and dash don't matter).
+  await dialog.getByLabel('Anmeldecode').fill(code.toLowerCase().replace('-', ''))
+  await dialog.getByRole('button', { name: 'Anmelden', exact: true }).click()
+  await expect(dialog).toBeHidden()
   await expect(phone.locator('.me')).toContainText('Marc')
+  await page.reload()
+  await expect(page.getByText('Auf 2 Geräten angemeldet')).toBeVisible()
   // On the phone the areas sit in a bar at the bottom; "Mehr" holds the rest.
   await phone.getByRole('button', { name: 'Mehr' }).click()
   await phone.getByRole('menuitem', { name: /Wünsche & Ideen/ }).click()

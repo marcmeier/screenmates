@@ -7,6 +7,7 @@ export const useApp = defineStore('app', {
     ready: false,
     me: null,
     users: [],
+    hier: [], // ids of the names this browser may pick (see NamensWahl)
     admin: false,
     antraege: 0, // open name requests (admins only)
     gruppe: null, // the active group: { id, name, admin, mitglieder: [user ids] }
@@ -19,6 +20,7 @@ export const useApp = defineStore('app', {
   }),
   getters: {
     userById: (s) => (id) => s.users.find((u) => u.id === id),
+    meineNamen: (s) => s.users.filter((u) => s.hier.includes(u.id)),
     dabei: (s) => s.users.filter((u) => u.dabei),
     vielleicht: (s) => s.users.filter((u) => u.rueckmeldung === 'vielleicht'),
     absagen: (s) => s.users.filter((u) => u.rueckmeldung === 'nein'),
@@ -48,6 +50,7 @@ export const useApp = defineStore('app', {
       this.admin = r.admin
       this.antraege = r.antraege
       this.gruppe = r.gruppe
+      this.hier = r.auf_geraet || []
     },
     async refreshGruppen() {
       this.gruppen = this.me ? (await api.get('/api/gruppen')).gruppen : []
@@ -65,6 +68,26 @@ export const useApp = defineStore('app', {
       await api.post('/api/zugang', { token }, { quiet: true })
       this.einladungFehler = ''
       await this.bootstrap()
+    },
+    /** A login code (from another device of yours, or an admin): this browser gets that name. */
+    async anmelden(code) {
+      const r = await api.post('/api/login', { code }, { quiet: true })
+      this.me = r.ich
+      this.admin = r.admin
+      this.einladungFehler = ''
+      await this.bootstrap()
+    },
+    /** Take a name off this browser; it needs a new login code to come back. */
+    async vergessen(userId) {
+      if (userId === this.me?.id) await ausschalten({ quiet: true }).catch(() => {})
+      await api.del(`/api/login/namen/${userId}`)
+      if (userId === this.me?.id) {
+        this.me = null
+        this.admin = false
+        this.gruppe = null
+        this.gruppen = []
+      }
+      await this.refreshUsers()
     },
     /** Already have a name: join the invitation's group (or ask to). */
     async annehmen(token) {

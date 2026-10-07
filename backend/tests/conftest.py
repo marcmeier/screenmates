@@ -19,8 +19,8 @@ from app import erfolge, push, tmdb  # noqa: E402
 from app.config import settings  # noqa: E402
 from app.db import engine  # noqa: E402
 from app.main import app  # noqa: E402
-from app.models import Einladung, Mitglied, User  # noqa: E402
-from app.routers import gastgeber, kino, kinochat, live, users, zugang  # noqa: E402
+from app.models import Einladung, Mitglied, SessionName, User  # noqa: E402
+from app.routers import gastgeber, kino, kinochat, live, zugang  # noqa: E402
 
 # Push messages the app wanted to send in this test (nothing leaves the machine).
 gesendet: list[push.Zustellung] = []
@@ -42,7 +42,6 @@ def client():
     shutil.rmtree(f"{_tmp}/media", ignore_errors=True)
     for backup in Path(_tmp).glob("backup-vor-reset-*.db"):
         backup.unlink()
-    users._fails.clear()
     zugang._fehl_ip.clear()
     zugang._fehl_alle.clear()
     kino._saele.clear()
@@ -113,11 +112,22 @@ def rein(c: TestClient, gruppe: int = 1, *, direkt: bool = False) -> str:
     return token
 
 
+def binden(c: TestClient, user_id: int) -> None:
+    """Give this browser an existing name, as a redeemed login code would."""
+    sid = c.cookies.get(settings.session_cookie)
+    assert sid, "binden needs a browser with a session"
+    with Session(engine) as s:
+        if not s.exec(select(SessionName).where(SessionName.sid == sid, SessionName.user_id == user_id)).first():
+            s.add(SessionName(sid=sid, user_id=user_id))
+            s.commit()
+
+
 def login(c: TestClient, name: str, *, admin: bool = False) -> dict:
     """Create (or reuse) an approved name in the first group and use it in this browser.
 
     The first name of a fresh database becomes admin (and group admin) by itself;
     tests say explicitly who is admin instead (`admin=True` or `become_admin`).
+    Reusing a name on another browser connects it like a login code would.
     """
     if not c.get("/api/zugang").json()["offen"]:  # invite-only once someone exists: come in like a friend would
         rein(c)
@@ -129,6 +139,7 @@ def login(c: TestClient, name: str, *, admin: bool = False) -> dict:
     elif admin:
         _set(name, is_admin=True)
     uid = next(u["id"] for u in c.get("/api/users").json()["users"] if u["name"] == name)
+    binden(c, uid)
     r = c.post("/api/users/waehlen", json={"user_id": uid})
     assert r.status_code == 200, r.text
     return r.json()["ich"]

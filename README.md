@@ -60,7 +60,8 @@ invite-only. The UI is available in English and German.
 
 **Groups and access**
 - Invite links only. Links either add people directly or need approval, and can expire.
-- No accounts: you pick your name and can protect it by choosing a film as your "password".
+- No accounts and no passwords: your name belongs to the device you created it on. Another phone,
+  laptop or TV gets it with a one-time login code (text, link or QR code).
 - One server can host several groups, each with its own movie night, history and cinema
   ([groups](docs/GROUPS.md)).
 - A host role that can be handed over or taken over by vote.
@@ -159,9 +160,11 @@ All settings are optional and go into `backend/.env` or the environment.
 docker compose exec screenmates python -m app.cli namen          # list names
 docker compose exec screenmates python -m app.cli admin "Alice"  # make someone admin
 docker compose exec screenmates python -m app.cli einladung      # one-time invite link, valid 24 h
+docker compose exec screenmates python -m app.cli login "Alice"  # login code for Alice's new device, 24 h
 ```
 
-Useful for giving an existing installation its first admin, or getting back in when no admin can.
+Useful for giving an existing installation its first admin, or getting back in after losing your only
+device.
 
 ## Cinema
 

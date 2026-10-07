@@ -7,6 +7,28 @@ All notable changes to screenmates are documented here. The format is based on
 
 ## Unreleased
 
+### Security
+- Names belong to devices now. Until now anyone with an invitation link could pick any name that had
+  no film password, including an admin's, and use it with all its rights. A browser can now only use
+  the names it created itself or connected with a one-time login code.
+- Login codes (`ABCD-EFGH`) come from Profile → Settings → "Connect another device", as text, link and
+  QR code. They work once and for 15 minutes; codes an admin makes (Admin → People, or
+  `python -m app.cli login <name>`) work for 24 hours. Only a hash of the code is stored, and wrong codes
+  count against the same limit as wrong invitations.
+
+### Changed
+- Settings show on how many devices you are signed in, and can sign you out on all the others.
+- "Sign out" keeps the name on the device so you can pick it again; "Remove from this device" takes it off.
+- The "Better safe than sorry" award is now "Second screen": connect a second device of your own.
+
+### Removed
+- The film password. It only protected names whose owner had set one, and a favourite film is easy to
+  guess.
+
+### Upgrading
+- Every browser that is signed in keeps its name. Browsers that were signed out need a login code once,
+  from another device of that person or from an admin.
+
 ### Documentation
 - The repository is now in English: new README with screenshots of the current app, translated docs
   (`docs/GROUPS.md`, `AWARDS.md`, `PREDICTION.md`, `CINEMA-QUALITY.md`, `CINEMA-CHECKLIST.md`, `API.md`)

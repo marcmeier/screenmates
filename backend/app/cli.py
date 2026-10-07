@@ -3,9 +3,10 @@
     python -m app.cli namen                 # all names with their state
     python -m app.cli admin "<Name>"        # make someone admin (and approve the name)
     python -m app.cli einladung [<gruppe>]  # a one-time link that lets you straight in (24 h)
+    python -m app.cli login "<Name>"        # a login code for that name on a new device (24 h)
 
 The way in when nobody can administrate any more: an existing database that
-predates admins, the last admin who forgot their film, or no valid invitation left.
+predates admins, the last admin who lost their device, or no valid invitation left.
 """
 
 from __future__ import annotations
@@ -60,6 +61,18 @@ def einladung(db: Session, gruppe: int | None) -> int:
     return 0
 
 
+def login_code(db: Session, name: str) -> int:
+    from .routers import login
+
+    u = db.exec(select(User).where(User.name == name)).first()
+    if u is None or not u.freigegeben:
+        print(f"Keinen freigegebenen Namen „{name}“ gefunden.", file=sys.stderr)
+        return 1
+    c = login.neuer_code(db, u, None, login.GUELTIG_ADMIN)
+    print(f"Anmeldecode für „{u.name}“ (einmal, 24 h): {c['code']}  –  <Adresse>{c['path']}")
+    return 0
+
+
 def main(argv: list[str]) -> int:
     init_db()
     with Session(engine) as db:
@@ -69,6 +82,8 @@ def main(argv: list[str]) -> int:
             return admin(db, argv[1])
         if argv[:1] == ["einladung"] and len(argv) <= 2:
             return einladung(db, int(argv[1]) if len(argv) == 2 else None)
+        if argv[:1] == ["login"] and len(argv) == 2:
+            return login_code(db, argv[1])
     print(__doc__, file=sys.stderr)
     return 2
 

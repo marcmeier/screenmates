@@ -152,9 +152,25 @@ async function einladung() {
   }
 }
 
+// #/login/<code>: a login code from another device (or an admin) – this browser gets that name.
+async function anmeldelink() {
+  if (route.value.tab !== 'login' || !route.value.sub) return
+  const code = route.value.sub
+  history.replaceState(null, '', '#/abend')
+  route.value = { tab: 'abend', sub: null, id: null }
+  try {
+    await app.anmelden(code)
+    ui.toast(t('namen.hallo', { name: app.me.name }), 'ok')
+  } catch (e) {
+    app.einladungFehler = e.message // shown at the door
+    ui.toast(e.message, 'error') // or in the app, when this browser is already in
+  }
+}
+
 async function start() {
   try {
     await einladung()
+    await anmeldelink()
     await app.bootstrap()
     if (app.draussen) return
     if (!app.me) ui.loginOpen = true
@@ -169,8 +185,9 @@ onMounted(start)
 watch(
   () => route.value.tab,
   async (tab) => {
-    if (tab !== 'einladung') return
+    if (tab !== 'einladung' && tab !== 'login') return
     await einladung()
+    await anmeldelink()
     await app.bootstrap()
     if (!app.draussen && !app.me) ui.loginOpen = true
   },

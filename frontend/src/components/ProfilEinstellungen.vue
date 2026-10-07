@@ -1,11 +1,11 @@
 <script setup>
-import { computed, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useRoute } from '../composables/useRoute'
 import { api } from '../api'
 import { useApp } from '../stores/app'
 import { useUi } from '../stores/ui'
 import { t } from '../i18n'
-import FilmPicker from './FilmPicker.vue'
+import AnmeldeCode from './AnmeldeCode.vue'
 import Icon from './Icon.vue'
 import Benachrichtigungen from './Benachrichtigungen.vue'
 import Darstellung from './Darstellung.vue'
@@ -13,10 +13,9 @@ import KalenderAbo from './KalenderAbo.vue'
 import MeineAbos from './MeineAbos.vue'
 import ProfilBild from './ProfilBild.vue'
 
-// Your own settings (profile picture, film password, subscriptions) – part of the profile page.
+// Your own settings (profile picture, devices, subscriptions) – part of the profile page.
 const app = useApp()
 const ui = useUi()
-const pickSchutz = ref(false)
 // One topic at a time: #/profil/einstellungen/<reiter>.
 const route = useRoute()
 const REITER = computed(() =>
@@ -29,11 +28,22 @@ const REITER = computed(() =>
 )
 const aktiv = computed(() => REITER.value.find((r) => r.id === route.value.id)?.id ?? 'profil')
 
-async function setSchutz(movie) {
-  await api.post(`/api/users/${app.me.id}/schutz`, { movie_id: movie?.id ?? null })
-  pickSchutz.value = false
-  await app.refreshUsers()
-  ui.toast(movie ? t('einst.geschuetztDurch', { film: movie.title }) : t('einst.schutzEntfernt'), 'ok')
+// On how many browsers your name is; signing out the others (a lost phone, a friend's laptop).
+const geraete = ref(null)
+async function geraeteLaden() {
+  geraete.value = (await api.get('/api/login')).geraete
+}
+onMounted(geraeteLaden)
+async function andereAbmelden() {
+  if (!confirm(t('einst.andereAbmeldenFrage', { name: app.me.name }))) return
+  const r = await api.post('/api/login/andere-abmelden')
+  geraete.value = r.geraete
+  ui.toast(t('einst.andereAbgemeldet', { n: r.abgemeldet }, r.abgemeldet), 'ok')
+}
+async function vergessen() {
+  if (!confirm(t('einst.vergessenFrage', { name: app.me.name }))) return
+  await app.vergessen(app.me.id)
+  ui.loginOpen = true
 }
 </script>
 
@@ -63,18 +73,15 @@ async function setSchutz(movie) {
         {{ $t('einst.ideen') }} <a href="#/wuensche">{{ $t('nav.wuensche') }}</a>
       </p>
 
-      <h3>{{ $t('einst.schutz') }}</h3>
-      <p class="muted">
-        {{ $t('einst.schutzText', { name: app.me.name }) }}
-      </p>
-      <div class="row">
-        <span class="chip" :class="{ ok: app.me.hat_schutz }">
-          <Icon name="schloss" :size="13" /> {{ app.me.hat_schutz ? $t('einst.geschuetzt') : $t('einst.ungeschuetzt') }}
-        </span>
-        <button class="small" @click="pickSchutz = !pickSchutz">{{ app.me.hat_schutz ? $t('einst.filmAendern') : $t('einst.schutzEinrichten') }}</button>
-        <button v-if="app.me.hat_schutz" class="ghost small" @click="setSchutz(null)">{{ $t('einst.entfernen') }}</button>
+      <h3>{{ $t('einst.geraete') }}</h3>
+      <p class="muted">{{ $t('einst.geraeteText') }}</p>
+      <AnmeldeCode url="/api/login/code" :label="$t('einst.geraetVerbinden')" />
+      <div class="row geraete">
+        <span v-if="geraete" class="muted small">{{ $t('einst.geraeteAnzahl', { n: geraete }, geraete) }}</span>
+        <span class="spacer"></span>
+        <button v-if="geraete > 1" class="ghost small" @click="andereAbmelden">{{ $t('einst.andereAbmelden') }}</button>
+        <button class="ghost small" @click="vergessen">{{ $t('einst.vergessen') }}</button>
       </div>
-      <div v-if="pickSchutz" class="picker"><FilmPicker :placeholder="$t('einst.passwortFilm')" @pick="setSchutz" /></div>
     </section>
 
     <Darstellung v-else-if="aktiv === 'darstellung'" />
@@ -93,8 +100,7 @@ async function setSchutz(movie) {
 section h2 { margin: 0 0 1rem; font-size: 1.1rem; }
 section h3 { margin: 1.4rem 0 0.3rem; font-size: 0.95rem; }
 section p { margin: 0 0 0.8rem; font-size: 0.9rem; }
-.chip.ok { color: var(--ok); border-color: var(--ok); }
-.picker { margin-top: 0.9rem; }
+.geraete { margin-top: 0.9rem; }
 .ideas { margin: 1rem 0 0; }
 .ich { font-size: 1.05rem; }
 .bild { margin-top: 0.9rem; }

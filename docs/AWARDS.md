@@ -32,7 +32,7 @@ raise your level. Code: `backend/app/erfolge.py` (rules and catalog),
 | 💡 Ideas | 1 · 3 · 10 | your wishes that were implemented or backed by three **other** people |
 | 🎬 Cinema director | 1 · 5 · 15 | shows you streamed with at least two others watching for 5 minutes each |
 | 🎟️ Cinemagoer | 1 · 5 · 20 | shows you watched for at least 5 minutes |
-| Profile | once | 📸 profile picture, 🔐 film password, 📺 streaming services added |
+| Profile | once | 📸 profile picture, 📱 a second device of your own connected, 📺 streaming services added |
 | Secret | once | seven of them – see the code, not spoiled here |
 
 ## Against gaming the system

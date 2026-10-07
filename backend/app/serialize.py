@@ -95,7 +95,6 @@ def user_dict(
         "color": u.color,
         "dabei": dabei,  # in for the next movie night of the caller's active group
         "rueckmeldung": "ja" if dabei else rueckmeldung,  # ja | vielleicht | nein | None (no answer yet)
-        "hat_schutz": u.schutz_movie_id is not None,
         "admin": u.is_admin,
         "freigegeben": u.freigegeben,
         "bild": f"/api/users/{u.id}/bild?v={u.bild}" if u.bild else None,
