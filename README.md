@@ -228,6 +228,9 @@ In development Vite proxies `/api` to the backend; in production FastAPI serves 
 built frontend. Migrations run automatically on startup. Clients poll `/api/live` for changes, which
 works behind any proxy without WebSockets.
 
+screenmates runs as a single process: live counters, cinema presence and rate limits are kept in memory.
+Don't start several uvicorn workers or replicas; one process easily serves a few groups of friends.
+
 The endpoints are documented in [docs/API.md](docs/API.md); a running backend also serves OpenAPI docs
 at `/docs`.
 

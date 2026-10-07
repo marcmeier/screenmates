@@ -20,6 +20,7 @@ from ..prognose import MIN_BEWERTUNGEN, Film, Modell, vorhersage
 from ..serialize import iso
 from ..session import require_user
 from ..util import ensure_movie, termin_text, upsert_movie
+from ..util import utc as _utc
 from ..zeitzone import zone
 from . import gastgeber
 from .watched import _payload
@@ -29,13 +30,6 @@ router = APIRouter(prefix="/api", tags=["abend"])
 
 # Rated films without keywords are completed from TMDB, at most this many per request.
 STICHWORTE_PRO_ANFRAGE = 30
-
-
-def _utc(dt: datetime | None) -> datetime | None:
-    """SQLite hands back naive datetimes; they are UTC by contract."""
-    if dt is None:
-        return None
-    return dt.replace(tzinfo=UTC) if dt.tzinfo is None else dt.astimezone(UTC)
 
 
 # --- Wem gefällt's? -----------------------------------------------------------

@@ -14,6 +14,11 @@ services:
       MEDIAMTX_API_URL: http://mediamtx:9997
     volumes:
       - screenmates-data:/data
+    # It only writes to /data; everything else stays read-only, without extra privileges.
+    read_only: true
+    tmpfs: [/tmp]
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
     restart: unless-stopped
 
   # Media server for the Kino. Its HTTP ports stay inside this network; only the
@@ -32,6 +37,9 @@ services:
     ports:
       - "8189:8189/udp"
       - "8189:8189/tcp"
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
     restart: unless-stopped
 
 volumes:

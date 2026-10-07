@@ -267,6 +267,7 @@ async def person_movies(person_id: int) -> dict[str, Any] | None:
 # --- Where to watch (JustWatch data via TMDB) and trailers --------------------------
 
 _cache: dict[str, tuple[float, Any]] = {}
+CACHE_MAX = 2000  # entries; one per film whose streaming offers were asked for, plus shelves
 
 
 async def _cached(key: str, ttl: float, load) -> Any:
@@ -276,6 +277,13 @@ async def _cached(key: str, ttl: float, load) -> Any:
         return hit[1]
     value = await load()
     if value is not None:
+        if len(_cache) >= CACHE_MAX:  # keep memory bounded: expired entries go, then the oldest half
+            jetzt = time.monotonic()
+            for k in [k for k, (bis, _) in _cache.items() if bis <= jetzt]:
+                del _cache[k]
+            if len(_cache) >= CACHE_MAX:
+                for k in list(_cache)[: CACHE_MAX // 2]:
+                    del _cache[k]
         _cache[key] = (time.monotonic() + ttl, value)
     return value
 

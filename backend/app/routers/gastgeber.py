@@ -33,6 +33,7 @@ from ..db import get_session
 from ..gruppen import aktive_gruppe, gruppen_admin, mitglieder
 from ..models import Abend, Stabwechsel, User, now
 from ..session import require_user
+from ..util import utc as _utc
 
 router = APIRouter(prefix="/api/gastgeber", tags=["gastgeber"])
 
@@ -54,10 +55,6 @@ def da(gid: int, uid: int | None) -> bool:
 
 def anwesend(db: DBSession, gid: int) -> set[int]:
     return {uid for uid in mitglieder(db, gid) if da(gid, uid)}
-
-
-def _utc(dt: datetime) -> datetime:
-    return dt if dt.tzinfo else dt.replace(tzinfo=UTC)
 
 
 def _abend(db: DBSession, gid: int) -> Abend:
