@@ -106,8 +106,12 @@ invite-only. The UI is available in English and German.
 git clone https://github.com/marcmeier/screenmates.git
 cd screenmates
 cp backend/.env.example backend/.env   # add your TMDB key here
-docker compose up -d --build
+docker compose up -d
 ```
+
+This pulls the released image (`ghcr.io/marcmeier/screenmates`); `SCREENMATES_VERSION=1.0.0` in the
+environment or in a `.env` next to `compose.yaml` pins a version. `docker compose up -d --build` builds
+your checkout instead.
 
 The first name you create becomes admin, so it needs the setup code from the log:
 
