@@ -209,12 +209,22 @@ def test_the_contact_is_one_the_push_services_accept(client, monkeypatch, einste
 
     from app.config import settings
 
-    monkeypatch.setattr(settings, "push_kontakt", einstellung)
+    monkeypatch.setattr(settings, "push_contact", einstellung)
     assert push.kontakt() == gesendet_als
     with Session(engine) as s:
         v = Vapid.from_pem(push.privater_schluessel(s).encode())
     kopf = v.sign({"sub": push.kontakt(), "aud": "https://fcm.googleapis.com"})
     assert kopf["Authorization"].startswith("vapid t=")
+
+
+def test_the_contact_falls_back_to_public_url_and_reads_the_old_name(monkeypatch):
+    from app.config import Settings, settings
+
+    monkeypatch.setattr(settings, "push_contact", "")
+    monkeypatch.setattr(settings, "public_url", "https://movies.example.org/")
+    assert push.kontakt() == "https://movies.example.org"
+    monkeypatch.setenv("PUSH_KONTAKT", "mailto:old@example.org")
+    assert Settings().push_contact == "mailto:old@example.org"
 
 
 def test_delivery_really_builds_the_request(runde, monkeypatch):

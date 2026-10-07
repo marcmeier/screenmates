@@ -45,6 +45,12 @@ All notable changes to screenmates are documented here. The format is based on
   The demo catalog follows that setting, as do genre names in the film data; the genre filter is in the
   app's language. A fresh install names its first group in the first admin's language ("Our group").
 - Quotation marks, the trailer player's language and the page language no longer assume German.
+- Public interfaces are English: `PUSH_CONTACT` (was `PUSH_KONTAKT`, falls back to `PUBLIC_URL`),
+  `CINEMA_PUBLIC_HOST` (was `KINO_PUBLIC_HOST`), command line `names`, `invite`, `setup` (were `namen`,
+  `einladung`, `einrichtung`), and the app sends its language as `Accept-Language` (was `X-Sprache`). The
+  old names keep working.
+- New `SOURCE_URL` for the source link on the about page, so a modified version can point to its own code
+  as the AGPL asks. Push services no longer get the project's address as contact when `PUBLIC_URL` is set.
 - Settings show on how many devices you are signed in, and can sign you out on all the others.
 - "Sign out" keeps the name on the device so you can pick it again; "Remove from this device" takes it off.
 - The "Better safe than sorry" award is now "Second screen": connect a second device of your own.

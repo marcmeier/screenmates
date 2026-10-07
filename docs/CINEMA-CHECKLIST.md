@@ -27,7 +27,7 @@ Check:
 ## 2. Over the internet
 
 Prerequisite: screenmates is publicly reachable (server, port forwarding or Tailscale),
-port **8189** UDP+TCP is open, and `KINO_PUBLIC_HOST` is set.
+port **8189** UDP+TCP is open, and `CINEMA_PUBLIC_HOST` is set.
 
 - [ ] Someone **outside** your network (mobile data is enough: turn off Wi-Fi on a phone) opens the
       page, picks a name and watches.
@@ -35,5 +35,5 @@ port **8189** UDP+TCP is open, and `KINO_PUBLIC_HOST` is set.
       the selected candidate pair goes to your public address on port 8189.
 - [ ] Several viewers at once: is the server's upload enough? (~5 Mbit/s per person at 1080p)
 
-If the mobile test fails: check port 8189 on the firewall/router and whether `KINO_PUBLIC_HOST`
+If the mobile test fails: check port 8189 on the firewall/router and whether `CINEMA_PUBLIC_HOST`
 is the address under which the server is reachable from outside.

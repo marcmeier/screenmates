@@ -1,13 +1,15 @@
 """Server-side helpers for the operator, run inside the container.
 
-    python -m app.cli namen                 # all names with their state
-    python -m app.cli admin "<Name>"        # make someone admin (and approve the name)
-    python -m app.cli einladung [<gruppe>]  # a one-time link that lets you straight in (24 h)
-    python -m app.cli login "<Name>"        # a login code for that name on a new device (24 h)
-    python -m app.cli einrichtung           # the setup code for the first name of a fresh install
+    python -m app.cli names               # all names with their state
+    python -m app.cli admin "<name>"      # make someone admin (and approve the name)
+    python -m app.cli invite [<group id>] # a one-time link that lets you straight in (24 h)
+    python -m app.cli login "<name>"      # a login code for that name on a new device (24 h)
+    python -m app.cli setup               # the setup code for the first name of a fresh install
 
 The way in when nobody can administrate any more: an existing database that
-predates admins, the last admin who lost their device, or no valid invitation left.
+predates admins, the last admin who lost their device, or no valid invitation
+left. The German command names of older versions (namen, einladung,
+einrichtung) still work.
 """
 
 from __future__ import annotations
@@ -22,10 +24,10 @@ from .db import engine, init_db
 from .models import Einladung, Gruppe, User
 
 
-def namen(db: Session) -> int:
+def names(db: Session) -> int:
     for u in db.exec(select(User).order_by(User.created_at)).all():
-        rolle = "Admin" if u.is_admin else "–"
-        stand = "aktiv" if u.freigegeben else "beantragt"
+        rolle = "admin" if u.is_admin else "–"
+        stand = "active" if u.freigegeben else "requested"
         print(f"{u.id:>4}  {u.name:<30} {stand:<10} {rolle}")
     return 0
 
@@ -33,20 +35,20 @@ def namen(db: Session) -> int:
 def admin(db: Session, name: str) -> int:
     u = db.exec(select(User).where(User.name == name)).first()
     if u is None:
-        print(f"Keinen Namen „{name}“ gefunden. Vorhanden:", file=sys.stderr)
-        namen(db)
+        print(f"No name “{name}”. These exist:", file=sys.stderr)
+        names(db)
         return 1
     u.is_admin, u.freigegeben = True, True
     db.add(u)
     db.commit()
-    print(f"„{u.name}“ ist jetzt Admin.")
+    print(f"“{u.name}” is admin now.")
     return 0
 
 
-def einladung(db: Session, gruppe: int | None) -> int:
+def invite(db: Session, gruppe: int | None) -> int:
     g = db.get(Gruppe, gruppe) if gruppe else db.exec(select(Gruppe).order_by(Gruppe.id)).first()
     if g is None:
-        print("Keine solche Gruppe.", file=sys.stderr)
+        print("No such group.", file=sys.stderr)
         return 1
     e = Einladung(
         token=secrets.token_urlsafe(18),
@@ -54,11 +56,11 @@ def einladung(db: Session, gruppe: int | None) -> int:
         direkt=True,
         max_nutzungen=1,
         gueltig_bis=datetime.now(UTC) + timedelta(days=1),
-        notiz="Kommandozeile",
+        notiz="Command line",
     )
     db.add(e)
     db.commit()
-    print(f"Einladung in „{g.name}“ (einmal, 24 h): <Adresse>/#/einladung/{e.token}")
+    print(f"Invitation to “{g.name}” (once, 24 h): <your address>/#/einladung/{e.token}")
     return 0
 
 
@@ -67,10 +69,10 @@ def login_code(db: Session, name: str) -> int:
 
     u = db.exec(select(User).where(User.name == name)).first()
     if u is None or not u.freigegeben:
-        print(f"Keinen freigegebenen Namen „{name}“ gefunden.", file=sys.stderr)
+        print(f"No approved name “{name}”.", file=sys.stderr)
         return 1
     c = login.neuer_code(db, u, None, login.GUELTIG_ADMIN)
-    print(f"Anmeldecode für „{u.name}“ (einmal, 24 h): {c['code']}  –  <Adresse>{c['path']}")
+    print(f"Login code for “{u.name}” (once, 24 h): {c['code']}  –  <your address>{c['path']}")
     return 0
 
 
@@ -78,28 +80,36 @@ def setup_code(db: Session) -> int:
     from . import einrichtung
 
     if not einrichtung.offen(db):
-        print("Es gibt schon Namen – der Einrichtungscode wird nicht mehr gebraucht.", file=sys.stderr)
+        print("Names exist already: the setup code isn't needed any more.", file=sys.stderr)
         return 1
     c = einrichtung.code(db)
-    print(f"Einrichtungscode für den ersten Namen: {c}  –  <Adresse>/#/setup/{c}")
+    print(f"Setup code for the first name: {c}  –  <your address>/#/setup/{c}")
     return 0
 
 
+COMMANDS = {
+    "names": (names, 0),
+    "namen": (names, 0),
+    "admin": (admin, 1),
+    "invite": (invite, None),
+    "einladung": (invite, None),
+    "login": (login_code, 1),
+    "setup": (setup_code, 0),
+    "einrichtung": (setup_code, 0),
+}
+
+
 def main(argv: list[str]) -> int:
+    befehl, args = (argv[0], argv[1:]) if argv else ("", [])
+    fn, n = COMMANDS.get(befehl, (None, 0))
+    if fn is None or (n is not None and len(args) != n) or (n is None and len(args) > 1):
+        print(__doc__, file=sys.stderr)
+        return 2
     init_db()
     with Session(engine) as db:
-        if argv[:1] == ["namen"]:
-            return namen(db)
-        if argv[:1] == ["admin"] and len(argv) == 2:
-            return admin(db, argv[1])
-        if argv[:1] == ["einladung"] and len(argv) <= 2:
-            return einladung(db, int(argv[1]) if len(argv) == 2 else None)
-        if argv[:1] == ["login"] and len(argv) == 2:
-            return login_code(db, argv[1])
-        if argv == ["einrichtung"]:
-            return setup_code(db)
-    print(__doc__, file=sys.stderr)
-    return 2
+        if fn is invite:
+            return invite(db, int(args[0]) if args else None)
+        return fn(db, *args)
 
 
 if __name__ == "__main__":

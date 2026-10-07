@@ -63,7 +63,7 @@ jobs:
         run: |
           printf 'SETUP_TOKEN=E2E-SETUP-CODE\nTIMEZONE=Europe/Berlin\nTMDB_LANGUAGE=de-DE\nTMDB_REGION=DE\n' > backend/.env
           docker compose up --detach --build --wait --wait-timeout 120
-        env: { KINO_PUBLIC_HOST: 127.0.0.1 }
+        env: { CINEMA_PUBLIC_HOST: 127.0.0.1 }
       - name: Stack answers
         run: |
           curl -fsS http://127.0.0.1:8000/api/health

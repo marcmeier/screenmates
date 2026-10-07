@@ -55,6 +55,16 @@ def test_push_and_bell_speak_each_readers_language(runde):  # noqa: F811
     assert eintraege and eintraege[0]["titel"].startswith("📅 Movie night is on")
 
 
+def test_accept_language_picks_the_language_and_x_sprache_still_works(client):
+    login(client, "marc")
+    detail = lambda h: client.put("/api/users/me/sprache", json={"sprache": "fr"}, headers=h).json()["detail"]  # noqa: E731
+    assert detail({"Accept-Language": "en"}) == "Unknown language."
+    assert detail({"Accept-Language": "fr-FR,en-GB;q=0.9,de;q=0.8"}) == "Unknown language."
+    assert detail({"Accept-Language": "fr,de;q=0.9,en;q=0.5"}) == "Unbekannte Sprache."
+    assert detail({"Accept-Language": "en", "X-Sprache": "de"}) == "Unbekannte Sprache."  # older apps
+    assert detail({}) == "Unbekannte Sprache."
+
+
 def test_the_language_is_back_to_german_after_a_request():
     assert sprache.aktuell() == "de"
     with sprache.als("en"):

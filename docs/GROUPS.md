@@ -18,7 +18,7 @@ with six people, group 2 with four – some in both, some in just one.
 
   Someone who already has a name joins (or asks to join) another group with that group's link. Requests show up for each group's admins.
 - **Without an invitation** (e.g. names created directly by an admin): if there is only one group, they land in it automatically; otherwise an admin decides.
-- **Emergency exit:** `python -m app.cli einladung [<group>]` creates a one-time link (24 h, direct); `python -m app.cli login <name>` a login code for an existing name.
+- **Emergency exit:** `python -m app.cli invite [<group>]` creates a one-time link (24 h, direct); `python -m app.cli login <name>` a login code for an existing name.
 - **Cinema:** one per group, MediaMTX path `kino-<group id>` (regex path in `deploy/mediamtx.yml`), its own secret, its own OBS stream key (the key decides the group; the WHIP URL is the same for everyone), its own audience. Several groups can stream at once – mind your upload bandwidth.
 - **Awards** count across all groups: a confirmed movie night is one night, no matter in which group (at most one per day).
 - **Ratings stay in their group:** predictions ("Who will like it?"), the forecast for suggestions and taste matching only use the active group's members and evenings.

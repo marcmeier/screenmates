@@ -1,7 +1,8 @@
 """The language screenmates speaks: German (the source) or English.
 
-Every request carries the app's language in the `X-Sprache` header; texts the
-server writes for that request (errors, shelves, achievements, facts) follow it.
+Every request carries the app's language in the `Accept-Language` header (the
+app sets it to its own choice; `X-Sprache` from older apps still works); texts
+the server writes for that request (errors, shelves, achievements, facts) follow it.
 Texts for someone else - push messages, the bell, calendar feeds - follow that
 person's choice (`design.sprache` in the profile), via `als(...)`.
 
@@ -51,6 +52,21 @@ def als(sprache: str) -> Iterator[None]:
         _aktuell.reset(token)
 
 
+def _bevorzugt(accept_language: str) -> str:
+    """'en-GB,en;q=0.9,de;q=0.8' -> 'en': the first of our languages, by the browser's weights."""
+    kandidaten = []
+    for i, teil in enumerate(accept_language.split(",")):
+        sprache, _, rest = teil.strip().partition(";")
+        q = 1.0
+        if rest.strip().startswith("q="):
+            try:
+                q = float(rest.strip()[2:])
+            except ValueError:
+                q = 0.0
+        kandidaten.append((-q, i, sprache.strip()[:2].lower()))
+    return next((s for _, _, s in sorted(kandidaten) if s in SPRACHEN), "de")
+
+
 class SprachMiddleware:
     """Pure ASGI, so the language reaches sync endpoints in the thread pool too."""
 
@@ -60,11 +76,11 @@ class SprachMiddleware:
     async def __call__(self, scope, receive, send):
         if scope["type"] != "http":
             return await self.app(scope, receive, send)
-        wert = "de"
-        for k, v in scope.get("headers", []):
-            if k == b"x-sprache":
-                wert = v.decode("latin-1").strip().lower()
-                break
+        headers = dict(scope.get("headers", []))
+        if b"x-sprache" in headers:
+            wert = headers[b"x-sprache"].decode("latin-1").strip().lower()
+        else:
+            wert = _bevorzugt(headers.get(b"accept-language", b"").decode("latin-1"))
         token = _aktuell.set(wert if wert in SPRACHEN else "de")
         try:
             await self.app(scope, receive, send)
