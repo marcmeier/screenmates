@@ -1241,7 +1241,12 @@ export default {
     deinEigenesProfilFindest: "Dein eigenes Profil findest du unter",
     deineGruppenNurFuer: "Deine Gruppen – nur für Gruppen-Admins sichtbar.",
     gleicheAb: "Gleiche ab …",
+    funktionen: "Funktionen",
     katalog: "Katalog",
+    wuenscheAn: "Wünsche & Ideen sind jetzt für alle sichtbar",
+    wuenscheAus: "Wünsche & Ideen sind ausgeschaltet",
+    wuenscheText:
+      "Eine Liste, auf der alle Ideen für screenmates sammeln und abstimmen – gedacht als Rückmeldung an alle, die den Server betreiben.",
     katalogAktualisiertNeuNeue:
       "Katalog aktualisiert: {neu} neue Filme, {gesamt} insgesamt",
     laeuftScreenmatesAufDem:

@@ -37,7 +37,7 @@ from ..session import require_admin, require_user
 from ..sprache import tr
 from ..util import upsert_movie
 from ..zeitzone import zone
-from . import gastgeber, umfrage
+from . import features, gastgeber, umfrage
 
 router = APIRouter(prefix="/api", tags=["misc"])
 
@@ -90,6 +90,7 @@ def status(db: DBSession = Depends(get_session)):
         "kino": settings.kino_enabled,
         "image_base": settings.tmdb_image_base,
         "zeitzone": zone().key,  # the group's wall-clock time, also for the app (see zeitzone.py)
+        "wuensche": features.angeboten(db),
     }
 
 
@@ -196,7 +197,10 @@ def events(limit: int = 30, gid: int = Depends(aktive_gruppe), db: DBSession = D
         feed.append(
             {"typ": "termin", "at": abend.gesetzt_am, "wer": names.get(abend.gesetzt_von), "termin": iso(abend.termin)}
         )
-    for f in db.exec(select(Feature).order_by(col(Feature.created_at).desc()).limit(limit)):
+    wuensche = (
+        db.exec(select(Feature).order_by(col(Feature.created_at).desc()).limit(limit)) if features.angeboten(db) else []
+    )
+    for f in wuensche:
         feed.append({"typ": "wunsch", "at": f.created_at, "wer": names.get(f.user_id), "text": f.text[:120]})
     for k in db.exec(
         select(Kistenoeffnung)

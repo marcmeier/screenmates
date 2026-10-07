@@ -76,7 +76,7 @@ async function namenLoeschen() {
         <button class="ghost small" @click="app.logout()"><Icon name="logout" :size="14" /> {{ $t('einst.abmelden') }}</button>
       </div>
       <ProfilBild :user="app.me" class="bild" />
-      <p class="ideas muted">
+      <p v-if="app.status.wuensche" class="ideas muted">
         {{ $t('einst.ideen') }} <a href="#/wuensche">{{ $t('nav.wuensche') }}</a>
       </p>
 

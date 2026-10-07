@@ -187,6 +187,9 @@ as nobody holds the baton.
 
 ## Wishes & info
 
+The wishes board is optional: while it's off (the default on a new install), `/features` answers `404`.
+`PUT /admin/einstellungen` with `wuensche: true/false` switches it (A); `/status` says whether it's on.
+
 | Method | Path | Access | Purpose |
 |---|---|:-:|---|
 | GET/POST | `/features` | –/N | Wishes (open by votes, then done) |

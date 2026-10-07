@@ -514,7 +514,11 @@ test('the sidebar folds to icons and remembers it', async () => {
   await expect.poll(async () => (await page.locator('.sidebar').boundingBox()).width).toBe(wide)
 })
 
-test('wishes can be voted on', async () => {
+test('wishes are off until the admin switches them on, then they can be voted on', async () => {
+  await expect(page.getByRole('link', { name: 'Wünsche & Ideen', exact: true })).toHaveCount(0)
+  await page.goto('/#/verwaltung/system')
+  await page.getByRole('checkbox', { name: /Wünsche & Ideen/ }).check()
+  await expect(page.locator('.toast', { hasText: 'Wünsche & Ideen sind jetzt für alle sichtbar' })).toBeVisible()
   await nav('Wünsche & Ideen')
   await page.getByLabel('Neuer Wunsch').fill('Serien unterstützen')
   await page.getByRole('button', { name: 'Wünschen' }).click()

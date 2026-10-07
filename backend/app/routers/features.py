@@ -1,4 +1,8 @@
-"""Feature wishes ('Wünsche') with votes and notes."""
+"""Feature wishes ('Wünsche') with votes and notes.
+
+A board for telling whoever runs the server what screenmates should do next. It's
+optional: off on a new install, an admin switches it on (Admin → System).
+"""
 
 from __future__ import annotations
 
@@ -10,11 +14,22 @@ from sqlmodel import Session as DBSession
 from sqlmodel import col, select
 
 from ..db import get_session
-from ..models import Feature, FeatureNote, FeatureVote, User
+from ..models import AppMeta, Feature, FeatureNote, FeatureVote, User
 from ..serialize import iso
 from ..session import current_user, is_admin, require_admin, require_owner_or_admin, require_user
 
-router = APIRouter(prefix="/api", tags=["features"])
+
+def angeboten(db: DBSession) -> bool:
+    meta = db.get(AppMeta, 1)
+    return bool(meta and meta.wuensche)
+
+
+def _nur_wenn_an(db: DBSession = Depends(get_session)) -> None:
+    if not angeboten(db):
+        raise HTTPException(404, "Wünsche & Ideen sind ausgeschaltet.")
+
+
+router = APIRouter(prefix="/api", tags=["features"], dependencies=[Depends(_nur_wenn_an)])
 
 
 class WunschText(BaseModel):

@@ -61,7 +61,9 @@ watch(
 const kino = useKino()
 // The Kino entry only exists once a media server is configured.
 const primary = computed(() => PRIMARY.filter((t) => t.id !== 'kino' || kino.enabled))
-const secondary = computed(() => SECONDARY.filter((t) => t.id !== 'verwaltung' || app.verwaltetGruppen))
+const secondary = computed(() =>
+  SECONDARY.filter((t) => (t.id !== 'verwaltung' || app.verwaltetGruppen) && (t.id !== 'wuensche' || app.status.wuensche)),
+)
 const ui = useUi()
 const route = useRoute()
 const failed = ref(false)
@@ -302,7 +304,7 @@ watch(
           </a>
           <a href="#/profil/einstellungen" role="menuitem" class="eintrag"><Icon name="profil" :size="18" /> {{ $t('app.einstellungen') }}</a>
           <a href="#/neuigkeiten" role="menuitem" class="eintrag"><Icon name="glocke" :size="18" /> {{ $t('nav.neuigkeiten') }}</a>
-          <a href="#/wuensche" role="menuitem" class="eintrag"><Icon name="wuensche" :size="18" /> {{ $t('nav.wuensche') }}</a>
+          <a v-if="app.status.wuensche" href="#/wuensche" role="menuitem" class="eintrag"><Icon name="wuensche" :size="18" /> {{ $t('nav.wuensche') }}</a>
           <a v-if="app.verwaltetGruppen" href="#/verwaltung" role="menuitem" class="eintrag">
             <Icon name="verwaltung" :size="18" /> {{ $t('nav.verwaltung') }}
             <span v-if="app.antraege" class="antraege">{{ app.antraege }}</span>

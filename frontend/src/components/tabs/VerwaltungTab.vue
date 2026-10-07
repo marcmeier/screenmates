@@ -40,6 +40,13 @@ async function sync() {
   }
 }
 
+// Optional parts of screenmates, switched on or off for the whole server.
+async function wuenscheSetzen(an) {
+  await api.put('/api/admin/einstellungen', { wuensche: an })
+  await app.refreshStatus()
+  ui.toast(an ? t('verwaltungtab.wuenscheAn') : t('verwaltungtab.wuenscheAus'), 'ok')
+}
+
 async function resetDabei() {
   await api.del('/api/dabei')
   await app.refreshUsers()
@@ -79,6 +86,17 @@ async function resetDabei() {
       <AdminBereich v-else-if="aktiv === 'personen'" />
 
       <template v-else-if="aktiv === 'system'">
+        <section class="panel">
+          <h2>{{ $t('verwaltungtab.funktionen') }}</h2>
+          <label class="schalter">
+            <input type="checkbox" :checked="app.status.wuensche" @change="wuenscheSetzen($event.target.checked)" />
+            <span>
+              <strong>{{ $t('nav.wuensche') }}</strong>
+              <span class="muted">{{ $t('verwaltungtab.wuenscheText') }}</span>
+            </span>
+          </label>
+        </section>
+
         <KiNutzung />
 
         <section class="panel">
@@ -105,5 +123,8 @@ async function resetDabei() {
 section h2 { margin: 0 0 1rem; font-size: 1.1rem; }
 section p { margin: 0 0 0.8rem; font-size: 0.9rem; }
 .small { font-size: 0.78rem; }
+.schalter { display: flex; gap: 0.7rem; align-items: flex-start; cursor: pointer; font-size: 0.9rem; }
+.schalter input { margin-top: 0.2rem; }
+.schalter > span { display: flex; flex-direction: column; gap: 0.2rem; }
 
 </style>
