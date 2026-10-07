@@ -10,7 +10,8 @@ and include what you found, how to reproduce it, and the version (shown on the a
 
 ## Running it safely
 
-- Serve it over HTTPS and set `COOKIE_SECURE=true`.
+- Serve it over HTTPS and set `COOKIE_SECURE=true`. screenmates sends a Content-Security-Policy and the
+  usual security headers itself; HSTS belongs on the reverse proxy that terminates HTTPS.
 - Behind a reverse proxy, set `FORWARDED_ALLOW_IPS` so rate limiting sees real client IPs.
 - Don't expose MediaMTX's HTTP ports (8889, 9997); only 8189 needs to be public. `compose.yaml`
   already does this.

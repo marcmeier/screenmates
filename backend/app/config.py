@@ -31,6 +31,8 @@ class Settings(BaseSettings):
     llm_api_key: str = ""
     llm_base_url: str = ""
     llm_model: str = ""
+    # AI searches per person within 24 hours (each one costs money at the provider).
+    llm_limit_per_day: int = 30
 
     # Kino (live screen sharing) via MediaMTX. Empty URL disables the feature.
     mediamtx_webrtc_url: str = ""  # e.g. http://127.0.0.1:8889
@@ -45,6 +47,10 @@ class Settings(BaseSettings):
 
     # Setup code for the first name (it becomes admin). Empty: one is made and written to the log.
     setup_token: str = ""
+
+    # Public address, e.g. https://movies.example.org. Used for links the server writes
+    # (calendar feeds); empty: the address the request came to.
+    public_url: str = ""
 
     session_cookie: str = "screenmates_sid"
     # Set to true when served over HTTPS so the session cookie is never sent in clear.

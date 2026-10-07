@@ -13,6 +13,7 @@ from . import einrichtung, erfolge, push, tmdb
 from .config import settings
 from .db import engine, init_db
 from .gruppen import kontext
+from .headers import SecurityHeaders
 from .routers import (
     abend,
     admin,
@@ -80,6 +81,8 @@ app.middleware("http")(live.mitzaehlen)
 
 # The app's language (X-Sprache) for texts the server writes.
 app.add_middleware(SprachMiddleware)
+
+app.add_middleware(SecurityHeaders)
 
 app.add_middleware(
     CORSMiddleware,

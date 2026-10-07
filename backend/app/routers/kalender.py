@@ -17,6 +17,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request, Response
 from sqlmodel import Session as DBSession
 from sqlmodel import col, func, select
 
+from ..config import settings
 from ..db import get_session
 from ..gruppen import aktive_gruppe, mitgliedschaften
 from ..models import Abend, Gruppe, Kistenoeffnung, Mitglied, Movie, Suggestion, User
@@ -52,9 +53,8 @@ def _zeit(dt: datetime) -> str:
 
 
 def _basis(request: Request) -> str:
-    proto = request.headers.get("x-forwarded-proto", request.url.scheme)
-    host = request.headers.get("x-forwarded-host") or request.headers.get("host") or request.url.netloc
-    return f"{proto}://{host}"
+    """PUBLIC_URL, or where the request came to (the scheme from a trusted proxy, see FORWARDED_ALLOW_IPS)."""
+    return (settings.public_url or str(request.base_url)).rstrip("/")
 
 
 def _beschreibung(db: DBSession, gid: int) -> list[str]:

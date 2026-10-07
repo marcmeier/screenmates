@@ -78,10 +78,10 @@ def test_a_name_belongs_to_the_browser_that_made_it(client):
     client.post("/api/users/waehlen", json={"user_id": None})
     assert client.get("/api/users").json()["ich"] is None
     assert client.post("/api/users/waehlen", json={"user_id": me["id"]}).status_code == 200
-    # Forgetting it does not.
+    # Forgetting it does not: without a name (or a valid invitation) the browser is back at the door.
     assert client.delete(f"/api/login/namen/{me['id']}").json() == {"namen": []}
-    assert client.get("/api/users").json()["ich"] is None
-    assert client.post("/api/users/waehlen", json={"user_id": me["id"]}).status_code == 403
+    assert client.get("/api/users").status_code == 423
+    assert client.post("/api/users/waehlen", json={"user_id": me["id"]}).status_code == 423
 
 
 def test_a_login_code_connects_another_device(client, browser):
@@ -133,8 +133,7 @@ def test_signing_out_other_devices(client, browser):
     phone = browser()
     phone.post("/api/login", json={"code": client.post("/api/login/code").json()["code"]})
     assert client.post("/api/login/andere-abmelden").json() == {"abgemeldet": 1, "geraete": 1}
-    assert phone.get("/api/users").json()["ich"] is None
-    assert phone.get("/api/users").json()["auf_geraet"] == []
+    assert phone.get("/api/users").status_code == 423  # the code was its only way in
     assert client.get("/api/users").json()["ich"]["name"] == "marc"
 
 
@@ -167,5 +166,5 @@ def test_delete_user_is_admin_only(client, browser):
     assert other.delete(f"/api/users/{marc['id']}").status_code == 200
     assert [u["name"] for u in other.get("/api/users").json()["users"]] == ["lena"]
     assert other.get("/api/users").json()["auf_geraet"] == [other.get("/api/users").json()["ich"]["id"]]
-    # marc's session survives, but is no longer bound to a user.
-    assert client.get("/api/users").json()["ich"] is None
+    # marc's browser had only that name: it's back at the door.
+    assert client.get("/api/users").status_code == 423
