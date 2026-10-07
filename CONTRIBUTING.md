@@ -53,7 +53,9 @@ languages.
 
 - Formatting is handled by ruff and eslint.
 - A lot of the code uses German names (`abend` = evening, `kiste` = case, `gastgeber` = host,
-  `kino` = cinema, `erfolge` = awards). Stick with the names already used nearby.
+  `kino` = cinema, `erfolge` = awards). New modules, tables and settings get English names; the German
+  ones are being renamed step by step (see [docs/TODO.md](docs/TODO.md)). Inside an existing module,
+  stick with the names already used there.
 - Keep pull requests focused. Include screenshots for UI changes, and a changelog entry for anything
   users will notice.
 

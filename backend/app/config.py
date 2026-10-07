@@ -45,8 +45,12 @@ class Settings(BaseSettings):
     media_dir: str = ""
 
     # Web Push: a contact for the push services (mailto: or an https: URL; only its origin is sent).
-    # The keys are made automatically.
-    push_kontakt: str = "https://github.com/marcmeier/screenmates"
+    # Empty: PUBLIC_URL. The keys are made automatically. PUSH_KONTAKT is the old name.
+    push_contact: str = Field("", validation_alias=AliasChoices("push_contact", "push_kontakt"))
+
+    # Where the source of this installation is (AGPL-3.0 §13): linked on the about page.
+    # Change it when you run a modified version.
+    source_url: str = "https://github.com/marcmeier/screenmates"
 
     # Setup code for the first name (it becomes admin). Empty: one is made and written to the log.
     setup_token: str = ""

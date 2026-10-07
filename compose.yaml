@@ -23,8 +23,9 @@ services:
       MTX_AUTHHTTPADDRESS: http://screenmates:8000/api/kino/mtx-auth
       MTX_APIADDRESS: :9997
       MTX_WEBRTCADDRESS: :8889
-      # Public hostname or IP of this server, so viewers outside your network can connect:
-      MTX_WEBRTCADDITIONALHOSTS: ${KINO_PUBLIC_HOST:-}
+      # Public hostname or IP of this server, so viewers outside your network can connect
+      # (KINO_PUBLIC_HOST is the old name):
+      MTX_WEBRTCADDITIONALHOSTS: ${CINEMA_PUBLIC_HOST:-${KINO_PUBLIC_HOST:-}}
     ports:
       - "8189:8189/udp"
       - "8189:8189/tcp"

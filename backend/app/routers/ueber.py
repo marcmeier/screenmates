@@ -14,6 +14,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 from sqlmodel import Session as DBSession
 
+from ..config import settings
 from ..db import get_session
 from ..models import Seitentext, now
 from ..session import require_admin
@@ -22,7 +23,6 @@ from ..sprache import tr
 router = APIRouter(prefix="/api", tags=["ueber"])
 
 SEITEN = ("impressum", "datenschutz", "spenden")
-REPO = "https://github.com/marcmeier/screenmates"
 
 # key -> (label, link prefix, what may precede the name when someone pastes a whole link)
 KONTEN = {
@@ -60,7 +60,8 @@ def kontoname(key: str, eingabe: str) -> str:
 def ueber(db: DBSession = Depends(get_session)):
     from ..main import __version__
 
-    return {"version": __version__, "repo": REPO, "texte": texte(db), "konten": konten(db)}
+    # The source of this installation (AGPL-3.0 §13): SOURCE_URL, so a modified version links its own.
+    return {"version": __version__, "repo": settings.source_url, "texte": texte(db), "konten": konten(db)}
 
 
 @router.put("/admin/seiten/{key}", dependencies=[Depends(require_admin)])

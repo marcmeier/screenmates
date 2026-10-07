@@ -15,7 +15,7 @@ login code (`POST /login`) or a name. "Anyone" then means: anyone with access.
 (`auf_geraet` in `GET /users`). There are no passwords. A browser without a name keeps its access
 only while its invitation is valid.
 
-**Language:** every request may carry `X-Sprache: de|en`; texts the server writes for that request
+**Language:** the `Accept-Language` header (`de` or `en`; `X-Sprache` from older clients takes precedence) decides the language of texts the server writes for that request
 (errors, shelves, awards, facts) follow it. Texts for someone else – push messages, the bell,
 calendar feeds – follow that person's profile language.
 

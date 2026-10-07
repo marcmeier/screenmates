@@ -881,7 +881,7 @@ export default {
     habeSchon: "Ich habe schon einen Namen",
     setupFeld: "Einrichtungscode",
     setupText:
-      "Steht im Server-Log (docker compose logs screenmates) oder kommt von python -m app.cli einrichtung.",
+      "Steht im Server-Log (docker compose logs screenmates) oder kommt von python -m app.cli setup.",
     hallo: "Hallo {name}!",
     mitFreigabe: "Leg deinen Namen an; ein Admin der Gruppe schaltet ihn frei.",
     neu: "Neuer Name",

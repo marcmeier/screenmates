@@ -7,7 +7,7 @@ posts it to the endpoint, signed with the server's VAPID key (RFC 8291/8292,
 done by pywebpush). The service worker (`frontend/public/sw.js`) shows it.
 
 - The VAPID key pair is made on first use and kept in the database, so there's
-  nothing to configure. `PUSH_KONTAKT` is the contact push services may use.
+  nothing to configure. `PUSH_CONTACT` (or `PUBLIC_URL`) is the contact push services may use.
 - Everyone chooses which kinds they want (`ARTEN`); a kind not chosen is on.
 - Sending runs in a small thread pool: a slow push service never holds up a
   request. Devices the push service no longer knows (404/410) are dropped.
@@ -105,12 +105,13 @@ def oeffentlicher_schluessel(db: DBSession) -> str:
 
 
 def kontakt() -> str:
-    """PUSH_KONTAKT as the push services want it: mailto:… or an https: origin without a path.
+    """PUSH_CONTACT (else PUBLIC_URL) as the push services want it: mailto:… or an https: origin.
 
     py_vapid refuses anything else (with a misleading "Missing 'sub'"), so a URL
-    like https://github.com/user/repo is cut down to https://github.com.
+    like https://github.com/user/repo is cut down to https://github.com. Without
+    either setting, the project's address stands in.
     """
-    k = settings.push_kontakt.strip()
+    k = (settings.push_contact or settings.public_url or "https://github.com/marcmeier/screenmates").strip()
     if k.lower().startswith("https://"):
         return f"https://{urlsplit(k).hostname}"
     return k

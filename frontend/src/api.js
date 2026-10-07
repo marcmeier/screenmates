@@ -29,7 +29,8 @@ export function beiAenderung(fn) {
 const STILL = ['/api/kino/da', '/api/kino/chat', '/api/kino/reaktion', '/api/erfolge', '/api/zugang', '/api/push', '/api/kalender']
 
 async function req(method, path, body, { signal, quiet = false } = {}) {
-  const opts = { method, credentials: 'same-origin', headers: { 'X-Sprache': sprache() }, signal }
+  // The server writes its texts (errors, shelves, awards) in the app's language, not the browser's.
+  const opts = { method, credentials: 'same-origin', headers: { 'Accept-Language': sprache() }, signal }
   if (body instanceof Blob) {
     opts.headers['Content-Type'] = body.type || 'application/octet-stream'
     opts.body = body

@@ -80,7 +80,7 @@ app = FastAPI(
 # Live updates: successful writes bump counters every open app polls (routers/live.py).
 app.middleware("http")(live.mitzaehlen)
 
-# The app's language (X-Sprache) for texts the server writes.
+# The app's language (Accept-Language) for texts the server writes.
 app.add_middleware(SprachMiddleware)
 
 app.add_middleware(SecurityHeaders)

@@ -161,17 +161,20 @@ All settings are optional and go into `backend/.env` or the environment.
 | `FORWARDED_ALLOW_IPS` | | Reverse proxy IPs, so rate limiting sees the real client IP. |
 | `CORS_ORIGINS` | | Only needed if frontend and API are on different origins. |
 | `SETUP_TOKEN` | | Setup code for the first name (it becomes admin). Empty: one is generated and written to the log until the first name exists. |
-| `PUSH_KONTAKT` | | Contact (`mailto:` or `https:`) sent to browser push services. Push keys are generated automatically; push needs HTTPS. |
-| `KINO_PUBLIC_HOST` | | Compose only: public hostname/IP of the server for cinema viewers outside your network. |
+| `PUSH_CONTACT` | `PUBLIC_URL` | Contact (`mailto:` or `https:`) sent to browser push services. Push keys are generated automatically; push needs HTTPS. |
+| `SOURCE_URL` | this repository | Link to the source code on the about page. If you run a modified version, the AGPL asks you to point it at your source. |
+| `CINEMA_PUBLIC_HOST` | | Compose only: public hostname/IP of the server for cinema viewers outside your network. |
+
+`PUSH_KONTAKT` and `KINO_PUBLIC_HOST`, the names before 1.0, still work.
 
 ### Admin CLI
 
 ```bash
-docker compose exec screenmates python -m app.cli namen          # list names
+docker compose exec screenmates python -m app.cli names          # list names
 docker compose exec screenmates python -m app.cli admin "Alice"  # make someone admin
-docker compose exec screenmates python -m app.cli einladung      # one-time invite link, valid 24 h
+docker compose exec screenmates python -m app.cli invite         # one-time invite link, valid 24 h
 docker compose exec screenmates python -m app.cli login "Alice"  # login code for Alice's new device, 24 h
-docker compose exec screenmates python -m app.cli einrichtung    # setup code for the first name
+docker compose exec screenmates python -m app.cli setup          # setup code for the first name
 ```
 
 Useful for giving an existing installation its first admin, or getting back in after losing your only
@@ -189,7 +192,7 @@ Docker it's already part of `compose.yaml`.
 For viewers outside your network:
 
 1. Open port 8189 (UDP, plus TCP as a fallback).
-2. Set `KINO_PUBLIC_HOST` to your server's public name or IP.
+2. Set `CINEMA_PUBLIC_HOST` to your server's public name or IP.
 3. Raise the UDP receive buffer, otherwise 1080p keyframes overflow the 208 KB Linux default:
    `net.core.rmem_max=8388608` on the host and `MTX_UDPREADBUFFERSIZE=8388608` for MediaMTX.
 
