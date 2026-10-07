@@ -53,6 +53,16 @@ watch(
   },
   { immediate: true },
 )
+// "No thanks" (notifications): the step counts as done – the card can be finished without it.
+function ueberspringen(key) {
+  gemerkt.value = { ...gemerkt.value, [key]: 'uebersprungen' }
+  try {
+    localStorage.setItem(KEY(), JSON.stringify(gemerkt.value))
+  } catch {
+    /* private mode */
+  }
+}
+const uebersprungen = (key) => gemerkt.value[key] === 'uebersprungen'
 const fertig = computed(() => schritte.value.filter((s) => s.erledigt).length)
 const sichtbar = computed(() => neu.value && !app.me.design?.schritte_aus && fertig.value < schritte.value.length)
 
@@ -72,17 +82,20 @@ async function ausblenden() {
     <div class="balken" aria-hidden="true"><span :style="{ width: `${(100 * fertig) / schritte.length}%` }"></span></div>
     <ul>
       <li v-for="s in schritte" :key="s.key" :class="{ erledigt: s.erledigt }">
-        <span class="haken" aria-hidden="true"><Icon v-if="s.erledigt" name="gesehen" :size="13" /></span>
+        <span class="haken" aria-hidden="true"><Icon v-if="s.erledigt && !uebersprungen(s.key)" name="gesehen" :size="13" /></span>
         <span class="text">
           <strong>{{ $t(`ersteSchritte.${s.key}.titel`) }}</strong>
-          <small class="muted">{{ $t(`ersteSchritte.${s.key}.text`) }}</small>
+          <small class="muted">{{ uebersprungen(s.key) ? $t('ersteSchritte.uebersprungen') : $t(`ersteSchritte.${s.key}.text`) }}</small>
         </span>
         <template v-if="!s.erledigt">
           <span v-if="s.key === 'antwort'" class="row knoepfe">
             <button class="small primary" @click="app.antworten('ja')">{{ $t('ersteSchritte.antwort.ja') }}</button>
             <button class="small ghost" @click="app.antworten('nein')">{{ $t('ersteSchritte.antwort.nein') }}</button>
           </span>
-          <a v-else :href="s.href" class="button small">{{ $t(`ersteSchritte.${s.key}.los`) }}</a>
+          <span v-else class="row knoepfe">
+            <a :href="s.href" class="button small">{{ $t(`ersteSchritte.${s.key}.los`) }}</a>
+            <button v-if="s.key === 'push'" class="ghost small nein" @click="ueberspringen('push')">{{ $t('ersteSchritte.push.nein') }}</button>
+          </span>
         </template>
       </li>
     </ul>
@@ -107,4 +120,6 @@ li.erledigt { opacity: 0.55; }
 .knoepfe { gap: 0.3rem; }
 a.button.small { align-self: flex-start; padding: 0.3rem 0.7rem; font-size: 0.8rem; }
 @media (prefers-reduced-motion: reduce) { .balken span { transition: none; } }
+.nein { color: var(--muted); font-size: 0.75rem; opacity: 0.8; }
+.nein:hover { opacity: 1; }
 </style>

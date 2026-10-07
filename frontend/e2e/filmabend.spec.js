@@ -91,6 +91,10 @@ test('newcomers get a first-steps checklist and short explanations', async () =>
   const schritte = page.getByRole('region', { name: 'Erste Schritte' })
   await expect(schritte).toBeVisible()
   await expect(schritte.getByRole('link', { name: 'Filme finden' })).toHaveAttribute('href', '#/finden')
+  // Notifications can be declined – the step counts as done.
+  await schritte.getByRole('button', { name: 'Nein danke' }).click()
+  await expect(schritte).toContainText('Übersprungen')
+  await expect(schritte.getByRole('button', { name: 'Nein danke' })).toHaveCount(0)
   // A tap on ⓘ explains our own words.
   await page.getByRole('button', { name: 'Was ist „Filmabend-Kiste“?' }).click()
   await expect(page.getByRole('tooltip')).toContainText('zieht zufällig einen Film')
@@ -441,7 +445,7 @@ test('detail sheet shows the trailer and where to watch (TMDB answers mocked)', 
   await expect(sheet.locator('.logos li.unser')).toHaveCount(1)
   await expect(sheet.getByText('Daten: JustWatch')).toBeVisible()
   expect(youtube).toEqual([]) // nothing loads from YouTube before you press play
-  await sheet.getByRole('button', { name: 'Trailer' }).click()
+  await sheet.getByRole('button', { name: 'Trailer ansehen' }).click()
   await expect(sheet.locator('iframe')).toHaveAttribute('src', /youtube-nocookie\.com\/embed\/abc123XYZ/)
   await page.keyboard.press('Escape')
   await page.unroute('**/api/movies/**')

@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.21.1 – 2026-10-07
+
+### Geändert
+- **Erste Schritte:** Bei „Benachrichtigungen einschalten“ gibt es jetzt ein zurückhaltendes „Nein danke“.
+  Der Schritt zählt dann als erledigt (mit Hinweis, wo es später geht) – die Checkliste lässt sich auch ohne
+  Benachrichtigungen abschließen.
+- **Trailer nicht zu übersehen:** In den Filmdetails sitzt ein großer Play-Knopf mitten auf dem Titelbild, und
+  „Trailer“ steht zusätzlich als erster Knopf neben Gesehen, Merken und Vorschlagen.
+
 ## 0.21.0 – 2026-10-07
 
 ### Geändert

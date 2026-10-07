@@ -24,6 +24,7 @@ const abende = ref([]) // our watched entries for this film, newest first
 const anbieter = ref(null) // where it streams (null without TMDB)
 const trailer = ref(null)
 const trailerAn = ref(false) // YouTube is only contacted once someone presses play
+const trailerSprache = computed(() => (trailer.value?.sprache && trailer.value.sprache !== 'de' ? ` (${trailer.value.sprache.toUpperCase()})` : ''))
 let ctrl = null
 
 // Ratings and guestbook belong where people look at a film, not only in "Gesehen".
@@ -101,8 +102,10 @@ function person(p) {
     </div>
     <div v-else class="hero" :style="film.backdrop_url ? { backgroundImage: `url(${film.backdrop_url})` } : {}">
       <button class="close" :aria-label="$t('einladung.schliessen')" @click="ui.detail = null"><Icon name="x" /></button>
-      <button v-if="trailer" class="trailer-btn" @click="trailerAn = true">
-        <Icon name="play" :size="18" /> Trailer{{ trailer.sprache && trailer.sprache !== 'de' ? ` (${trailer.sprache.toUpperCase()})` : '' }}
+      <!-- Hard to miss: a big play button on the picture (and "Trailer" among the actions below). -->
+      <button v-if="trailer" class="trailer-btn" :aria-label="$t('moviedetail.trailerAnsehen')" @click="trailerAn = true">
+        <span class="play-kreis"><Icon name="play" :size="28" /></span>
+        <span class="play-text">Trailer{{ trailerSprache }}</span>
       </button>
     </div>
 
@@ -126,6 +129,7 @@ function person(p) {
         </p>
 
         <div v-if="app.me" class="row actions">
+          <button v-if="trailer && !trailerAn" @click="trailerAn = true"><Icon name="play" /> Trailer{{ trailerSprache }}</button>
           <button v-if="!film.gesehen" class="primary" @click="alsGesehen(film)"><Icon name="gesehen" /> {{ $t('moviedetail.gesehen') }}</button>
           <span v-else class="chip seen"><Icon name="gesehen" :size="14" /> {{ $t('moviedetail.schonGesehen') }}</span>
           <button :class="{ on: film.gemerkt }" @click="toggleMerken(film)">
@@ -188,10 +192,18 @@ function person(p) {
 .player { position: relative; aspect-ratio: 16 / 9; background: #000; border-radius: 14px 14px 0 0; overflow: hidden; }
 .player iframe { width: 100%; height: 100%; border: 0; display: block; }
 .trailer-btn {
-  position: absolute; left: 1.6rem; top: 1.2rem; z-index: 2; background: rgba(0, 0, 0, 0.65);
-  border-color: rgba(255, 255, 255, 0.25); backdrop-filter: blur(4px); font-weight: 600;
+  position: absolute; z-index: 2; left: 50%; top: 40%; transform: translate(-50%, -50%);
+  display: flex; flex-direction: column; align-items: center; gap: 0.4rem; padding: 0; border: none; background: none;
+  font-weight: 700; color: #fff; text-shadow: 0 2px 10px rgba(0, 0, 0, 0.8);
 }
-.trailer-btn:hover { background: var(--accent); border-color: var(--accent); }
+.play-kreis {
+  width: 68px; height: 68px; border-radius: 50%; display: grid; place-items: center; padding-left: 4px;
+  background: color-mix(in srgb, var(--accent) 85%, transparent); border: 2px solid rgba(255, 255, 255, 0.85);
+  box-shadow: 0 0 0 6px rgba(0, 0, 0, 0.25), 0 8px 30px color-mix(in srgb, var(--accent) 60%, transparent);
+  transition: transform 0.15s, background 0.15s;
+}
+.trailer-btn:hover .play-kreis { transform: scale(1.08); background: var(--accent); }
+.play-text { font-size: 0.9rem; letter-spacing: 0.02em; }
 .body.unter-trailer { margin-top: 1.2rem; }
 .body.unter-trailer .info { padding-top: 0; }
 .body { display: flex; gap: 1.4rem; padding: 0 1.6rem; margin-top: -110px; position: relative; z-index: 1; }
@@ -225,5 +237,7 @@ h2 { margin: 0; font-size: 1.7rem; letter-spacing: -0.02em; }
   .frame { width: 110px; }
   .info { padding-top: 0; }
   .hero { height: 180px; }
+  .trailer-btn { top: 36%; }
+  .play-kreis { width: 56px; height: 56px; }
 }
 </style>
