@@ -878,6 +878,9 @@ export default {
     eingeladen: "Du bist eingeladen in",
     erster: "Noch niemand da – leg den ersten Namen an. Er wird Admin.",
     habeSchon: "Ich habe schon einen Namen",
+    setupFeld: "Einrichtungscode",
+    setupText:
+      "Steht im Server-Log (docker compose logs screenmates) oder kommt von python -m app.cli einrichtung.",
     hallo: "Hallo {name}!",
     mitFreigabe: "Leg deinen Namen an; ein Admin der Gruppe schaltet ihn frei.",
     neu: "Neuer Name",

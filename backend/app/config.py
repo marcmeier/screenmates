@@ -43,6 +43,9 @@ class Settings(BaseSettings):
     # The keys are made automatically.
     push_kontakt: str = "https://github.com/marcmeier/screenmates"
 
+    # Setup code for the first name (it becomes admin). Empty: one is made and written to the log.
+    setup_token: str = ""
+
     session_cookie: str = "screenmates_sid"
     # Set to true when served over HTTPS so the session cookie is never sent in clear.
     cookie_secure: bool = False

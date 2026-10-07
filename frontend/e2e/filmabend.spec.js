@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test'
-import { ADMIN_SITZUNG, KINO } from '../playwright.config.js'
+import { ADMIN_SITZUNG, KINO, SETUP } from '../playwright.config.js'
 
 // One story, in order: a new group plans a movie night from scratch.
 test.describe.configure({ mode: 'serial' })
@@ -48,9 +48,23 @@ const zweitesGeraet = async () => {
   return ctx.newPage()
 }
 
-test('first visit asks for a name', async () => {
+test('first visit asks for a name, and the first name needs the setup code', async ({ browser }) => {
+  // Whoever finds the fresh server first doesn't become its admin.
+  const fremd = await browser.newPage()
+  await fremd.goto('/#/abend')
+  const tuer = fremd.getByRole('dialog', { name: 'Namen wählen' })
   // The very first request of a freshly started stack can take a while (seeding, cold caches).
-  await expect(page.getByRole('dialog', { name: 'Namen wählen' })).toBeVisible({ timeout: 20_000 })
+  await expect(tuer).toBeVisible({ timeout: 20_000 })
+  await expect(tuer).toContainText('Noch niemand da')
+  await fremd.getByPlaceholder('Neuer Name').fill('Mallory')
+  await fremd.getByRole('button', { name: 'Anlegen' }).click()
+  await expect(tuer.getByRole('alert')).toContainText('Einrichtungscode')
+  await fremd.close()
+  // The operator opens the link from the server log: the code is filled in.
+  await page.goto(`/#/setup/${SETUP}`)
+  const dialog = page.getByRole('dialog', { name: 'Namen wählen' })
+  await expect(dialog).toBeVisible()
+  await expect(dialog.getByLabel('Einrichtungscode')).toHaveCount(0)
   await page.getByPlaceholder('Neuer Name').fill('Marc')
   await page.getByRole('button', { name: 'Anlegen' }).click()
   await expect(page.getByRole('dialog', { name: 'Namen wählen' })).toBeHidden()

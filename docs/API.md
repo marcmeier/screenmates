@@ -53,7 +53,7 @@ Every film carries the group flags `gesehen` (watched), `gemerkt` (on the watchl
 | Method | Path | Access | Purpose |
 |---|---|:-:|---|
 | GET | `/users` | – | Approved names, `ich`, `admin`, `antraege` (open requests, admins only), `auf_geraet` (ids of the names this browser may pick) |
-| POST | `/users` | – | Create a name: the first name in an empty database becomes admin; with a "direct" invitation you're in that group right away, otherwise it's a request (`freigegeben: false`) to the admins of the invitation's group. Admins create approved names directly. At most 20 open requests |
+| POST | `/users` | – | Create a name: the first name in an empty database becomes admin and needs the setup code from the server log (`setup`; throttled like `/zugang`); with a "direct" invitation you're in that group right away, otherwise it's a request (`freigegeben: false`) to the admins of the invitation's group. Admins create approved names directly. At most 20 open requests |
 | POST | `/users/waehlen` | – | Switch to one of this browser's names (`user_id`) or sign out (`user_id: null`; the name stays on the browser) |
 | DELETE | `/users/{id}` | A | Delete a user or reject a request (ratings and votes are removed, comments anonymized). Never the last admin |
 | PUT/DELETE | `/users/{id}/bild` | E | Upload (image as request body, max. 5 MB; JPG/PNG/WebP/GIF, becomes 256×256 WebP without metadata) or remove a profile picture. E = the person themselves or an admin |

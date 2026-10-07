@@ -861,6 +861,8 @@ export default {
     eingeladen: "You're invited to",
     erster: "Nobody here yet – create the first name. It becomes admin.",
     habeSchon: "I already have a name",
+    setupFeld: "Setup code",
+    setupText: "It's in the server log (docker compose logs screenmates) or from python -m app.cli einrichtung.",
     hallo: "Hi {name}!",
     mitFreigabe: "Create your name; an admin of the group will approve it.",
     neu: "New name",

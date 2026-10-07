@@ -109,8 +109,14 @@ cp backend/.env.example backend/.env   # add your TMDB key here
 docker compose up -d --build
 ```
 
-Then open http://localhost:8000. The first name you create becomes admin; invite links for others are
-under Admin → Groups.
+The first name you create becomes admin, so it needs the setup code from the log:
+
+```bash
+docker compose logs screenmates | grep "setup code"
+```
+
+Open http://localhost:8000/#/setup/ followed by that code (or type the code into the name dialog) and
+create your name. Invite links for others are under Admin → Groups.
 
 The compose file starts screenmates and MediaMTX (for the cinema). Database, push keys and profile
 pictures are stored in the `screenmates-data` volume, so that's what you back up.
@@ -151,6 +157,7 @@ All settings are optional and go into `backend/.env` or the environment.
 | `COOKIE_SECURE` | `false` | Set to `true` behind HTTPS. |
 | `FORWARDED_ALLOW_IPS` | | Reverse proxy IPs, so rate limiting sees the real client IP. |
 | `CORS_ORIGINS` | | Only needed if frontend and API are on different origins. |
+| `SETUP_TOKEN` | | Setup code for the first name (it becomes admin). Empty: one is generated and written to the log until the first name exists. |
 | `PUSH_KONTAKT` | | Contact (`mailto:` or `https:`) sent to browser push services. Push keys are generated automatically; push needs HTTPS. |
 | `KINO_PUBLIC_HOST` | | Compose only: public hostname/IP of the server for cinema viewers outside your network. |
 
@@ -161,6 +168,7 @@ docker compose exec screenmates python -m app.cli namen          # list names
 docker compose exec screenmates python -m app.cli admin "Alice"  # make someone admin
 docker compose exec screenmates python -m app.cli einladung      # one-time invite link, valid 24 h
 docker compose exec screenmates python -m app.cli login "Alice"  # login code for Alice's new device, 24 h
+docker compose exec screenmates python -m app.cli einrichtung    # setup code for the first name
 ```
 
 Useful for giving an existing installation its first admin, or getting back in after losing your only

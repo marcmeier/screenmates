@@ -60,7 +60,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Build and start the stack
-        run: docker compose up --detach --build --wait --wait-timeout 120
+        run: |
+          echo "SETUP_TOKEN=E2E-SETUP-CODE" > backend/.env
+          docker compose up --detach --build --wait --wait-timeout 120
         env: { KINO_PUBLIC_HOST: 127.0.0.1 }
       - name: Stack answers
         run: |

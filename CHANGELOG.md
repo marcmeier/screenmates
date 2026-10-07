@@ -15,6 +15,10 @@ All notable changes to screenmates are documented here. The format is based on
   QR code. They work once and for 15 minutes; codes an admin makes (Admin → People, or
   `python -m app.cli login <name>`) work for 24 hours. Only a hash of the code is stored, and wrong codes
   count against the same limit as wrong invitations.
+- A fresh install no longer makes whoever reaches it first its admin. The first name needs the setup code
+  that the server writes to its log on every start until then (`docker compose logs screenmates`, or
+  `python -m app.cli einrichtung`). The log also shows a `/#/setup/<code>` link that fills it in.
+  `SETUP_TOKEN` sets the code in advance.
 
 ### Changed
 - Settings show on how many devices you are signed in, and can sign you out on all the others.

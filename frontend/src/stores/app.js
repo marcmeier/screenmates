@@ -15,6 +15,7 @@ export const useApp = defineStore('app', {
     // Invite-only: closed until this browser came in with an invitation (or has a name).
     zugang: { gesperrt: false, offen: true, einladung: null },
     einladungFehler: '',
+    setupCode: '', // from a #/setup/<code> link: the first name of a fresh install needs it
     glocke: 0, // unread notifications (comes with the live poll)
     status: { movie_count: 0, canon_count: 0, tmdb: false, ki: false, syncing: false, last_sync: null },
   }),
@@ -103,8 +104,8 @@ export const useApp = defineStore('app', {
       await this.refreshGruppen()
     },
     /** Create a name. Returns it; `freigegeben: false` means it now waits for an admin. */
-    async createUser(name) {
-      const u = await api.post('/api/users', { name }, { quiet: true })
+    async createUser(name, setup = '') {
+      const u = await api.post('/api/users', { name, setup: setup || this.setupCode }, { quiet: true })
       if (u.freigegeben) await this.choose(u.id)
       return u
     },
