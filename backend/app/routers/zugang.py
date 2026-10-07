@@ -24,6 +24,7 @@ from sqlmodel import select
 from ..db import get_session
 from ..models import Einladung, Gruppe, SessionName, User
 from ..session import current_session, ensure_session
+from ..util import utc
 
 router = APIRouter(prefix="/api", tags=["zugang"])
 
@@ -52,15 +53,11 @@ class Code(BaseModel):
     token: str = Field(min_length=8, max_length=100)
 
 
-def _aware(dt: datetime) -> datetime:
-    return dt if dt.tzinfo else dt.replace(tzinfo=UTC)
-
-
 def gueltig(e: Einladung | None) -> bool:
     """Not withdrawn, not expired, not used up."""
     if e is None or e.widerrufen:
         return False
-    if e.gueltig_bis and _aware(e.gueltig_bis) < datetime.now(UTC):
+    if e.gueltig_bis and utc(e.gueltig_bis) < datetime.now(UTC):
         return False
     return e.max_nutzungen is None or e.nutzungen < e.max_nutzungen
 

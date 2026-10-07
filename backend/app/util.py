@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from datetime import UTC, datetime
-from typing import Any
+from typing import Any, overload
 
 from fastapi import HTTPException
 from sqlmodel import Session as DBSession
@@ -30,8 +30,14 @@ MONATE = (
 )
 
 
-def utc(dt: datetime) -> datetime:
-    """SQLite hands back naive datetimes; they are UTC by contract."""
+@overload
+def utc(dt: datetime) -> datetime: ...
+@overload
+def utc(dt: None) -> None: ...
+def utc(dt: datetime | None) -> datetime | None:
+    """SQLite hands back naive datetimes; they are UTC by contract. None stays None."""
+    if dt is None:
+        return None
     return dt.replace(tzinfo=UTC) if dt.tzinfo is None else dt.astimezone(UTC)
 
 

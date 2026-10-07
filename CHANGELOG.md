@@ -55,6 +55,8 @@ All notable changes to screenmates are documented here. The format is based on
   other groups stay as they are. Server-wide areas (wishes, awards, statistics) and starting over with a
   single admin moved to the command line: `python -m app.cli reset <area>… [--keep <name>] --yes`, which
   shows what would go without `--yes` and backs up the database first, like the app.
+- `compose.yaml` runs both containers read-only, without capabilities and with `no-new-privileges`.
+- Keyboard focus on input fields shows a ring, not only a different border colour.
 - "Wishes & ideas" is optional: off on a new install, switched on in Admin → System. Installations in use
   keep it on.
 - Public interfaces are English: `PUSH_CONTACT` (was `PUSH_KONTAKT`, falls back to `PUBLIC_URL`),
@@ -68,6 +70,8 @@ All notable changes to screenmates are documented here. The format is based on
 - The "Better safe than sorry" award is now "Second screen": connect a second device of your own.
 
 ### Fixed
+- Failures in the background tasks (push reminders, counting the cinema's traffic) were swallowed without
+  a trace; they are logged now.
 - Language: switching to English and right back to German could end in English, because the answers
   arrived in the other order. Language, theme and font now change on screen at once and reach the server
   in the order they were clicked.

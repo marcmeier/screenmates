@@ -77,6 +77,8 @@ input, textarea, select {
   width: 100%;
 }
 input:focus, textarea:focus, select:focus { outline: none; border-color: var(--accent); }
+/* Keyboard focus also gets a ring, not only a different border colour. */
+input:focus-visible, textarea:focus-visible, select:focus-visible { box-shadow: 0 0 0 3px var(--accent-soft); }
 textarea { resize: vertical; }
 label.field { display: flex; flex-direction: column; gap: 4px; font-size: 0.78rem; color: var(--muted); }
 

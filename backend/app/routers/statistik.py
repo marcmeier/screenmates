@@ -8,7 +8,6 @@ WebRTC sessions report, because MediaMTX forgets a session once it ends.
 from __future__ import annotations
 
 import asyncio
-import contextlib
 import logging
 import time
 
@@ -85,11 +84,15 @@ async def kino_mitzaehlen() -> None:
     """Background task (started with the app when the Kino is set up)."""
     async with httpx.AsyncClient(timeout=5) as c:
         while True:
-            with contextlib.suppress(Exception):  # MediaMTX down or restarting: try again later
+            try:
                 r = await c.get(f"{settings.mediamtx_api_url}/v3/webrtcsessions/list", params={"itemsPerPage": 1000})
                 r.raise_for_status()
                 with DBSession(engine) as db:
                     verbuchen(db, r.json().get("items") or [])
+            except httpx.HTTPError:
+                pass  # MediaMTX down or restarting: try again later
+            except Exception:
+                log.exception("Counting the Kino's traffic failed")
             await asyncio.sleep(INTERVALL)
 
 

@@ -23,7 +23,6 @@ from __future__ import annotations
 
 import asyncio
 import base64
-import contextlib
 import json
 import logging
 from collections.abc import Iterable
@@ -381,6 +380,8 @@ async def erinnern() -> None:
             bewertungs_erinnerungen(db)
 
     while True:
-        with contextlib.suppress(Exception):
+        try:
             await asyncio.to_thread(einmal)
+        except Exception:  # keep reminding next minute, but say what went wrong
+            log.exception("Push reminders failed")
         await asyncio.sleep(PRUEFEN_ALLE)
