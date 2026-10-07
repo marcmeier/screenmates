@@ -179,6 +179,53 @@ def test_the_first_name_runs_the_first_group(client, db):
     assert (m.gruppe_id, m.ist_admin) == (1, True)
 
 
+# --- what one group rated stays in that group ------------------------------------------------------
+
+
+@respx.mock
+def test_predictions_taste_and_ai_search_only_use_the_active_groups_evenings(client, browser, db, monkeypatch):
+    from app.config import settings
+
+    from .test_prognose_termin_erinnerung import _gesehen, _katalog
+
+    _katalog(db, 12)
+    login(client, "marc", admin=True)
+    g2 = client.post("/api/admin/gruppen", json={"name": "Horror-Crew"}).json()["id"]
+    kim = browser()
+    kim_id = login(kim, "kim")["id"]  # in both groups
+    tom = browser()
+    tom_id = login(tom, "tom")["id"]
+    _mitglied("kim", gruppe=g2)
+    _mitglied("tom", gruppe=g2)
+    client.delete(f"/api/admin/gruppen/1/mitglieder/{tom_id}")  # tom: only the other group
+    kim.post("/api/gruppen/aktiv", json={"gruppe_id": g2})
+    tom.post("/api/gruppen/aktiv", json={"gruppe_id": g2})
+    for i in range(10):  # kim and tom rate plenty, in the other group
+        _gesehen(kim, 9000 + i, 5 if i % 2 == 0 else 1)
+        _gesehen(tom, 9000 + i, 3)
+
+    r = client.get("/api/movies/9010/prognose").json()  # marc, group 1
+    assert r["prognosen"] == []  # kim's stars from the other group don't predict anything here
+    assert {z["user_id"]: z["bewertungen"] for z in r["zu_wenig"]} == {
+        client.get("/api/users").json()["ich"]["id"]: 0,
+        kim_id: 0,
+    }
+    assert client.get(f"/api/users/{tom_id}/geschmack").status_code == 404
+    assert client.get(f"/api/users/{kim_id}/geschmack").json()["vergleiche"] == []
+    # The other group's evenings still count there.
+    assert kim.get("/api/movies/9010/prognose").json()["prognosen"][0]["user_id"] == kim_id
+
+    # The AI search hides what the active group has seen, not what another group has.
+    monkeypatch.setattr(settings, "llm_api_key", "k")
+    answer = '[{"titel": "Film 0", "originaltitel": "Film 0", "jahr": 1981, "warum": "x"}]'
+    respx.post("https://api.anthropic.com/v1/messages").mock(
+        return_value=httpx.Response(200, json={"content": [{"type": "text", "text": answer}]})
+    )
+    r = client.post("/api/ki-suche", json={"beschreibung": "Slasher", "mit_sammlung": True}).json()
+    assert [m["id"] for m in r["results"]] == [9000]
+    assert kim.post("/api/ki-suche", json={"beschreibung": "Slasher", "mit_sammlung": True}).json()["results"] == []
+
+
 # --- one Kino per group --------------------------------------------------------------------------
 
 

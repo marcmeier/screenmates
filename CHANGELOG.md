@@ -29,6 +29,12 @@ All notable changes to screenmates are documented here. The format is based on
 - Calendar feeds no longer take their links from a client-supplied `X-Forwarded-Host` header; `PUBLIC_URL`
   sets the address explicitly.
 
+### Privacy
+- Groups no longer see into each other. The rating prediction on a film page listed everyone on the server
+  and used ratings from all groups, including the film and stars its "because you rated …" hint was based
+  on. Predictions, the suggestions' group forecast and taste matching now use only the active group's
+  members and evenings, and the AI search only hides films the active group has seen.
+
 ### Changed
 - Settings show on how many devices you are signed in, and can sign you out on all the others.
 - "Sign out" keeps the name on the device so you can pick it again; "Remove from this device" takes it off.

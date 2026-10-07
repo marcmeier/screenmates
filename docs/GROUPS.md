@@ -21,4 +21,5 @@ with six people, group 2 with four – some in both, some in just one.
 - **Emergency exit:** `python -m app.cli einladung [<group>]` creates a one-time link (24 h, direct); `python -m app.cli login <name>` a login code for an existing name.
 - **Cinema:** one per group, MediaMTX path `kino-<group id>` (regex path in `deploy/mediamtx.yml`), its own secret, its own OBS stream key (the key decides the group; the WHIP URL is the same for everyone), its own audience. Several groups can stream at once – mind your upload bandwidth.
 - **Awards** count across all groups: a confirmed movie night is one night, no matter in which group (at most one per day).
+- **Ratings stay in their group:** predictions ("Who will like it?"), the forecast for suggestions and taste matching only use the active group's members and evenings.
 - **Under the hood:** `watched`, `wishlist`, `suggestion` and `veto` carry a `gruppe_id`; their uniqueness applies per group. `abend`, `info` and `kinostate` use the group ID as their ID. Migration `0006` created "Our group" (ID 1) with all existing data and approved names; former admins became its group admins.
