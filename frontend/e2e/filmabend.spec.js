@@ -77,7 +77,16 @@ test('first visit asks for a name, and the first name needs the setup code', asy
 test('someone new picks language and colours, then gets three cards – once', async () => {
   const willkommen = page.getByRole('dialog', { name: 'Willkommen bei screenmates' })
   await expect(willkommen).toContainText('Willkommen, Marc!')
-  // Language: switches at once and is kept with the profile.
+  // Language: switches at once and is kept with the profile. The first answer takes a while:
+  // switching back right away must still end in German, on the page and on the server.
+  let erste = true
+  await page.route('**/api/users/me/sprache', async (route) => {
+    if (erste) {
+      erste = false
+      await new Promise((r) => setTimeout(r, 1500))
+    }
+    await route.continue()
+  })
   await willkommen.getByRole('radio', { name: 'English' }).click()
   const welcome = page.getByRole('dialog', { name: 'Welcome to screenmates' })
   await expect(welcome).toContainText('Welcome, Marc!')
@@ -85,6 +94,10 @@ test('someone new picks language and colours, then gets three cards – once', a
   await expect(page.getByRole('link', { name: 'Movie night' }).first()).toBeVisible()
   await welcome.getByRole('radio', { name: 'Deutsch' }).click()
   await expect(willkommen).toContainText('Willkommen, Marc!')
+  await page.waitForTimeout(2500) // both requests done
+  await expect(page.locator('html')).toHaveAttribute('lang', 'de')
+  expect((await (await page.request.get('/api/users')).json()).ich.design.sprache).toBe('de')
+  await page.unroute('**/api/users/me/sprache')
   // Colours: applied right away.
   await willkommen.getByRole('radio', { name: 'Nacht' }).click()
   await expect.poll(() => page.evaluate(() => document.documentElement.style.getPropertyValue('--accent'))).toBe('#3b82f6')

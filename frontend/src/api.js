@@ -72,6 +72,13 @@ export const api = {
   del: (p, o) => req('DELETE', p, undefined, o),
 }
 
+/** A queue for settings clicked in quick succession: each request waits for the one before,
+ * so the server stores them in the order they were made (the last click wins). */
+export function inReihe() {
+  let kette = Promise.resolve()
+  return (fn) => (kette = kette.then(fn, fn))
+}
+
 export const qs = (params) =>
   new URLSearchParams(
     Object.entries(params).filter(([, v]) => v !== null && v !== undefined && v !== ''),
