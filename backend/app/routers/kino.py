@@ -422,7 +422,8 @@ async def whep(request: Request, gid: int = Depends(aktive_gruppe), db: DBSessio
     return await _relay("POST", f"{pfad(gid)}/whep", request, db, gid)
 
 
-@router.api_route("/sitzung/{kind}/{rid}", methods=["PATCH", "DELETE"])
+@router.patch("/sitzung/{kind}/{rid}")  # trickle ICE
+@router.delete("/sitzung/{kind}/{rid}")  # hang up
 async def session_resource(
     kind: str,
     rid: str,
