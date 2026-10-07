@@ -67,6 +67,9 @@ const schritte = computed(() => {
 })
 const aktuell = computed(() => schritte.value.find((s) => !s.fertig)?.key ?? 'los')
 const stand = computed(() => schritte.value.findIndex((s) => s.key === aktuell.value))
+// A step you can act on right now stays open on phones even when it is not "now" (the case button).
+const handlung = (key) =>
+  key === 'film' && !gewinner.value && props.pool.length > 0 && (kiste.darfOeffnen || g.uebernehmen === 'sofort')
 
 async function eintragen() {
   const w = await api.post('/api/watched', { movie_id: gewinner.value.id })
@@ -91,7 +94,7 @@ async function eintragen() {
       </template>
       <span v-if="t.notiz" class="muted notiz">· {{ t.notiz }}</span>
       <span class="spacer"></span>
-      <button class="small ghost" @click="emit('einladen')"><Icon name="teilen" :size="14" /> {{ $t('naechsterabend.einladen') }}</button>
+      <button class="small ghost einladen" :title="$t('naechsterabend.einladen')" @click="emit('einladen')"><Icon name="teilen" :size="14" /> <span class="lbl">{{ $t('naechsterabend.einladen') }}</span></button>
       <button class="small ghost mehr" :aria-expanded="mehr" aria-controls="abend-mehr" :title="$t('naechsterabend.planung')" :aria-label="$t('naechsterabend.planung')" @click="mehr = !mehr">⋯</button>
     </header>
     <div v-if="mehr" id="abend-mehr" class="mehr-panel">
@@ -105,7 +108,7 @@ async function eintragen() {
       <span :style="{ width: `${((stand + 0.5) / 3) * 100}%` }"></span>
     </div>
     <ol class="schritte">
-      <li v-for="(s, i) in schritte" :key="s.key" :class="{ fertig: s.fertig, aktuell: aktuell === s.key }" :aria-current="aktuell === s.key ? 'step' : undefined">
+      <li v-for="(s, i) in schritte" :key="s.key" :class="{ fertig: s.fertig, aktuell: aktuell === s.key, zu: aktuell !== s.key && !handlung(s.key) }" :aria-current="aktuell === s.key ? 'step' : undefined">
         <span class="nr" aria-hidden="true"><Icon v-if="s.fertig" name="gesehen" :size="14" /><template v-else>{{ i + 1 }}</template></span>
         <div class="inhalt">
           <h3>{{ s.titel }}</h3>
@@ -228,6 +231,23 @@ a.button.primary { background: var(--accent); border-color: var(--accent); color
 @media (max-width: 800px) {
   .schritte { grid-template-columns: minmax(0, 1fr); gap: 1.1rem; }
   .schritte li + li::before { content: '⌄'; left: 50%; top: -1.05rem; transform: translateX(-50%); font-size: 1.1rem; }
+}
+/* Phones: only the step that's on now is open; done and coming ones shrink to one line each,
+   so the evening fits the screen – the case button included. */
+@media (max-width: 600px) {
+  .abendmodus { padding: 0.8rem; }
+  header { flex-wrap: nowrap; margin-bottom: 0.7rem; font-size: 0.95rem; min-width: 0; }
+  header .notiz, header .bis { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; font-size: 0.85rem; }
+  header .einladen .lbl { display: none; }
+  .heute { flex: none; white-space: nowrap; }
+  header .notiz { display: none; } /* too long for one line here; it is on the invitation */
+  .fortschritt { margin-bottom: 0.7rem; }
+  .schritte { gap: 0.9rem; }
+  .schritte li.zu { padding: 0.45rem 0.7rem; align-items: center; }
+  .schritte li.zu .inhalt > :not(h3) { display: none; }
+  .schritte li.zu h3 { margin: 0; font-size: 0.88rem; }
+  .schritte li.zu .nr { width: 22px; height: 22px; font-size: 0.72rem; }
+  .schritte li + li::before { top: -0.95rem; }
 }
 @media (prefers-reduced-motion: reduce) { .schritte li, .fortschritt span { transition: none; } }
 .kiste-knopf.gross { width: 100%; padding: 0.7rem 0.9rem; font-size: 0.95rem; border-radius: 10px; }

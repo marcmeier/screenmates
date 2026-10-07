@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.21.0 – 2026-10-07
+
+### Geändert
+- **Filmabend auf dem Handy kompakt und aufgeräumt:**
+  - Planungskarte: Datum oben (der Hinweis in einer eigenen kurzen Zeile), Einladen und Planung als zwei
+    kleine Symbole daneben, darunter wer dabei ist und die Zusage als **eine** Leiste
+    (Ich bin dabei · Vielleicht · Kann nicht); „Termin festlegen“ und „Abstimmen“ teilen sich eine Zeile.
+  - Abendmodus: Nur der Schritt, der dran ist (oder in dem man gerade etwas tun kann, z. B. die Kiste
+    öffnen), ist aufgeklappt – die anderen schrumpfen auf eine Zeile. Der Kisten-Knopf ist so ohne Scrollen
+    sichtbar; das LIVE-Abzeichen bleibt einzeilig.
+
 ## 0.20.2 – 2026-10-07
 
 ### Behoben
