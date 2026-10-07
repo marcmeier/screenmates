@@ -5,7 +5,6 @@ from __future__ import annotations
 import asyncio
 from collections import defaultdict
 from datetime import UTC, date, datetime, timedelta
-from zoneinfo import ZoneInfo
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
@@ -21,12 +20,13 @@ from ..prognose import MIN_BEWERTUNGEN, Film, Modell, vorhersage
 from ..serialize import iso
 from ..session import require_user
 from ..util import ensure_movie, termin_text, upsert_movie
+from ..zeitzone import zone
 from . import gastgeber
 from .watched import _payload
 
 router = APIRouter(prefix="/api", tags=["abend"])
 
-BERLIN = ZoneInfo("Europe/Berlin")
+
 # Rated films without keywords are completed from TMDB, at most this many per request.
 STICHWORTE_PRO_ANFRAGE = 30
 
@@ -193,8 +193,8 @@ def get_termin(gid: int = Depends(aktive_gruppe), db: DBSession = Depends(get_se
 
 
 def pruefe_termin(termin: datetime, *, vergangenes: timedelta = timedelta(hours=6)) -> datetime:
-    """A date without zone is German time; it must lie ahead (a little in the past is fine), within a year."""
-    termin = termin if termin.tzinfo else termin.replace(tzinfo=BERLIN)
+    """A date without zone is the group's time; it must lie ahead (a little in the past is fine), within a year."""
+    termin = termin if termin.tzinfo else termin.replace(tzinfo=zone())
     jetzt = datetime.now(UTC)
     if not jetzt - vergangenes <= termin <= jetzt + timedelta(days=366):
         raise HTTPException(422, "Der Termin muss in der Zukunft liegen (höchstens ein Jahr).")
@@ -217,7 +217,7 @@ def termin_setzen(db: DBSession, gid: int, user: User, termin: datetime, notiz: 
     # A date this close needs no reminder on top of the news.
     a.erinnert = termin if termin - datetime.now(UTC) <= push.ERINNERUNG else None
     db.add(a)
-    erfolge.protokoll(db, "termin", user.id, termin.astimezone(BERLIN).date().isoformat())
+    erfolge.protokoll(db, "termin", user.id, termin.astimezone(zone()).date().isoformat())
     db.commit()
     if vorher != termin:
         verschoben = vorher is not None and vorher > datetime.now(UTC) - timedelta(hours=6)
@@ -274,10 +274,10 @@ def erinnerungen(
     heute: date | None = Query(None), gid: int = Depends(aktive_gruppe), db: DBSession = Depends(get_session)
 ):
     """Films watched around today's date in earlier years (±3 days)."""
-    heute = heute or datetime.now(BERLIN).date()
+    heute = heute or datetime.now(zone()).date()
     treffer = []
     for w in db.exec(select(Watched).where(col(Watched.hidden).is_(False), Watched.gruppe_id == gid)).all():
-        tag = _utc(w.watched_at).astimezone(BERLIN).date()
+        tag = _utc(w.watched_at).astimezone(zone()).date()
         jahre = heute.year - tag.year
         if jahre < 1:
             continue

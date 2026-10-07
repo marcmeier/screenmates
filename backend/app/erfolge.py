@@ -29,7 +29,6 @@ import time
 from collections import Counter, defaultdict
 from dataclasses import dataclass
 from datetime import UTC, date, datetime, timedelta
-from zoneinfo import ZoneInfo
 
 from sqlmodel import Session as DBSession
 from sqlmodel import col, select
@@ -52,8 +51,8 @@ from .models import (
     now,
 )
 from .sprache import tr
+from .zeitzone import zone
 
-BERLIN = ZoneInfo("Europe/Berlin")
 PUNKTE = {1: 10, 2: 25, 3: 50, 4: 100}  # bronze, silver, gold, platinum
 STUFEN = {1: "bronze", 2: "silber", 3: "gold", 4: "platin"}
 NACHTRAG = timedelta(days=2)  # entered later than this after the evening: doesn't count
@@ -304,7 +303,7 @@ def _aware(dt: datetime) -> datetime:
 
 
 def _tag(dt: datetime) -> date:
-    return _aware(dt).astimezone(BERLIN).date()
+    return _aware(dt).astimezone(zone()).date()
 
 
 def stand(db: DBSession) -> dict[int, Counter]:
@@ -431,7 +430,7 @@ def stand(db: DBSession) -> dict[int, Counter]:
         c["bild"] = int(bool(user.bild))
         c["schutz"] = int(u in zweitgeraet)
         c["abos"] = int(u in abos)
-        c["nachteule"] = int(any(_aware(w.watched_at).astimezone(BERLIN).hour < 5 for w in meine))
+        c["nachteule"] = int(any(_aware(w.watched_at).astimezone(zone()).hour < 5 for w in meine))
         c["marathon"] = int(any(n >= 3 for n in tage.values()))
         c["zeitreise"] = int(any((filme.get(w.movie_id) and (filme[w.movie_id].year or 9999) < 1960) for w in meine))
         genres = {g for w in meine if w.movie_id in filme for g in json.loads(filme[w.movie_id].genres or "[]")}

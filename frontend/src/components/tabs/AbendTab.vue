@@ -19,6 +19,7 @@ import AbendModus from '../AbendModus.vue'
 import WieWars from '../WieWars.vue'
 import { useKiste } from '../../stores/kiste'
 import { seltenheitFuer } from '../../seltenheit'
+import { zeitzone } from '../../zeitzone'
 import UserAvatar from '../UserAvatar.vue'
 
 // Markdown rendering is only needed once there is info text; load it on demand.
@@ -98,7 +99,7 @@ const chance = (m) => {
 // On the day itself the page leads through the evening (see AbendModus.vue), and that card
 // replaces the planning one – until the film is logged as watched. A start before midnight still
 // counts after it; the server drops the date six hours after the start anyway.
-const tagFmt = new Intl.DateTimeFormat('sv-SE', { timeZone: 'Europe/Berlin' })
+const tagFmt = new Intl.DateTimeFormat('sv-SE', { timeZone: zeitzone() })
 const heuteAbend = computed(() => {
   const t = termin.value?.termin
   if (!t || termin.value.geschaut) return false

@@ -36,6 +36,7 @@ from ..serialize import iso, movie_dict, with_flags
 from ..session import require_admin, require_user
 from ..sprache import tr
 from ..util import upsert_movie
+from ..zeitzone import zone
 from . import gastgeber, umfrage
 
 router = APIRouter(prefix="/api", tags=["misc"])
@@ -88,6 +89,7 @@ def status(db: DBSession = Depends(get_session)):
         "ki": settings.llm_enabled,
         "kino": settings.kino_enabled,
         "image_base": settings.tmdb_image_base,
+        "zeitzone": zone().key,  # the group's wall-clock time, also for the app (see zeitzone.py)
     }
 
 

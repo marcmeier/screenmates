@@ -147,6 +147,7 @@ All settings are optional and go into `backend/.env` or the environment.
 
 | Variable | Default | Description |
 |---|---|---|
+| `TIMEZONE` (or `TZ`) | | The group's time zone, e.g. `Europe/Berlin`. "20:00" means 20:00 there on every device. Empty: the first admin's browser zone, else UTC. |
 | `TMDB_API_KEY` | | TMDB v3 key or v4 token. Enables the full catalog, posters, people, trailers and streaming offers. |
 | `TMDB_LANGUAGE` | `de-DE` | Language for film data, e.g. `en-US`. |
 | `TMDB_REGION` | `DE` | Region for streaming offers, e.g. `US`. |

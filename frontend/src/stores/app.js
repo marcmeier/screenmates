@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { api } from '../api'
 import { ausschalten } from '../push'
+import { zeitzoneSetzen } from '../zeitzone'
 
 export const useApp = defineStore('app', {
   state: () => ({
@@ -63,6 +64,7 @@ export const useApp = defineStore('app', {
     },
     async refreshStatus() {
       this.status = await api.get('/api/status')
+      zeitzoneSetzen(this.status.zeitzone)
     },
     /** Come in with an invitation code (from a #/einladung/<code> link). */
     async einlassen(token) {
@@ -105,7 +107,9 @@ export const useApp = defineStore('app', {
     },
     /** Create a name. Returns it; `freigegeben: false` means it now waits for an admin. */
     async createUser(name, setup = '') {
-      const u = await api.post('/api/users', { name, setup: setup || this.setupCode }, { quiet: true })
+      // The very first name also brings the group's time zone along (when the server has none set).
+      const zeitzone = Intl.DateTimeFormat().resolvedOptions().timeZone
+      const u = await api.post('/api/users', { name, setup: setup || this.setupCode, zeitzone }, { quiet: true })
       if (u.freigegeben) await this.choose(u.id)
       return u
     },

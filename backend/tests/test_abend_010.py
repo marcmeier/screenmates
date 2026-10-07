@@ -126,7 +126,9 @@ def _rating_id(wid, c):
 
 
 def test_the_day_after_everyone_without_stars_is_asked_once(paar):
-    from app.util import BERLIN
+    from app.zeitzone import zone
+
+    BERLIN = zone()
 
     marc, lena = paar
     geraet(marc, "marc")

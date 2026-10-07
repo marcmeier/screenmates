@@ -3,6 +3,7 @@ import { t as tr } from '../i18n'
 import { ref } from 'vue'
 import { api } from '../api'
 import { useUi } from '../stores/ui'
+import { zeitzone, zeitzoneOrt } from '../zeitzone'
 import Icon from './Icon.vue'
 import Modal from './Modal.vue'
 
@@ -15,17 +16,17 @@ const props = defineProps({
 const emit = defineEmits(['close', 'saved', 'umfrage'])
 const ui = useUi()
 
-// The date is German time on every device: someone abroad means 20:00 at home,
-// not 20:00 where their phone happens to be. <input type="datetime-local"> has no
-// zone, so it is filled with Berlin wall-clock time and sent without an offset,
-// which the backend reads as German time.
-const berlin = new Intl.DateTimeFormat('sv-SE', {
-  timeZone: 'Europe/Berlin', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit',
+// The date is the group's time on every device (see zeitzone.js): someone abroad means 20:00
+// at home, not 20:00 where their phone happens to be. <input type="datetime-local"> has no
+// zone, so it is filled with the group's wall-clock time and sent without an offset, which
+// the backend reads as the group's time.
+const gruppenzeit = new Intl.DateTimeFormat('sv-SE', {
+  timeZone: zeitzone(), year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit',
 })
-const wandzeit = (iso) => berlin.format(new Date(iso)).replace(' ', 'T') // "2026-10-09T20:00"
+const wandzeit = (iso) => gruppenzeit.format(new Date(iso)).replace(' ', 'T') // "2026-10-09T20:00"
 /** The next given weekday (0 = Sunday … 6 = Saturday) at 20:00, never today. */
 function naechster(wochentag) {
-  const heute = berlin.format(new Date()).slice(0, 10)
+  const heute = gruppenzeit.format(new Date()).slice(0, 10)
   const d = new Date(`${heute}T12:00:00Z`)
   d.setUTCDate(d.getUTCDate() + ((wochentag - d.getUTCDay() + 7) % 7 || 7))
   return `${d.toISOString().slice(0, 10)}T20:00`
@@ -80,11 +81,11 @@ async function entfernen() {
       </div>
 
       <label v-if="art === 'fest'">
-        <span>{{ $t('termindialog.wann') }} <em class="muted">{{ $t('termindialog.deutscheZeit') }}</em></span>
+        <span>{{ $t('termindialog.wann') }} <em class="muted">{{ $t('termindialog.ortszeit', { ort: zeitzoneOrt() }) }}</em></span>
         <input v-model="wann" type="datetime-local" required />
       </label>
       <fieldset v-else class="optionen">
-        <legend>{{ $t('termindialog.welcheTermineStehenZur') }} <em class="muted">{{ $t('termindialog.deutscheZeit2') }}</em></legend>
+        <legend>{{ $t('termindialog.welcheTermineStehenZur') }} <em class="muted">{{ $t('termindialog.ortszeit', { ort: zeitzoneOrt() }) }}</em></legend>
         <div v-for="(o, i) in optionen" :key="i" class="option">
           <input v-model="optionen[i]" type="datetime-local" :aria-label="$t('termindialog.terminX', { x: i + 1 })" required />
           <button v-if="optionen.length > 1" type="button" class="ghost small" :aria-label="$t('termindialog.terminXEntfernen', { x: i + 1 })" @click="optionen.splice(i, 1)">

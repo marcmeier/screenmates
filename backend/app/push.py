@@ -41,7 +41,8 @@ from . import sprache
 from .config import settings
 from .db import engine
 from .models import Abend, AppMeta, Benachrichtigung, Gruppe, Mitglied, PushAbo, User, now
-from .util import BERLIN, utc
+from .util import utc
+from .zeitzone import zone
 
 log = logging.getLogger(__name__)
 
@@ -275,7 +276,7 @@ def faellige_erinnerungen(db: DBSession, jetzt: datetime | None = None) -> int:
             ttl=int(ERINNERUNG.total_seconds()),
             werte={
                 "gruppe": gruppenname(db, a.id),
-                "zeit": f"{termin.astimezone(BERLIN):%H:%M}",
+                "zeit": f"{termin.astimezone(zone()):%H:%M}",
                 "wo": f" · {a.notiz}" if a.notiz else "",
             },
         )
@@ -321,14 +322,14 @@ def los_meldungen(db: DBSession, jetzt: datetime | None = None) -> int:
             dringend=True,
             werte={
                 "gruppe": gruppenname(db, a.id),
-                "zeit": f"{termin.astimezone(BERLIN):%H:%M}",
+                "zeit": f"{termin.astimezone(zone()):%H:%M}",
                 "wo": f" · {a.notiz}" if a.notiz else "",
             },
         )
     return n
 
 
-BEWERTEN_AB, BEWERTEN_BIS = 10, 20  # hours (German time) for "how was it?"
+BEWERTEN_AB, BEWERTEN_BIS = 10, 20  # hours (the group's time) for "how was it?"
 
 
 def bewertungs_erinnerungen(db: DBSession, jetzt: datetime | None = None) -> int:
@@ -336,7 +337,7 @@ def bewertungs_erinnerungen(db: DBSession, jetzt: datetime | None = None) -> int
     from .models import Ereignis, Movie, Watched, WatchedParticipant, WatchedRating
 
     jetzt = jetzt or datetime.now(UTC)
-    if not BEWERTEN_AB <= jetzt.astimezone(BERLIN).hour < BEWERTEN_BIS:
+    if not BEWERTEN_AB <= jetzt.astimezone(zone()).hour < BEWERTEN_BIS:
         return 0
     n = 0
     for w in db.exec(select(Watched).where(col(Watched.hidden).is_(False))).all():

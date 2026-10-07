@@ -28,6 +28,7 @@ const backend = {
     TMDB_API_KEY: '',
     LLM_API_KEY: '',
     SETUP_TOKEN: SETUP,
+    TIMEZONE: 'Europe/Berlin', // the story's dates are German ones
     ...(KINO && { MEDIAMTX_WEBRTC_URL: 'http://127.0.0.1:18889', MEDIAMTX_API_URL: 'http://127.0.0.1:19997' }),
   },
   url: `http://127.0.0.1:${PORT}/api/health`,

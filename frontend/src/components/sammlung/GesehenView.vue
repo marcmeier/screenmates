@@ -4,6 +4,7 @@ import { api } from '../../api'
 import { useApp } from '../../stores/app'
 import { useUi } from '../../stores/ui'
 import { datumFmt, dezimal } from '../../format'
+import { zeitzone } from '../../zeitzone'
 import WatchedEntry from '../WatchedEntry.vue'
 
 const app = useApp()
@@ -38,7 +39,7 @@ const shown = computed(() => {
 // Newest first, in months ("Oktober 2026 · 3"): easier to find your way than one long list.
 const monate = computed(() => {
   if (sort.value !== 'datum' || filter.value.trim()) return [{ key: 'alle', titel: '', eintraege: shown.value }]
-  const fmt = datumFmt({ month: 'long', year: 'numeric', timeZone: 'Europe/Berlin' })
+  const fmt = datumFmt({ month: 'long', year: 'numeric', timeZone: zeitzone() })
   const gruppen = []
   for (const e of shown.value) {
     const titel = fmt.format(new Date(e.watched_at))

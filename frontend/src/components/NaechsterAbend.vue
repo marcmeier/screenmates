@@ -5,6 +5,7 @@ import { useApp } from '../stores/app'
 import { terminText } from '../einladung'
 import GastgeberLeiste from './GastgeberLeiste.vue'
 import Icon from './Icon.vue'
+import { zeitzone } from '../zeitzone'
 import TerminUmfrage from './TerminUmfrage.vue'
 import UserAvatar from './UserAvatar.vue'
 
@@ -21,7 +22,7 @@ const app = useApp()
 const t = computed(() => terminText(props.termin))
 const vorschlaege = computed(() => props.umfrage?.vorschlaege ?? [])
 const umfrageOffen = computed(() => vorschlaege.value.length > 0)
-const tag = new Intl.DateTimeFormat('sv-SE', { timeZone: 'Europe/Berlin' })
+const tag = new Intl.DateTimeFormat('sv-SE', { timeZone: zeitzone() })
 const heute = computed(() => props.termin?.termin && tag.format(new Date(props.termin.termin)) === tag.format(new Date()))
 
 const brauchtDich = computed(() => {

@@ -1,7 +1,7 @@
 """The year in review: a group's film year in numbers ("screenmates Wrapped").
 
 Everything comes from the chronicle of the active group (hidden entries left
-out), by German calendar year: how many films and evenings, which genres and
+out), by calendar year in the group's time: how many films and evenings, which genres and
 decades, the best and the most disputed film, and a few friendly titles for the
 people: who was there most, who rates strictest, who gets the most hearts.
 Titles need a minimum of data (``MIN_PERSON`` ratings), so one 1-star rating
@@ -33,7 +33,8 @@ from ..models import (
     WatchedRating,
 )
 from ..serialize import iso, movie_dict
-from ..util import BERLIN, MONATE, WOCHENTAGE, utc
+from ..util import MONATE, WOCHENTAGE, utc
+from ..zeitzone import zone
 
 router = APIRouter(prefix="/api/rueckblick", tags=["rueckblick"])
 
@@ -42,7 +43,7 @@ MIN_PERSON = 3  # ratings a person needs for strictest / most generous
 
 
 def _tag(dt: datetime) -> date:
-    return utc(dt).astimezone(BERLIN).date()
+    return utc(dt).astimezone(zone()).date()
 
 
 def _gesehen(db: DBSession, gid: int) -> list[Watched]:
@@ -56,7 +57,7 @@ def _gesehen(db: DBSession, gid: int) -> list[Watched]:
 @router.get("")
 def years(gid: int = Depends(aktive_gruppe), db: DBSession = Depends(get_session)):
     jahre = sorted({_tag(w.watched_at).year for w in _gesehen(db, gid)}, reverse=True)
-    return {"jahre": jahre, "jetzt": datetime.now(BERLIN).year}
+    return {"jahre": jahre, "jetzt": datetime.now(zone()).year}
 
 
 def _bester(werte: dict, umgekehrt: bool = False):
