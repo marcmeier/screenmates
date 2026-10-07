@@ -1,0 +1,14 @@
+# What the app needs. Pinned with hashes into requirements.txt (used by Docker and CI):
+#   pip-compile --generate-hashes --strip-extras --allow-unsafe -o requirements.txt requirements.in
+# make lock does both files. Dependabot updates them.
+fastapi>=0.142
+uvicorn[standard]>=0.30
+sqlmodel>=0.0.22
+httpx>=0.28
+python-multipart>=0.0.9
+python-dotenv>=1.0
+pydantic-settings>=2.4
+alembic>=1.14
+pillow>=11
+pywebpush>=2.0
+tzdata>=2024.1

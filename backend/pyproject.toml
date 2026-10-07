@@ -1,7 +1,10 @@
 [project]
 name = "screenmates-backend"
-version = "0.21.4"
+dynamic = ["version"]  # backend/app/version.py
 requires-python = ">=3.12"
+
+[tool.setuptools.dynamic]
+version = { attr = "app.version.__version__" }
 
 [tool.ruff]
 line-length = 120

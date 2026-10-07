@@ -47,6 +47,7 @@ from ..models import (
 )
 from ..serialize import iso
 from ..session import require_user
+from ..version import __version__
 from .users import ensure_not_last_admin
 
 router = APIRouter(prefix="/api/users/me", tags=["users"])
@@ -59,7 +60,6 @@ def _titel(db: DBSession, ids: set[int]) -> dict[int, str]:
 @router.get("/export")
 def export(request: Request, user: User = Depends(require_user), db: DBSession = Depends(get_session)):
     """Everything about you, as a file to keep (GDPR Art. 15 and 20)."""
-    from ..main import __version__
 
     uid = user.id
     gruppen = {g.id: g.name for g in db.exec(select(Gruppe)).all()}

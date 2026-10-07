@@ -46,8 +46,7 @@ from .routers import erfolge as erfolge_api
 from .routers import push as push_api
 from .seed import seed_if_empty
 from .sprache import SprachMiddleware, tr
-
-__version__ = "0.21.4"
+from .version import __version__
 
 
 @asynccontextmanager

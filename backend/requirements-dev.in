@@ -1,0 +1,8 @@
+# Development tools on top of the app. Pinned with hashes into requirements-dev.txt:
+#   pip-compile --generate-hashes --strip-extras --allow-unsafe -o requirements-dev.txt requirements-dev.in
+-c requirements.txt
+-r requirements.in
+pytest>=8
+pytest-asyncio>=0.24
+respx>=0.21
+ruff>=0.6

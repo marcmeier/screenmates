@@ -1,7 +1,6 @@
 {
   "name": "screenmates",
   "private": true,
-  "version": "0.21.4",
   "type": "module",
   "scripts": {
     "dev": "vite",
