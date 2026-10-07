@@ -12,7 +12,8 @@ is running. Path and field names are German, as in the code (e.g. `termin` = dat
 login code (`POST /login`) or a name. "Anyone" then means: anyone with access.
 
 **Names and devices:** a browser may only use the names it created or connected with a login code
-(`auf_geraet` in `GET /users`). There are no passwords.
+(`auf_geraet` in `GET /users`). There are no passwords. A browser without a name keeps its access
+only while its invitation is valid.
 
 **Language:** every request may carry `X-Sprache: de|en`; texts the server writes for that request
 (errors, shelves, awards, facts) follow it. Texts for someone else – push messages, the bell,
@@ -34,7 +35,7 @@ calendar feeds – follow that person's profile language.
 | GET | `/personen?q=` | – | People search (TMDB), by popularity |
 | GET | `/personen/{id}/filme` | – | Filmography (optional `genre`), best known first, without cameo appearances |
 | POST | `/sync` | A | Import the most popular and best-rated films from TMDB |
-| POST | `/ki-suche` | – | Free text → film suggestions (needs `LLM_API_KEY`) |
+| POST | `/ki-suche` | N | Free text → film suggestions (needs `LLM_API_KEY`). At most `LLM_LIMIT_PER_DAY` searches per person within 24 h, then `429` |
 | GET | `/movies/{id}/anbieter` | – | "Where's it on?": subscription/free/rent/buy in the configured region (JustWatch via TMDB), the group's subscriptions first with `bei` |
 | GET | `/movies/{id}/trailer` | – | Best YouTube trailer (configured language before English) or `null` |
 | GET | `/movies/{id}/prognose` | – | "Who'll like it?": estimated stars per person with a reason, from 8 ratings on ([PREDICTION.md](PREDICTION.md)) |

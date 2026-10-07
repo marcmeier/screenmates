@@ -176,7 +176,30 @@ def test_info_markdown_roundtrip(client):
 
 
 def test_ki_without_key_is_503(client):
+    login(client, "marc")
     assert client.post("/api/ki-suche", json={"beschreibung": "x"}).status_code == 503
+
+
+def test_ki_needs_a_name(client, monkeypatch):
+    from app.config import settings
+
+    monkeypatch.setattr(settings, "llm_api_key", "k")
+    assert client.post("/api/ki-suche", json={"beschreibung": "x"}).status_code == 401
+
+
+@respx.mock
+def test_ki_has_a_daily_allowance_per_person(client, browser, monkeypatch):
+    from app.config import settings
+
+    monkeypatch.setattr(settings, "llm_api_key", "k")
+    monkeypatch.setattr(settings, "llm_limit_per_day", 2)
+    respx.post("https://api.anthropic.com/v1/messages").mock(return_value=httpx.Response(500))
+    login(client, "marc")
+    codes = [client.post("/api/ki-suche", json={"beschreibung": "x"}).status_code for _ in range(3)]
+    assert codes == [502, 502, 429]  # failed searches cost too, so they count
+    lena = browser()
+    login(lena, "lena")
+    assert lena.post("/api/ki-suche", json={"beschreibung": "x"}).status_code == 502  # her own allowance
 
 
 @respx.mock

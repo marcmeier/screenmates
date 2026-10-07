@@ -9,16 +9,19 @@ answers the access question or logs in.
 """
 
 import secrets
+from datetime import timedelta
 
 from fastapi import Depends, HTTPException, Request, Response
 from sqlmodel import Session as DBSession
+from sqlmodel import col, delete, select
 
 from .config import settings
 from .db import get_session
-from .models import Session, User
+from .models import Session, SessionName, User, now
 
 COOKIE = settings.session_cookie
 MAX_AGE = 60 * 60 * 24 * 365
+VERLASSEN = timedelta(days=30)  # browsers that came to the door but never got a name are forgotten after this
 
 
 def current_session(request: Request, db: DBSession = Depends(get_session)) -> Session | None:
@@ -30,6 +33,7 @@ def ensure_session(request: Request, response: Response, db: DBSession) -> Sessi
     sess = current_session(request, db)
     if sess:
         return sess
+    aufraeumen(db)
     sess = Session(sid=secrets.token_urlsafe(32))
     db.add(sess)
     db.commit()
@@ -43,6 +47,18 @@ def ensure_session(request: Request, response: Response, db: DBSession) -> Sessi
         path="/",
     )
     return sess
+
+
+def aufraeumen(db: DBSession) -> None:
+    """Drop sessions without a name that are older than VERLASSEN (no commit)."""
+    ohne_namen = select(SessionName.sid)
+    db.exec(
+        delete(Session).where(
+            col(Session.user_id).is_(None),
+            col(Session.sid).not_in(ohne_namen),
+            col(Session.created_at) < now() - VERLASSEN,
+        )
+    )
 
 
 def current_user(sess: Session | None = Depends(current_session), db: DBSession = Depends(get_session)) -> User | None:

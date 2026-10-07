@@ -22,7 +22,7 @@ from sqlmodel import Session as DBSession
 from sqlmodel import select
 
 from ..db import get_session
-from ..models import Einladung, Gruppe, User
+from ..models import Einladung, Gruppe, SessionName, User
 from ..session import current_session, ensure_session
 
 router = APIRouter(prefix="/api", tags=["zugang"])
@@ -75,6 +75,21 @@ def _geschlossen(db: DBSession) -> bool:
     return db.exec(select(User.id).limit(1)).first() is not None
 
 
+def hat_zugang(db: DBSession, sess) -> bool:
+    """A browser is inside with a name (signed in or kept on it), or with an invitation that still holds.
+
+    A browser that came with a link but has no name yet loses its access when the link
+    expires or is withdrawn.
+    """
+    if sess is None:
+        return False
+    if sess.user_id is not None:
+        return True
+    if db.exec(select(SessionName.id).where(SessionName.sid == sess.sid).limit(1)).first() is not None:
+        return True
+    return sess.zugang and einladung_der_sitzung(db, sess) is not None
+
+
 def _aktuell(q: deque[float]) -> deque[float]:
     while q and q[0] < time.monotonic() - FENSTER:
         q.popleft()
@@ -100,9 +115,7 @@ def zugang_pruefen(request: Request, db: DBSession = Depends(get_session)) -> No
     if not path.startswith("/api/") or path.startswith(OFFEN):
         return
     sess = current_session(request, db)
-    if sess and (sess.zugang or sess.user_id is not None):
-        return
-    if not _geschlossen(db):
+    if hat_zugang(db, sess) or not _geschlossen(db):
         return
     raise HTTPException(423, "screenmates gibt es nur mit Einladung.")
 
@@ -111,7 +124,7 @@ def zugang_pruefen(request: Request, db: DBSession = Depends(get_session)) -> No
 def get_zugang(request: Request, db: DBSession = Depends(get_session)):
     sess = current_session(request, db)
     gesperrt = _geschlossen(db)
-    offen = not gesperrt or bool(sess and (sess.zugang or sess.user_id is not None))
+    offen = not gesperrt or hat_zugang(db, sess)
     e = einladung_der_sitzung(db, sess)
     g = db.get(Gruppe, e.gruppe_id) if e else None
     return {

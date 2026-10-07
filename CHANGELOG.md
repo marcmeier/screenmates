@@ -19,6 +19,15 @@ All notable changes to screenmates are documented here. The format is based on
   that the server writes to its log on every start until then (`docker compose logs screenmates`, or
   `python -m app.cli einrichtung`). The log also shows a `/#/setup/<code>` link that fills it in.
   `SETUP_TOKEN` sets the code in advance.
+- Responses carry a Content-Security-Policy (only the app's own scripts, trailers only from
+  youtube-nocookie.com, no framing) and `X-Content-Type-Options`, `Referrer-Policy`, `X-Frame-Options`,
+  `Permissions-Policy`.
+- The AI search needs a name and has a daily allowance per person (`LLM_LIMIT_PER_DAY`, default 30), so
+  nobody can run up the provider bill.
+- A browser that came with an invitation but has no name loses its access when the invitation expires or is
+  withdrawn. Browsers that never got a name are forgotten after 30 days.
+- Calendar feeds no longer take their links from a client-supplied `X-Forwarded-Host` header; `PUBLIC_URL`
+  sets the address explicitly.
 
 ### Changed
 - Settings show on how many devices you are signed in, and can sign you out on all the others.

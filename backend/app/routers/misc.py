@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import random
+from datetime import timedelta
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
@@ -32,7 +33,7 @@ from ..models import (
     now,
 )
 from ..serialize import iso, movie_dict, with_flags
-from ..session import current_user, require_admin
+from ..session import require_admin, require_user
 from ..sprache import tr
 from ..util import upsert_movie
 from . import gastgeber, umfrage
@@ -242,9 +243,17 @@ def events(limit: int = 30, gid: int = Depends(aktive_gruppe), db: DBSession = D
 
 
 @router.post("/ki-suche")
-async def ki_suche(body: KiSuche, db: DBSession = Depends(get_session), user: User | None = Depends(current_user)):
+async def ki_suche(body: KiSuche, db: DBSession = Depends(get_session), user: User = Depends(require_user)):
     if not settings.llm_enabled:
         raise HTTPException(503, "Die KI-Suche ist nicht eingerichtet (LLM_API_KEY fehlt).")
+    # Every search costs money at the provider: a daily allowance per person, failed ones included.
+    heute = db.exec(
+        select(func.count())
+        .select_from(KiAnfrage)
+        .where(KiAnfrage.user_id == user.id, col(KiAnfrage.at) > now() - timedelta(days=1))
+    ).one()
+    if heute >= settings.llm_limit_per_day:
+        raise HTTPException(429, tr("Du hast heute schon {n} KI-Suchen gemacht – morgen geht es weiter.", n=heute))
     gesehen_ids = set(db.exec(select(Watched.movie_id)).all())
     vermeiden = (
         list(db.exec(select(Movie.title).where(col(Movie.id).in_(gesehen_ids))).all()) if body.ohne_gesehene else []
@@ -261,7 +270,7 @@ async def ki_suche(body: KiSuche, db: DBSession = Depends(get_session), user: Us
         # Every request is logged for the admins' overview, the failed ones too (they may cost as well).
         db.add(
             KiAnfrage(
-                user_id=user.id if user else None,
+                user_id=user.id,
                 gruppe_id=aktuelle_gruppe(),
                 modell=nutzung.modell,
                 tokens_ein=nutzung.tokens_ein,
