@@ -7,6 +7,11 @@ All notable changes to screenmates are documented here. The format is based on
 
 ## Unreleased
 
+## 1.0.0 – 2026-10-07
+
+The first public release. Before upgrading an existing installation, read "Upgrading" below and back up
+the database: migrations 0013–0016 run on the first start.
+
 ### Security
 - Names belong to devices now. Until now anyone with an invitation link could pick any name that had
   no film password, including an admin's, and use it with all its rights. A browser can now only use
@@ -17,7 +22,7 @@ All notable changes to screenmates are documented here. The format is based on
   count against the same limit as wrong invitations.
 - A fresh install no longer makes whoever reaches it first its admin. The first name needs the setup code
   that the server writes to its log on every start until then (`docker compose logs screenmates`, or
-  `python -m app.cli einrichtung`). The log also shows a `/#/setup/<code>` link that fills it in.
+  `python -m app.cli setup`). The log also shows a `/#/setup/<code>` link that fills it in.
   `SETUP_TOKEN` sets the code in advance.
 - Responses carry a Content-Security-Policy (only the app's own scripts, trailers only from
   youtube-nocookie.com, no framing) and `X-Content-Type-Options`, `Referrer-Policy`, `X-Frame-Options`,
@@ -81,12 +86,19 @@ All notable changes to screenmates are documented here. The format is based on
   afterwards and make the date disappear again until the next change; the invitation then said "date to
   follow".
 
+### Deprecated
+- The old names `PUSH_KONTAKT`, `KINO_PUBLIC_HOST`, the `X-Sprache` header and the command-line names
+  `namen`, `einladung`, `einrichtung` still work and will be removed in 2.0.
+
 ### Removed
 - The film password. It only protected names whose owner had set one, and a favourite film is easy to
   guess.
 
 ### Upgrading
-- Existing databases keep German time (Europe/Berlin) unless `TIMEZONE` says otherwise.
+- Back up the database first (`/data/screenmates.db` in the volume); the migrations change how names and
+  sessions are stored.
+- Existing databases keep German time (Europe/Berlin) unless `TIMEZONE` says otherwise, and keep
+  "Wishes & ideas" switched on.
 - If you relied on the old German defaults for film data, set `TMDB_LANGUAGE=de-DE` and `TMDB_REGION=DE`.
 - Every browser that is signed in keeps its name. Browsers that were signed out need a login code once,
   from another device of that person or from an admin.
