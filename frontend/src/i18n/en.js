@@ -360,6 +360,8 @@ export default {
       "{zusammenfassung} awards for everything you’ve already done",
   },
   erinnerungen: {
+    dieseWoche: "This week a year ago | This week {n} years ago",
+    heute: "On this day a year ago | On this day {n} years ago",
     ihrX: "· you: ★ {x}",
   },
   filmpicker: {
@@ -434,9 +436,9 @@ export default {
       "Once {name} and others have rated at least {n} of the same films, you’ll see here who has similar taste.",
     sobaldDu:
       "Once you and others have rated at least {n} of the same films, you’ll see here who has similar taste.",
-    ticktZu: "ticks to",
-    wie: "like {name}",
-    wieDu: "like you",
+    ticktZu: "agrees",
+    wie: "with {name}",
+    wieDu: "with you",
   },
   gesehenview: {
     besteWertung: "Best rated",
@@ -1045,7 +1047,7 @@ export default {
     verdeckt: "Covert",
   },
   sprache: {
-    filmdaten: "Film titles and plots stay in German.",
+    filmdaten: "Film titles and plots come from TMDB in the language this server is set up for.",
     wahl: "Language",
   },
   stabwechsel: {

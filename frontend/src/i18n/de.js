@@ -366,6 +366,8 @@ export default {
       "{zusammenfassung} Erfolge für alles, was du schon gemacht hast",
   },
   erinnerungen: {
+    dieseWoche: "Diese Woche vor einem Jahr | Diese Woche vor {n} Jahren",
+    heute: "Heute vor einem Jahr | Heute vor {n} Jahren",
     ihrX: "· ihr: ★ {x}",
   },
   filmpicker: {
@@ -1063,7 +1065,7 @@ export default {
     verdeckt: "Verdeckt",
   },
   sprache: {
-    filmdaten: "Filmtitel und Beschreibungen kommen weiter auf Deutsch.",
+    filmdaten: "Filmtitel und Beschreibungen kommen von TMDB in der Sprache, die dieser Server eingestellt hat.",
     wahl: "Sprache",
   },
   stabwechsel: {

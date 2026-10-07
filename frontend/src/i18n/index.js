@@ -4,7 +4,7 @@ import en from "./en";
 
 // The app speaks German and English. Your choice is kept with your profile (all devices);
 // before you have a name, this device's last choice or the browser's language decides.
-// Film data (titles, plots, genres) stays as TMDB gives it in German.
+// Film data (titles, plots, genres) comes from TMDB in the server's TMDB_LANGUAGE.
 export const SPRACHEN = { de: "Deutsch", en: "English" };
 const KEY = "screenmates.sprache";
 

@@ -14,6 +14,15 @@ All notable changes to screenmates are documented here. The format is based on
 - Licensed under the GNU AGPL v3.0; added contributing guide, security policy, code of conduct, issue and
   pull request templates, and Dependabot.
 
+## 0.21.3 – 2026-10-07
+
+### Fixed
+- **English UI:** the "On this day a year ago" card on the movie night was still in German.
+- **Kindred tastes:** reads "Kim agrees … 80 % with you" instead of the clumsy "Kim ticks to … 80 % like you".
+- **Settings → Appearance:** no longer claims film titles and plots stay in German – their language follows the
+  server's `TMDB_LANGUAGE`.
+- `backend/pyproject.toml` carried the outdated version 0.5.0; it now matches the app version.
+
 ## 0.21.2 – 2026-10-07
 
 ### Fixed

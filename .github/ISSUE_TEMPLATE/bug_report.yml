@@ -35,7 +35,7 @@ body:
     attributes:
       label: screenmates version
       description: Shown on the app's about page.
-      placeholder: "0.21.2"
+      placeholder: "0.21.3"
     validations:
       required: true
   - type: dropdown
