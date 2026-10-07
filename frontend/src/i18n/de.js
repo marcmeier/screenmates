@@ -91,7 +91,17 @@ export default {
     zuschauen: "Zuschauen",
     inDerKiste: "{n} Film in der Kiste. | {n} Filme in der Kiste.",
   },
+  anmeldecode: {
+    code: "Anmeldecode",
+    geheim: "Gib ihn nur {name} selbst – wer den Code hat, kann sich als {name} anmelden.",
+    kopieren: "Link kopieren",
+    kopiert: "Link kopiert",
+    neu: "Neuer Code",
+    qr: "QR-Code mit dem Anmeldelink",
+    text: "Öffne den Link auf dem anderen Gerät, scanne den QR-Code oder gib dort den Code ein. Er gilt einmal, bis {zeit}.",
+  },
   adminbereich: {
+    anmeldecode: "Anmeldecode",
     abgemeldet: "{name}: {n} Gerät abgemeldet | {name}: {n} Geräte abgemeldet",
     ablehnen: "Ablehnen",
     admin: "Admin",
@@ -105,10 +115,6 @@ export default {
     bildEntfernen: "Bild entfernen",
     farbeVonName: "Farbe von {name}",
     farbeVonName2: "Farbe von {name}",
-    filmPasswortVonName:
-      "Film-Passwort von „{name}“ zurücksetzen? Danach kann jeder den Namen wählen, bis {name2} ein neues festlegt.",
-    filmPasswortVonName2: "Film-Passwort von {name} zurückgesetzt",
-    filmPasswortZuruecksetzen: "Film-Passwort zurücksetzen",
     freigeben: "Freigeben",
     geraete: "{n} Gerät | {n} Geräte",
     jetztAdmin: "{name} ist jetzt Admin",
@@ -120,7 +126,6 @@ export default {
     nameLoeschen: "{name} löschen",
     nameLoeschenBewertungenUnd:
       "„{name}“ löschen? Bewertungen und Stimmen gehen verloren, Kommentare bleiben anonym erhalten.",
-    nameMitFilmPasswort: "Name mit Film-Passwort geschützt",
     namenDirektAnlegen: "Namen direkt anlegen …",
     namenDirektAnlegen2: "Namen direkt anlegen",
     neuerNameFuerName: "Neuer Name für {name}",
@@ -258,19 +263,20 @@ export default {
   },
   einst: {
     abmelden: "Abmelden",
-    entfernen: "Entfernen",
-    filmAendern: "Film ändern",
-    geschuetzt: "geschützt",
-    geschuetztDurch: "Dein Name ist jetzt durch „{film}“ geschützt",
+    andereAbgemeldet: "Auf {n} anderem Gerät abgemeldet | Auf {n} anderen Geräten abgemeldet",
+    andereAbmelden: "Auf allen anderen Geräten abmelden",
+    andereAbmeldenFrage:
+      "{name} auf allen anderen Geräten abmelden? Dort braucht es danach einen neuen Anmeldecode.",
+    geraete: "Deine Geräte",
+    geraeteAnzahl: "Auf {n} Gerät angemeldet | Auf {n} Geräten angemeldet",
+    geraeteText:
+      "Dein Name gehört zu den Geräten, auf denen du ihn angelegt oder mit einem Anmeldecode verbunden hast. Für ein neues Handy, einen Laptop oder den Fernseher holst du dir hier einen Code.",
+    geraetVerbinden: "Anderes Gerät verbinden",
     ideen: "Ideen, was screenmates noch können soll?",
-    passwortFilm: "Deinen Passwort-Film suchen …",
     profil: "Profil & Anmeldung",
-    schutz: "Film-Schutz",
-    schutzEinrichten: "Schutz einrichten",
-    schutzEntfernt: "Schutz entfernt",
-    schutzText:
-      "Ohne Schutz kann sich jeder als {name} ausgeben. Mit Schutz muss man beim Anmelden deinen Film anklicken – den Film verrät screenmates niemandem, auch dir nicht.",
-    ungeschuetzt: "ungeschützt",
+    vergessen: "Von diesem Gerät entfernen",
+    vergessenFrage:
+      "„{name}“ von diesem Gerät entfernen? Um den Namen hier wieder zu nutzen, brauchst du dann einen Anmeldecode.",
     reiter: {
       profil: "Profil",
       darstellung: "Darstellung",
@@ -860,20 +866,23 @@ export default {
     anlegen: "Anlegen",
     antragGestellt: "Antrag gestellt",
     beantragen: "Beantragen",
+    codeEinloesen: "Anmelden",
+    codeFeld: "Anmeldecode",
+    codeText:
+      "Auf einem Gerät, auf dem du schon angemeldet bist: Profil → Einstellungen → „Anderes Gerät verbinden“. Den Code von dort hier eingeben.",
+    codeTitel: "Mit Anmeldecode anmelden",
     danach:
       "Danach findest du deinen Namen hier in der Liste und kannst ihn mit einem Klick wählen.",
     dialog: "Namen wählen",
     direkt: "Leg deinen Namen an, dann bist du direkt dabei.",
     eingeladen: "Du bist eingeladen in",
     erster: "Noch niemand da – leg den ersten Namen an. Er wird Admin.",
+    habeSchon: "Ich habe schon einen Namen",
     hallo: "Hallo {name}!",
     mitFreigabe: "Leg deinen Namen an; ein Admin der Gruppe schaltet ihn frei.",
     neu: "Neuer Name",
     neuHier: "Neu hier? Beantrag deinen Namen, ein Admin schaltet ihn frei.",
     neuPlatzhalter: "Neuer Name …",
-    passwortFuer: "Film-Passwort für {name}",
-    passwortText:
-      "Such den Film, den {name} als Passwort gewählt hat, und klick ihn an.",
     wartet: "„{name}“ wartet jetzt auf die Freigabe durch einen Admin.",
     wartetGruppe:
       "„{name}“ wartet jetzt auf die Freigabe durch einen Admin von „{gruppe}“.",
@@ -1354,6 +1363,7 @@ export default {
     uhr: "{zeit} Uhr",
   },
   zugang: {
+    codeHinweis: "Du hast schon einen Namen? Gib hier den Anmeldecode von deinem anderen Gerät ein.",
     feld: "Einladungslink oder Code",
     nurMitEinladung: "Nur mit Einladung",
     rechtliches: "Über · Impressum · Datenschutz",

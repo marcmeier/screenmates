@@ -5,7 +5,7 @@ with six people, group 2 with four – some in both, some in just one.
 
 | Applies to … | What |
 |---|---|
-| the whole server | names, admins, profile pictures, film passwords, streaming subscriptions, levels and **awards**, wishes & ideas, the film catalog, AI search |
+| the whole server | names, admins, profile pictures, devices and login codes, streaming subscriptions, levels and **awards**, wishes & ideas, the film catalog, AI search |
 | one group | movie night (who's in, suggestions, vetoes, the case, date, info), history with ratings and guestbook, watchlist, activity feed, "On this day", **cinema** |
 
 - **Members only** see a group's content – through the API as well (`401`/`409`/`404`).
@@ -18,7 +18,7 @@ with six people, group 2 with four – some in both, some in just one.
 
   Someone who already has a name joins (or asks to join) another group with that group's link. Requests show up for each group's admins.
 - **Without an invitation** (e.g. names created directly by an admin): if there is only one group, they land in it automatically; otherwise an admin decides.
-- **Emergency exit:** `python -m app.cli einladung [<group>]` creates a one-time link (24 h, direct).
+- **Emergency exit:** `python -m app.cli einladung [<group>]` creates a one-time link (24 h, direct); `python -m app.cli login <name>` a login code for an existing name.
 - **Cinema:** one per group, MediaMTX path `kino-<group id>` (regex path in `deploy/mediamtx.yml`), its own secret, its own OBS stream key (the key decides the group; the WHIP URL is the same for everyone), its own audience. Several groups can stream at once – mind your upload bandwidth.
 - **Awards** count across all groups: a confirmed movie night is one night, no matter in which group (at most one per day).
 - **Under the hood:** `watched`, `wishlist`, `suggestion` and `veto` carry a `gruppe_id`; their uniqueness applies per group. `abend`, `info` and `kinostate` use the group ID as their ID. Migration `0006` created "Our group" (ID 1) with all existing data and approved names; former admins became its group admins.

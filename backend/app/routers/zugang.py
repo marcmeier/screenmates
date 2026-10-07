@@ -7,7 +7,7 @@ until the first name (its admin) exists.
 
 Without access the whole API is closed, apart from what the door itself needs
 and what authenticates on its own (health check, MediaMTX's callback, OBS with
-its stream key).
+its stream key, a login code for a name, see `login.py`).
 """
 
 from __future__ import annotations
@@ -33,6 +33,7 @@ router = APIRouter(prefix="/api", tags=["zugang"])
 OFFEN = (
     "/api/health",
     "/api/zugang",
+    "/api/login",
     "/api/ueber",
     "/api/kino/mtx-auth",
     "/api/kino/whip",
@@ -40,8 +41,8 @@ OFFEN = (
     "/api/kalender/",
 )
 
-# Wrong codes: per client IP, plus a cap for everyone together. Tokens can't be
-# guessed anyway; this keeps the door quiet.
+# Wrong codes (invitations and login codes): per client IP, plus a cap for everyone
+# together. Neither can be guessed anyway; this keeps the door quiet.
 MAX_PRO_IP, MAX_GESAMT, FENSTER = 10, 100, 900
 _fehl_ip: dict[str, deque[float]] = defaultdict(deque)
 _fehl_alle: deque[float] = deque()
@@ -80,6 +81,19 @@ def _aktuell(q: deque[float]) -> deque[float]:
     return q
 
 
+def bremse(request: Request) -> str:
+    """Refuse a client (or everyone) after too many wrong codes; returns the client's address."""
+    ip = request.client.host if request.client else "?"
+    if len(_aktuell(_fehl_ip[ip])) >= MAX_PRO_IP or len(_aktuell(_fehl_alle)) >= MAX_GESAMT:
+        raise HTTPException(429, "Zu viele Fehlversuche – bitte in einer Viertelstunde nochmal.")
+    return ip
+
+
+def fehlversuch(ip: str) -> None:
+    _fehl_ip[ip].append(time.monotonic())
+    _fehl_alle.append(time.monotonic())
+
+
 def zugang_pruefen(request: Request, db: DBSession = Depends(get_session)) -> None:
     """App-wide dependency: closes the API to browsers without access."""
     path = request.url.path
@@ -110,14 +124,10 @@ def get_zugang(request: Request, db: DBSession = Depends(get_session)):
 @router.post("/zugang")
 def enter(body: Code, request: Request, response: Response, db: DBSession = Depends(get_session)):
     """Come in with an invitation; the browser keeps it for creating (or joining with) a name."""
-    ip = request.client.host if request.client else "?"
-    fehl = _aktuell(_fehl_ip[ip])
-    if len(fehl) >= MAX_PRO_IP or len(_aktuell(_fehl_alle)) >= MAX_GESAMT:
-        raise HTTPException(429, "Zu viele Fehlversuche – bitte in einer Viertelstunde nochmal.")
+    ip = bremse(request)
     e = db.exec(select(Einladung).where(Einladung.token == body.token.strip())).first()
     if not gueltig(e):
-        fehl.append(time.monotonic())
-        _fehl_alle.append(time.monotonic())
+        fehlversuch(ip)
         raise HTTPException(403, "Diese Einladung gilt nicht (mehr). Frag nach einem neuen Link.")
     sess = ensure_session(request, response, db)
     sess.zugang = True

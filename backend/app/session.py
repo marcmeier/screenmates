@@ -1,9 +1,10 @@
 """Cookie sessions and the authorization dependencies built on them.
 
 There are no passwords: a browser comes in with an invitation link (see
-`routers/zugang.py`), then picks a name (optionally guarded by a "film as
-PIN"). Administration is a right of individual people (`User.is_admin`), not of
-a browser. Reads never create a session row; one is created only when a browser
+`routers/zugang.py`) and creates a name, which then belongs to that browser.
+Other devices get the name with a one-time login code (`routers/login.py`).
+Administration is a right of individual people (`User.is_admin`), not of a
+browser. Reads never create a session row; one is created only when a browser
 answers the access question or logs in.
 """
 

@@ -1,8 +1,7 @@
-"""User administration for admins: requests, names, rights, sessions.
+"""User administration for admins: requests, names, rights, devices.
 
-Deleting a name and resetting someone's film password live in `users.py`
-(DELETE /api/users/{id}, POST /api/users/{id}/schutz), next to the owner's own
-calls; invitations are in `einladungen.py`.
+Deleting a name lives in `users.py` (DELETE /api/users/{id}); invitations are
+in `einladungen.py`, login codes in `login.py`.
 """
 
 from __future__ import annotations
@@ -15,15 +14,16 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 from sqlalchemy.exc import IntegrityError
 from sqlmodel import Session as DBSession
-from sqlmodel import col, select
+from sqlmodel import col, delete, select
 
 from ..config import settings
 from ..db import get_session
 from ..gruppen import aufnehmen
-from ..models import KiAnfrage, Session, User
+from ..models import KiAnfrage, Session, SessionName, User
 from ..serialize import iso, user_dict
-from ..session import require_admin
+from ..session import current_user, require_admin
 from ..sprache import tr
+from . import login
 from .users import clean_name, ensure_not_last_admin, in_einzige_gruppe, new_user
 
 router = APIRouter(prefix="/api/admin", tags=["admin"], dependencies=[Depends(require_admin)])
@@ -47,12 +47,12 @@ def _admin_dict(u: User, sitzungen: int) -> dict:
 
 
 def _sitzungen(db: DBSession) -> Counter[int]:
-    return Counter(uid for uid in db.exec(select(Session.user_id).where(col(Session.user_id).is_not(None))).all())
+    return Counter(db.exec(select(SessionName.user_id)).all())
 
 
 @router.get("/users")
 def list_all(db: DBSession = Depends(get_session)):
-    """Everyone, requests first, with how many browsers are logged in as them."""
+    """Everyone, requests first, with how many browsers have their name."""
     rows = db.exec(select(User).order_by(col(User.freigegeben), User.created_at)).all()
     n = _sitzungen(db)
     return {"users": [_admin_dict(u, n[u.id]) for u in rows]}
@@ -99,14 +99,24 @@ def change(user_id: int, body: Aendern, db: DBSession = Depends(get_session)):
 
 @router.post("/users/{user_id}/abmelden")
 def logout_everywhere(user_id: int, db: DBSession = Depends(get_session)):
-    """End every browser session of this person. Those browsers also lose their access."""
+    """Take the name off every browser. Browsers logged in with it also lose their access."""
     if db.get(User, user_id) is None:
         raise HTTPException(404)
-    rows = db.exec(select(Session).where(Session.user_id == user_id)).all()
-    for s in rows:
-        db.delete(s)
+    geraete = set(db.exec(select(SessionName.sid).where(SessionName.user_id == user_id)).all())
+    geraete |= set(db.exec(select(Session.sid).where(Session.user_id == user_id)).all())
+    db.exec(delete(SessionName).where(SessionName.user_id == user_id))
+    db.exec(delete(Session).where(Session.user_id == user_id))
     db.commit()
-    return {"beendet": len(rows)}
+    return {"beendet": len(geraete)}
+
+
+@router.post("/users/{user_id}/login-code", status_code=201)
+def login_code(user_id: int, db: DBSession = Depends(get_session), admin: User = Depends(current_user)):
+    """A login code for someone who lost their device (or whose name an admin created)."""
+    u = db.get(User, user_id)
+    if u is None or not u.freigegeben:
+        raise HTTPException(404)
+    return login.neuer_code(db, u, admin, login.GUELTIG_ADMIN)
 
 
 # --- KI usage ------------------------------------------------------------------

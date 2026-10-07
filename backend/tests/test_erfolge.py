@@ -86,12 +86,13 @@ def test_unlock_popups_come_once_and_carry_points(client, lena):
     assert neu(client)["neu"] == []
 
 
-def test_levels_titles_and_level_next_to_names(client, lena):
+def test_levels_titles_and_level_next_to_names(client, lena, browser):
     assert erfolge.level(0) == 1 and erfolge.level(24) == 1 and erfolge.level(25) == 2 and erfolge.level(75) == 3
     assert erfolge.titel(1) == "Popcorn-Neuling" and erfolge.titel(5) == "Cineast"
     login(client, "marc")
     client.post("/api/abos", json={"anbieter": [8]})
-    client.post(f"/api/users/{client.get('/api/users').json()['ich']['id']}/schutz", json={"movie_id": 694})
+    zweit = browser()  # a second device of marc's, connected with his own code
+    zweit.post("/api/login", json={"code": client.post("/api/login/code").json()["code"]})
     wid = abend(client, mit=[lena.me["id"]])
     bewerten(lena, wid)
     bewerten(client, wid)

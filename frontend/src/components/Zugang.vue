@@ -6,25 +6,32 @@ import Icon from './Icon.vue'
 import UeberInhalt from './UeberInhalt.vue'
 
 // The front door: screenmates is invite-only. A link (#/einladung/<code>) opens it
-// by itself; here you can also paste the link or code you got.
+// by itself; here you can also paste the link or code you got – or the login code
+// (#/login/ABCD-EFGH) for a name you already have on another device.
 const app = useApp()
 const eingabe = ref('')
 const error = ref('')
 const busy = ref(false)
 
-function code(text) {
+const LOGIN_CODE = /^[A-Za-z0-9]{4}[- ]?[A-Za-z0-9]{4}$/ // invitation tokens are much longer
+
+function lesen(text) {
   const t = text.trim()
+  const login = t.match(/login\/([A-Za-z0-9-]+)/)
+  if (login) return { login: login[1] }
+  if (LOGIN_CODE.test(t)) return { login: t }
   const m = t.match(/einladung\/([A-Za-z0-9_-]+)/)
-  return m ? m[1] : t
+  return { einladung: m ? m[1] : t }
 }
 
 async function rein() {
-  const token = code(eingabe.value)
-  if (!token) return
+  if (!eingabe.value.trim()) return
+  const { login, einladung } = lesen(eingabe.value)
   error.value = ''
   busy.value = true
   try {
-    await app.einlassen(token)
+    if (login) await app.anmelden(login)
+    else await app.einlassen(einladung)
   } catch (e) {
     error.value = e.message
   } finally {
@@ -46,6 +53,7 @@ const ueber = ref(location.hash.startsWith('#/ueber'))
         <input v-model="eingabe" :placeholder="$t('zugang.feld')" :aria-label="$t('zugang.feld')" />
         <button class="primary" :disabled="busy || !eingabe.trim()">{{ $t('zugang.rein') }}</button>
       </form>
+      <p class="muted hinweis">{{ $t('zugang.codeHinweis') }}</p>
       <p v-if="app.einladungFehler || error" class="error" role="alert">{{ error || app.einladungFehler }}</p>
     </div>
     <button class="ghost small rechtliches" :aria-expanded="ueber" @click="ueber = !ueber">{{ $t('zugang.rechtliches') }}</button>
@@ -69,5 +77,6 @@ const ueber = ref(location.hash.startsWith('#/ueber'))
 h1 { font-size: 1.2rem; font-weight: 650; margin: 0 0 0.4rem; }
 .card > .muted { margin: 0 0 1.2rem; font-size: 0.9rem; }
 form input { flex: 1; }
+.card > .hinweis { margin: 1rem 0 0; font-size: 0.8rem; }
 .error { color: #ff6b6b; margin: 1rem 0 0; }
 </style>

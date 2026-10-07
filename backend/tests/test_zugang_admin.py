@@ -121,12 +121,14 @@ def test_logout_everywhere_ends_all_sessions_of_a_person(client, browser, db):
     assert db.exec(select(Session).where(Session.user_id == lena["id"])).all() == []
 
 
-def test_admins_reset_someones_film_password(client, browser):
+def test_logging_out_everywhere_takes_the_name_off_every_browser(client, browser):
     login(client, "marc", admin=True)
-    lena_b = browser()
-    lena = login(lena_b, "lena")
-    lena_b.post(f"/api/users/{lena['id']}/schutz", json={"movie_id": 694})
-    assert client.post(f"/api/users/{lena['id']}/schutz", json={"movie_id": None}).json() == {"hat_schutz": False}
+    handy = browser()
+    lena = login(handy, "lena")
+    handy.post("/api/users/waehlen", json={"user_id": None})  # logged out, but the name is still on it
+    assert client.post(f"/api/admin/users/{lena['id']}/abmelden").json() == {"beendet": 1}
+    assert handy.get("/api/users").json()["auf_geraet"] == []
+    assert handy.post("/api/users/waehlen", json={"user_id": lena["id"]}).status_code == 403
 
 
 def test_rights_follow_the_person_not_the_browser(client):

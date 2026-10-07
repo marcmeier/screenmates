@@ -1,10 +1,12 @@
-"""Users, name selection (the lightweight login), name requests, film-as-PIN, attendance."""
+"""Users, name selection (the lightweight login), name requests, attendance.
+
+Which names a browser may pick is decided in `login.py`.
+"""
 
 from __future__ import annotations
 
 import json
-import time
-from collections import defaultdict, deque
+from collections import defaultdict
 from datetime import UTC, datetime, timedelta
 from typing import Literal
 
@@ -25,29 +27,18 @@ from ..session import (
     ensure_session,
     is_admin,
     require_admin,
-    require_owner_or_admin,
     require_user,
 )
 from ..sprache import tr
 from ..util import BERLIN, utc
+from . import login
 
 router = APIRouter(prefix="/api", tags=["users"])
 
 PALETTE = ["#e50914", "#f5a623", "#7ed321", "#4a90e2", "#bd10e0", "#50e3c2", "#ff6b6b", "#d4a017"]
 
-# Film-as-PIN guesses: at most MAX_TRIES wrong films per user per WINDOW seconds.
-MAX_TRIES, WINDOW = 8, 600
-_fails: dict[int, deque[float]] = defaultdict(deque)
-
 # Open name requests at a time, so the list an admin has to go through stays short.
 MAX_ANTRAEGE = 20
-
-
-def _throttled(user_id: int) -> bool:
-    q = _fails[user_id]
-    while q and q[0] < time.monotonic() - WINDOW:
-        q.popleft()
-    return len(q) >= MAX_TRIES
 
 
 def admin_count(db: DBSession) -> int:
@@ -94,16 +85,11 @@ class NameAnlegen(BaseModel):
 
 
 class NameWaehlen(BaseModel):
-    user_id: int | None = None
-    movie_id: int | None = None  # the protection film, when the user is guarded
+    user_id: int | None = None  # None: log out (the name stays on this browser)
 
 
 class AbosSetzen(BaseModel):
     anbieter: list[int] = Field(max_length=60)  # TMDB provider ids
-
-
-class SchutzSetzen(BaseModel):
-    movie_id: int | None = None  # None removes the protection
 
 
 @router.get("/users")
@@ -148,6 +134,7 @@ def list_users(
         "admin": admin,
         "antraege": antraege,
         "gruppe": gruppe,
+        "auf_geraet": login.namen(db, sess),  # names this browser may pick (requests included)
     }
 
 
@@ -161,14 +148,13 @@ def create_user(
     sess: Session | None = Depends(current_session),
 ):
     """Create a name. The very first one becomes admin; afterwards the invitation decides:
-    a "direkt" link lets you in, otherwise it's a request for an admin of the link's group."""
+    a "direkt" link lets you in, otherwise it's a request for an admin of the link's group.
+    The name belongs to this browser; other devices get it with a login code."""
     name = clean_name(body.name)
     if db.exec(select(func.count()).select_from(User)).one() == 0:
         u = new_user(db, name, freigegeben=True, admin=True)
         # The door closes with the first name: its browser stays inside.
-        eigene = ensure_session(request, response, db)
-        eigene.zugang = True
-        db.add(eigene)
+        login.binden(db, ensure_session(request, response, db), u.id)
         db.commit()
         if not db.exec(select(Mitglied).where(Mitglied.user_id == u.id)).first():
             # A fresh install: the first name runs the first group.
@@ -182,7 +168,10 @@ def create_user(
             db.commit()
         return user_dict(u)
     if admin:
-        return user_dict(new_user(db, name, freigegeben=True))
+        u = new_user(db, name, freigegeben=True)
+        login.binden(db, ensure_session(request, response, db), u.id)
+        db.commit()
+        return user_dict(u)
     from .zugang import einladung_der_sitzung
 
     e = einladung_der_sitzung(db, sess)
@@ -191,6 +180,7 @@ def create_user(
         db.add(e)
         u = new_user(db, name, freigegeben=True, ohne_gruppe=True)
         aufnehmen(db, e.gruppe_id, u.id)
+        login.binden(db, ensure_session(request, response, db), u.id)
         db.commit()
         return user_dict(u)
     offen = db.exec(select(func.count()).select_from(User).where(col(User.freigegeben).is_(False))).one()
@@ -201,8 +191,10 @@ def create_user(
         e.nutzungen += 1
         u.antrag_gruppe_id = e.gruppe_id
         db.add_all([e, u])
-        db.commit()
-        db.refresh(u)
+    # Approved later, the name is ready on the browser that asked for it.
+    login.binden(db, ensure_session(request, response, db), u.id)
+    db.commit()
+    db.refresh(u)
     return user_dict(u)
 
 
@@ -217,15 +209,12 @@ def choose_user(body: NameWaehlen, request: Request, response: Response, db: DBS
     u = db.get(User, body.user_id)
     if u is None:
         raise HTTPException(404, "Diesen Namen gibt es nicht.")
+    if not login.darf(db, sess, u.id):
+        raise HTTPException(
+            403, tr("„{name}“ ist auf diesem Gerät nicht angemeldet – dafür braucht es einen Anmeldecode.", name=u.name)
+        )
     if not u.freigegeben:
         raise HTTPException(403, tr("„{name}“ wartet noch auf die Freigabe durch einen Admin.", name=u.name))
-    if u.schutz_movie_id is not None:
-        if _throttled(u.id):
-            raise HTTPException(429, "Zu viele Fehlversuche – bitte später nochmal.")
-        if body.movie_id != u.schutz_movie_id:
-            _fails[u.id].append(time.monotonic())
-            raise HTTPException(403, "Das ist nicht der richtige Film.")
-        _fails.pop(u.id, None)
     sess.user_id = u.id
     sess.zugang = True  # whoever holds a name is inside, also after logging out
     db.add(sess)
@@ -245,32 +234,6 @@ def delete_user(user_id: int, db: DBSession = Depends(get_session)):
     db.commit()
     bilder.loeschen(user_id, bild)
     return {"ok": True}
-
-
-@router.get("/users/{user_id}/schutz")
-def get_schutz(user_id: int, db: DBSession = Depends(get_session)):
-    u = db.get(User, user_id)
-    if u is None:
-        raise HTTPException(404)
-    return {"hat_schutz": u.schutz_movie_id is not None}
-
-
-@router.post("/users/{user_id}/schutz")
-def set_schutz(
-    user_id: int,
-    body: SchutzSetzen,
-    db: DBSession = Depends(get_session),
-    user: User | None = Depends(current_user),
-    admin: bool = Depends(is_admin),
-):
-    u = db.get(User, user_id)
-    if u is None:
-        raise HTTPException(404)
-    require_owner_or_admin(u.id, user, admin)
-    u.schutz_movie_id = body.movie_id
-    db.add(u)
-    db.commit()
-    return {"hat_schutz": u.schutz_movie_id is not None}
 
 
 @router.post("/abos")

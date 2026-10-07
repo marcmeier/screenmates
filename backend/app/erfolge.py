@@ -199,9 +199,9 @@ KATALOG: list[Def] = [
     Def(
         "schutz",
         "schutz",
-        "Sicher ist sicher",
-        "Den eigenen Namen mit einem Film-Passwort geschützt",
-        "🔐",
+        "Zweitgerät",
+        "Ein weiteres eigenes Gerät mit einem Anmeldecode verbunden",
+        "📱",
         1,
         kategorie="Profil",
     ),
@@ -371,6 +371,7 @@ def stand(db: DBSession) -> dict[int, Counter]:
     zusagen: dict[int, set[date]] = defaultdict(set)
     umfragen: dict[int, set[date]] = defaultdict(set)
     zwischenrufe: dict[int, set[str]] = defaultdict(set)
+    zweitgeraet: set[int] = set()
     for e in ereignisse:
         if e.user_id is None:
             continue
@@ -388,6 +389,8 @@ def stand(db: DBSession) -> dict[int, Counter]:
             umfragen[e.user_id].add(date.fromisoformat(e.bezug))
         elif e.typ == "kino_chat":
             zwischenrufe[e.user_id].add(e.bezug)
+        elif e.typ == "zweitgeraet":
+            zweitgeraet.add(e.user_id)
     for abend in db.exec(select(Abend)).all():  # one per group; before the launch only the current one is known
         if abend.termin and abend.gesetzt_von and abend.gesetzt_am and _aware(abend.gesetzt_am) < seit:
             termine[abend.gesetzt_von].add(_tag(abend.termin))
@@ -426,7 +429,7 @@ def stand(db: DBSession) -> dict[int, Counter]:
         c["kino"] = len(kino[u])
         c["treffer"] = sum(1 for wid in treffer[u] if wid in watched and any(echt(watched[wid], p) for p in teil[wid]))
         c["bild"] = int(bool(user.bild))
-        c["schutz"] = int(user.schutz_movie_id is not None)
+        c["schutz"] = int(u in zweitgeraet)
         c["abos"] = int(u in abos)
         c["nachteule"] = int(any(_aware(w.watched_at).astimezone(BERLIN).hour < 5 for w in meine))
         c["marathon"] = int(any(n >= 3 for n in tage.values()))

@@ -83,6 +83,33 @@ def test_database_from_before_migrations_is_adopted_with_its_data(tmp_path):
     assert con.execute("select gruppe_id, user_id from mitglied").fetchall() == [(1, 1)]
 
 
+def test_0013_keeps_logged_in_browsers_and_drops_the_film_password(tmp_path):
+    from alembic import command
+
+    u = url(tmp_path)
+    command.upgrade(migrate.alembic_config(u), "0012")
+    con = sqlite3.connect(tmp_path / "db.sqlite")
+    con.execute(
+        "insert into user (id, name, color, design, obs_key, schutz_movie_id, is_admin, freigegeben, bild, vitrine,"
+        " kalender, push, created_at) values (1, 'Marc', '', '', '', 694, 1, 1, '', '[]', '', '', '2026-10-03')"
+    )
+    con.execute(  # group 1 exists since 0006
+        "insert into mitglied (gruppe_id, user_id, ist_admin, dabei, rueckmeldung, seit)"
+        " values (1, 1, 1, 0, '', '2026-10-03')"
+    )
+    con.execute("insert into session (sid, user_id, zugang, created_at) values ('drin', 1, 1, '2026-10-04')")
+    con.execute("insert into session (sid, user_id, zugang, created_at) values ('draussen', null, 1, '2026-10-04')")
+    con.commit()
+    con.close()
+
+    migrate.upgrade(u)
+
+    con = sqlite3.connect(tmp_path / "db.sqlite")
+    assert con.execute("select sid, user_id from sessionname").fetchall() == [("drin", 1)]
+    assert "schutz_movie_id" not in [r[1] for r in con.execute("pragma table_info(user)")]
+    assert con.execute("select user_id, ist_admin from mitglied").fetchall() == [(1, 1)]  # the rebuild kept children
+
+
 def test_database_from_0_1_is_refused(tmp_path):
     con = sqlite3.connect(tmp_path / "db.sqlite")
     con.execute("create table user (id integer primary key, name text)")  # user_version stays 0

@@ -5,6 +5,7 @@ import { api } from '../api'
 import { useApp } from '../stores/app'
 import { useUi } from '../stores/ui'
 import { datum } from '../format'
+import AnmeldeCode from './AnmeldeCode.vue'
 import Icon from './Icon.vue'
 import UserAvatar from './UserAvatar.vue'
 
@@ -31,6 +32,7 @@ async function fertig(text) {
 const neuerName = ref('')
 const bearbeiten = ref(null) // id of the name being renamed
 const name = ref('')
+const codeFuer = ref(null) // id of the name whose login code is shown
 
 async function anlegen() {
   const n = neuerName.value.trim()
@@ -62,11 +64,7 @@ async function loeschen(u) {
   await api.del(`/api/users/${u.id}`)
   await fertig(t('adminbereich.nameGeloescht', { name: u.name }))
 }
-async function schutzWeg(u) {
-  if (!confirm(t('adminbereich.filmPasswortVonName', { name: u.name, name2: u.name }))) return
-  await api.post(`/api/users/${u.id}/schutz`, { movie_id: null })
-  await fertig(t('adminbereich.filmPasswortVonName2', { name: u.name }))
-}
+
 async function bildWeg(u) {
   if (!confirm(t('adminbereich.profilbildVonNameEntfernen', { name: u.name }))) return
   await api.del(`/api/users/${u.id}/bild`)
@@ -115,7 +113,7 @@ watch(() => app.antraege, laden)
           </form>
           <strong v-else>{{ u.name }}</strong>
           <span v-if="u.admin" class="chip admin">{{ $t('adminbereich.admin') }}</span>
-          <span v-if="u.hat_schutz" class="chip" :title="$t('adminbereich.nameMitFilmPasswort')"><Icon name="schloss" :size="12" /></span>
+
           <span class="muted small">{{ u.sitzungen ? $t('adminbereich.geraete', { n: u.sitzungen }, u.sitzungen) : $t('adminbereich.nichtAngemeldet') }} · {{ $t('adminbereich.seit', { am: datum(u.seit) }) }}</span>
         </div>
         <div class="row tools">
@@ -123,11 +121,21 @@ watch(() => app.antraege, laden)
           <button v-if="!(u.admin && einzigerAdmin)" class="ghost small" @click="aendern(u, { admin: !u.admin }, u.admin ? $t('adminbereich.keinAdminMehr', { name: u.name }) : $t('adminbereich.jetztAdmin', { name: u.name }))">
             {{ u.admin ? $t('adminbereich.adminEntziehen') : $t('adminbereich.zumAdminMachen') }}
           </button>
-          <button v-if="u.hat_schutz" class="ghost small" @click="schutzWeg(u)">{{ $t('adminbereich.filmPasswortZuruecksetzen') }}</button>
+          <button v-if="u.id !== app.me?.id" class="ghost small" :aria-expanded="codeFuer === u.id" @click="codeFuer = codeFuer === u.id ? null : u.id">
+            <Icon name="schloss" :size="13" /> {{ $t('adminbereich.anmeldecode') }}
+          </button>
           <button v-if="u.bild" class="ghost small" @click="bildWeg(u)">{{ $t('adminbereich.bildEntfernen') }}</button>
           <button v-if="u.sitzungen" class="ghost small" @click="abmelden(u)"><Icon name="logout" :size="13" /> {{ $t('adminbereich.ueberallAbmelden') }}</button>
           <button v-if="u.id !== app.me?.id" class="ghost small danger" :aria-label="$t('adminbereich.nameLoeschen', { name: u.name })" @click="loeschen(u)"><Icon name="muell" :size="14" /></button>
         </div>
+        <AnmeldeCode
+          v-if="codeFuer === u.id"
+          class="tools"
+          :url="`/api/admin/users/${u.id}/login-code`"
+          :label="$t('adminbereich.anmeldecode')"
+          :name="u.name"
+          sofort
+        />
       </li>
     </ul>
     <form class="row create" @submit.prevent="anlegen">

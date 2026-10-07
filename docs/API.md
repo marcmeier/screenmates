@@ -7,9 +7,12 @@ is running. Path and field names are German, as in the code (e.g. `termin` = dat
 **Access:** – anyone · **N** a chosen name · **E** author or admin · **A** admin
 
 **Invite-only:** as soon as one name exists, the whole API answers browsers without access with
-`423` – except `/health`, `/zugang`, `/kino/mtx-auth` and streaming with an OBS key
-(`/kino/whip`, `/kino/sitzung/whip/…`). Access comes from an invitation (`POST /zugang`) or a
-name. "Anyone" then means: anyone with access.
+`423` – except `/health`, `/zugang`, `/login`, `/kino/mtx-auth` and streaming with an OBS key
+(`/kino/whip`, `/kino/sitzung/whip/…`). Access comes from an invitation (`POST /zugang`), a
+login code (`POST /login`) or a name. "Anyone" then means: anyone with access.
+
+**Names and devices:** a browser may only use the names it created or connected with a login code
+(`auf_geraet` in `GET /users`). There are no passwords.
 
 **Language:** every request may carry `X-Sprache: de|en`; texts the server writes for that request
 (errors, shelves, awards, facts) follow it. Texts for someone else – push messages, the bell,
@@ -49,13 +52,13 @@ Every film carries the group flags `gesehen` (watched), `gemerkt` (on the watchl
 
 | Method | Path | Access | Purpose |
 |---|---|:-:|---|
-| GET | `/users` | – | Approved names, `ich`, `admin`, `antraege` (open requests, admins only) |
+| GET | `/users` | – | Approved names, `ich`, `admin`, `antraege` (open requests, admins only), `auf_geraet` (ids of the names this browser may pick) |
 | POST | `/users` | – | Create a name: the first name in an empty database becomes admin; with a "direct" invitation you're in that group right away, otherwise it's a request (`freigegeben: false`) to the admins of the invitation's group. Admins create approved names directly. At most 20 open requests |
-| POST | `/users/waehlen` | – | Sign in (`user_id`, plus `movie_id` as film PIN if protected) or sign out (`user_id: null`). Throttled |
+| POST | `/users/waehlen` | – | Switch to one of this browser's names (`user_id`) or sign out (`user_id: null`; the name stays on the browser) |
 | DELETE | `/users/{id}` | A | Delete a user or reject a request (ratings and votes are removed, comments anonymized). Never the last admin |
 | PUT/DELETE | `/users/{id}/bild` | E | Upload (image as request body, max. 5 MB; JPG/PNG/WebP/GIF, becomes 256×256 WebP without metadata) or remove a profile picture. E = the person themselves or an admin |
 | GET | `/users/{id}/bild` | – | Profile picture (URL with `?v=…` from `users[].bild`, cached for long) |
-| GET/POST | `/users/{id}/schutz` | –/E | Query protection (only `hat_schutz`) or set/remove it |
+
 | PUT | `/users/me/design` | N | Your look: color `theme` and `schrift` (font) |
 | PUT | `/users/me/sprache` | N | Your language: `de` or `en` (applies on all devices) |
 | POST | `/users/me/willkommen` · `/users/me/erste-schritte` | N | The introduction / the first-steps card was seen (applies on all devices) |
@@ -100,7 +103,12 @@ watchlisted, suggested, "on our services") apply to the active group.
 | Method | Path | Access | Purpose |
 |---|---|:-:|---|
 | GET | `/zugang` | – | `gesperrt` (names exist), `offen` (this browser has access), `einladung` (group and mode of this browser's invitation) |
-| POST | `/zugang` | – | Come in with an invitation (`token`). Throttled: 10 failed attempts per IP, 100 in total per 15 min |
+| POST | `/zugang` | – | Come in with an invitation (`token`). Throttled: 10 failed attempts (invitations and login codes) per IP, 100 in total per 15 min |
+| POST | `/login` | – | Redeem a login code (`code`, e.g. `ABCD-EFGH`; case, spaces and dashes don't matter): this browser gets the name and is signed in with it. One use; throttled like `/zugang` |
+| GET | `/login` | N | `geraete`: on how many browsers your name is |
+| POST | `/login/code` | N | A login code for another device of yours: `code`, `path` (`/#/login/<code>`), `valid_until` (15 min) |
+| POST | `/login/andere-abmelden` | N | Take your name off every other browser |
+| DELETE | `/login/namen/{id}` | – | Take a name off this browser |
 | GET/POST | `/admin/gruppen/{id}/einladungen` | group/server admin | The group's valid links, or a new link: `direkt`, `tage` (or `null`), `max_nutzungen` (or `null`), `notiz` |
 | DELETE | `/admin/einladungen/{id}` | group/server admin | Revoke a link (people already in stay in) |
 | POST | `/einladungen/annehmen` | N | Join a group with an existing name via its link (`direkt`) or ask to join |
@@ -108,7 +116,8 @@ watchlisted, suggested, "on our services") apply to the active group.
 | POST | `/admin/gruppen/{id}/anfragen/{user}` | group/server admin | Accept (`annehmen: true`) or reject |
 | GET/POST | `/admin/users` | A | All names incl. requests and number of signed-in devices, or create an approved name directly |
 | PATCH | `/admin/users/{id}` | A | `name`, `color` (`#rrggbb`), `admin`, `freigegeben` (approve a request). There is always one admin left |
-| POST | `/admin/users/{id}/abmelden` | A | End all of the person's sessions; those browsers also lose access |
+| POST | `/admin/users/{id}/abmelden` | A | Take the name off every browser; browsers signed in with it also lose access |
+| POST | `/admin/users/{id}/login-code` | A | A login code for that person (valid 24 h), e.g. after a lost phone or for a name created by an admin |
 | GET | `/admin/ki-nutzung` | A | How much the AI search was used and what it cost (as far as the provider reports) |
 | GET | `/ueber` | – | About page: version, repository, imprint/privacy/donation texts, linked accounts (reachable without an invitation) |
 | PUT | `/admin/seiten/{key}` | A | Edit an about-page text or account |

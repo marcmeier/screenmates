@@ -3,20 +3,22 @@ import { ref } from 'vue'
 import { useApp } from '../stores/app'
 import { t } from '../i18n'
 import { useUi } from '../stores/ui'
-import FilmPicker from './FilmPicker.vue'
 import Icon from './Icon.vue'
 import Modal from './Modal.vue'
 import UserAvatar from './UserAvatar.vue'
 
+// Who's watching: the names on this device, a new name, or a login code for a name
+// you already have on another device. Nobody can pick someone else's name.
 const app = useApp()
 const ui = useUi()
 const newName = ref('')
 const error = ref('')
 const busy = ref(false)
-// Film-as-PIN: a guarded name is unlocked by clicking the right film.
-const guarded = ref(null)
 // A requested name waits for an admin.
 const beantragt = ref(null)
+// "I already have a name": sign in with a login code from another device.
+const mitCode = ref(false)
+const code = ref('')
 
 function close() {
   ui.loginOpen = false
@@ -37,16 +39,13 @@ async function attempt(fn) {
   }
 }
 
-function pick(u) {
-  if (u.hat_schutz) {
-    error.value = ''
-    guarded.value = u
-  } else {
-    attempt(() => app.choose(u.id))
-  }
-}
+const pick = (u) => attempt(() => app.choose(u.id))
+const einloesen = () => code.value.trim() && attempt(() => app.anmelden(code.value.trim()))
 
-const unlock = (movie) => attempt(() => app.choose(guarded.value.id, movie.id))
+function zeigeCode(an) {
+  mitCode.value = an
+  error.value = ''
+}
 
 async function create() {
   const name = newName.value.trim()
@@ -85,20 +84,19 @@ async function create() {
         <div class="center"><button @click="close">{{ $t('namen.allesKlar') }}</button></div>
       </template>
 
-      <template v-else-if="!guarded">
+      <template v-else-if="!mitCode">
         <h2>{{ $t('namen.wer') }}</h2>
         <p v-if="app.zugang.einladung" class="einladung center">
           {{ $t('namen.eingeladen') }} <strong>„{{ app.zugang.einladung.gruppe }}“</strong>.
           {{ app.zugang.einladung.direkt ? $t('namen.direkt') : $t('namen.mitFreigabe') }}
         </p>
-        <div v-if="app.users.length" class="users">
-          <button v-for="u in app.users" :key="u.id" class="user" :disabled="busy" @click="pick(u)">
+        <div v-if="app.meineNamen.length" class="users">
+          <button v-for="u in app.meineNamen" :key="u.id" class="user" :disabled="busy" @click="pick(u)">
             <UserAvatar :user="u" />
             <span>{{ u.name }}</span>
-            <Icon v-if="u.hat_schutz" name="schloss" :size="14" class="lock" />
           </button>
         </div>
-        <p v-else class="muted center">{{ $t('namen.erster') }}</p>
+        <p v-else-if="!app.users.length" class="muted center">{{ $t('namen.erster') }}</p>
 
         <p v-if="app.users.length && !app.zugang.einladung" class="muted center hint">{{ $t('namen.neuHier') }}</p>
         <form class="create" @submit.prevent="create">
@@ -107,13 +105,28 @@ async function create() {
             <Icon name="plus" :size="16" /> {{ !app.users.length || app.zugang.einladung?.direkt ? $t('namen.anlegen') : $t('namen.beantragen') }}
           </button>
         </form>
+        <p v-if="app.users.length" class="center schon">
+          <button class="ghost small" @click="zeigeCode(true)">{{ $t('namen.habeSchon') }}</button>
+        </p>
       </template>
 
       <template v-else>
-        <button class="ghost small back" @click="guarded = null"><Icon name="pfeil" :size="14" /> {{ $t('allg.zurueck') }}</button>
-        <h2>{{ $t('namen.passwortFuer', { name: guarded.name }) }}</h2>
-        <p class="muted center">{{ $t('namen.passwortText', { name: guarded.name }) }}</p>
-        <FilmPicker :busy="busy" @pick="unlock" />
+        <button class="ghost small back" @click="zeigeCode(false)"><Icon name="pfeil" :size="14" /> {{ $t('allg.zurueck') }}</button>
+        <h2>{{ $t('namen.codeTitel') }}</h2>
+        <p class="muted center">{{ $t('namen.codeText') }}</p>
+        <form class="create" @submit.prevent="einloesen">
+          <input
+            v-model="code"
+            class="code"
+            maxlength="20"
+            placeholder="ABCD-EFGH"
+            autocomplete="one-time-code"
+            autocapitalize="characters"
+            spellcheck="false"
+            :aria-label="$t('namen.codeFeld')"
+          />
+          <button class="primary" :disabled="busy || !code.trim()">{{ $t('namen.codeEinloesen') }}</button>
+        </form>
       </template>
 
       <p v-if="error" class="error" role="alert">{{ error }}</p>
@@ -131,9 +144,10 @@ h2 { text-align: center; font-weight: 600; font-size: 1.25rem; margin: 0.6rem 0 
 .einladung { font-size: 0.9rem; margin: -0.6rem 0 1.2rem; }
 .users { display: flex; flex-wrap: wrap; gap: 0.6rem; justify-content: center; margin-bottom: 1.6rem; }
 .user { padding: 0.45rem 0.9rem 0.45rem 0.45rem; border-radius: 999px; }
-.lock { color: var(--muted); }
 .create { display: flex; gap: 0.5rem; }
 .create button { flex: none; }
+.code { font-family: 'JetBrains Mono Variable', ui-monospace, monospace; letter-spacing: 0.08em; text-transform: uppercase; }
+.schon { margin: 1rem 0 0; }
 .back { margin-bottom: 0.4rem; }
 .error { color: #ff6b6b; text-align: center; margin: 1rem 0 0; }
 </style>
