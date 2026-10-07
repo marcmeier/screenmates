@@ -1,6 +1,6 @@
 <script setup>
 import { computed, onMounted } from 'vue'
-import { api } from '../api'
+import { api, inReihe } from '../api'
 import { useApp } from '../stores/app'
 import { SCHRIFTEN, anwenden } from '../design'
 import SprachWahl from './SprachWahl.vue'
@@ -14,11 +14,13 @@ const design = computed(() => ({ theme: 'kino', schrift: 'inter', ...(app.me?.de
 onMounted(() => Object.values(SCHRIFTEN).forEach((s) => s.laden?.()))
 
 // Applied and remembered at once; the server gets only the font, so a theme picked a moment
-// earlier (its answer still on the way) is never sent back as the old one.
+// earlier (its answer still on the way) is never sent back as the old one. Fonts clicked in
+// quick succession reach the server in that order.
+const reihe = inReihe()
 async function schrift(key) {
   app.me.design = { ...app.me.design, schrift: key }
   anwenden(design.value)
-  await api.put('/api/users/me/design', { schrift: key })
+  await reihe(() => api.put('/api/users/me/design', { schrift: key }))
 }
 </script>
 

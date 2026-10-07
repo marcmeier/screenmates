@@ -1,6 +1,6 @@
 <script setup>
 import { computed } from 'vue'
-import { api } from '../api'
+import { api, inReihe } from '../api'
 import { useApp } from '../stores/app'
 import { THEMES, anwenden } from '../design'
 
@@ -8,11 +8,12 @@ import { THEMES, anwenden } from '../design'
 const app = useApp()
 const design = computed(() => ({ theme: 'kino', schrift: 'inter', ...(app.me?.design || {}) }))
 
-// Applied and remembered at once; the server gets only the theme (see Darstellung.vue).
+// Applied and remembered at once; the server gets only the theme, in click order (see Darstellung.vue).
+const reihe = inReihe()
 async function waehlen(theme) {
   app.me.design = { ...app.me.design, theme }
   anwenden(design.value)
-  await api.put('/api/users/me/design', { theme })
+  await reihe(() => api.put('/api/users/me/design', { theme }))
 }
 </script>
 

@@ -66,6 +66,9 @@ All notable changes to screenmates are documented here. The format is based on
 - The "Better safe than sorry" award is now "Second screen": connect a second device of your own.
 
 ### Fixed
+- Language: switching to English and right back to German could end in English, because the answers
+  arrived in the other order. Language, theme and font now change on screen at once and reach the server
+  in the order they were clicked.
 - Settings → Appearance: picking a theme and then quickly a font could undo the theme, because the second
   change still sent the old theme along. Theme and font are now saved separately.
 - Movie night page: a reload that started just before you saved the date (or a poll result) could arrive
