@@ -13,10 +13,12 @@ const design = computed(() => ({ theme: 'kino', schrift: 'inter', ...(app.me?.de
 // Every font button shows itself in its font.
 onMounted(() => Object.values(SCHRIFTEN).forEach((s) => s.laden?.()))
 
+// Applied and remembered at once; the server gets only the font, so a theme picked a moment
+// earlier (its answer still on the way) is never sent back as the old one.
 async function schrift(key) {
-  const neu = { theme: design.value.theme, schrift: key }
-  anwenden(neu) // at once, before the server answers
-  app.me.design = (await api.put('/api/users/me/design', neu)).design
+  app.me.design = { ...app.me.design, schrift: key }
+  anwenden(design.value)
+  await api.put('/api/users/me/design', { schrift: key })
 }
 </script>
 
