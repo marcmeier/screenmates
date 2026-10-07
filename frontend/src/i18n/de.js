@@ -1145,8 +1145,7 @@ export default {
     abstimmenLassen: "Abstimmen lassen",
     alleStimmenMitJa:
       "Alle stimmen mit Ja, Vielleicht oder Nein ab. Wer festlegt, übernimmt die Antworten als Zusagen.",
-    deutscheZeit: "(deutsche Zeit)",
-    deutscheZeit2: "(deutsche Zeit)",
+    ortszeit: "(Zeit in {ort})",
     festerTermin: "Fester Termin",
     optional: "(optional)",
     speichern: "Speichern",

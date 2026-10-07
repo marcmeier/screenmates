@@ -110,6 +110,28 @@ def test_0013_keeps_logged_in_browsers_and_drops_the_film_password(tmp_path):
     assert con.execute("select user_id, ist_admin from mitglied").fetchall() == [(1, 1)]  # the rebuild kept children
 
 
+def test_0015_keeps_german_time_for_databases_from_before(tmp_path):
+    from alembic import command
+
+    u = url(tmp_path)
+    command.upgrade(migrate.alembic_config(u), "0014")
+    con = sqlite3.connect(tmp_path / "db.sqlite")
+    con.execute(
+        "insert into user (id, name, color, design, obs_key, is_admin, freigegeben, bild, vitrine, kalender, push,"
+        " created_at) values (1, 'Marc', '', '', '', 1, 1, '', '[]', '', '', '2026-10-03')"
+    )
+    con.commit()
+    con.close()
+    migrate.upgrade(u)
+    con = sqlite3.connect(tmp_path / "db.sqlite")
+    assert con.execute("select zeitzone from appmeta").fetchall() == [("Europe/Berlin",)]
+
+    frisch = url(tmp_path, "frisch.sqlite")  # a new install: its first admin decides
+    migrate.upgrade(frisch)
+    con = sqlite3.connect(tmp_path / "frisch.sqlite")
+    assert con.execute("select zeitzone from appmeta").fetchall() in ([], [("",)])
+
+
 def test_database_from_0_1_is_refused(tmp_path):
     con = sqlite3.connect(tmp_path / "db.sqlite")
     con.execute("create table user (id integer primary key, name text)")  # user_version stays 0

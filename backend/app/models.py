@@ -277,6 +277,7 @@ class AppMeta(SQLModel, table=True):
     erfolge_geprueft: bool = False  # the first check ran (its unlocks are marked retroactive)
     vapid: str = ""  # Web Push: the server's VAPID private key (PEM), made on first use
     einrichtung: str = ""  # setup code for the first name, while there is none (see einrichtung.py)
+    zeitzone: str = ""  # the group's time zone when TIMEZONE isn't set (see zeitzone.py)
 
 
 class KinoState(SQLModel, table=True):

@@ -2,6 +2,7 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Literal
 
+from pydantic import AliasChoices, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -13,6 +14,8 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=BASE_DIR / ".env", extra="ignore")
 
     app_name: str = "screenmates"
+    # The group's wall-clock time, e.g. Europe/Berlin (see zeitzone.py). TZ works too.
+    timezone: str = Field("", validation_alias=AliasChoices("timezone", "tz"))
     database_url: str = f"sqlite:///{BASE_DIR / 'screenmates.db'}"
 
     # TMDB — leave empty to run on seed data only.

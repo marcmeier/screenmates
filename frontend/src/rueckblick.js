@@ -1,6 +1,7 @@
 // Wording for the year in review, shared by the overview and the story.
 import { datumFmt, dezimal, zahl } from './format'
 import { t } from './i18n'
+import { zeitzone } from './zeitzone'
 
 export const n = (x) => zahl(x)
 export const stunden = (minuten) => Math.round(minuten / 60)
@@ -34,7 +35,7 @@ export const FILME = benannt('film', [
   { key: 'aeltester', text: (f) => t('rueckblick.text.von', { jahr: f.movie.year }) },
 ])
 
-export const datum = (iso) => datumFmt({ day: 'numeric', month: 'long', timeZone: 'Europe/Berlin' }).format(new Date(iso))
+export const datum = (iso) => datumFmt({ day: 'numeric', month: 'long', timeZone: zeitzone() }).format(new Date(iso))
 // Month 1–12 and weekday 0 = Monday (as the server counts) in the current language.
 export const monatName = (m) => datumFmt({ month: 'long', timeZone: 'UTC' }).format(new Date(Date.UTC(2024, m.nr - 1, 15)))
 export const wochentagName = (d) => datumFmt({ weekday: 'long', timeZone: 'UTC' }).format(new Date(Date.UTC(2024, 0, 1 + d.nr)))

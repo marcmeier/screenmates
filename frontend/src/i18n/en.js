@@ -1123,8 +1123,7 @@ export default {
     abstimmenLassen: "Let people vote",
     alleStimmenMitJa:
       "Everyone votes yes, maybe or no. Whoever sets the date takes the answers as RSVPs.",
-    deutscheZeit: "(German time)",
-    deutscheZeit2: "(German time)",
+    ortszeit: "({ort} time)",
     festerTermin: "Fixed date",
     optional: "(optional)",
     speichern: "Save",

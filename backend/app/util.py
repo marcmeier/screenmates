@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from datetime import UTC, datetime
 from typing import Any
-from zoneinfo import ZoneInfo
 
 from fastapi import HTTPException
 from sqlmodel import Session as DBSession
@@ -12,8 +11,8 @@ from sqlmodel import Session as DBSession
 from . import tmdb
 from .models import Movie
 from .sprache import aktuell
+from .zeitzone import zone
 
-BERLIN = ZoneInfo("Europe/Berlin")
 WOCHENTAGE = ("Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag", "Sonntag")
 MONATE = (
     "Januar",
@@ -54,8 +53,8 @@ MONTHS = (
 
 
 def termin_text(dt: datetime) -> str:
-    """'Freitag, 9. Oktober, 20:00 Uhr' (or 'Friday 9 October, 20:00') in German time, no locale needed."""
-    d = utc(dt).astimezone(BERLIN)
+    """'Freitag, 9. Oktober, 20:00 Uhr' (or 'Friday 9 October, 20:00') in the group's time, no locale needed."""
+    d = utc(dt).astimezone(zone())
     if aktuell() == "en":
         return f"{WEEKDAYS[d.weekday()]} {d.day} {MONTHS[d.month - 1]}, {d:%H:%M}"
     return f"{WOCHENTAGE[d.weekday()]}, {d.day}. {MONATE[d.month - 1]}, {d:%H:%M} Uhr"

@@ -35,6 +35,11 @@ All notable changes to screenmates are documented here. The format is based on
   on. Predictions, the suggestions' group forecast and taste matching now use only the active group's
   members and evenings, and the AI search only hides films the active group has seen.
 
+### Added
+- Time zone setting `TIMEZONE` (or `TZ`). Dates, reminders, "on this day", awards and the year in review
+  used to be fixed to German time. Without the setting, a new install takes the zone of the first admin's
+  browser. The date dialog says which zone it means ("Berlin time").
+
 ### Changed
 - Settings show on how many devices you are signed in, and can sign you out on all the others.
 - "Sign out" keeps the name on the device so you can pick it again; "Remove from this device" takes it off.
@@ -52,6 +57,7 @@ All notable changes to screenmates are documented here. The format is based on
   guess.
 
 ### Upgrading
+- Existing databases keep German time (Europe/Berlin) unless `TIMEZONE` says otherwise.
 - Every browser that is signed in keeps its name. Browsers that were signed out need a login code once,
   from another device of that person or from an admin.
 

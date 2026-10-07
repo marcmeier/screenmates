@@ -9,7 +9,7 @@ from fastapi.staticfiles import StaticFiles
 from sqlmodel import Session
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
-from . import einrichtung, erfolge, push, tmdb
+from . import einrichtung, erfolge, push, tmdb, zeitzone
 from .config import settings
 from .db import engine, init_db
 from .gruppen import kontext
@@ -54,6 +54,7 @@ async def lifespan(app: FastAPI):
     init_db()
     seed_if_empty()
     with Session(engine) as db:
+        zeitzone.laden(db)
         einrichtung.ankuendigen(db)
         # Achievements: the first check right away, so only history counts as retroactive.
         erfolge.pruefen(db, sofort=True)

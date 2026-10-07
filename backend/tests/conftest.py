@@ -11,6 +11,7 @@ os.environ["MEDIA_DIR"] = f"{_tmp}/media"
 os.environ["TMDB_API_KEY"] = ""
 os.environ["LLM_API_KEY"] = ""
 SETUP = os.environ["SETUP_TOKEN"] = "TEST-SETUP-CODE"  # the first name of every fresh test database needs it
+os.environ["TIMEZONE"] = "Europe/Berlin"  # the tests' dates and times are German ones
 
 import pytest  # noqa: E402
 from fastapi.testclient import TestClient  # noqa: E402

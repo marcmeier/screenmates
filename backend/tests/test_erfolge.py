@@ -7,7 +7,7 @@ from sqlmodel import select
 
 from app import erfolge
 from app.models import AppMeta, Erfolg
-from app.util import BERLIN
+from app.zeitzone import zone
 
 from .conftest import login
 
@@ -24,7 +24,7 @@ def meine(c):
 def abends(dt: datetime) -> datetime:
     """Move a time from the small hours to the evening before: run at night, the tests
     would otherwise unlock the secret "Nachteule" (after midnight) on the side."""
-    stunde = dt.astimezone(BERLIN).hour
+    stunde = dt.astimezone(zone()).hour
     return dt - timedelta(hours=stunde + 1) if stunde < 5 else dt
 
 

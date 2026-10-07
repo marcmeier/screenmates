@@ -1,13 +1,13 @@
 """The year in review: numbers, films and friendly titles from a group's chronicle."""
 
 from datetime import datetime
+from zoneinfo import ZoneInfo
 
 import pytest
 
-from app.util import BERLIN
-
 from .conftest import login
 
+BERLIN = ZoneInfo("Europe/Berlin")  # TIMEZONE in conftest
 JAHR = datetime.now(BERLIN).year - 1
 
 

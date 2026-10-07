@@ -16,7 +16,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlmodel import Session as DBSession
 from sqlmodel import col, func, select
 
-from .. import bilder, einrichtung, erfolge
+from .. import bilder, einrichtung, erfolge, zeitzone
 from ..db import get_session
 from ..gruppen import aktive_gruppe, aufnehmen, gruppen_admin, mitgliedschaften
 from ..models import Abend, Abo, Ereignis, Gruppe, Mitglied, Session, User
@@ -30,7 +30,8 @@ from ..session import (
     require_user,
 )
 from ..sprache import tr
-from ..util import BERLIN, utc
+from ..util import utc
+from ..zeitzone import zone
 from . import login
 
 router = APIRouter(prefix="/api", tags=["users"])
@@ -83,6 +84,7 @@ def new_user(db: DBSession, name: str, *, freigegeben: bool, admin: bool = False
 class NameAnlegen(BaseModel):
     name: str = Field(min_length=1, max_length=30)
     setup: str = Field("", max_length=40)  # the setup code, only for the very first name
+    zeitzone: str = Field("", max_length=64)  # the browser's time zone; the first name's sets the group's
 
 
 class NameWaehlen(BaseModel):
@@ -161,6 +163,7 @@ def create_user(
             raise HTTPException(403, "Für den ersten Namen braucht es den Einrichtungscode aus dem Server-Log.")
         u = new_user(db, name, freigegeben=True, admin=True)
         einrichtung.erledigt(db)
+        zeitzone.vom_ersten_admin(db, body.zeitzone)
         # The door closes with the first name: its browser stays inside.
         login.binden(db, ensure_session(request, response, db), u.id)
         db.commit()
@@ -266,7 +269,7 @@ def rueckmelden(db: DBSession, m: Mitglied, antwort: str | None, termin: datetim
     m.rueckmeldung = antwort if antwort in ("vielleicht", "nein") else ""
     db.add(m)
     if antwort == "ja" and termin is not None and utc(termin) > datetime.now(UTC) - timedelta(hours=6):
-        tag = utc(termin).astimezone(BERLIN).date().isoformat()
+        tag = utc(termin).astimezone(zone()).date().isoformat()
         schon = db.exec(
             select(Ereignis).where(Ereignis.typ == "zusage", Ereignis.user_id == m.user_id, Ereignis.bezug == tag)
         ).first()

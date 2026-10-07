@@ -26,7 +26,8 @@ from ..models import Mitglied, TerminStimme, TerminVorschlag, User
 from ..serialize import iso
 from ..session import require_user
 from ..sprache import tr
-from ..util import BERLIN, termin_text, utc
+from ..util import termin_text, utc
+from ..zeitzone import zone
 from . import gastgeber
 from .abend import _termin_dict, pruefe_termin, termin_setzen
 from .users import rueckmelden
@@ -222,7 +223,7 @@ def pick(
         if m.user_id in antworten:
             rueckmelden(db, m, antworten[m.user_id], termin)
     # The proposer found the date (counts once the evening took place).
-    erfolge.protokoll(db, "umfrage", von, termin.astimezone(BERLIN).date().isoformat())
+    erfolge.protokoll(db, "umfrage", von, termin.astimezone(zone()).date().isoformat())
     _schliessen(db, gid)
     db.commit()
     return {"termin": _termin_dict(a, db), "umfrage": _zustand(db, gid, user, admin)}

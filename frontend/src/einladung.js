@@ -2,12 +2,13 @@
 // (portrait, how messengers show pictures best), drawn on a canvas in the browser.
 import { datumFmt } from './format'
 import { t } from './i18n'
+import { zeitzone } from './zeitzone'
 
 export function terminText(termin) {
   if (!termin?.termin) return null
   const d = new Date(termin.termin)
-  const tag = datumFmt({ weekday: 'long', day: 'numeric', month: 'long', timeZone: 'Europe/Berlin' }).format(d)
-  const zeit = datumFmt({ hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Berlin' }).format(d)
+  const tag = datumFmt({ weekday: 'long', day: 'numeric', month: 'long', timeZone: zeitzone() }).format(d)
+  const zeit = datumFmt({ hour: '2-digit', minute: '2-digit', timeZone: zeitzone() }).format(d)
   return { tag, zeit: t('zeit.uhr', { zeit }), notiz: termin.notiz }
 }
 
