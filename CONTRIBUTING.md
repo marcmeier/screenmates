@@ -32,6 +32,12 @@ run when MediaMTX and FFmpeg are present (`./scripts/mediamtx.sh`, `./scripts/ff
 
 CI runs lint, unit tests, E2E tests and the Docker Compose setup on every pull request.
 
+## Dependencies
+
+Backend dependencies are listed loosely in `backend/requirements.in` (and `requirements-dev.in`) and
+pinned with hashes in the `.txt` files, which Docker and CI install. After changing an `.in` file, run
+`make lock`. Releases are described in [docs/RELEASING.md](docs/RELEASING.md).
+
 ## Database changes
 
 After changing `backend/app/models.py`, generate a migration:

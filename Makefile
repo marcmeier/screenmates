@@ -3,7 +3,7 @@ SHELL := /bin/bash
 VENV  := backend/.venv
 PY    := $(VENV)/bin/python
 
-.PHONY: help install kino-install dev backend frontend kino-server test test-backend test-e2e migration lint format build run
+.PHONY: help install kino-install dev backend frontend kino-server test test-backend test-e2e migration lint format build run lock
 MTX   := .tools/mediamtx
 # With MediaMTX installed, `make dev`/`make run` switch the Kino on automatically.
 KINO  := $(if $(wildcard $(MTX)),MEDIAMTX_WEBRTC_URL=http://127.0.0.1:8889,)
@@ -53,6 +53,11 @@ lint: ## ruff + eslint
 format: ## Format the code
 	cd backend && .venv/bin/ruff format . && .venv/bin/ruff check --fix .
 	cd frontend && npx eslint --fix .
+
+lock: ## Re-pin the backend dependencies (requirements*.in -> requirements*.txt, with hashes)
+	cd backend && .venv/bin/pip install -q pip-tools && \
+	  .venv/bin/pip-compile -q --generate-hashes --strip-extras --allow-unsafe -o requirements.txt requirements.in && \
+	  .venv/bin/pip-compile -q --generate-hashes --strip-extras --allow-unsafe -o requirements-dev.txt requirements-dev.in
 
 build: ## Build the frontend for production
 	cd frontend && npm run build

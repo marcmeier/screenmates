@@ -19,6 +19,7 @@ from ..db import get_session
 from ..models import Seitentext, now
 from ..session import require_admin
 from ..sprache import tr
+from ..version import __version__
 
 router = APIRouter(prefix="/api", tags=["ueber"])
 
@@ -58,7 +59,6 @@ def kontoname(key: str, eingabe: str) -> str:
 
 @router.get("/ueber")
 def ueber(db: DBSession = Depends(get_session)):
-    from ..main import __version__
 
     # The source of this installation (AGPL-3.0 §13): SOURCE_URL, so a modified version links its own.
     return {"version": __version__, "repo": settings.source_url, "texte": texte(db), "konten": konten(db)}
