@@ -254,7 +254,7 @@ async def ki_suche(body: KiSuche, db: DBSession = Depends(get_session), user: Us
     ).one()
     if heute >= settings.llm_limit_per_day:
         raise HTTPException(429, tr("Du hast heute schon {n} KI-Suchen gemacht – morgen geht es weiter.", n=heute))
-    gesehen_ids = set(db.exec(select(Watched.movie_id)).all())
+    gesehen_ids = set(db.exec(select(Watched.movie_id).where(Watched.gruppe_id == aktuelle_gruppe())).all())
     vermeiden = (
         list(db.exec(select(Movie.title).where(col(Movie.id).in_(gesehen_ids))).all()) if body.ohne_gesehene else []
     )

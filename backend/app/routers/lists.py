@@ -66,7 +66,7 @@ async def suggestions_forecast(gid: int = Depends(aktive_gruppe), db: DBSession 
     mit = db.exec(select(Mitglied).where(Mitglied.gruppe_id == gid)).all()
     dabei = [m.user_id for m in mit if m.dabei]
     leute = dabei if len(dabei) >= 2 else [m.user_id for m in mit]
-    prognosen = await gruppen_prognose(db, filme, leute) if filme else {}
+    prognosen = await gruppen_prognose(db, gid, filme, leute) if filme else {}
     return {"fuer": "dabei" if leute is dabei else "gruppe", "prognosen": {str(k): v for k, v in prognosen.items()}}
 
 

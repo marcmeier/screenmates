@@ -61,12 +61,15 @@ async def _stichworte(db: DBSession, filme: list[Movie]) -> None:
     db.commit()
 
 
-def _sterne(db: DBSession) -> tuple[dict[int, dict[int, list[int]]], dict[int, Movie]]:
-    """Everyone's stars per film (oldest film first) and those films."""
+def _sterne(db: DBSession, gid: int) -> tuple[dict[int, dict[int, list[int]]], dict[int, Movie]]:
+    """Everyone's stars per film in this group's history (oldest film first) and those films.
+
+    Only this group's evenings: what someone rated with another group stays with that group.
+    """
     rows = db.exec(
         select(WatchedRating.user_id, Watched.movie_id, WatchedRating.stars)
         .join(Watched, col(Watched.id) == WatchedRating.watched_id)
-        .where(col(Watched.hidden).is_(False))
+        .where(col(Watched.hidden).is_(False), Watched.gruppe_id == gid)
         .order_by(Watched.watched_at)
     ).all()
     sterne: dict[int, dict[int, list[int]]] = defaultdict(lambda: defaultdict(list))
@@ -79,14 +82,14 @@ def _sterne(db: DBSession) -> tuple[dict[int, dict[int, list[int]]], dict[int, M
 _gruppen_cache: dict[tuple, dict] = {}
 
 
-async def gruppen_prognose(db: DBSession, movie_ids: list[int], leute: list[int]) -> dict[int, dict]:
+async def gruppen_prognose(db: DBSession, gid: int, movie_ids: list[int], leute: list[int]) -> dict[int, dict]:
     """For each film: what these people will think: their real stars if they rated it,
     otherwise their forecast. The group value needs at least two people with a value."""
-    sterne, filme = _sterne(db)
+    sterne, filme = _sterne(db, gid)
     ziele = {m.id: m for m in db.exec(select(Movie).where(col(Movie.id).in_(movie_ids))).all()}
     await _stichworte(db, [*ziele.values(), *filme.values()])
     stand = db.exec(select(func.count(), func.max(WatchedRating.id), func.sum(WatchedRating.stars))).one()
-    schluessel = (tuple(sorted(leute)), tuple(sorted(ziele)), tuple(stand))
+    schluessel = (gid, tuple(sorted(leute)), tuple(sorted(ziele)), tuple(stand))
     if schluessel in _gruppen_cache:
         return _gruppen_cache[schluessel]
     film = {mid: Film.aus(m) for mid, m in filme.items()}
@@ -121,25 +124,17 @@ async def gruppen_prognose(db: DBSession, movie_ids: list[int], leute: list[int]
 
 
 @router.get("/movies/{movie_id}/prognose")
-async def prognose(movie_id: int, db: DBSession = Depends(get_session)):
+async def prognose(movie_id: int, gid: int = Depends(aktive_gruppe), db: DBSession = Depends(get_session)):
+    """Who in the active group will like this film, from their stars in this group."""
     ziel = await ensure_movie(db, movie_id)
-    rows = db.exec(
-        select(WatchedRating.user_id, Watched.movie_id, WatchedRating.stars)
-        .join(Watched, col(Watched.id) == WatchedRating.watched_id)
-        .where(col(Watched.hidden).is_(False))
-        .order_by(Watched.watched_at)
-    ).all()
-    sterne: dict[int, dict[int, list[int]]] = defaultdict(lambda: defaultdict(list))
-    for uid, mid, s in rows:
-        sterne[uid][mid].append(s)  # dicts keep insertion order: oldest film first
-
-    filme = {m.id: m for m in db.exec(select(Movie).where(col(Movie.id).in_({mid for _, mid, _ in rows}))).all()}
+    sterne, filme = _sterne(db, gid)  # dicts keep insertion order: oldest film first
     await _stichworte(db, [ziel, *filme.values()])
     zf = Film.aus(ziel)
     film = {mid: Film.aus(m) for mid, m in filme.items()}
 
     prognosen, zu_wenig = [], []
-    for u in db.exec(select(User).order_by(User.name)).all():
+    mitglieder = select(Mitglied.user_id).where(Mitglied.gruppe_id == gid)
+    for u in db.exec(select(User).where(col(User.id).in_(mitglieder)).order_by(User.name)).all():
         meine = sterne.get(u.id, {})
         if movie_id in meine:
             continue  # rated it already: the real stars are shown, no guess needed

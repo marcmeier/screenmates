@@ -335,27 +335,26 @@ GEMEINSAM_MIN = 3  # films both rated before a taste match is shown
 @router.get("/users/{user_id}/geschmack")
 def taste(
     user_id: int,
-    ich: User = Depends(require_user),
+    gid: int = Depends(aktive_gruppe),
     db: DBSession = Depends(get_session),
 ):
-    """ "Lena tickt zu 87 % wie du": how close this person's stars are to everyone's they share a group with.
+    """ "Lena tickt zu 87 % wie du": how close this person's stars are to everyone else's in the active group.
 
     100 % means the same stars on every film both rated, 0 % two stars apart on average
     (ratings rarely differ by more, so a scale up to four stars would put everyone at 80 %).
-    Only people who share a group with the asker are compared.
+    Only the active group's members and evenings count.
     """
     from ..models import Watched, WatchedRating
 
-    meine_gruppen = set(mitgliedschaften(db, ich.id))
-    leute = set(db.exec(select(Mitglied.user_id).where(col(Mitglied.gruppe_id).in_(meine_gruppen))).all())
-    if user_id not in leute | {ich.id}:
+    leute = set(db.exec(select(Mitglied.user_id).where(Mitglied.gruppe_id == gid)).all())
+    if user_id not in leute:
         raise HTTPException(404)
     nachbarn = leute - {user_id}
     sterne: dict[int, dict[int, list[int]]] = defaultdict(lambda: defaultdict(list))
     for uid, mid, s in db.exec(
         select(WatchedRating.user_id, Watched.movie_id, WatchedRating.stars)
         .join(Watched, col(Watched.id) == WatchedRating.watched_id)
-        .where(col(Watched.hidden).is_(False))
+        .where(col(Watched.hidden).is_(False), Watched.gruppe_id == gid)
     ).all():
         sterne[uid][mid].append(s)
     mittel = {uid: {mid: sum(v) / len(v) for mid, v in filme.items()} for uid, filme in sterne.items()}
