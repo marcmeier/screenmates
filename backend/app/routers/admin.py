@@ -19,7 +19,7 @@ from sqlmodel import col, delete, select
 from ..config import settings
 from ..db import get_session
 from ..gruppen import aufnehmen
-from ..models import KiAnfrage, Session, SessionName, User
+from ..models import AppMeta, KiAnfrage, Session, SessionName, User
 from ..serialize import iso, user_dict
 from ..session import current_user, require_admin
 from ..sprache import tr
@@ -117,6 +117,24 @@ def login_code(user_id: int, db: DBSession = Depends(get_session), admin: User =
     if u is None or not u.freigegeben:
         raise HTTPException(404)
     return login.neuer_code(db, u, admin, login.GUELTIG_ADMIN)
+
+
+# --- settings -------------------------------------------------------------------
+
+
+class Einstellungen(BaseModel):
+    wuensche: bool | None = None  # offer the wishes & ideas board
+
+
+@router.put("/einstellungen")
+def settings_(body: Einstellungen, db: DBSession = Depends(get_session)):
+    """Switch optional parts of screenmates on or off (stored, so it survives restarts)."""
+    meta = db.get(AppMeta, 1) or AppMeta(id=1)
+    if body.wuensche is not None:
+        meta.wuensche = body.wuensche
+    db.add(meta)
+    db.commit()
+    return {"wuensche": meta.wuensche}
 
 
 # --- KI usage ------------------------------------------------------------------

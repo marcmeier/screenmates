@@ -126,10 +126,12 @@ def test_0015_keeps_german_time_for_databases_from_before(tmp_path):
     con = sqlite3.connect(tmp_path / "db.sqlite")
     assert con.execute("select zeitzone from appmeta").fetchall() == [("Europe/Berlin",)]
 
+    assert con.execute("select wuensche from appmeta").fetchall() == [(1,)]  # 0016: in use, so it stays on
+
     frisch = url(tmp_path, "frisch.sqlite")  # a new install: its first admin decides
     migrate.upgrade(frisch)
     con = sqlite3.connect(tmp_path / "frisch.sqlite")
-    assert con.execute("select zeitzone from appmeta").fetchall() in ([], [("",)])
+    assert con.execute("select zeitzone, wuensche from appmeta").fetchall() in ([], [("", 0)])
 
 
 def test_database_from_0_1_is_refused(tmp_path):

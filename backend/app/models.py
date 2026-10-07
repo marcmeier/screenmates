@@ -278,6 +278,7 @@ class AppMeta(SQLModel, table=True):
     vapid: str = ""  # Web Push: the server's VAPID private key (PEM), made on first use
     einrichtung: str = ""  # setup code for the first name, while there is none (see einrichtung.py)
     zeitzone: str = ""  # the group's time zone when TIMEZONE isn't set (see zeitzone.py)
+    wuensche: bool = False  # the "wishes & ideas" board is offered (an admin switches it on)
 
 
 class KinoState(SQLModel, table=True):

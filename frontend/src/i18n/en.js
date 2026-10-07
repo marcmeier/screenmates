@@ -1217,7 +1217,12 @@ export default {
     deinEigenesProfilFindest: "Your own profile is under",
     deineGruppenNurFuer: "Your groups – visible to group admins only.",
     gleicheAb: "Syncing …",
+    funktionen: "Features",
     katalog: "Catalogue",
+    wuenscheAn: "Wishes & ideas are visible to everyone now",
+    wuenscheAus: "Wishes & ideas are switched off",
+    wuenscheText:
+      "A list where everyone collects and votes on ideas for screenmates – meant as feedback for whoever runs the server.",
     katalogAktualisiertNeuNeue:
       "Catalogue updated: {neu} new films, {gesamt} in total",
     laeuftScreenmatesAufDem: "screenmates runs on the bundled seed catalogue.",

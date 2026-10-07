@@ -49,6 +49,8 @@ All notable changes to screenmates are documented here. The format is based on
   The demo catalog follows that setting, as do genre names in the film data; the genre filter is in the
   app's language. A fresh install names its first group in the first admin's language ("Our group").
 - Quotation marks, the trailer player's language and the page language no longer assume German.
+- "Wishes & ideas" is optional: off on a new install, switched on in Admin → System. Installations in use
+  keep it on.
 - Public interfaces are English: `PUSH_CONTACT` (was `PUSH_KONTAKT`, falls back to `PUBLIC_URL`),
   `CINEMA_PUBLIC_HOST` (was `KINO_PUBLIC_HOST`), command line `names`, `invite`, `setup` (were `namen`,
   `einladung`, `einrichtung`), and the app sends its language as `Accept-Language` (was `X-Sprache`). The

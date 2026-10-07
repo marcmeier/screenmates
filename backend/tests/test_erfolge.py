@@ -173,7 +173,7 @@ def test_short_comments_and_more_than_three_a_day_dont_count(client, lena):
     assert erfolge.stand(client_db())[me_id(client)]["gaestebuch"] == 3
 
 
-def test_votes_on_your_own_wish_dont_count(client, lena, kim, browser):
+def test_votes_on_your_own_wish_dont_count(client, lena, kim, browser, wuensche):
     login(client, "marc", admin=True)
     f = lena.post("/api/features", json={"text": "Serien"}).json()
     lena.post(f"/api/features/{f['id']}/vote")

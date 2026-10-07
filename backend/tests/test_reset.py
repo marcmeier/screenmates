@@ -12,7 +12,7 @@ from .test_umfrage import in_tagen
 
 
 @pytest.fixture
-def voll(client, browser):
+def voll(client, browser, wuensche):
     """marc (admin) and lena after a busy test phase."""
     marc = login(client, "marc", admin=True)
     lena = browser()

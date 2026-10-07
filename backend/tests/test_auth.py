@@ -26,7 +26,7 @@ def test_reads_do_not_create_sessions(client, db):
         ("post", "/api/dabei", None),
     ],
 )
-def test_writes_require_a_name(client, method, path, body):
+def test_writes_require_a_name(client, wuensche, method, path, body):
     r = getattr(client, method)(path, json=body) if body else getattr(client, method)(path)
     assert r.status_code == 401
 

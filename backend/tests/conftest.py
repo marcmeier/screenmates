@@ -74,6 +74,18 @@ def db(client):
 
 
 @pytest.fixture
+def wuensche(client):
+    """The wishes & ideas board switched on (it's off on a fresh install)."""
+    from app.models import AppMeta
+
+    with Session(engine) as s:
+        meta = s.get(AppMeta, 1) or AppMeta(id=1)
+        meta.wuensche = True
+        s.add(meta)
+        s.commit()
+
+
+@pytest.fixture
 def kino_on(monkeypatch):
     monkeypatch.setattr(settings, "mediamtx_webrtc_url", "http://mtx:8889")
     monkeypatch.setattr(settings, "mediamtx_api_url", "http://mtx:9997")

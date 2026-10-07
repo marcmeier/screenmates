@@ -7,7 +7,7 @@ from app.models import User, WatchedNote
 from .conftest import login
 
 
-def test_the_export_holds_what_is_yours(client, browser):
+def test_the_export_holds_what_is_yours(client, browser, wuensche):
     login(client, "marc", admin=True)
     lena = browser()
     me = login(lena, "lena")

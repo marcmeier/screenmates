@@ -155,7 +155,24 @@ def test_the_welcome_is_seen_once_and_keeps_the_look(client):
     assert client.get("/api/users").json()["ich"]["design"]["willkommen"] is True
 
 
-def test_feature_permissions(client, browser):
+def test_wishes_are_off_until_an_admin_switches_them_on(client, browser):
+    login(client, "marc", admin=True)
+    assert client.get("/api/status").json()["wuensche"] is False
+    assert client.get("/api/features").status_code == 404
+    assert client.post("/api/features", json={"text": "x"}).status_code == 404
+    lena = browser()
+    login(lena, "lena")
+    assert lena.put("/api/admin/einstellungen", json={"wuensche": True}).status_code == 403
+    assert client.put("/api/admin/einstellungen", json={"wuensche": True}).json() == {"wuensche": True}
+    assert lena.get("/api/status").json()["wuensche"] is True
+    lena.post("/api/features", json={"text": "Serien bitte"})
+    assert any(e["typ"] == "wunsch" for e in client.get("/api/events").json()["events"])
+    client.put("/api/admin/einstellungen", json={"wuensche": False})
+    assert lena.get("/api/features").status_code == 404
+    assert not any(e["typ"] == "wunsch" for e in client.get("/api/events").json()["events"])
+
+
+def test_feature_permissions(client, browser, wuensche):
     login(client, "marc")
     fid = client.post("/api/features", json={"text": "Dark Mode"}).json()["id"]
     lena = browser()
