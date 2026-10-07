@@ -36,6 +36,8 @@ All notable changes to screenmates are documented here. The format is based on
   members and evenings, and the AI search only hides films the active group has seen.
 
 ### Added
+- Docker images for amd64 and arm64 on the GitHub container registry, built and published with every
+  release; `compose.yaml` uses them, so a new install no longer builds anything.
 - Time zone setting `TIMEZONE` (or `TZ`). Dates, reminders, "on this day", awards and the year in review
   used to be fixed to German time. Without the setting, a new install takes the zone of the first admin's
   browser. The date dialog says which zone it means ("Berlin time").

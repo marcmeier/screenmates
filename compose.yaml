@@ -1,5 +1,8 @@
 services:
   screenmates:
+    # The released image; `docker compose up --build` builds this checkout instead
+    # (and so does `up` when the image can't be pulled). SCREENMATES_VERSION pins a release.
+    image: ghcr.io/marcmeier/screenmates:${SCREENMATES_VERSION:-latest}
     build: .
     ports: ["8000:8000"]
     env_file:
