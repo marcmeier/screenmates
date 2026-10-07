@@ -828,10 +828,13 @@ test('after clearing the evening, the case opens for everyone again', async () =
   expect((await page.request.delete(`/api/kiste/${aktuell.id}`)).ok()).toBeTruthy()
 })
 
-test('the danger zone clears an area only after typing the word', async () => {
+test('the danger zone clears an area of the group only after typing the word', async () => {
+  expect((await page.request.post('/api/kino/chat', { data: { text: 'Test, Test' } })).ok()).toBeTruthy()
   await page.goto('/#/verwaltung/gefahr')
   const zone = page.getByRole('region', { name: 'Gefahrenzone' })
-  await zone.getByRole('checkbox', { name: /Wünsche & Ideen/ }).check()
+  await expect(zone).toContainText('in der Gruppe „Unsere Gruppe“')
+  await expect(zone.getByRole('checkbox', { name: /Wünsche/ })).toHaveCount(0) // server-wide: command line only
+  await zone.getByRole('checkbox', { name: /Kino/ }).check()
   await zone.getByRole('button', { name: 'Ausgewähltes löschen' }).click()
   const dialog = page.getByRole('dialog', { name: 'Wirklich löschen?' })
   const los = dialog.getByRole('button', { name: 'Endgültig löschen' })
@@ -840,8 +843,9 @@ test('the danger zone clears an area only after typing the word', async () => {
   await los.click()
   await expect(page.getByText(/Gelöscht – Sicherung: backup-vor-reset-/)).toBeVisible()
   await page.waitForEvent('load') // the app starts afresh
-  await page.goto('/#/wuensche')
-  await expect(page.locator('main')).not.toContainText('Serien unterstützen')
+  expect((await (await page.request.get('/api/kino/chat')).json()).eintraege).toEqual([])
+  await page.goto('/#/wuensche') // wishes belong to the server: still there
+  await expect(page.locator('main')).toContainText('Serien unterstützen')
   await page.goto('/#/abend')
 })
 

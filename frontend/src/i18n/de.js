@@ -430,9 +430,6 @@ export default {
   },
   gefahrenzone: {
     abbrechen: "Abbrechen",
-    alleAnderenNamenEinladungen: "alle anderen Namen, Einladungen und Anträge",
-    allesNeu: "Alles neu",
-    allesNeuStarten: "Alles neu starten",
     ausgewaehltesLoeschen: "Ausgewähltes löschen",
     bestaetigenMit: "Zum Bestätigen „{wort}“ eintippen",
     bestaetigung: "Bestätigung",
@@ -440,14 +437,14 @@ export default {
     gefahrenzone: "Gefahrenzone",
     geloescht: "Gelöscht",
     geloeschtMit: "Gelöscht – Sicherung: {datei}",
-    geloeschtWirdFuerAlle: "Gelöscht wird für alle Gruppen:",
-    leertAllesObenUnd:
-      "Leert alles oben und löscht zusätzlich alle anderen Namen ({neustart} Namen und Einladungen), mit ihren Bildern, Abos und Sitzungen. Es bleiben: du als Admin, die Gruppen, der Filmkatalog, die Über-Seite und die Einstellungen. Ideal, bevor du screenmates deinen Freunden zeigst.",
+    geloeschtWirdIn: "Gelöscht wird in der Gruppe „{gruppe}“:",
+    serverweit:
+      "Was den ganzen Server betrifft – Wünsche, Erfolge, Statistik oder ganz von vorn mit nur dir als Admin –, geht über die Kommandozeile:",
     sicherungenImDatenordner: "Sicherungen im Datenordner:",
     wirklichLoeschen: "Wirklich löschen?",
     wirklichLoeschen2: "Wirklich löschen?",
-    zumAufraeumenNachDem:
-      "Zum Aufräumen nach dem Testen, für alle Gruppen. Vor jedem Löschen sichert der Server die Datenbank (die letzten fünf bleiben liegen) – rückgängig machen geht nur über diese Sicherung.",
+    zumAufraeumen:
+      "Zum Aufräumen nach dem Testen, in der Gruppe „{gruppe}“; andere Gruppen bleiben, wie sie sind. Vor jedem Löschen sichert der Server die Datenbank (die letzten fünf bleiben liegen) – rückgängig machen geht nur über diese Sicherung.",
   },
   geschmack: {
     ausGemeinsamGemeinsamBewerteten:

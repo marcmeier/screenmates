@@ -49,6 +49,10 @@ All notable changes to screenmates are documented here. The format is based on
   The demo catalog follows that setting, as do genre names in the film data; the genre filter is in the
   app's language. A fresh install names its first group in the first admin's language ("Our group").
 - Quotation marks, the trailer player's language and the page language no longer assume German.
+- Danger zone: in the app it now clears areas of the active group only (history, movie night, cinema);
+  other groups stay as they are. Server-wide areas (wishes, awards, statistics) and starting over with a
+  single admin moved to the command line: `python -m app.cli reset <area>… [--keep <name>] --yes`, which
+  shows what would go without `--yes` and backs up the database first, like the app.
 - "Wishes & ideas" is optional: off on a new install, switched on in Admin → System. Installations in use
   keep it on.
 - Public interfaces are English: `PUSH_CONTACT` (was `PUSH_KONTAKT`, falls back to `PUBLIC_URL`),

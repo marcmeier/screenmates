@@ -6,10 +6,11 @@ import { useUi } from '../stores/ui'
 import Icon from './Icon.vue'
 import Modal from './Modal.vue'
 
-// Server admins only: clear out what testing left behind – area by area, or everything
-// back to a fresh start. The server backs up the database before it deletes anything.
+// Server admins only: clear out what testing left behind in the active group, area by area.
+// What concerns the whole server is on the command line (python -m app.cli reset).
+// The server backs up the database before it deletes anything.
 const ui = useUi()
-const stand = ref(null) // { bereiche: [{ key, titel, text, anzahl }], neustart, bestaetigung, backups }
+const stand = ref(null) // { gruppe: { id, name }, bereiche: [{ key, titel, text, anzahl }], bestaetigung, backups }
 const gewaehlt = ref([])
 const auftrag = ref(null) // { bereiche: [...], titel } while the confirmation is open
 const wort = ref('')
@@ -21,11 +22,7 @@ onMounted(laden)
 const titel = (key) => stand.value.bereiche.find((b) => b.key === key)?.titel ?? key
 function bestaetigen(bereiche) {
   wort.value = ''
-  auftrag.value = {
-    bereiche,
-    neustart: bereiche.includes('neustart'),
-    liste: bereiche.includes('neustart') ? stand.value.bereiche.map((b) => b.titel) : bereiche.map(titel),
-  }
+  auftrag.value = { bereiche, liste: bereiche.map(titel) }
 }
 const passt = computed(() => wort.value.trim().toUpperCase() === stand.value?.bestaetigung)
 
@@ -47,11 +44,8 @@ async function ausfuehren() {
 <template>
   <section class="panel gefahr" aria-labelledby="gefahr-titel">
     <h2 id="gefahr-titel"><Icon name="muell" :size="18" /> {{ $t('gefahrenzone.gefahrenzone') }}</h2>
-    <p class="muted">
-      {{ $t('gefahrenzone.zumAufraeumenNachDem') }}
-    </p>
-
     <template v-if="stand">
+      <p class="muted">{{ $t('gefahrenzone.zumAufraeumen', { gruppe: stand.gruppe.name }) }}</p>
       <ul class="bereiche">
         <li v-for="b in stand.bereiche" :key="b.key">
           <label>
@@ -69,15 +63,9 @@ async function ausfuehren() {
         </button>
       </div>
 
-      <div class="neustart">
-        <div>
-          <strong>{{ $t('gefahrenzone.allesNeu') }}</strong>
-          <p class="muted">
-            {{ $t('gefahrenzone.leertAllesObenUnd', { neustart: stand.neustart }) }}
-          </p>
-        </div>
-        <button class="rot voll" @click="bestaetigen(['neustart'])"><Icon name="sync" :size="15" /> {{ $t('gefahrenzone.allesNeuStarten') }}</button>
-      </div>
+      <p class="muted klein">
+        {{ $t('gefahrenzone.serverweit') }} <code>python -m app.cli reset</code>
+      </p>
 
       <p v-if="stand.backups.length" class="muted klein">
         {{ $t('gefahrenzone.sicherungenImDatenordner') }} <code v-for="b in stand.backups" :key="b">{{ b }}</code>
@@ -87,10 +75,9 @@ async function ausfuehren() {
     <Modal v-if="auftrag" :label="$t('gefahrenzone.wirklichLoeschen')" @close="auftrag = null">
       <form class="dialog" @submit.prevent="passt && ausfuehren()">
         <h2><Icon name="muell" /> {{ $t('gefahrenzone.wirklichLoeschen2') }}</h2>
-        <p>{{ $t('gefahrenzone.geloeschtWirdFuerAlle') }}</p>
+        <p>{{ $t('gefahrenzone.geloeschtWirdIn', { gruppe: stand.gruppe.name }) }}</p>
         <ul>
           <li v-for="eintrag in auftrag.liste" :key="eintrag">{{ eintrag }}</li>
-          <li v-if="auftrag.neustart"><strong>{{ $t('gefahrenzone.alleAnderenNamenEinladungen') }}</strong></li>
         </ul>
         <label>
           <span>{{ $t('gefahrenzone.bestaetigenMit', { wort: stand.bestaetigung }) }}</span>
@@ -119,9 +106,7 @@ button.rot { border-color: var(--accent); color: #ff6b6b; background: transparen
 button.rot:hover:not(:disabled) { background: var(--accent-soft); color: #fff; }
 button.rot.voll { background: var(--accent); color: var(--on-accent); }
 button.rot.voll:hover:not(:disabled) { background: var(--accent-hover); }
-.neustart { display: flex; gap: 1rem; align-items: center; justify-content: space-between; flex-wrap: wrap; margin-top: 1.2rem; padding-top: 1rem; border-top: 1px solid color-mix(in srgb, var(--accent) 35%, var(--line)); }
-.neustart > div { flex: 1; min-width: 16rem; }
-.neustart p { margin: 0.2rem 0 0; font-size: 0.84rem; }
+
 .klein { font-size: 0.75rem; margin: 1rem 0 0; }
 .klein code { margin-right: 0.4rem; font-size: 0.72rem; }
 .dialog { padding: 1.3rem 1.4rem; display: flex; flex-direction: column; gap: 0.8rem; }

@@ -65,7 +65,7 @@ invite-only. The UI is available in English and German.
 - One server can host several groups, each with its own movie night, history and cinema
   ([groups](docs/GROUPS.md)).
 - A host role that can be handed over or taken over by vote.
-- Admin area with user management, AI usage costs and a reset option that backs up the database first.
+- Admin area with user management, AI usage costs and a per-group reset that backs up the database first.
 
 ## Screenshots
 
@@ -177,6 +177,7 @@ docker compose exec screenmates python -m app.cli admin "Alice"  # make someone 
 docker compose exec screenmates python -m app.cli invite         # one-time invite link, valid 24 h
 docker compose exec screenmates python -m app.cli login "Alice"  # login code for Alice's new device, 24 h
 docker compose exec screenmates python -m app.cli setup          # setup code for the first name
+docker compose exec screenmates python -m app.cli reset wishes   # clear server-wide data (shows first, --yes deletes)
 ```
 
 Useful for giving an existing installation its first admin, or getting back in after losing your only
