@@ -200,7 +200,8 @@ test('the host links a film and goes live', async () => {
   await host.locator('.desk').getByPlaceholder('Film suchen').fill('shining')
   await host.locator('.desk .results button', { hasText: 'Shining' }).first().click()
   await host.getByRole('button', { name: 'Übertragung starten' }).click()
-  await expect(host.getByText('Du bist live', { exact: true })).toBeVisible({ timeout: 10_000 })
+  // The status on the page, not the toast that says the same for a moment.
+  await expect(host.getByRole('main').getByText('Du bist live', { exact: true })).toBeVisible({ timeout: 10_000 })
   // The same host on a second device (phone): not "über OBS", but the other device.
   const handy = await host.context().newPage()
   await handy.goto(host.url())
