@@ -5,13 +5,12 @@ body:
   - type: markdown
     attributes:
       value: |
-        Thanks for taking the time to report a bug! Please check the [existing issues](https://github.com/marcmeier/screenmates/issues) first.
-        **Security issues** belong in a [private report](https://github.com/marcmeier/screenmates/security/advisories/new), not here.
+        Please check the [existing issues](https://github.com/marcmeier/screenmates/issues) first. Security issues go in a [private report](https://github.com/marcmeier/screenmates/security/advisories/new).
   - type: textarea
     id: what
     attributes:
       label: What happened?
-      description: A clear description of the bug. Screenshots or a short screen recording help a lot.
+      description: Screenshots or a screen recording help.
     validations:
       required: true
   - type: textarea

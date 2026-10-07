@@ -1,35 +1,17 @@
-# Security policy
+# Security
 
-## Supported versions
+Only the latest release gets security fixes.
 
-screenmates is released continuously. Security fixes land in the latest release only – please keep
-your installation up to date.
+## Reporting
 
-| Version | Supported |
-|---|---|
-| latest release | ✅ |
-| older releases | ❌ |
+Please don't open public issues for security problems. Use GitHub's
+[private vulnerability reporting](https://github.com/marcmeier/screenmates/security/advisories/new)
+and include what you found, how to reproduce it, and the version (shown on the about page).
 
-## Reporting a vulnerability
+## Running it safely
 
-**Please do not report security issues in public issues, discussions or pull requests.**
-
-Report them privately through GitHub's
-[private vulnerability reporting](https://github.com/marcmeier/screenmates/security/advisories/new).
-Please include:
-
-- a description of the issue and its impact,
-- steps to reproduce (or a proof of concept),
-- the affected version (shown on the app's about page).
-
-You can expect an acknowledgement within a few days. Once the issue is confirmed, a fix is prepared and
-released, and you'll be credited in the advisory unless you prefer otherwise.
-
-## Hardening your installation
-
-- Serve screenmates over **HTTPS** and set `COOKIE_SECURE=true`.
-- Behind a reverse proxy, set `FORWARDED_ALLOW_IPS` to the proxy's address so rate limits see real
-  client IPs.
-- Keep the MediaMTX HTTP ports (8889, 9997) internal – only the WebRTC media port 8189 needs to be
-  public. The provided `compose.yaml` already does this.
-- Back up the data volume (database, VAPID keys, profile pictures) regularly.
+- Serve it over HTTPS and set `COOKIE_SECURE=true`.
+- Behind a reverse proxy, set `FORWARDED_ALLOW_IPS` so rate limiting sees real client IPs.
+- Don't expose MediaMTX's HTTP ports (8889, 9997); only 8189 needs to be public. `compose.yaml`
+  already does this.
+- Back up the data volume (database, push keys, profile pictures).
