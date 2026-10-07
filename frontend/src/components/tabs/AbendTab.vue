@@ -45,7 +45,11 @@ const umfrage = ref(null)
 // December and January: the year in review is ready (see RueckblickView.vue).
 const rueckblickJahr = ref(null)
 
+// Loads overlap (live updates, own changes). Only the newest one may write the page; a load that
+// started before something was saved here would bring back the old state.
+let ladeNr = 0
 async function load() {
+  const nr = ++ladeNr
   const [s, p, t, er, u] = await Promise.all([
     api.get('/api/suggestions'),
     api.get('/api/spin'),
@@ -53,6 +57,7 @@ async function load() {
     api.get('/api/erinnerungen'),
     api.get('/api/termin/umfrage'),
   ])
+  if (nr !== ladeNr) return
   vorschlaege.value = s.suggestions
   pool.value = p.pool
   termin.value = t
@@ -108,13 +113,21 @@ async function rueckblickPruefen() {
   if (r?.jahre.includes(jahr)) rueckblickJahr.value = jahr
 }
 onMounted(rueckblickPruefen)
+// Saved here: show it at once, and reload so nothing older that is still on its way wins.
 function umfrageGestartet(u) {
   umfrage.value = u
   terminOffen.value = null
+  load()
 }
 function festgelegt(r) {
   termin.value = r.termin
   umfrage.value = r.umfrage
+  load()
+}
+function terminGespeichert(t) {
+  termin.value = t
+  terminOffen.value = null
+  load()
 }
 
 // The invitation shows what's really up for the vote: no vetoed films.
@@ -208,7 +221,7 @@ async function gewinnerGesehen() {
       :termin="termin"
       :modus="terminOffen"
       @close="terminOffen = null"
-      @saved="(t) => ((termin = t), (terminOffen = null))"
+      @saved="terminGespeichert"
       @umfrage="umfrageGestartet"
     />
     <Einladung v-if="einladungOffen" :termin="termin" :filme="zurWahl" :dabei="app.dabei" @close="einladungOffen = false" />

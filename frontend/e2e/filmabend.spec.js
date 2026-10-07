@@ -300,12 +300,36 @@ test('a date for the evening and an invitation card for the group chat', async (
   await page.route(/image\.tmdb\.org.*[?&]karte/, (r) =>
     r.fulfill({ body: png, contentType: 'image/png', headers: { 'access-control-allow-origin': '*' } }),
   )
+  // A reload that started before saving must not undo the saved date. The page reloads when someone
+  // else changes something; hold that reload's answer back until after saving.
+  let unterwegs, zugestellt
+  let einmal = true
+  const gestartet = new Promise((r) => (unterwegs = r))
+  const fertig = new Promise((r) => (zugestellt = r))
+  await page.route('**/api/termin', async (route) => {
+    if (!einmal || route.request().method() !== 'GET') return route.continue()
+    einmal = false
+    const alt = await route.fetch() // still without a date
+    unterwegs()
+    await new Promise((r) => setTimeout(r, 3000))
+    await route.fulfill({ response: alt })
+    zugestellt()
+  })
+  const zweit = await zweitesGeraet()
+  // Right after its own write ("Geschaut") the page takes changes as its own for 2.5 s: wait that out.
+  await page.waitForTimeout(3000)
+  await zweit.request.post('/api/users/me/willkommen') // changes nothing, but counts as a change
+  await gestartet
   await page.getByRole('button', { name: 'Termin festlegen' }).click()
   const dialog = page.getByRole('dialog', { name: 'Termin für den Filmabend' })
   await dialog.getByPlaceholder('z. B. bei Marc').fill('bei Marc')
   await dialog.getByRole('button', { name: 'Speichern' }).click()
   await expect(dialog).toBeHidden()
   await expect(page.locator('.crew .termin')).toContainText(/Freitag, \d+\. \w+, 20:00 Uhr · bei Marc/)
+  await fertig
+  await expect(page.locator('.crew .termin')).toContainText(/Freitag, \d+\. \w+, 20:00 Uhr · bei Marc/)
+  await page.unroute('**/api/termin')
+  await zweit.context().close()
   await inDerGruppe('Marc legt den Termin fest: Freitag')
 
   await page.getByRole('button', { name: 'Einladen' }).click()

@@ -34,6 +34,11 @@ All notable changes to screenmates are documented here. The format is based on
 - "Sign out" keeps the name on the device so you can pick it again; "Remove from this device" takes it off.
 - The "Better safe than sorry" award is now "Second screen": connect a second device of your own.
 
+### Fixed
+- Movie night page: a reload that started just before you saved the date (or a poll result) could arrive
+  afterwards and make the date disappear again until the next change; the invitation then said "date to
+  follow".
+
 ### Removed
 - The film password. It only protected names whose owner had set one, and a favourite film is easy to
   guess.
