@@ -560,9 +560,20 @@ test('a theme and a font of your own, kept with the profile', async () => {
   await page.goto('/#/profil/einstellungen/darstellung')
   const akzent = () => page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue('--accent').trim())
   expect(await akzent()).toBe('#e50914')
+  // The theme's answer takes a moment; the font picked right after must not undo the theme.
+  let erste = true
+  await page.route('**/api/users/me/design', async (route) => {
+    if (erste) {
+      erste = false
+      await new Promise((r) => setTimeout(r, 1500))
+    }
+    await route.continue()
+  })
   await page.getByRole('radio', { name: 'Nacht' }).click()
   await page.getByRole('radio', { name: 'Space Grotesk' }).click()
   await expect.poll(akzent).toBe('#3b82f6')
+  await page.waitForTimeout(2000) // both requests done
+  await page.unroute('**/api/users/me/design')
   await expect.poll(() => page.evaluate(() => getComputedStyle(document.body).fontFamily)).toContain('Space Grotesk')
   await page.reload()
   await expect.poll(akzent).toBe('#3b82f6')

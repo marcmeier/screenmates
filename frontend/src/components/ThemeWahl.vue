@@ -8,10 +8,11 @@ import { THEMES, anwenden } from '../design'
 const app = useApp()
 const design = computed(() => ({ theme: 'kino', schrift: 'inter', ...(app.me?.design || {}) }))
 
+// Applied and remembered at once; the server gets only the theme (see Darstellung.vue).
 async function waehlen(theme) {
-  const neu = { theme, schrift: design.value.schrift }
-  anwenden(neu) // at once, before the server answers
-  app.me.design = (await api.put('/api/users/me/design', neu)).design
+  app.me.design = { ...app.me.design, theme }
+  anwenden(design.value)
+  await api.put('/api/users/me/design', { theme })
 }
 </script>
 

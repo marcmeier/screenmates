@@ -56,6 +56,11 @@ def test_design_is_personal(client, browser):
     assert client.put("/api/users/me/design", json={"theme": "neon", "schrift": "grotesk"}).status_code == 200
     assert client.get("/api/users").json()["ich"]["design"] == {"theme": "neon", "schrift": "grotesk"}
     assert client.put("/api/users/me/design", json={"theme": "pink-hell", "schrift": "inter"}).status_code == 422
+    # Theme and font change on their own: a quick font change can't undo the theme just picked.
+    client.put("/api/users/me/design", json={"theme": "nacht"})
+    client.put("/api/users/me/design", json={"schrift": "mono"})
+    assert client.get("/api/users").json()["ich"]["design"] == {"theme": "nacht", "schrift": "mono"}
+    assert client.put("/api/users/me/design", json={"schrift": "comic-sans"}).status_code == 422
     lena = browser()
     login(lena, "lena")
     assert lena.get("/api/users").json()["ich"]["design"] == {}

@@ -377,16 +377,22 @@ SCHRIFTEN = ("inter", "grotesk", "lesbar", "serif", "mono", "rund", "system")
 
 
 class Design(BaseModel):
-    theme: str = "kino"
-    schrift: str = "inter"
+    theme: str | None = None
+    schrift: str | None = None
 
 
 @router.put("/users/me/design")
 def set_design(body: Design, user: User = Depends(require_user), db: DBSession = Depends(get_session)):
-    """How screenmates looks for you: colour theme and font (stays dark either way)."""
-    if body.theme not in THEMES or body.schrift not in SCHRIFTEN:
+    """How screenmates looks for you: colour theme and/or font (stays dark either way).
+
+    Only what is sent changes, so two quick changes (theme, then font) can't undo each other.
+    """
+    if (body.theme is not None and body.theme not in THEMES) or (
+        body.schrift is not None and body.schrift not in SCHRIFTEN
+    ):
         raise HTTPException(422, "Unbekanntes Farbschema oder Schrift.")
-    user.design = json.dumps(json.loads(user.design or "{}") | {"theme": body.theme, "schrift": body.schrift})
+    neu = body.model_dump(exclude_none=True)
+    user.design = json.dumps(json.loads(user.design or "{}") | neu)
     db.add(user)
     db.commit()
     return {"design": json.loads(user.design)}

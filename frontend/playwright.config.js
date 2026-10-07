@@ -55,7 +55,9 @@ export default defineConfig({
   testDir: 'e2e',
   fullyParallel: false,
   workers: 1,
-  retries: process.env.CI ? 1 : 0,
+  // No retries: the story is serial against one server, so a retry starts on a database that is no
+  // longer fresh and only buries the first, real failure under follow-up ones.
+  retries: 0,
   reporter: process.env.CI ? 'github' : 'list',
   use: {
     baseURL: EXTERNAL || `http://127.0.0.1:${PORT}`,
