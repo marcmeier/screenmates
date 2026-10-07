@@ -67,17 +67,35 @@ async function programm(movie = film.value) {
   await kino.refresh()
 }
 
-// The film of the evening goes on the programme by itself, as long as nothing else is set.
+// Every newly drawn case puts its film on the programme once – also over what an earlier show
+// left there – unless a show is on air. Changed by hand afterwards, it stays changed: the case
+// it was taken from is remembered on this device.
 const ausKiste = computed(() => !!film.value && film.value.id === kiste.aktuell?.gewinner?.id)
+const UEBERNOMMEN = 'screenmates.kino.programmAusKiste'
+function schonUebernommen(id) {
+  try {
+    return localStorage.getItem(UEBERNOMMEN) === id
+  } catch {
+    return false
+  }
+}
 watch(
-  () => kiste.aktuell?.gewinner?.id,
+  () => [kiste.aktuell?.id, kiste.aktuell?.gewinner?.id],
   () => {
-    const g = kiste.aktuell?.gewinner
-    if (g && !kino.live && !kino.titel && !kino.movie && !film.value) {
-      titel.value = g.title
-      film.value = g
-      programm(g)
+    const k = kiste.aktuell
+    const g = k?.gewinner
+    if (!g || kino.live) return
+    const kennung = `${k.id}@${k.start}` // ids start again at 1 after a reset
+    if (schonUebernommen(kennung)) return
+    try {
+      localStorage.setItem(UEBERNOMMEN, kennung)
+    } catch {
+      /* private mode */
     }
+    if (film.value?.id === g.id) return
+    titel.value = g.title
+    film.value = g
+    programm(g)
   },
   { immediate: true },
 )

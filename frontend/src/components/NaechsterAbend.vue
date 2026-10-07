@@ -62,7 +62,7 @@ const zusammenfassung = computed(() =>
       <div class="wann">
         <span v-if="heute" class="heute-badge">{{ $t('naechsterabend.heute') }}</span>
         <Icon v-else name="kalender" :size="17" class="muted" />
-        <span v-if="t" class="termin"><strong>{{ t.tag }}</strong>, {{ t.zeit }}<span v-if="t.notiz" class="muted"> · {{ t.notiz }}</span></span>
+        <span v-if="t" class="termin"><strong>{{ t.tag }}</strong>, {{ t.zeit }}<span v-if="t.notiz" class="muted"><span class="trenner"> · </span>{{ t.notiz }}</span></span>
         <span v-else-if="umfrageOffen" class="muted">{{ $t('naechsterabend.terminWirdAbgestimmt') }}</span>
         <span v-else class="muted">{{ $t('naechsterabend.nochNichtsGeplant') }}</span>
         <span v-if="t && umfrageOffen" class="chip klein">{{ $t('naechsterabend.umfrageLaeuft') }}</span>
@@ -89,9 +89,9 @@ const zusammenfassung = computed(() =>
         </button>
       </div>
       <div class="aktionen">
-        <button class="small" @click="emit('einladen')"><Icon name="teilen" :size="14" /> {{ $t('naechsterabend.einladen') }}</button>
+        <button class="small" :title="$t('naechsterabend.einladen')" @click="emit('einladen')"><Icon name="teilen" :size="14" /> <span class="lbl">{{ $t('naechsterabend.einladen') }}</span></button>
         <button v-if="app.me" class="small ghost auf" :aria-expanded="offen" aria-controls="planung" @click="manuell = !offen">
-          {{ $t('naechsterabend.planung') }} <Icon name="pfeil" :size="14" class="pfeil" />
+          <span class="lbl">{{ $t('naechsterabend.planung') }}</span><span class="mehr-punkte" aria-hidden="true">⋯</span> <Icon name="pfeil" :size="14" class="pfeil" />
         </button>
       </div>
     </div>
@@ -157,10 +157,32 @@ const zusammenfassung = computed(() =>
 .andere { font-size: 0.82rem; gap: 0.45rem; }
 .andere .namen { margin-right: 0.8rem; }
 .knoepfe { gap: 0.3rem; }
+/* Phones: one tidy block – when (with invite/planning as icons beside it), who's in,
+   and the answer as one segmented bar instead of loose buttons. */
+.mehr-punkte { display: none; }
 @media (max-width: 600px) {
-  .rsvp { width: 100%; }
-  .rsvp button { flex: 1; justify-content: center; }
-  .aktionen { width: 100%; justify-content: space-between; }
+  .crew { padding: 0.75rem 0.8rem; gap: 0.55rem; }
+  .zeile { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 0.5rem; align-items: center; }
+  .wann { grid-column: 1; grid-row: 1; font-size: 0.9rem; min-width: 0; }
+  .wann > svg { display: none; }
+  .termin { min-width: 0; }
+  /* the place/note gets its own short line instead of wrapping into the date */
+  .termin .trenner { display: none; }
+  .termin .muted { display: block; font-size: 0.8rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .aktionen { grid-column: 2; grid-row: 1; margin: 0; gap: 0.2rem; }
+  .aktionen .lbl, .aktionen .pfeil { display: none; }
+  .aktionen button { width: 36px; height: 34px; padding: 0; justify-content: center; }
+  .mehr-punkte { display: inline; font-size: 1.1rem; line-height: 1; }
+  .wer { grid-column: 1 / -1; grid-row: 2; }
+  .zeile > .spacer { display: none; }
+  .rsvp {
+    grid-column: 1 / -1; grid-row: 3; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0;
+    border: 1px solid var(--line); border-radius: 10px; overflow: hidden;
+  }
+  .rsvp button { border: none; border-radius: 0; justify-content: center; padding: 0.55rem 0.3rem; font-size: 0.82rem; white-space: nowrap; gap: 0.3rem; }
+  .rsvp button + button { border-left: 1px solid var(--line); }
+  .leer { display: grid; grid-template-columns: 1fr 1fr; }
+  .leer button { justify-content: center; }
 }
 @media (prefers-reduced-motion: reduce) { .details { animation: none; } .pfeil { transition: none; } }
 </style>

@@ -1,5 +1,28 @@
 # Changelog
 
+## 0.21.0 – 2026-10-07
+
+### Geändert
+- **Filmabend auf dem Handy kompakt und aufgeräumt:**
+  - Planungskarte: Datum oben (der Hinweis in einer eigenen kurzen Zeile), Einladen und Planung als zwei
+    kleine Symbole daneben, darunter wer dabei ist und die Zusage als **eine** Leiste
+    (Ich bin dabei · Vielleicht · Kann nicht); „Termin festlegen“ und „Abstimmen“ teilen sich eine Zeile.
+  - Abendmodus: Nur der Schritt, der dran ist (oder in dem man gerade etwas tun kann, z. B. die Kiste
+    öffnen), ist aufgeklappt – die anderen schrumpfen auf eine Zeile. Der Kisten-Knopf ist so ohne Scrollen
+    sichtbar; das LIVE-Abzeichen bleibt einzeilig.
+- **Die Kiste feiert den Gewinner:** Bleibt das Band stehen, tritt der Film als große Karte vor das Band –
+  mit kurzem Lichtblitz, einem Halo in seiner Seltenheitsfarbe, einem Glanz über das Plakat, langsam drehenden
+  Lichtstrahlen und einem tiefen Ton vor der Fanfare; die übrigen Filme treten zurück. Bei „Bewegung
+  reduzieren“ bleibt nur die große Karte.
+
+## 0.20.2 – 2026-10-07
+
+### Behoben
+- **Kino zeigt den gezogenen Film:** Der Film aus der Kiste kam nur ins Kino-Programm, wenn dort noch nichts
+  stand – ein Titel von einer früheren Vorstellung blieb also stehen (z. B. „Der Astronaut“ statt des
+  gezogenen „Deadpool & Wolverine“). Jetzt setzt jede neu gezogene Kiste ihren Film einmal ins Programm,
+  solange nicht gesendet wird; wer ihn danach von Hand ändert, behält seine Wahl.
+
 ## 0.20.1 – 2026-10-07
 
 ### Geändert
