@@ -164,6 +164,11 @@ def create_user(
         u = new_user(db, name, freigegeben=True, admin=True)
         einrichtung.erledigt(db)
         zeitzone.vom_ersten_admin(db, body.zeitzone)
+        # Migration 0006 made the first group before anyone chose a language: name it in the admin's.
+        erste = db.exec(select(Gruppe).order_by(Gruppe.id)).first()
+        if erste is not None and erste.name == "Unsere Gruppe":
+            erste.name = tr("Unsere Gruppe")
+            db.add(erste)
         # The door closes with the first name: its browser stays inside.
         login.binden(db, ensure_session(request, response, db), u.id)
         db.commit()

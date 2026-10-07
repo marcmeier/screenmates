@@ -48,7 +48,7 @@ def test_the_numbers(client, jahr):
     r = client.get(f"/api/rueckblick/{JAHR}").json()
     assert (r["filme"], r["abende"], r["minuten"], r["leute"]) == (3, 3, 146 + 91 + 111, 3)
     assert r["genres"][0] == {"name": "Horror", "anzahl": 3}
-    assert r["monat"] == {"name": "Januar", "nr": 1, "anzahl": 2}
+    assert r["monat"] == {"nr": 1, "anzahl": 2}  # the app names it in its own language
     assert r["serie"] == 2  # two weeks in a row in January
     assert (r["bewertungen"], r["kommentare"], r["herzen"]) == (7, 3, 1)
     assert r["erster"]["movie"]["title"] == "Shining"

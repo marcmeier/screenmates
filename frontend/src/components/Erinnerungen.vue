@@ -29,7 +29,7 @@ const zitat = (eintrag) => [...eintrag.notes].sort((a, b) => b.hearts.length - a
         </div>
       </div>
       <blockquote v-if="zitat(e.eintrag)">
-        „{{ zitat(e.eintrag).text }}“
+        {{ $t('allg.zitat', { text: zitat(e.eintrag).text }) }}
         <UserAvatar v-if="zitat(e.eintrag).user_id" :user-id="zitat(e.eintrag).user_id" />
       </blockquote>
     </article>

@@ -41,6 +41,10 @@ All notable changes to screenmates are documented here. The format is based on
   browser. The date dialog says which zone it means ("Berlin time").
 
 ### Changed
+- Film data defaults to English now (`TMDB_LANGUAGE=en-US`, `TMDB_REGION=US`); set `de-DE`/`DE` for German.
+  The demo catalog follows that setting, as do genre names in the film data; the genre filter is in the
+  app's language. A fresh install names its first group in the first admin's language ("Our group").
+- Quotation marks, the trailer player's language and the page language no longer assume German.
 - Settings show on how many devices you are signed in, and can sign you out on all the others.
 - "Sign out" keeps the name on the device so you can pick it again; "Remove from this device" takes it off.
 - The "Better safe than sorry" award is now "Second screen": connect a second device of your own.
@@ -58,6 +62,7 @@ All notable changes to screenmates are documented here. The format is based on
 
 ### Upgrading
 - Existing databases keep German time (Europe/Berlin) unless `TIMEZONE` says otherwise.
+- If you relied on the old German defaults for film data, set `TMDB_LANGUAGE=de-DE` and `TMDB_REGION=DE`.
 - Every browser that is signed in keeps its name. Browsers that were signed out need a login code once,
   from another device of that person or from an admin.
 

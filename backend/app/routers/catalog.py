@@ -220,8 +220,9 @@ async def discover(
             stmt = stmt.where(or_(col(column).is_(None), column <= hi))
     sort_col, desc = SORTS[sort]
     stmt = stmt.order_by(col(sort_col).desc() if desc else col(sort_col).asc())
-    inc_names = {tmdb.GENRES[g] for g in inc if g in tmdb.GENRES}
-    exc_names = {tmdb.GENRES[g] for g in exc if g in tmdb.GENRES}
+    namen = tmdb.genres()  # the language the catalogue's genre names are stored in
+    inc_names = {namen[g] for g in inc if g in namen}
+    exc_names = {namen[g] for g in exc if g in namen}
     rows = [
         m
         for m in db.exec(stmt).all()
@@ -441,7 +442,8 @@ def _discover_defaults(flt: dict) -> dict:
 
 @router.get("/genres")
 def genres():
-    return {"genres": [{"id": k, "name": v} for k, v in sorted(tmdb.GENRES.items(), key=lambda kv: kv[1])]}
+    """For the filter: names in the app's language."""
+    return {"genres": [{"id": k, "name": v} for k, v in sorted(tmdb.genres(aktuell()).items(), key=lambda kv: kv[1])]}
 
 
 DEPARTMENTS = {

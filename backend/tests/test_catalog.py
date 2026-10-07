@@ -73,6 +73,27 @@ def test_normalise_maps_genre_ids():
     assert data["genres"] == '["Horror", "Thriller"]'
 
 
+def test_genre_names_follow_the_film_data_and_the_filter_the_app(client, monkeypatch):
+    from app.config import settings
+
+    raw = {"id": 1, "title": "X", "genre_ids": [35, 10749]}
+    assert tmdb.normalise(raw)["genres"] == '["Komödie", "Liebesfilm"]'  # TMDB_LANGUAGE=de-DE in the tests
+    monkeypatch.setattr(settings, "tmdb_language", "en-US")
+    assert tmdb.normalise(raw)["genres"] == '["Comedy", "Romance"]'
+    namen = lambda h: {g["id"]: g["name"] for g in client.get("/api/genres", headers=h).json()["genres"]}  # noqa: E731
+    assert namen({"X-Sprache": "en"})[35] == "Comedy"
+    assert namen({"X-Sprache": "de"})[35] == "Komödie"
+
+
+def test_the_demo_catalogue_speaks_the_film_datas_language():
+    from app.seed import SEED, film
+
+    shining = next(r for r in SEED if r["id"] == 694)
+    assert (film(shining, True).title, film(shining, False).title) == ("Shining", "The Shining")
+    assert "Hotel" in film(shining, True).overview and "hotel" in film(shining, False).overview
+    assert all(r["overview_en"] for r in SEED)
+
+
 @respx.mock
 def test_tmdb_results_have_posters_and_genre_lists(client, tmdb_on):
     respx.get(f"{TMDB}/search/movie").mock(

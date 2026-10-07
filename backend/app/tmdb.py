@@ -30,7 +30,8 @@ MIN_RUNTIME = 60
 MIN_VOTES_FOR_RATING = 200
 
 # TMDB's movie genre ids are stable; list results only carry ids, not names.
-GENRES: dict[int, str] = {
+# German and English names, as TMDB gives them in details for de-DE and en-US.
+GENRES_DE: dict[int, str] = {
     28: "Action",
     12: "Abenteuer",
     16: "Animation",
@@ -51,6 +52,33 @@ GENRES: dict[int, str] = {
     10752: "Kriegsfilm",
     37: "Western",
 }
+GENRES_EN: dict[int, str] = {
+    28: "Action",
+    12: "Adventure",
+    16: "Animation",
+    35: "Comedy",
+    80: "Crime",
+    99: "Documentary",
+    18: "Drama",
+    10751: "Family",
+    14: "Fantasy",
+    36: "History",
+    27: "Horror",
+    10402: "Music",
+    9648: "Mystery",
+    10749: "Romance",
+    878: "Science Fiction",
+    10770: "TV Movie",
+    53: "Thriller",
+    10752: "War",
+    37: "Western",
+}
+
+
+def genres(sprache: str | None = None) -> dict[int, str]:
+    """Genre names in a language ("de"/"en"); by default in the film data's language (TMDB_LANGUAGE)."""
+    sprache = sprache or settings.tmdb_language[:2].lower()
+    return GENRES_DE if sprache == "de" else GENRES_EN
 
 
 class TMDBError(Exception):
@@ -117,9 +145,10 @@ def _year(release_date: str) -> int | None:
 def normalise(raw: dict[str, Any]) -> dict[str, Any]:
     """Map a TMDB movie (list item or detail) onto `Movie` columns."""
     if raw.get("genres"):
-        genres = [g["name"] for g in raw["genres"]]
+        genre_namen = [g["name"] for g in raw["genres"]]
     else:
-        genres = [GENRES[g] for g in raw.get("genre_ids", []) if g in GENRES]
+        namen = genres()
+        genre_namen = [namen[g] for g in raw.get("genre_ids", []) if g in namen]
     collection = raw.get("belongs_to_collection") or {}
     release = raw.get("release_date") or ""
     return {
@@ -136,7 +165,7 @@ def normalise(raw: dict[str, Any]) -> dict[str, Any]:
         "vote_average": raw.get("vote_average") or 0.0,
         "vote_count": raw.get("vote_count") or 0,
         "popularity": raw.get("popularity") or 0.0,
-        "genres": json.dumps(genres, ensure_ascii=False),
+        "genres": json.dumps(genre_namen, ensure_ascii=False),
         "collection": collection.get("name", "") if isinstance(collection, dict) else "",
         # only details carry keywords; "" leaves what we already have untouched
         "keywords": json.dumps([k["name"] for k in raw["keywords"].get("keywords", [])], ensure_ascii=False)

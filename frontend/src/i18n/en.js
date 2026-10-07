@@ -158,6 +158,7 @@ export default {
     heute: "Today",
     jemand: "Someone",
     jemanden: "someone",
+    zitat: "“{text}”",
     zurueck: "Back",
   },
   api: {

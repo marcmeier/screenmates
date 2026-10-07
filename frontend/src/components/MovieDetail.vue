@@ -6,6 +6,7 @@ import { useUi } from '../stores/ui'
 import { useMovieActions } from '../composables/useMovieActions'
 import { navigate } from '../composables/useRoute'
 import { laufzeit, dezimal } from '../format'
+import { sprache } from '../i18n'
 import Icon from './Icon.vue'
 import Modal from './Modal.vue'
 import Poster from './Poster.vue'
@@ -93,7 +94,7 @@ function person(p) {
   <Modal v-if="film" :label="film.title" width="820px" @close="ui.detail = null">
     <div v-if="trailerAn" class="player">
       <iframe
-        :src="`https://www.youtube-nocookie.com/embed/${trailer.key}?autoplay=1&rel=0&hl=de`"
+        :src="`https://www.youtube-nocookie.com/embed/${trailer.key}?autoplay=1&rel=0&hl=${sprache()}`"
         :title="$t('moviedetail.trailerTitle', { title: film.title })"
         allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
         allowfullscreen
