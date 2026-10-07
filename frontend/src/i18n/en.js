@@ -265,7 +265,13 @@ export default {
     geraeteAnzahl: "Signed in on {n} device | Signed in on {n} devices",
     geraeteText:
       "Your name belongs to the devices where you created it or connected it with a login code. For a new phone, a laptop or the TV, get a code here.",
+    daten: "Your data",
+    datenHerunterladen: "Download everything",
+    datenText:
+      "A file with everything screenmates keeps about you. Or delete your name for good: ratings, suggestions, awards and devices go with it, comments and chat messages stay without your name.",
     geraetVerbinden: "Connect another device",
+    loeschen: "Delete my name",
+    loeschenFrage: "This can't be undone. To confirm, type your name: {name}",
     ideen: "Ideas for what screenmates should do next?",
     profil: "Profile & sign-in",
     vergessen: "Remove from this device",

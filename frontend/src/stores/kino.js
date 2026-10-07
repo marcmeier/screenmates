@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia'
 import { markRaw } from 'vue'
 import { api } from '../api'
-import { pickScreen, publish } from '../webrtc'
+import { iceServerSetzen, pickScreen, publish } from '../webrtc'
 import { useUi } from './ui'
 import { t } from '../i18n'
 
@@ -44,7 +44,9 @@ export const useKino = defineStore('kino', {
   actions: {
     async refresh() {
       try {
-        Object.assign(this, await api.get('/api/kino', { quiet: true }))
+        const status = await api.get('/api/kino', { quiet: true })
+        iceServerSetzen(status.ice)
+        Object.assign(this, status)
       } catch {
         /* keep the last known state; polling retries */
       }

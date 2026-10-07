@@ -45,6 +45,13 @@ async function vergessen() {
   await app.vergessen(app.me.id)
   ui.loginOpen = true
 }
+// Your data: a file with everything about you, or your name deleted for good.
+async function namenLoeschen() {
+  const eingabe = prompt(t('einst.loeschenFrage', { name: app.me.name }))
+  if (eingabe === null) return
+  await api.del(`/api/users/me?name=${encodeURIComponent(eingabe)}`)
+  window.location.reload() // without a name this browser is back at the door
+}
 </script>
 
 <template>
@@ -81,6 +88,14 @@ async function vergessen() {
         <span class="spacer"></span>
         <button v-if="geraete > 1" class="ghost small" @click="andereAbmelden">{{ $t('einst.andereAbmelden') }}</button>
         <button class="ghost small" @click="vergessen">{{ $t('einst.vergessen') }}</button>
+      </div>
+
+      <h3>{{ $t('einst.daten') }}</h3>
+      <p class="muted">{{ $t('einst.datenText') }}</p>
+      <div class="row">
+        <a class="button small" href="/api/users/me/export" download><Icon name="download" :size="14" /> {{ $t('einst.datenHerunterladen') }}</a>
+        <span class="spacer"></span>
+        <button class="ghost small danger" @click="namenLoeschen"><Icon name="muell" :size="14" /> {{ $t('einst.loeschen') }}</button>
       </div>
     </section>
 

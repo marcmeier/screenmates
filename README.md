@@ -139,7 +139,8 @@ make dev       # backend on :8000, Vite on :5173
 ### Running it on the internet
 
 Put it behind a reverse proxy with HTTPS and set `COOKIE_SECURE=true` and `FORWARDED_ALLOW_IPS` (the
-proxy's address). The cinema needs a few more steps, see below.
+proxy's address). The cinema needs a few more steps, see below. [docs/PRIVACY.md](docs/PRIVACY.md) lists
+what is stored and which other services are involved, as a starting point for your privacy notice.
 
 ## Configuration
 
@@ -164,6 +165,7 @@ All settings are optional and go into `backend/.env` or the environment.
 | `PUSH_CONTACT` | `PUBLIC_URL` | Contact (`mailto:` or `https:`) sent to browser push services. Push keys are generated automatically; push needs HTTPS. |
 | `SOURCE_URL` | this repository | Link to the source code on the about page. If you run a modified version, the AGPL asks you to point it at your source. |
 | `CINEMA_PUBLIC_HOST` | | Compose only: public hostname/IP of the server for cinema viewers outside your network. |
+| `STUN_SERVERS` | Google's | Comma-separated STUN servers for the cinema. Empty turns them off (see [privacy](docs/PRIVACY.md)). |
 
 `PUSH_KONTAKT` and `KINO_PUBLIC_HOST`, the names before 1.0, still work.
 
@@ -235,6 +237,7 @@ runs both on every push, plus the E2E suite against the Docker Compose setup.
 - [Cinema quality](docs/CINEMA-QUALITY.md): measurements behind the streaming settings
 - [Cinema checklist](docs/CINEMA-CHECKLIST.md): manual test for OBS and remote viewers
 - [API](docs/API.md): all endpoints and permissions
+- [Privacy](docs/PRIVACY.md): what is stored, which services are involved, what you can turn off
 - [Changelog](CHANGELOG.md)
 
 ## Roadmap

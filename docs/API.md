@@ -60,7 +60,9 @@ Every film carries the group flags `gesehen` (watched), `gemerkt` (on the watchl
 | PUT/DELETE | `/users/{id}/bild` | E | Upload (image as request body, max. 5 MB; JPG/PNG/WebP/GIF, becomes 256×256 WebP without metadata) or remove a profile picture. E = the person themselves or an admin |
 | GET | `/users/{id}/bild` | – | Profile picture (URL with `?v=…` from `users[].bild`, cached for long) |
 
-| PUT | `/users/me/design` | N | Your look: color `theme` and `schrift` (font) |
+| GET | `/users/me/export` | N | Everything about you as a JSON file (profile, groups, ratings, comments, suggestions, wishes, awards, chat, notifications, devices, AI searches) |
+| DELETE | `/users/me?name=…` | N | Delete your own name (type it again to confirm). Never the last admin |
+| PUT | `/users/me/design` | N | Your look: color `theme` and/or `schrift` (font) |
 | PUT | `/users/me/sprache` | N | Your language: `de` or `en` (applies on all devices) |
 | POST | `/users/me/willkommen` · `/users/me/erste-schritte` | N | The introduction / the first-steps card was seen (applies on all devices) |
 | POST | `/abos` | N | Set your streaming subscriptions (provider IDs) |

@@ -36,6 +36,8 @@ webrtcLocalTCPAddress: :8189
 # Public hostname/IP of the server, so viewers outside your LAN get a reachable
 # ICE candidate. Override with MTX_WEBRTCADDITIONALHOSTS=kino.example.com
 webrtcAdditionalHosts: []
+# STUN lets MediaMTX find its public address. With webrtcAdditionalHosts set it isn't needed;
+# remove it (or use your own server) if MediaMTX shouldn't talk to Google - see docs/PRIVACY.md.
 webrtcICEServers2:
   - url: stun:stun.l.google.com:19302
 

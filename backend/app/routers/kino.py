@@ -122,8 +122,9 @@ def _viewers(gid: int) -> list[int]:
 async def status(gid: int | None = Depends(_gruppe_optional), db: DBSession = Depends(get_session)):
     if not settings.kino_enabled:
         return {"enabled": False, "live": False}
+    ice = [{"urls": s.strip()} for s in settings.stun_servers.split(",") if s.strip()]
     if gid is None:  # no name or no group yet: nothing to show, but no error either (it's polled)
-        return {"enabled": True, "live": False, "zuschauer": [], "publikum": []}
+        return {"enabled": True, "live": False, "zuschauer": [], "publikum": [], "ice": ice}
     st = _state(db, gid)
     freigeben(db)
     path = await _mtx_path(gid)
@@ -132,6 +133,7 @@ async def status(gid: int | None = Depends(_gruppe_optional), db: DBSession = De
     seit = path.get("readyTime") if live else None
     return {
         "enabled": True,
+        "ice": ice,  # STUN servers for the browsers (STUN_SERVERS)
         "live": live,
         "seit": seit or (iso(st.gestartet) if live else None),
         "titel": st.titel,
