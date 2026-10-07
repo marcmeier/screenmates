@@ -73,6 +73,7 @@ EN: dict[str, str] = {
     "Unbekannte Sprache.": "Unknown language.",
     "„{name}“ ist auf diesem Gerät nicht angemeldet – dafür braucht es einen Anmeldecode.": "“{name}” isn't signed in on this device – you need a login code for that.",
     "Dieser Anmeldecode gilt nicht (mehr). Lass dir einen neuen geben.": "This login code isn't valid (any more). Ask for a new one.",
+    "Für den ersten Namen braucht es den Einrichtungscode aus dem Server-Log.": "The first name needs the setup code from the server log.",
     "Eintrag nicht gefunden.": "Entry not found.",
     "Dieser Kommentar wurde gelöscht.": "This comment was deleted.",
     "Nur Mitglieder der Gruppe können dabei gewesen sein.": "Only members of the group can have been there.",

@@ -9,7 +9,7 @@ from fastapi.staticfiles import StaticFiles
 from sqlmodel import Session
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
-from . import erfolge, push, tmdb
+from . import einrichtung, erfolge, push, tmdb
 from .config import settings
 from .db import engine, init_db
 from .gruppen import kontext
@@ -52,8 +52,9 @@ __version__ = "0.21.4"
 async def lifespan(app: FastAPI):
     init_db()
     seed_if_empty()
-    # Achievements: the first check right away, so only history counts as retroactive.
     with Session(engine) as db:
+        einrichtung.ankuendigen(db)
+        # Achievements: the first check right away, so only history counts as retroactive.
         erfolge.pruefen(db, sofort=True)
     await tmdb.startup()
     # The Kino's traffic for the statistics: MediaMTX forgets sessions, so count along.

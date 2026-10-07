@@ -19,6 +19,8 @@ const beantragt = ref(null)
 // "I already have a name": sign in with a login code from another device.
 const mitCode = ref(false)
 const code = ref('')
+// A fresh install: the first name (the admin) needs the setup code from the server log.
+const setup = ref('')
 
 function close() {
   ui.loginOpen = false
@@ -53,7 +55,7 @@ async function create() {
   error.value = ''
   busy.value = true
   try {
-    const u = await app.createUser(name)
+    const u = await app.createUser(name, setup.value.trim())
     if (u.freigegeben) {
       ui.toast(t('namen.hallo', { name: u.name }), 'ok')
       ui.changed()
@@ -96,16 +98,23 @@ async function create() {
             <span>{{ u.name }}</span>
           </button>
         </div>
-        <p v-else-if="!app.users.length" class="muted center">{{ $t('namen.erster') }}</p>
+        <template v-else-if="!app.zugang.gesperrt">
+          <p class="muted center">{{ $t('namen.erster') }}</p>
+          <label v-if="!app.setupCode" class="setup">
+            <span>{{ $t('namen.setupFeld') }}</span>
+            <input v-model="setup" class="code" maxlength="40" placeholder="ABCD-EFGH-JKLM" autocomplete="off" spellcheck="false" />
+            <small class="muted">{{ $t('namen.setupText') }}</small>
+          </label>
+        </template>
 
         <p v-if="app.users.length && !app.zugang.einladung" class="muted center hint">{{ $t('namen.neuHier') }}</p>
         <form class="create" @submit.prevent="create">
           <input v-model="newName" maxlength="30" :placeholder="$t('namen.neuPlatzhalter')" :aria-label="$t('namen.neu')" />
           <button class="primary" :disabled="busy || !newName.trim()">
-            <Icon name="plus" :size="16" /> {{ !app.users.length || app.zugang.einladung?.direkt ? $t('namen.anlegen') : $t('namen.beantragen') }}
+            <Icon name="plus" :size="16" /> {{ !app.zugang.gesperrt || app.zugang.einladung?.direkt ? $t('namen.anlegen') : $t('namen.beantragen') }}
           </button>
         </form>
-        <p v-if="app.users.length" class="center schon">
+        <p v-if="app.zugang.gesperrt" class="center schon">
           <button class="ghost small" @click="zeigeCode(true)">{{ $t('namen.habeSchon') }}</button>
         </p>
       </template>
@@ -148,6 +157,8 @@ h2 { text-align: center; font-weight: 600; font-size: 1.25rem; margin: 0.6rem 0 
 .create button { flex: none; }
 .code { font-family: 'JetBrains Mono Variable', ui-monospace, monospace; letter-spacing: 0.08em; text-transform: uppercase; }
 .schon { margin: 1rem 0 0; }
+.setup { display: flex; flex-direction: column; gap: 0.3rem; margin: 0 0 1.2rem; font-size: 0.9rem; }
+.setup small { font-size: 0.8rem; }
 .back { margin-bottom: 0.4rem; }
 .error { color: #ff6b6b; text-align: center; margin: 1rem 0 0; }
 </style>

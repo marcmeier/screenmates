@@ -9,7 +9,7 @@ from sqlmodel import select
 from app import migrate
 from app.models import Session, User
 
-from .conftest import login, rein
+from .conftest import SETUP, login, rein
 
 
 def users(c):
@@ -20,10 +20,49 @@ def users(c):
 
 
 def test_the_first_name_of_a_fresh_install_becomes_admin(client):
-    r = client.post("/api/users", json={"name": "Marc"}).json()
+    r = client.post("/api/users", json={"name": "Marc", "setup": SETUP}).json()
     assert r["admin"] is True and r["freigegeben"] is True
     client.post("/api/users/waehlen", json={"user_id": r["id"]})
     assert client.get("/api/users").json()["admin"] is True
+
+
+def test_the_first_name_needs_the_setup_code(client, browser):
+    """Whoever reaches a fresh server first must not become its admin."""
+    r = client.post("/api/users", json={"name": "Mallory"})
+    assert r.status_code == 403 and "Einrichtungscode" in r.json()["detail"]
+    assert client.post("/api/users", json={"name": "Mallory", "setup": "WRONG-CODE"}).status_code == 403
+    assert client.get("/api/users").json()["users"] == []
+    # Typed sloppily, the right code works, once; afterwards it's an ordinary request.
+    r = client.post("/api/users", json={"name": "Marc", "setup": SETUP.lower().replace("-", " ")})
+    assert r.status_code == 201 and r.json()["admin"] is True
+    b = browser()
+    rein(b)
+    assert b.post("/api/users", json={"name": "Lena", "setup": SETUP}).json()["admin"] is False
+
+
+def test_wrong_setup_codes_are_throttled(client):
+    for _ in range(10):
+        assert client.post("/api/users", json={"name": "x", "setup": "nope"}).status_code == 403
+    assert client.post("/api/users", json={"name": "Marc", "setup": SETUP}).status_code == 429
+
+
+def test_without_setup_token_a_code_is_made_logged_and_forgotten(client, db, monkeypatch, caplog):
+    from app import einrichtung
+    from app.config import settings
+    from app.models import AppMeta
+
+    monkeypatch.setattr(settings, "setup_token", "")
+    with caplog.at_level("WARNING", logger="screenmates"):
+        einrichtung.ankuendigen(db)
+    code = db.get(AppMeta, 1).einrichtung
+    assert len(code) == 14 and code in caplog.text
+    assert einrichtung.code(db) == code  # the same one until it's used, also after a restart
+    assert client.post("/api/users", json={"name": "Marc", "setup": code}).status_code == 201
+    db.expire_all()
+    assert db.get(AppMeta, 1).einrichtung == ""
+    caplog.clear()
+    einrichtung.ankuendigen(db)  # names exist: nothing to announce
+    assert caplog.text == ""
 
 
 def test_later_names_are_requests_until_an_admin_approves(client, browser):

@@ -2,7 +2,7 @@
 
 import pytest
 
-from .conftest import become_admin, binden, login, rein
+from .conftest import SETUP, become_admin, binden, login, rein
 
 
 def test_reads_do_not_create_sessions(client, db):
@@ -52,7 +52,7 @@ def test_admin_requires_admin(client, method, path, body):
 
 
 def test_duplicate_names_are_rejected(client):
-    assert client.post("/api/users", json={"name": "marc"}).status_code == 201
+    assert client.post("/api/users", json={"name": "marc", "setup": SETUP}).status_code == 201
     assert client.post("/api/users", json={"name": "marc"}).status_code == 409
     assert client.post("/api/users", json={"name": ""}).status_code == 422
     assert client.post("/api/users", json={"name": "x" * 31}).status_code == 422

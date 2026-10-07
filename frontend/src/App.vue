@@ -167,8 +167,17 @@ async function anmeldelink() {
   }
 }
 
+// #/setup/<code>: the link from the server log for the first name of a fresh install.
+function setuplink() {
+  if (route.value.tab !== 'setup' || !route.value.sub) return
+  app.setupCode = route.value.sub
+  history.replaceState(null, '', '#/abend')
+  route.value = { tab: 'abend', sub: null, id: null }
+}
+
 async function start() {
   try {
+    setuplink()
     await einladung()
     await anmeldelink()
     await app.bootstrap()
@@ -185,6 +194,7 @@ onMounted(start)
 watch(
   () => route.value.tab,
   async (tab) => {
+    if (tab === 'setup') return setuplink()
     if (tab !== 'einladung' && tab !== 'login') return
     await einladung()
     await anmeldelink()

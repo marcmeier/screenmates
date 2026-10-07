@@ -16,7 +16,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlmodel import Session as DBSession
 from sqlmodel import col, func, select
 
-from .. import bilder, erfolge
+from .. import bilder, einrichtung, erfolge
 from ..db import get_session
 from ..gruppen import aktive_gruppe, aufnehmen, gruppen_admin, mitgliedschaften
 from ..models import Abend, Abo, Ereignis, Gruppe, Mitglied, Session, User
@@ -82,6 +82,7 @@ def new_user(db: DBSession, name: str, *, freigegeben: bool, admin: bool = False
 
 class NameAnlegen(BaseModel):
     name: str = Field(min_length=1, max_length=30)
+    setup: str = Field("", max_length=40)  # the setup code, only for the very first name
 
 
 class NameWaehlen(BaseModel):
@@ -151,8 +152,15 @@ def create_user(
     a "direkt" link lets you in, otherwise it's a request for an admin of the link's group.
     The name belongs to this browser; other devices get it with a login code."""
     name = clean_name(body.name)
-    if db.exec(select(func.count()).select_from(User)).one() == 0:
+    if einrichtung.offen(db):
+        from .zugang import bremse, fehlversuch
+
+        ip = bremse(request)
+        if not einrichtung.stimmt(db, body.setup):
+            fehlversuch(ip)
+            raise HTTPException(403, "Für den ersten Namen braucht es den Einrichtungscode aus dem Server-Log.")
         u = new_user(db, name, freigegeben=True, admin=True)
+        einrichtung.erledigt(db)
         # The door closes with the first name: its browser stays inside.
         login.binden(db, ensure_session(request, response, db), u.id)
         db.commit()

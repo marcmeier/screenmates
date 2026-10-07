@@ -276,6 +276,7 @@ class AppMeta(SQLModel, table=True):
     erfolge_seit: datetime | None = None  # achievements: data from before this counts as it is
     erfolge_geprueft: bool = False  # the first check ran (its unlocks are marked retroactive)
     vapid: str = ""  # Web Push: the server's VAPID private key (PEM), made on first use
+    einrichtung: str = ""  # setup code for the first name, while there is none (see einrichtung.py)
 
 
 class KinoState(SQLModel, table=True):

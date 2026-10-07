@@ -4,6 +4,7 @@
     python -m app.cli admin "<Name>"        # make someone admin (and approve the name)
     python -m app.cli einladung [<gruppe>]  # a one-time link that lets you straight in (24 h)
     python -m app.cli login "<Name>"        # a login code for that name on a new device (24 h)
+    python -m app.cli einrichtung           # the setup code for the first name of a fresh install
 
 The way in when nobody can administrate any more: an existing database that
 predates admins, the last admin who lost their device, or no valid invitation left.
@@ -73,6 +74,17 @@ def login_code(db: Session, name: str) -> int:
     return 0
 
 
+def setup_code(db: Session) -> int:
+    from . import einrichtung
+
+    if not einrichtung.offen(db):
+        print("Es gibt schon Namen – der Einrichtungscode wird nicht mehr gebraucht.", file=sys.stderr)
+        return 1
+    c = einrichtung.code(db)
+    print(f"Einrichtungscode für den ersten Namen: {c}  –  <Adresse>/#/setup/{c}")
+    return 0
+
+
 def main(argv: list[str]) -> int:
     init_db()
     with Session(engine) as db:
@@ -84,6 +96,8 @@ def main(argv: list[str]) -> int:
             return einladung(db, int(argv[1]) if len(argv) == 2 else None)
         if argv[:1] == ["login"] and len(argv) == 2:
             return login_code(db, argv[1])
+        if argv == ["einrichtung"]:
+            return setup_code(db)
     print(__doc__, file=sys.stderr)
     return 2
 

@@ -8,7 +8,7 @@ from sqlmodel import select
 from app.models import Gruppe, KinoState, Mitglied
 from app.routers import kino
 
-from .conftest import _mitglied, login, rein
+from .conftest import SETUP, _mitglied, login, rein
 
 MTX = "http://mtx:8889"
 SDP = "v=0\r\n"
@@ -174,7 +174,7 @@ def test_approved_names_join_the_only_group(client, browser, db):
 
 
 def test_the_first_name_runs_the_first_group(client, db):
-    r = client.post("/api/users", json={"name": "Marc"}).json()
+    r = client.post("/api/users", json={"name": "Marc", "setup": SETUP}).json()
     m = db.exec(select(Mitglied).where(Mitglied.user_id == r["id"])).one()
     assert (m.gruppe_id, m.ist_admin) == (1, True)
 

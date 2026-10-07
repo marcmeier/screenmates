@@ -10,6 +10,7 @@ os.environ["DATABASE_URL"] = f"sqlite:///{_tmp}/test.db"
 os.environ["MEDIA_DIR"] = f"{_tmp}/media"
 os.environ["TMDB_API_KEY"] = ""
 os.environ["LLM_API_KEY"] = ""
+SETUP = os.environ["SETUP_TOKEN"] = "TEST-SETUP-CODE"  # the first name of every fresh test database needs it
 
 import pytest  # noqa: E402
 from fastapi.testclient import TestClient  # noqa: E402
@@ -131,7 +132,7 @@ def login(c: TestClient, name: str, *, admin: bool = False) -> dict:
     """
     if not c.get("/api/zugang").json()["offen"]:  # invite-only once someone exists: come in like a friend would
         rein(c)
-    r = c.post("/api/users", json={"name": name})
+    r = c.post("/api/users", json={"name": name, "setup": SETUP})
     assert r.status_code in (201, 409), r.text
     if r.status_code == 201:
         _set(name, freigegeben=True, is_admin=admin)

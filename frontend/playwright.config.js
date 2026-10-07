@@ -15,6 +15,8 @@ const EXTERNAL = process.env.E2E_BASE_URL
 export const KINO = EXTERNAL ? process.env.E2E_KINO === '1' : existsSync(MTX)
 // The story's admin session, saved by filmabend.spec.js for kino.spec.js (screenmates is invite-only).
 export const ADMIN_SITZUNG = join(tmpdir(), 'screenmates-e2e-admin.json')
+// The first name of the fresh stack needs the setup code (the CI Docker job sets it in backend/.env).
+export const SETUP = process.env.SETUP_TOKEN || 'E2E-SETUP-CODE'
 const db = join(tmpdir(), `screenmates-e2e-${Date.now()}.db`)
 const python = process.env.PYTHON || (existsSync('../backend/.venv/bin/python') ? '.venv/bin/python' : 'python')
 
@@ -25,6 +27,7 @@ const backend = {
     DATABASE_URL: `sqlite:///${db}`,
     TMDB_API_KEY: '',
     LLM_API_KEY: '',
+    SETUP_TOKEN: SETUP,
     ...(KINO && { MEDIAMTX_WEBRTC_URL: 'http://127.0.0.1:18889', MEDIAMTX_API_URL: 'http://127.0.0.1:19997' }),
   },
   url: `http://127.0.0.1:${PORT}/api/health`,
