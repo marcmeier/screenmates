@@ -31,6 +31,7 @@ from .routers import (
     live,
     login,
     misc,
+    my_data,
     profilbild,
     reset,
     rueckblick,
@@ -108,6 +109,7 @@ async def tmdb_error(_: Request, exc: tmdb.TMDBError):
 
 for r in (
     catalog.router,
+    my_data.router,  # before users: /users/me must not be read as /users/{id}
     users.router,
     watched.router,
     lists.router,

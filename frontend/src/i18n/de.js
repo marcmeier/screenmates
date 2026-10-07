@@ -272,7 +272,13 @@ export default {
     geraeteAnzahl: "Auf {n} Gerät angemeldet | Auf {n} Geräten angemeldet",
     geraeteText:
       "Dein Name gehört zu den Geräten, auf denen du ihn angelegt oder mit einem Anmeldecode verbunden hast. Für ein neues Handy, einen Laptop oder den Fernseher holst du dir hier einen Code.",
+    daten: "Deine Daten",
+    datenHerunterladen: "Alles herunterladen",
+    datenText:
+      "Eine Datei mit allem, was screenmates über dich speichert. Oder du löschst deinen Namen ganz: Bewertungen, Vorschläge, Erfolge und Geräte gehen mit, Kommentare und Chat-Nachrichten bleiben ohne deinen Namen.",
     geraetVerbinden: "Anderes Gerät verbinden",
+    loeschen: "Namen löschen",
+    loeschenFrage: "Das lässt sich nicht rückgängig machen. Tipp zum Bestätigen deinen Namen ein: {name}",
     ideen: "Ideen, was screenmates noch können soll?",
     profil: "Profil & Anmeldung",
     vergessen: "Von diesem Gerät entfernen",

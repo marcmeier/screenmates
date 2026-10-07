@@ -39,6 +39,10 @@ All notable changes to screenmates are documented here. The format is based on
 - Time zone setting `TIMEZONE` (or `TZ`). Dates, reminders, "on this day", awards and the year in review
   used to be fixed to German time. Without the setting, a new install takes the zone of the first admin's
   browser. The date dialog says which zone it means ("Berlin time").
+- Your data: Profile → Settings can download everything screenmates keeps about you as a file, and delete
+  your own name.
+- `STUN_SERVERS` for the cinema (default unchanged); empty turns the STUN server off.
+- `docs/PRIVACY.md`: what is stored for how long, which other services see what, and what to switch off.
 
 ### Changed
 - Film data defaults to English now (`TMDB_LANGUAGE=en-US`, `TMDB_REGION=US`); set `de-DE`/`DE` for German.

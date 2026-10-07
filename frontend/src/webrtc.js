@@ -2,7 +2,11 @@ import { t, t as tr } from './i18n'
 // WHIP (send) and WHEP (watch) over plain fetch + RTCPeerConnection.
 // Signalling goes through screenmates (/api/kino/...), media straight to MediaMTX.
 
-const ICE = [{ urls: 'stun:stun.l.google.com:19302' }]
+// STUN servers from the server's settings (STUN_SERVERS), via the Kino status.
+let ICE = []
+export function iceServerSetzen(liste) {
+  if (Array.isArray(liste)) ICE = liste
+}
 
 // Viewer playout buffer. WebRTC defaults to ~50 ms for calls; for a film a bit of
 // delay is free and evens out packet jitter. Measured on a live stream: at 300 ms

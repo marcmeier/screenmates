@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs'
 import { expect, test } from '@playwright/test'
 import { ADMIN_SITZUNG, KINO, SETUP } from '../playwright.config.js'
 
@@ -864,5 +865,28 @@ test('a second group has its own movie night', async () => {
   await expect(page.locator('.crew')).not.toContainText('Marc')
   await Promise.all([page.waitForEvent('load'), page.getByLabel('Gruppe wechseln').selectOption({ label: 'Unsere Gruppe' })])
   expect(await gesehen()).toBeGreaterThan(0)
+})
+
+test('someone downloads their data and then deletes their name', async ({ browser }) => {
+  const link = await (await page.request.post('/api/admin/gruppen/1/einladungen', { data: { direkt: true } })).json()
+  const tom = await browser.newPage()
+  await tom.goto(`/#/einladung/${link.token}`)
+  await tom.getByPlaceholder('Neuer Name').fill('Tom')
+  await tom.getByRole('button', { name: 'Anlegen' }).click()
+  await tom.getByRole('dialog', { name: 'Willkommen bei screenmates' }).getByRole('button', { name: 'Überspringen' }).click()
+  await tom.goto('/#/profil/einstellungen')
+  const [download] = await Promise.all([tom.waitForEvent('download'), tom.getByRole('link', { name: 'Alles herunterladen' }).click()])
+  expect(download.suggestedFilename()).toBe('screenmates-Tom.json')
+  const daten = JSON.parse(readFileSync(await download.path(), 'utf8'))
+  expect(daten.profile.name).toBe('Tom')
+  expect(daten.groups.map((g) => g.group)).toEqual(['Unsere Gruppe'])
+
+  tom.once('dialog', (d) => d.accept('Tom'))
+  await tom.getByRole('button', { name: 'Namen löschen' }).click()
+  // The name is gone; the browser still holds its invitation and may make a new one.
+  await expect(tom.getByRole('dialog', { name: 'Namen wählen' })).toBeVisible({ timeout: 10_000 })
+  const namen = (await (await page.request.get('/api/users')).json()).users.map((u) => u.name)
+  expect(namen).not.toContain('Tom')
+  await tom.close()
 })
 
