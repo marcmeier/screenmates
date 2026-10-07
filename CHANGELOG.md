@@ -1,757 +1,737 @@
 # Changelog
 
+All notable changes to screenmates are documented here. The format is based on
+[Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project uses
+[Semantic Versioning](https://semver.org/). Releases are published on
+[GitHub](https://github.com/marcmeier/screenmates/releases).
+
+## Unreleased
+
+### Documentation
+- The repository is now in English: new README with screenshots of the current app, translated docs
+  (`docs/GROUPS.md`, `AWARDS.md`, `PREDICTION.md`, `CINEMA-QUALITY.md`, `CINEMA-CHECKLIST.md`, `API.md`)
+  and changelog. Future entries are written in English.
+- Licensed under the GNU AGPL v3.0; added contributing guide, security policy, code of conduct, issue and
+  pull request templates, and Dependabot.
+
 ## 0.21.2 – 2026-10-07
 
-### Behoben
-- **Farbschemata mit hellem Akzent:** Im Theme „Schwarz“ (und weniger stark bei „Wald“ und „Bernstein“) war
-  weiße Schrift auf der Akzentfarbe kaum lesbar – etwa „Für alle öffnen“, die LIVE-/HEUTE-Abzeichen, Zähler,
-  Schrittnummern und der Trailer-Knopf. Diese Stellen nehmen jetzt die Textfarbe, die zum Farbschema passt.
+### Fixed
+- **Color themes with a light accent:** in the "Black" theme (and less so in "Forest" and "Amber"), white text
+  on the accent color was hard to read – e.g. "Open for everyone", the LIVE/TODAY badges, counters, step
+  numbers and the trailer button. These spots now use the text color that matches the theme.
 
 ## 0.21.1 – 2026-10-07
 
-### Geändert
-- **Erste Schritte:** Bei „Benachrichtigungen einschalten“ gibt es jetzt ein zurückhaltendes „Nein danke“.
-  Der Schritt zählt dann als erledigt (mit Hinweis, wo es später geht) – die Checkliste lässt sich auch ohne
-  Benachrichtigungen abschließen.
-- **Trailer nicht zu übersehen:** In den Filmdetails sitzt ein großer Play-Knopf mitten auf dem Titelbild, und
-  „Trailer“ steht zusätzlich als erster Knopf neben Gesehen, Merken und Vorschlagen.
+### Changed
+- **First steps:** "Turn on notifications" now has an unobtrusive "No thanks". The step then counts as done
+  (with a hint where to turn them on later) – the checklist can be completed without notifications.
+- **Trailer hard to miss:** film details show a large play button in the middle of the backdrop, and
+  "Trailer" is also the first button next to Watched, Save and Suggest.
 
 ## 0.21.0 – 2026-10-07
 
-### Geändert
-- **Filmabend auf dem Handy kompakt und aufgeräumt:**
-  - Planungskarte: Datum oben (der Hinweis in einer eigenen kurzen Zeile), Einladen und Planung als zwei
-    kleine Symbole daneben, darunter wer dabei ist und die Zusage als **eine** Leiste
-    (Ich bin dabei · Vielleicht · Kann nicht); „Termin festlegen“ und „Abstimmen“ teilen sich eine Zeile.
-  - Abendmodus: Nur der Schritt, der dran ist (oder in dem man gerade etwas tun kann, z. B. die Kiste
-    öffnen), ist aufgeklappt – die anderen schrumpfen auf eine Zeile. Der Kisten-Knopf ist so ohne Scrollen
-    sichtbar; das LIVE-Abzeichen bleibt einzeilig.
-- **Die Kiste feiert den Gewinner:** Bleibt das Band stehen, tritt der Film als große Karte vor das Band –
-  mit kurzem Lichtblitz, einem Halo in seiner Seltenheitsfarbe, einem Glanz über das Plakat, langsam drehenden
-  Lichtstrahlen und einem tiefen Ton vor der Fanfare; die übrigen Filme treten zurück. Bei „Bewegung
-  reduzieren“ bleibt nur die große Karte.
+### Changed
+- **Movie night on the phone, compact and tidy:**
+  - Planning card: the date on top (the hint in its own short line), Invite and Planning as two small icons
+    next to it, below that who's in and your reply as **one** bar (I'm in · Maybe · Can't make it);
+    "Set date" and "Vote" share a row.
+  - Evening mode: only the current step (or one where you can act right now, e.g. open the case) is
+    expanded – the others shrink to a single line. The case button is visible without scrolling; the LIVE
+    badge stays on one line.
+- **The case celebrates the winner:** when the reel stops, the film steps forward as a large card – with a
+  short flash, a halo in its rarity color, a sheen across the poster, slowly turning light rays and a low
+  tone before the fanfare; the other films fall back. With "reduce motion" only the large card remains.
 
 ## 0.20.2 – 2026-10-07
 
-### Behoben
-- **Kino zeigt den gezogenen Film:** Der Film aus der Kiste kam nur ins Kino-Programm, wenn dort noch nichts
-  stand – ein Titel von einer früheren Vorstellung blieb also stehen (z. B. „Der Astronaut“ statt des
-  gezogenen „Deadpool & Wolverine“). Jetzt setzt jede neu gezogene Kiste ihren Film einmal ins Programm,
-  solange nicht gesendet wird; wer ihn danach von Hand ändert, behält seine Wahl.
+### Fixed
+- **The cinema shows the drawn film:** the film from the case only went into the cinema program if nothing
+  was there yet – so a title from an earlier show stayed put. Now every newly drawn case puts its film into
+  the program once, as long as nobody is streaming; if you change it by hand afterwards, your choice stays.
 
 ## 0.20.1 – 2026-10-07
 
-### Geändert
-- **Der Abendmodus führt durch die drei Schritte:** Immer genau ein Schritt ist dran (rot, leicht leuchtend),
-  erledigte sind grün abgehakt, kommende gedimmt; Pfeile zwischen den Schritten und ein Fortschrittsbalken
-  zeigen den Weg. Ist der Film gezogen, gelten die Schritte davor als erledigt (vorher blieb „Wer ist da?“
-  mit nur einer Zusage rot).
-- **Schritt 3:** „Im Kino schauen“ bzw. „Zum Kino – läuft schon“ ist jetzt der große, leuchtende Knopf;
-  „Geschaut – eintragen“ steht schlicht daneben.
+### Changed
+- **Evening mode guides through the three steps:** exactly one step is current (red, softly glowing), done
+  ones are checked off in green, upcoming ones dimmed; arrows between the steps and a progress bar show the
+  way. Once the film is drawn, the steps before count as done (previously "Who's here?" stayed red with only
+  one yes).
+- **Step 3:** "Watch in the cinema" or "To the cinema – already showing" is now the big glowing button;
+  "Watched – log it" sits plainly next to it.
 
 ## 0.20.0 – 2026-10-07
 
-### Neu
-- **Gastgeber schaut wie alle:** Wer sendet, sieht im Kino jetzt standardmäßig den Stream wie die anderen –
-  mit derselben Verzögerung und mit Ton und Lautstärkeregler. Damit der Ton nicht doppelt kommt, bleibt
-  der geteilte Tab in Chrome stumm. Ein Schalter im Player wechselt zur verzögerungsfreien Vorschau.
+### Added
+- **The host watches like everyone else:** whoever streams now sees the stream in the cinema like the
+  others by default – with the same delay, with sound and a volume slider. To avoid double audio, the shared
+  tab stays muted in Chrome. A switch in the player toggles the zero-latency preview.
 
-### Behoben
-- **„Übertragung beenden“** beendet die Vorstellung zuverlässig: erst beim Server, dann lokal (vorher konnte
-  der lokale Abbau den Aufruf verhindern).
-- Der Knopf „Kiste für alle öffnen“ im Abendmodus wirkte ausgegraut, solange Schritt 1 offen war.
-- Im Kino beginnen Chat und Bild auf gleicher Höhe (die LIVE-Zeile steht darüber); „seit …“ und
-  „x schauen“ sind übersetzt.
+### Fixed
+- **"End stream"** reliably ends the show: first on the server, then locally (before, the local teardown
+  could prevent the call).
+- The "Open the case for everyone" button in evening mode looked disabled while step 1 was open.
+- In the cinema, chat and picture start at the same height (the LIVE row sits above them); "since …" and
+  "x watching" are translated.
 
-### Geändert
-- **Vorschläge und Kiste auf einer Höhe:** Die Überschrift „Filmabend-Kiste“ steht jetzt in derselben Zeile wie
-  „Vorschläge“, Liste und Kiste beginnen bündig; die Veto-Regel steht unter der Liste.
-- **Der Kisten-Knopf fällt auf:** „Für alle öffnen“ und im Abendmodus „Kiste für alle öffnen“ bzw.
-  „Stab übernehmen & Kiste öffnen“ leuchten im Verlauf und pulsieren dezent (aus bei „Bewegung reduzieren“).
+### Changed
+- **Suggestions and case aligned:** the "Movie-night case" heading now sits on the same row as
+  "Suggestions", list and case start flush; the veto rule sits below the list.
+- **The case button stands out:** "Open for everyone" and, in evening mode, "Open the case for everyone" or
+  "Take the baton & open the case" glow in a gradient and pulse subtly (off with "reduce motion").
 
 ## 0.19.0 – 2026-10-06
 
-### Geändert – einfacher zu lesen und einzuordnen
-- **Filmabend:** „Vorschläge · 4“ statt Überschrift plus Erklärsatz; der Veto-Hinweis steht nur noch da,
-  solange man sein Veto nicht gesetzt hat; die Kiste sagt nur noch „4 Filme in der Kiste.“ (der Rest steht
-  im ⓘ). Auf Handy und Tablet steht die Kiste unter den Vorschlägen – erst sehen, was drin ist.
-- **Chronik nach Monaten:** „Oktober 2026 · 3“ als Zwischenüberschriften (bei „Neueste zuerst“). Das
-  Gästebuch-Feld klappt erst auf „Ins Gästebuch schreiben“ auf; Ausblenden/Löschen sind schlichter.
-- **Neuigkeiten nach Tagen:** Heute · Gestern · Diese Woche · Älter.
-- **Erfolge:** „Als Nächstes“ zeigt die drei Erfolge, denen man am nächsten ist; der Katalog ist je
-  Kategorie eingeklappt (mit „3/14“), „Zuletzt freigeschaltet“ zeigt nur noch fünf.
-- **Wünsche:** Offene nach Stimmen sortiert, „Erledigt“ eingeklappt.
-- **Leere Listen** führen mit einem Knopf weiter (Merkliste → Filme finden, Chronik → Zum Filmabend).
+### Changed – easier to read and take in
+- **Movie night:** "Suggestions · 4" instead of a heading plus an explanatory sentence; the veto hint only
+  shows while you haven't used your veto; the case just says "4 films in the case." (the rest is behind
+  ⓘ). On phones and tablets the case sits below the suggestions – see what's in it first.
+- **History by month:** "October 2026 · 3" as subheadings (with "Newest first"). The guestbook field only
+  expands on "Write in the guestbook"; Hide/Delete are plainer.
+- **News by day:** Today · Yesterday · This week · Older.
+- **Awards:** "Up next" shows the three awards you're closest to; the catalog is collapsed per category
+  (with "3/14"), "Recently unlocked" shows only five.
+- **Wishes:** open ones sorted by votes, "Done" collapsed.
+- **Empty lists** lead on with a button (watchlist → Find films, history → To the movie night).
 
 ## 0.18.0 – 2026-10-06
 
-### Geändert
-- **Einstellungen mit Reitern:** Profil · Darstellung · Benachrichtigungen (mit Kalender-Abo) · Dienste –
-  statt einer langen Seite. Jeder Reiter hat eine eigene Adresse (z. B. `#/profil/einstellungen/dienste`);
-  Hinweise wie „Streamingdienste eintragen“ führen direkt dorthin.
-- **Kompaktere Seitenköpfe auf dem Handy:** kleinere Überschrift, kein Untertitel (die Leiste unten zeigt
-  ja, wo man ist); auch der Profilkopf ist kleiner.
+### Changed
+- **Settings with tabs:** Profile · Appearance · Notifications (with calendar subscription) · Services –
+  instead of one long page. Every tab has its own address (e.g. `#/profil/einstellungen/dienste`); hints
+  like "Add your streaming services" link straight there.
+- **More compact page headers on phones:** smaller heading, no subtitle (the bottom bar shows where you
+  are); the profile header is smaller too.
 
-### Behoben
-- Die untere Leiste auf dem Handy war in Safari durchscheinend; jetzt hat sie einen festen Hintergrund.
+### Fixed
+- The bottom bar on phones was translucent in Safari; it now has a solid background.
 
 ## 0.17.0 – 2026-10-06
 
-### Geändert
-- **Handy: Navigation unten.** Filmabend · Finden · Unsere Filme · Kino · **Mehr** sitzen in einer festen
-  Leiste am unteren Rand (Daumenhöhe, über der Home-Leiste des iPhones). Oben bleibt eine schmale Zeile mit
-  Logo, Gruppenwahl (nur bei mehreren Gruppen), Glocke und Profilbild. „Mehr“ öffnet Profil,
-  Einstellungen, Neuigkeiten, Wünsche, Verwaltung, Über und Abmelden; das Profilbild führt zum Profil.
-- **Ruhigere Vorschlagskarten:** Jahr, Bewertung, Chance und Prognose in einer Zeile, darunter wer
-  vorschlägt und wo der Film läuft; Titel höchstens zweizeilig. Auf dem Handy sind „+1/Zurückziehen“ und
-  „Veto“ kompakte Symbol-Knöpfe.
-- **Rot nur noch fürs Wichtigste:** Der eigene Vorschlag ist grün markiert, Admin-Kennzeichen und
-  Gruppenkarten sind neutral; Rot bleibt der Hauptaktion (z. B. „Für alle öffnen“) und Warnungen.
-- **Besser lesbar:** Graue Hinweistexte haben mehr Kontrast, auf dem Handy ist alles eine Spur größer.
-  Die lange Gruppen-Erklärung in der Verwaltung steckt jetzt hinter einem ⓘ.
+### Changed
+- **Phone: navigation at the bottom.** Movie night · Find · Our films · Cinema · **More** sit in a fixed bar
+  at the bottom edge (thumb height, above the iPhone home indicator). At the top a slim row remains with the
+  logo, group picker (only with several groups), bell and profile picture. "More" opens profile, settings,
+  news, wishes, admin, about and sign out; the profile picture leads to the profile.
+- **Calmer suggestion cards:** year, rating, odds and prediction on one line, below that who suggested it
+  and where it's streaming; titles at most two lines. On phones "+1/Withdraw" and "Veto" are compact icon
+  buttons.
+- **Red only for what matters most:** your own suggestion is marked green, admin labels and group cards are
+  neutral; red stays reserved for the main action (e.g. "Open for everyone") and warnings.
+- **Better legibility:** gray hint texts have more contrast, and everything is a notch larger on phones.
+  The long group explanation in the admin area now sits behind an ⓘ.
 
 ## 0.16.0 – 2026-10-06
 
-### Geändert
-- **Verwaltung mit Reitern:** Gruppen · Personen (mit Zahl offener Anträge) · System (KI-Nutzung,
-  Katalog) · Gefahrenzone. Gruppen-Admins sehen nur ihre Gruppen. Jeder Reiter hat eine eigene Adresse
-  (z. B. `#/verwaltung/gefahr`).
-- **Gruppen übersichtlich:** Oben eine Auswahl aller Gruppen, darunter immer nur die gewählte als eigene,
-  umrandete Karte – Kopf mit Name, Umbenennen und Löschen, darunter getrennt Mitglieder, Einladungslinks
-  und „Nächster Abend“. „Neue Gruppe“ steht als Eintrag in der Auswahl.
+### Changed
+- **Admin area with tabs:** Groups · People (with the number of open requests) · System (AI usage,
+  catalog) · Danger zone. Group admins only see their groups. Every tab has its own address
+  (e.g. `#/verwaltung/gefahr`).
+- **Groups at a glance:** a picker of all groups on top, below it only the selected one as its own framed
+  card – header with name, rename and delete, below that members, invitation links and "Next night" in
+  separate sections. "New group" is an entry in the picker.
 
-### Behoben
-- „Noch in keiner Gruppe“ war in der englischen Ansicht noch deutsch.
+### Fixed
+- "Not in a group yet" was still German in the English UI.
 
 ## 0.15.0 – 2026-10-06
 
-### Neu
-- **Erste Schritte:** Neue Leute sehen in ihren ersten 30 Tagen oben auf der Filmabend-Seite eine kleine
-  Checkliste – zum nächsten Abend zusagen, einen Film vorschlagen, Streamingdienste eintragen,
-  Benachrichtigungen einschalten. Jeder Punkt führt direkt hin und hakt sich von selbst ab; erledigt oder
-  ausgeblendet verschwindet die Karte (auf allen Geräten).
-- **ⓘ-Erklärungen** bei unseren eigenen Begriffen: Vorschläge und Chancen, Veto, Filmabend-Kiste und
-  Gastgeber – antippen, ein, zwei Sätze lesen.
+### Added
+- **First steps:** in their first 30 days, new people see a small checklist at the top of the movie-night
+  page – reply for the next night, suggest a film, add streaming services, turn on notifications. Each item
+  links straight there and checks itself off; once done or hidden, the card disappears (on all devices).
+- **ⓘ explanations** for our own terms: suggestions and odds, veto, movie-night case and host – tap, read
+  a sentence or two.
 
-### Behoben
-- „Offen“/„Erledigt“ auf der Wunschseite waren in der englischen Ansicht noch deutsch.
+### Fixed
+- "Open"/"Done" on the wishes page were still German in the English UI.
 
 ## 0.14.1 – 2026-10-06
 
-### Behoben
-- **Handy im Hochformat:** Auf schmalen Bildschirmen wurde der Inhalt rechts abgeschnitten (z. B. auf der
-  Filmabend-Seite „Zurückziehen“/„Veto“ und die Kiste), weil lange Anbieter-Chips wie „Amazon Prime Video ·
-  Marc, Matthias“ die einspaltige Ansicht breiter machten als den Bildschirm. Die Spalten passen sich jetzt
-  an, lange Chips werden gekürzt. Geprüft mit Safaris Engine bei 390 px (iPhone 13) und 320 px (Anzeigezoom).
-- Die Reiter in „Unsere Filme“ und die Kopfzeile (bei sehr schmalen Displays nur das Profilbild) passen
-  auch bei 320 px Breite.
+### Fixed
+- **Phones in portrait:** on narrow screens the content was cut off on the right (e.g. "Withdraw"/"Veto"
+  and the case on the movie-night page), because long provider chips like "Amazon Prime Video · Alice,
+  Bob" made the single-column view wider than the screen. Columns now adapt and long chips are truncated.
+  Tested with Safari's engine at 390 px (iPhone 13) and 320 px (display zoom).
+- The tabs in "Our films" and the header (on very narrow displays only the profile picture) fit at 320 px
+  width too.
 
 ## 0.14.0 – 2026-10-06
 
-### Geändert
-- **Am Filmabend nur noch eine Karte:** Am Tag des Termins ersetzt der Abendmodus die Planungskarte, statt
-  doppelt „Heute Abend“ und „Heute“ zu zeigen. Zusagen („Ich bin da“, „Kann nicht“) sitzen im Schritt
-  „Wer ist da?“, Einladen steht oben rechts, Termin ändern, Kalender und Gastgeber-Stab hinter „⋯“.
-- **Die Kopfzeile kennt die Uhr:** vorher „Heute Abend · 20:00 Uhr · in 2 Stunden“, ab Beginn
-  „● Läuft seit 20:00 Uhr“. Ist der Film als gesehen eingetragen, kommt wieder die Planung für den
-  nächsten Abend.
+### Changed
+- **Only one card on movie night:** on the day of the date, evening mode replaces the planning card
+  instead of showing both "Tonight" and "Today". Replies ("I'm here", "Can't make it") sit in the "Who's
+  here?" step, Invite is top right, change date, calendar and host baton are behind "⋯".
+- **The header knows the time:** before, "Tonight · 20:00 · in 2 hours"; from the start, "● Running since
+  20:00". Once the film is logged as watched, planning for the next night comes back.
 
-### Neu
-- **„Gleich geht’s los“:** Fünf Minuten vor Beginn bekommt eine Benachrichtigung, wer zugesagt oder
-  „vielleicht“ gesagt hat und screenmates gerade nicht offen hat – auch bei geschlossener App, wenn
-  Benachrichtigungen auf dem Gerät an sind (Einstellung „Erinnerungen am Tag des Filmabends“).
+### Added
+- **"Starting soon":** five minutes before the start, everyone who said yes or maybe and doesn't have
+  screenmates open gets a notification – even with the app closed, if notifications are on for the device
+  (setting "Reminders on movie-night day").
 
 ## 0.13.1 – 2026-10-06
 
-### Geändert
-- **Abendmodus:** Ist am Filmabend noch nichts vorgeschlagen, führt im Schritt „Was schauen wir?“ ein
-  Knopf **Filme finden** direkt nach Finden.
-- **Kiste ohne Gastgeber:** Wer nicht Gastgeber ist, sieht im Schritt „Was schauen wir?“ jetzt, wer die
-  Kiste öffnet. Ist der Gastgeber nicht da (oder hat niemand den Stab), geht es mit einem Klick:
-  **Stab übernehmen & Kiste öffnen**. Ist er da, startet „Selbst übernehmen?“ die kurze Abstimmung.
+### Changed
+- **Evening mode:** if nothing has been suggested on movie night, a **Find films** button in the "What are
+  we watching?" step leads straight to Find.
+- **Case without a host:** non-hosts now see who opens the case in the "What are we watching?" step. If the
+  host isn't around (or nobody holds the baton), it's one click: **Take the baton & open the case**. If the
+  host is there, "Take over yourself?" starts the short vote.
 
-### Behoben
-- Das Willkommen konnte sich gleich wieder öffnen, wenn eine ältere Antwort des Servers nachkam.
+### Fixed
+- The welcome could reopen right away when an older server response arrived late.
 
 ## 0.13.0 – 2026-10-06
 
-### Neu
-- **Englisch durchgehend, Etappe 2:** Auch was der Server schreibt, kommt jetzt in der Sprache der App –
-  Fehlermeldungen, Erfolge (Namen, Beschreibungen, Level-Titel), Regale in Finden, die Fakten in der
-  Seitenleiste, die Auswahl der Benachrichtigungen, die KI-Begründungen und die Rollen in den Filmdetails.
-- **Für jede Person in ihrer Sprache:** Push-Nachrichten, Einträge in der Glocke und der Kalender-Feed
-  richten sich nach der Sprache der Person, die sie bekommt (Datum und Uhrzeit inklusive).
-- Übersetzt sind jetzt auch Verwaltung, Gruppen, Einladungslinks, KI-Nutzung, die Gefahrenzone
-  (Bestätigung mit „LÖSCHEN“ oder „DELETE“) und die Über-Seite.
+### Added
+- **English throughout, stage 2:** what the server writes now also comes in the app's language – error
+  messages, awards (names, descriptions, level titles), shelves in Find, the facts in the sidebar, the
+  notification choices, the AI's reasoning and the roles in film details.
+- **For everyone in their own language:** push messages, bell entries and the calendar feed follow the
+  language of the person receiving them (date and time included).
+- Also translated now: admin area, groups, invitation links, AI usage, the danger zone (confirm with
+  "LÖSCHEN" or "DELETE") and the about page.
 
-### Hinweise
-- Filmdaten (Titel, Beschreibungen, Genres) bleiben deutsch; ebenso Texte, die Admins selbst schreiben
-  (Hausregeln, Impressum) und bereits verschickte Benachrichtigungen.
+### Notes
+- Film data (titles, descriptions, genres) follows the server's `TMDB_LANGUAGE`; texts that admins write
+  themselves (house rules, imprint) and notifications already sent stay as they are.
 
 ## 0.12.0 – 2026-10-06
 
-### Neu
-- **Deutsch und Englisch:** screenmates spricht jetzt beide Sprachen. Neue Leute wählen im Willkommen
-  zuerst **Sprache und Farbschema**; später geht beides unter Einstellungen → Darstellung. Die Sprache
-  hängt am Profil und gilt auf allen Geräten; vor der Anmeldung entscheidet die Browsersprache
-  (umschaltbar auf der Einladungsseite).
-- Übersetzt sind alle Hauptseiten: Filmabend (samt Kiste, Gastgeber-Stab, Terminplanung, Einladung),
-  Finden, Unsere Filme mit Rückblick, Kino, Profil, Erfolge, Einstellungen, Neuigkeiten und Wünsche.
-  Datum, Uhrzeit und Zahlen folgen der Sprache.
+### Added
+- **German and English:** screenmates now speaks both languages. New people first choose **language and
+  color theme** in the welcome; later both live under Settings → Appearance. The language belongs to the
+  profile and applies on all devices; before signing in, the browser language decides (switchable on the
+  invitation page).
+- All main pages are translated: movie night (including case, host baton, date planning, invitation),
+  Find, Our films with year in review, cinema, profile, awards, settings, news and wishes. Date, time and
+  numbers follow the language.
 
-### Hinweise
-- Filmdaten (Titel, Beschreibungen, Genres) kommen weiter auf Deutsch von TMDB.
-- Noch deutsch (nächste Etappe): Texte vom Server (Erfolgs-Katalog, Regal-Namen, Fakten in der
-  Seitenleiste, Push-Nachrichten, Fehlermeldungen), Verwaltung, Gefahrenzone und die Über-Seite.
+### Notes
+- Still German at this stage (next step): texts from the server (award catalog, shelf names, sidebar facts,
+  push messages, error messages), admin area, danger zone and the about page.
 
 ## 0.11.2 – 2026-10-06
 
-### Geändert
-- **Finden kompakt:** Unter der Suche steht nur noch eine Leiste – Stöbern/Alle Filme, **„Wo läuft’s?“**
-  (Dienste, „Läuft bei uns“ und „Kostenlos“ in einem Menü, der Knopf zeigt die Wahl) und **Genre**
-  (Chips im Menü, der Knopf zeigt z. B. „Horror, Thriller“), dazu Filter, Sortierung und die Trefferzahl.
-  Die Filme beginnen dadurch deutlich weiter oben.
-- **„Nach oben“:** Weit unten in der Liste erscheint unten rechts ein Knopf, der zurück an den Anfang bringt.
+### Changed
+- **Compact Find:** below the search there is just one bar – Browse/All films, **"Where's it on?"**
+  (services, "Streams for us" and "Free" in one menu, the button shows the choice) and **Genre** (chips in
+  the menu, the button shows e.g. "Horror, Thriller"), plus filters, sorting and the result count. Films
+  start much higher up as a result.
+- **"Back to top":** far down a list, a button appears bottom right that takes you back to the start.
 
 ## 0.11.1 – 2026-10-06
 
-### Behoben
-- **Nach „Alles neu“ (Gefahrenzone) ging die Kiste nicht mehr auf.** Jeder Browser merkte sich die
-  Nummer der zuletzt gezeigten Öffnung und zeigte nur höhere – nach dem Leeren beginnen die Nummern
-  aber wieder bei 1. Jetzt merkt er sich den Startzeitpunkt, der immer weiter steigt.
-- **Kisten-Ton auf dem iPhone:** „Probedrehen“, „Für alle öffnen“ und der Abend-Modus schalten den
-  Ton direkt im eigenen Klick frei (iOS lässt Ton nur dann starten); die allgemeine Freischaltung
-  reagiert auf Loslassen und Klick statt aufs Antippen. Die gespeicherte Ton-Einstellung beginnt
-  einmal neu bei „an“, weil der alte Fehler sie ungewollt auf „aus“ gesetzt haben kann.
+### Fixed
+- **After "Start over" (danger zone) the case no longer opened.** Every browser remembered the number of
+  the last reveal shown and only showed higher ones – but after clearing, the numbers start at 1 again. It
+  now remembers the start time, which always increases.
+- **Case sound on iPhone:** "Test spin", "Open for everyone" and evening mode unlock audio directly in your
+  own click (iOS only allows sound to start then); the general unlock reacts to release and click instead
+  of touch. The saved sound setting starts over once at "on", because the old bug may have switched it to
+  "off" unintentionally.
 
 ## 0.11.0 – 2026-10-06
 
-**Aufgeräumt:** Die Filmabend-Seite ist in klare Teile gegliedert, die Neuigkeiten haben ihre eigene
-Seite, und im Kino gehören Bild und Chat wieder die Bühne.
+**Tidied up:** the movie-night page is split into clear parts, news has its own page, and in the cinema
+picture and chat own the stage again.
 
-### Geändert
-- **Filmabend in drei Teilen:** oben der nächste Abend (Termin, wer dabei ist, deine Antwort), darunter
-  abgesetzt **„Was schauen wir?“** mit Vorschlägen und Kiste, ganz unten als Fuß die Hausregeln & Infos
-  (und „Heute vor einem Jahr“).
-- **Neuigkeiten** als eigene Seite hinter der Glocke: „Für dich“ (deine Benachrichtigungen) und „In der
-  Gruppe“ (die Aktivität, Neues seit deinem letzten Besuch markiert). Die Aktivität ist dafür von der
-  Filmabend-Seite verschwunden.
-- **Senden im Kino entschlackt:** eine Zeile mit „Was läuft?“, Film, Quelle und Start; Qualität, Inhalt
-  und Ton unter „Einstellungen“, die OBS-Anleitung nur bei OBS. Während der Übertragung nur noch
-  „live“, Pause und Beenden.
-- **Der Film aus der Kiste kommt ins Kino:** Hat die Kiste gezogen und ist im Kino noch nichts
-  eingetragen, steht der Film des Abends gleich als Programm drin („aus der Kiste“).
-- **Kino auf dem Handy:** Steuerleiste und Schließen-Knopf erscheinen beim Antippen und blenden nach
-  drei Sekunden aus; im iPhone-Vollbild gibt es nur noch einen Schließen-Knopf (oben rechts).
+### Changed
+- **Movie night in three parts:** at the top the next night (date, who's in, your reply), below it, set
+  apart, **"What are we watching?"** with suggestions and the case, and at the very bottom as a footer the
+  house rules & info (and "On this day").
+- **News** as its own page behind the bell: "For you" (your notifications) and "In the group" (the activity,
+  with what's new since your last visit marked). The activity has left the movie-night page for it.
+- **Streaming in the cinema slimmed down:** one row with "What's on?", film, source and start; quality,
+  content and audio under "Settings", the OBS guide only for OBS. While streaming, only "live", pause and
+  end.
+- **The film from the case goes to the cinema:** once the case has drawn and nothing is set in the cinema,
+  the film of the night is already in the program ("from the case").
+- **Cinema on phones:** the control bar and close button appear on tap and fade out after three seconds;
+  in iPhone fullscreen there is only one close button (top right).
 
-### Behoben
-- **Kein Ton bei der Kiste auf dem iPhone:** Safari spielt nur Ton, der während eines Antippens
-  freigeschaltet wurde. Der Ton wird jetzt beim ersten Antippen irgendwo in der App freigeschaltet und
-  wiederverwendet, klingt auch bei aktivem Stummschalter, und das Lautsprecher-Symbol holt blockierten
-  Ton zurück („Ton antippen“) statt ihn abzuschalten.
+### Fixed
+- **No case sound on iPhone:** Safari only plays audio that was unlocked during a tap. Audio is now unlocked
+  on the first tap anywhere in the app and reused, plays even with the silent switch on, and the speaker
+  icon brings back blocked audio ("Tap for sound") instead of muting it.
 
 ## 0.10.2 – 2026-10-06
 
-### Geändert
-- **Die Kiste springt nicht mehr:** Das Filmband steht beim Countdown, beim Drehen und bei der
-  Enthüllung an genau derselben Stelle in der Bildschirmmitte; was darunter erscheint (Hinweis,
-  „Überspringen“, der Gewinner mit „Weiter“), wächst nur nach unten.
-- Fliegende Reaktionen im Kino zeigen jetzt immer, von wem sie kommen – vorher nur im Vollbild.
-- Der Senden-Block sagt richtig, woher die Übertragung kommt: „Du bist live“, „Du sendest von einem
-  anderen Gerät“, „Lena sendet aus dem Browser“ oder „Live über OBS“. Vorher hieß alles, was nicht
-  aus diesem Browser kam, „über OBS“.
-- iPhone-Vollbild im Hochformat: Ein eigener Schließen-Knopf oben rechts liegt immer frei (vorher
-  verdeckten die Reaktionsknöpfe das ✕). Auf Touch-Geräten bricht die Steuerleiste um, und der
-  Lautstärkeregler entfällt (iOS ignoriert ihn; die Tasten am Gerät regeln die Lautstärke).
+### Changed
+- **The case no longer jumps:** the film reel stays in exactly the same spot in the middle of the screen
+  during countdown, spin and reveal; whatever appears below (hint, "Skip", the winner with "Next") only
+  grows downward.
+- Flying reactions in the cinema now always show who sent them – before, only in fullscreen.
+- The streaming panel correctly says where the stream comes from: "You're live", "You're streaming from
+  another device", "Lena is streaming from the browser" or "Live via OBS". Before, everything not from this
+  browser was labeled "via OBS".
+- iPhone fullscreen in portrait: a dedicated close button top right is always clear (the reaction buttons
+  used to cover the ✕). On touch devices the control bar wraps and the volume slider is dropped (iOS
+  ignores it; the device buttons set the volume).
 
 ## 0.10.1 – 2026-10-06
 
-### Behoben
-- **Hausregeln & Infos** sahen kaputt aus (schmale Pille, Text lief hinaus): Die neuen Hinweise an
-  den Vorschlägen hießen intern wie die Infokarte und gaben ihr ihre Form.
-- **Kino-Aussetzer in Bild und Ton:** Der Medienserver verwarf eingehende Pakete, weil der
-  UDP-Empfangspuffer (Linux-Standard 208 KB) bei 1080p-Schlüsselbildern überlief. MediaMTX lässt
-  sich jetzt mit `MTX_UDPREADBUFFERSIZE` einen größeren Puffer geben (README → Kino); auf midgard
-  sind es 8 MB.
-- **Vollbild auf dem iPhone:** Safari kann dort nur den eigenen Videoplayer bildschirmfüllend
-  zeigen. Jetzt legt sich das Kino-Bild selbst über den ganzen Bildschirm – in der App auf dem
-  Home-Bildschirm wie echtes Vollbild, mit Reaktionen, Pause und Chat-Einblendungen. Doppeltippen
-  zoomt die Seite nicht mehr.
-- Die Kino-Abfrage beim Medienserver erzeugt kein „path not found“ mehr in dessen Log, wenn nichts
-  läuft (tausende Zeilen am Tag, zwischen denen echte Warnungen untergingen).
+### Fixed
+- **House rules & info** looked broken (narrow pill, text overflowing): the new hints on the suggestions
+  shared an internal name with the info card and gave it their shape.
+- **Cinema dropouts in picture and sound:** the media server dropped incoming packets because the UDP
+  receive buffer (Linux default 208 KB) overflowed on 1080p keyframes. MediaMTX can now be given a larger
+  buffer with `MTX_UDPREADBUFFERSIZE` (README → Cinema); 8 MB in production.
+- **Fullscreen on iPhone:** Safari can only show its own video player fullscreen there. The cinema picture
+  now covers the whole screen itself – in the home-screen app just like real fullscreen, with reactions,
+  pause and chat overlays. Double-tapping no longer zooms the page.
+- The cinema's query to the media server no longer produces "path not found" in its log when nothing is
+  running (thousands of lines a day, burying real warnings).
 
 ## 0.10.0 – 2026-10-06
 
-**Der ganze Abend, nicht nur die Planung:** screenmates führt jetzt durch den Abend selbst, fragt
-am Tag danach nach den Sternen und hilft beim Aussuchen mit dem, was die Gruppe mag und was wo läuft.
+**The whole evening, not just the planning:** screenmates now guides through the night itself, asks for
+stars the day after, and helps choose with what the group likes and what's streaming where.
 
-### Neu
-- **Abend-Modus:** Am Tag des Termins führen oben auf der Filmabend-Seite drei Schritte durch den
-  Abend – *Wer ist da?* → *Was schauen wir?* (Kiste für alle öffnen) → *Film ab!* (ins Kino oder
-  „Geschaut – eintragen“, mit allen, die zugesagt haben).
-- **„Wie war's?“:** Filme der letzten Tage, bei denen du dabei warst, aber noch keine Sterne
-  vergeben hast, erscheinen oben mit Sternen zum Antippen. Am Tag danach (10–20 Uhr) erinnert eine
-  Benachrichtigung einmal daran.
-- **Für euch ≈ 4,2 ★:** Jeder Vorschlag zeigt, wie er der Gruppe gefallen dürfte – bei Zusagen für
-  die, die dabei sind. Wer den Film schon bewertet hat, zählt mit den echten Sternen, die anderen mit
-  ihrer Prognose („Wem gefällt's?“). Fährt man darüber, steht es pro Person da.
-- **Läuft bei:** Jeder Vorschlag zeigt den besten Weg – zuerst ein Abo aus der Gruppe („Netflix ·
-  Lena“), sonst kostenlos, Abo, leihen oder kaufen.
-- **Die Kisten-Chance steht am Vorschlag** (in der Seltenheitsfarbe). Die Kiste selbst ist nur noch
-  die Karte mit dem Knopf; ihre Liste gibt es nur, wenn sie aus der Merkliste zieht.
-- **Willkommen:** Wer neu dazukommt, sieht einmal drei kurze Karten (Vorschlagen → Kiste →
-  Schauen & bewerten) und kann gleich seine Streamingdienste eintragen.
-- **Neu seit deinem letzten Besuch:** Der Aktivitäts-Feed markiert Neues und klappt den Rest ein.
-- **Die Glocke:** Alle Benachrichtigungen (Termin, Umfrage, Kiste, Kino, Stab, Antworten, „Wie
-  war's?“) stehen auch in der App, mit Zähler für Ungelesenes – auch ohne Push. Sie bleiben 30 Tage.
-- **Geschmacksverwandte** im Profil: „Lena tickt zu 87 % wie du“, aus mindestens drei gemeinsam
-  bewerteten Filmen. Auf fremden Profilen steht, wie nah man selbst der Person ist.
-- **Kino:** Der Gastgeber sagt eine **Pause** an („Kurze Pause – gleich geht's weiter“ mit Uhr über
-  dem Bild), Zuschauende schicken **„Moment, bin gleich da“** ins Bild.
+### Added
+- **Evening mode:** on the day of the date, three steps at the top of the movie-night page guide through
+  the night – *Who's here?* → *What are we watching?* (open the case for everyone) → *Roll film!* (to the
+  cinema, or "Watched – log it" with everyone who said yes).
+- **"How was it?":** films from the last few days that you attended but haven't rated yet appear at the top
+  with stars to tap. The day after (10:00–20:00) a notification reminds you once.
+- **For you ≈ 4.2 ★:** every suggestion shows how much the group is likely to enjoy it – with replies, for
+  those who are in. Anyone who already rated the film counts with their real stars, the others with their
+  prediction ("Who'll like it?"). Hover to see it per person.
+- **Streaming on:** every suggestion shows the best way to watch – first a subscription in the group
+  ("Netflix · Lena"), otherwise free, subscription, rent or buy.
+- **The case odds sit on each suggestion** (in the rarity color). The case itself is now just the card
+  with the button; its list only appears when it draws from the watchlist.
+- **Welcome:** newcomers see three short cards once (Suggest → Case → Watch & rate) and can add their
+  streaming services right away.
+- **New since your last visit:** the activity feed marks what's new and collapses the rest.
+- **The bell:** all notifications (date, poll, case, cinema, baton, replies, "How was it?") also live in
+  the app, with an unread counter – even without push. They're kept for 30 days.
+- **Kindred tastes** on the profile: "Lena ticks 87 % like you", from at least three films rated in
+  common. Other people's profiles show how close you are to them.
+- **Cinema:** the host can call a **pause** ("Short break – back in a moment" with a clock over the
+  picture), viewers send **"Hang on, be right back"** into the picture.
 
-### Behoben
-- Unter Last (mehrere Kino-Zuschauende, Live-Updates, Video-Kodierung) konnten die
-  Datenbankverbindungen ausgehen, weil Abfragen, die auf MediaMTX, TMDB oder die KI warten, ihre
-  Verbindung so lange festhielten. Sie geben sie jetzt vorher zurück, und der Pool ist größer. Das
-  war vermutlich auch die Ursache für den gelegentlich roten `docker`-CI-Job.
-- Die Prognose lernt das Modell einer Person nur noch einmal und rechnet damit beliebig viele Filme.
+### Fixed
+- Under load (several cinema viewers, live updates, video encoding) the database connections could run
+  out, because requests waiting on MediaMTX, TMDB or the AI held on to their connection. They now return
+  it beforehand, and the pool is larger. This was probably also the cause of the occasionally red `docker`
+  CI job.
+- The prediction now trains a person's model only once and uses it for any number of films.
 
-### Betrieb
-- Migration `0012`: Tabelle `benachrichtigung` (die Glocke, 30 Tage).
-- Neue Push-Art `bewerten` (Einstellungen → Benachrichtigungen).
+### Operations
+- Migration `0012`: table `benachrichtigung` (the bell, 30 days).
+- New push type `bewerten` (Settings → Notifications).
 
 ## 0.9.2 – 2026-10-06
 
-### Neu
-- **Gefahrenzone** in der Verwaltung (nur Server-Admins): Chronik, Filmabend, Kino-Chat, Wünsche,
-  Erfolge sowie Statistik & KI-Protokoll einzeln leeren – oder **„Alles neu“**: zusätzlich alle
-  anderen Namen, Einladungen und Anträge weg, es bleiben der Admin, die Gruppen, der Filmkatalog,
-  die Über-Seite und die Einstellungen. Vorher wird „LÖSCHEN“ eingetippt, und der Server sichert die
-  Datenbank (`backup-vor-reset-<Zeit>.db` neben der Datenbank, die letzten fünf bleiben).
+### Added
+- **Danger zone** in the admin area (server admins only): clear history, movie night, cinema chat, wishes,
+  awards, and statistics & AI log individually – or **"Start over"**: additionally removes all other
+  names, invitations and requests; the admin, the groups, the film catalog, the about page and the settings
+  remain. You type "LÖSCHEN" first, and the server backs up the database
+  (`backup-vor-reset-<time>.db` next to the database, the last five are kept).
 
-### Geändert
-- **Kino neu aufgeteilt:** Der Chat steht für alle – auch für den Gastgeber – rechts neben dem Bild,
-  mit fester Höhe zum Scrollen. „Senden“ liegt jetzt breit unter dem Bild.
-- **Kino-Chat bleibt 30 Tage:** Nachrichten werden gespeichert (vorher nur im Speicher, nach einem
-  Neustart weg) und altern nach 30 Tagen raus. Ältere Nachrichten lassen sich nachladen,
-  Tagestrenner zeigen, wann etwas geschrieben wurde. Reaktionen bleiben ein Moment im Bild.
-- **Filmabend-Seite aufgeräumt:** Die Planung ist eine Zeile – Termin, wer dabei ist, deine
-  Antwort, Einladen. Aufgeklappt wird sie von selbst nur, wenn etwas auf dich wartet (noch nicht
-  geantwortet, Umfrage zum Abstimmen oder Festlegen); sonst über „Planung“. Am Tag selbst steht
-  dort „Heute“.
-- Wird nach einem vergangenen Abend ein neuer Termin gesetzt, beginnen die Zusagen von vorn
-  (vorher stand „Dabei: …“ vom letzten Mal einfach weiter da).
-- **Kiste für alle:** Der Übergang vom Countdown zum Drehen ist jetzt eine Bewegung. Das Band
-  zieht schon während des Countdowns langsam an und beschleunigt weich, der Countdown blendet
-  aus, statt hart zu verschwinden.
+### Changed
+- **Cinema rearranged:** the chat sits to the right of the picture for everyone – the host too – with a
+  fixed height to scroll. "Stream" now sits wide below the picture.
+- **Cinema chat is kept for 30 days:** messages are stored (before, only in memory and gone after a
+  restart) and age out after 30 days. Older messages can be loaded, day separators show when something was
+  written. Reactions remain a moment in the picture.
+- **Movie-night page tidied up:** planning is one row – date, who's in, your reply, invite. It only
+  expands by itself when something is waiting for you (no reply yet, a poll to vote on or decide);
+  otherwise via "Planning". On the day itself it says "Today".
+- When a new date is set after a past night, replies start from scratch (before, "In: …" from last time
+  simply stayed).
+- **Case for everyone:** the transition from countdown to spin is now one motion. The reel starts moving
+  slowly during the countdown and accelerates smoothly; the countdown fades out instead of vanishing.
 
-### Behoben
-- Die Kiste ruckelte beim Drehen: Die Startzeit wurde bei jeder Live-Abfrage neu aus der
-  Server-Uhr umgerechnet und schwankte mit dem Netz. Jetzt steht sie beim Öffnen fest, und der
-  Uhrenabgleich nimmt die schnellste Messung.
-- **Push-Nachrichten kamen nicht an.** Die Kontaktadresse für die Push-Dienste
-  (`https://github.com/marcmeier/screenmates`) hatte einen Pfad, den die Signatur nicht erlaubt –
-  jede Zustellung scheiterte. Jetzt geht nur der Ursprung raus (`https://github.com`), ebenso bei
-  einer eigenen `PUSH_KONTAKT`-Adresse. Ein Test signiert und verschlüsselt jetzt echt.
-- **„Test schicken“** wartet auf die Antwort des Push-Dienstes und meldet, ob die Nachricht wirklich
-  zugestellt wurde (vorher hieß es „geschickt“, sobald sie in der Warteschlange lag).
-- Findet der Browser seinen Push-Dienst nicht (Brave ohne Google-Push, Chromium-Builds ohne
-  Google-Dienste), erklärt screenmates jetzt auf Deutsch, was zu tun ist, statt „Registration failed“.
+### Fixed
+- The case stuttered while spinning: the start time was recalculated from the server clock on every live
+  poll and wobbled with the network. It is now fixed at opening, and clock sync uses the fastest
+  measurement.
+- **Push messages didn't arrive.** The contact address for the push services
+  (`https://github.com/marcmeier/screenmates`) had a path, which the signature doesn't allow – every
+  delivery failed. Now only the origin is sent (`https://github.com`), likewise for a custom `PUSH_KONTAKT`
+  address. A test now really signs and encrypts.
+- **"Send test"** waits for the push service's answer and reports whether the message was really
+  delivered (before, it said "sent" as soon as it was queued).
+- If the browser can't find its push service (Brave without Google push, Chromium builds without Google
+  services), screenmates now explains what to do instead of "Registration failed".
 
-### Betrieb
-- Migration `0011`: Tabelle `kinonachricht` (Kino-Chat, 30 Tage).
+### Operations
+- Migration `0011`: table `kinonachricht` (cinema chat, 30 days).
 
 ## 0.9.0 – 2026-10-06
 
-**Gemeinsam planen, gemeinsam erinnern:** Den Termin findet die Gruppe per Umfrage, jede Person
-sagt zu, vielleicht oder ab, und der Abend landet im Kalender. screenmates meldet sich jetzt auch bei
-geschlossener App, im Kino wird gequatscht und gekreischt, und am Ende des Jahres gibt es den
-Rückblick. Das letzte Feature-Release vor 1.0.
+**Plan together, remember together:** the group finds the date by poll, everyone replies yes, maybe or no,
+and the night lands in the calendar. screenmates now reaches you with the app closed, the cinema chats and
+screams, and at the end of the year there's the year in review.
 
-### Neu
-- **Terminumfrage.** Statt eines festen Termins schlägt man mehrere vor („Abstimmen“ beim Termin);
-  alle antworten pro Termin mit Ja, Vielleicht oder Nein, der Favorit ist markiert. Wer festlegt,
-  setzt den Termin, und die Antworten werden zu Rückmeldungen für den Abend. Festlegen darf, wer
-  die Umfrage gestartet hat, der Gastgeber oder ein Admin – oder jeder, solange niemand den Stab hält.
-  Vorschläge stehen im Aktivitäts-Feed.
-- **Dabei, vielleicht, kann nicht.** Neben „Ich bin dabei!“ gibt es „Vielleicht“ und „Kann nicht“;
-  wer wie geantwortet hat, steht unter den Dabei-Chips.
-- **Kalender.** „Kalender“ beim Termin lädt den Abend als `.ics`-Datei (mit Ort, Filmen zur Wahl
-  und Erinnerung zwei Stunden vorher). In den Einstellungen gibt es ein **Kalender-Abo** mit den
-  nächsten Terminen aller eigenen Gruppen; verschiebt sich ein Termin, zieht der Kalender nach. Der
-  Link ist persönlich und lässt sich erneuern oder abschalten.
-- **Benachrichtigungen (Web Push)** aufs Handy und den Rechner, auch bei geschlossener App: neuer
-  oder verschobener Termin, neue Terminumfrage, Erinnerung am Tag des Filmabends (drei Stunden
-  vorher, nicht für wer abgesagt hat), die Kiste geht auf, das Kino ist live, der Gastgeber-Stab
-  wird dir angeboten, jemand antwortet auf deinen Kommentar. Einschalten pro Gerät, auswählen pro
-  Person, Testnachricht inklusive. Was gerade live passiert, bekommt nur, wer die App nicht offen
-  hat. Auf iPhone und iPad in der App auf dem Home-Bildschirm.
-- **Kino-Chat und Reaktionen.** Neben dem Bild ein Chat für alle, die gerade im Kino sind, und
-  Reaktionen (😂 😱 ❤️ 👏 🍿 🔥 😴 🤯), die für alle übers Bild fliegen. Im Vollbild erscheinen neue
-  Nachrichten direkt im Bild, Reaktionen gehen über die Steuerleiste.
-- **Rückblick** unter „Unsere Filme“: das Filmjahr der Gruppe – Filme, Abende, Stunden, Genres,
-  bester, umstrittenster und einstimmigster Film, Rekorde (Wochen am Stück, Lieblingstag) und
-  Auszeichnungen wie „Stammgast“, „Strengste Kritik“ oder „Herzensbrecher“. Dazu eine **Story**
-  zum Durchtippen. Im Dezember und Januar weist die Startseite darauf hin.
-- **Neue Erfolge:** 🤞 „Wort gehalten“ (zugesagt und gekommen, drei Stufen), 🗓️ „Terminfinder“
-  (dein Umfrage-Termin wurde gewählt und der Abend fand statt) und ein geheimer.
-- Statistiken in der Seitenleiste zählen jetzt auch Kino-Chat-Nachrichten und Reaktionen.
-- Neue Screenshots in der README.
+### Added
+- **Date poll.** Instead of a fixed date, propose several ("Vote" next to the date); everyone answers each
+  date with Yes, Maybe or No, the favorite is marked. Whoever decides sets the date, and the answers become
+  replies for the night. Deciding is up to whoever started the poll, the host or an admin – or anyone, as
+  long as nobody holds the baton. Proposals show up in the activity feed.
+- **In, maybe, can't make it.** Besides "I'm in!" there is "Maybe" and "Can't make it"; who replied how
+  shows below the attendee chips.
+- **Calendar.** "Calendar" next to the date downloads the night as an `.ics` file (with location, the films
+  up for choice, and a reminder two hours before). Settings offer a **calendar subscription** with the next
+  dates of all your groups; if a date moves, the calendar follows. The link is personal and can be renewed
+  or turned off.
+- **Notifications (Web Push)** to phone and computer, even with the app closed: new or moved date, new date
+  poll, a reminder on movie-night day (three hours before, not for those who declined), the case opens, the
+  cinema is live, the host baton is offered to you, someone replies to your comment. Turned on per device,
+  chosen per person, test message included. Things happening live only go to people who don't have the app
+  open. On iPhone and iPad in the home-screen app.
+- **Cinema chat and reactions.** Next to the picture, a chat for everyone currently in the cinema, and
+  reactions (😂 😱 ❤️ 👏 🍿 🔥 😴 🤯) that fly across the picture for everyone. In fullscreen, new messages
+  appear right in the picture, reactions go via the control bar.
+- **Year in review** under "Our films": the group's film year – films, nights, hours, genres, best, most
+  divisive and most unanimous film, records (weeks in a row, favorite day) and awards like "Regular",
+  "Harshest critic" or "Heartbreaker". Plus a **story** to tap through. In December and January the home
+  page points to it.
+- **New awards:** 🤞 "Kept your word" (said yes and showed up, three tiers), 🗓️ "Date finder" (your poll date
+  was chosen and the night happened) and a secret one.
+- Sidebar statistics now also count cinema chat messages and reactions.
+- New screenshots in the README.
 
-### Behoben
-- Im Changelog standen 0.7.0 und 0.8.0 mit dem falschen Datum.
-- Zwei Erfolgs-Tests schlugen fehl, wenn sie nach Mitternacht liefen (die Test-Abende schalteten
-  nebenbei „Nachteule“ frei).
+### Fixed
+- The changelog listed 0.7.0 and 0.8.0 with the wrong date.
+- Two award tests failed when run after midnight (the test nights unlocked "Night owl" along the way).
 
-### Betrieb
-- Migration `0010`: Tabellen `terminvorschlag`, `terminstimme`, `pushabo`; `mitglied.rueckmeldung`,
+### Operations
+- Migration `0010`: tables `terminvorschlag`, `terminstimme`, `pushabo`; `mitglied.rueckmeldung`,
   `user.kalender`, `user.push`, `abend.erinnert`, `appmeta.vapid`.
-- Neue Abhängigkeit `pywebpush`. Die VAPID-Schlüssel erzeugt screenmates beim ersten Gebrauch und
-  speichert sie in der Datenbank (Backup!). `PUSH_KONTAKT` ist optional. Push braucht HTTPS.
-- Neu ohne Anmeldung erreichbar: `/api/kalender/<token>.ics` (der Token ist der Schlüssel).
-- Ein Hintergrund-Task prüft jede Minute, ob eine Erinnerung fällig ist.
-- Kino-Chat und Reaktionen liegen nur im Speicher (die letzten 200, höchstens 6 Stunden) und lösen
-  kein Neuladen der anderen Apps aus.
-- Ein Service Worker (`/sw.js`) zeigt die Benachrichtigungen; er speichert nichts zwischen.
+- New dependency `pywebpush`. screenmates generates the VAPID keys on first use and stores them in the
+  database (back it up!). `PUSH_KONTAKT` is optional. Push requires HTTPS.
+- Newly reachable without sign-in: `/api/kalender/<token>.ics` (the token is the key).
+- A background task checks every minute whether a reminder is due.
+- Cinema chat and reactions live only in memory (the last 200, at most 6 hours) and don't trigger a reload
+  in the other apps.
+- A service worker (`/sw.js`) shows the notifications; it caches nothing.
 
 ## 0.8.0 – 2026-10-05
 
-**Der Gastgeber-Stab:** Wer den Abend führt, ist jetzt eine Rolle, die wandert – weitergeben,
-übernehmen, abstimmen. Damit kann auch ohne Admin jemand die Kiste für alle öffnen und das Kino
-bespielen.
+**The host baton:** who runs the night is now a role that moves – hand it over, take it over, vote. So even
+without an admin someone can open the case for everyone and run the cinema.
 
-### Neu
-- **Gastgeber-Stab.** Eine Person pro Gruppe hält ihn: Sie öffnet die Kiste für alle und bespielt
-  das Kino (Bildschirm teilen, Programm, Vorstellung beenden, **persönlicher OBS-Schlüssel**, der
-  nur mit dem Stab funktioniert). Admins der Gruppe können weiterhin alles.
-  - Wer einen neuen Termin setzt, bekommt den Stab, wenn ihn gerade niemand hält oder der letzte
-    Abend vorbei ist. Den Termin verschieben nimmt ihn niemandem weg.
-  - **Weitergeben:** Der Gastgeber bietet den Stab jemandem an – annehmen oder ablehnen.
-  - **Übernehmen:** Ist der Gastgeber nicht da (seit einer Minute keine App offen) oder gibt es
-    keinen, nimmt man den Stab einfach. Ist er da, stimmen die Anwesenden 60 Sekunden lang ab:
-    Die Stimme des Gastgebers zählt doppelt, sein Ja entscheidet sofort, mehr Ja als Nein gewinnt,
-    ohne Widerspruch gilt Schweigen als Zustimmung. Steht das Ergebnis fest, endet die Abstimmung
-    sofort. Wer verliert, wartet fünf Minuten.
-  - Läuft beim Wechsel gerade eine Übertragung, läuft sie weiter; der neue Gastgeber kann sie
-    beenden und selbst senden.
-  - Angebote und Abstimmungen erscheinen überall in der App; Wechsel stehen im Aktivitäts-Feed.
-- **Hinter den Kulissen:** Zwischen den Statistiken in der Seitenleiste blitzt auf, was gerade
-  vorbereitet wird – „Popcorn wird vorbereitet …“, „Tauben werden von der Datenleitung
-  verscheucht …“ und mehr.
-- **Unterstützen per Ko-fi und PayPal.** Admins tragen auf der Über-Seite ihren Ko-fi- und
-  PayPal.me-Namen ein (oder fügen einfach den Link ein). Jeder Weg bekommt einen Knopf und am
-  Rechner einen QR-Code zum Scannen mit dem Handy – im Browser erzeugt, ohne fremden Dienst.
-  Gespeichert wird nur der Name, verlinkt werden nur ko-fi.com und paypal.me.
-- Neue Screenshots in der README.
+### Added
+- **Host baton.** One person per group holds it: they open the case for everyone and run the cinema (screen
+  sharing, program, ending the show, a **personal OBS key** that only works with the baton). Group admins
+  can still do everything.
+  - Whoever sets a new date gets the baton if nobody currently holds it or the last night is over. Moving
+    the date takes it from nobody.
+  - **Hand over:** the host offers the baton to someone – accept or decline.
+  - **Take over:** if the host isn't around (no app open for a minute) or there is none, you simply take
+    the baton. If they're around, those present vote for 60 seconds: the host's vote counts double, their
+    yes decides at once, more yes than no wins, and without objection silence counts as consent. Once the
+    result is certain, the vote ends immediately. Whoever loses waits five minutes.
+  - A stream running during a handover keeps running; the new host can end it and stream themselves.
+  - Offers and votes appear everywhere in the app; handovers show up in the activity feed.
+- **Behind the scenes:** between the sidebar statistics, what's being prepared flashes up – "Popping the
+  popcorn …", "Shooing pigeons off the data line …" and more.
+- **Support via Ko-fi and PayPal.** Admins enter their Ko-fi and PayPal.me names on the about page (or just
+  paste the link). Each gets a button and, on desktop, a QR code to scan with a phone – generated in the
+  browser, without a third-party service. Only the name is stored; only ko-fi.com and paypal.me are linked.
+- New screenshots in the README.
 
-### Behoben
-- Auf der Profilseite stand die Überschrift „Erfolge“ doppelt.
-- Statistik: „1 Gruppe“ statt „1 Gruppen“ (Einzahl für alle Zahlen).
-- Die Schriftauswahl zeigt jede Schrift gleich in ihrer Schrift, nicht erst beim Drüberfahren.
+### Fixed
+- The profile page showed the "Awards" heading twice.
+- Statistics: "1 group" instead of "1 groups" (singular for every number).
+- The font picker shows each font in its own typeface right away, not only on hover.
 
-### Betrieb
-- Migration `0009`: `abend.gastgeber_id` (vorbelegt mit dem, der den Termin gesetzt hat),
-  Tabelle `stabwechsel`, `user.obs_key`. Senden, Programm und Vorstellung beenden prüfen jetzt
-  „Gastgeber oder Admin der Gruppe“.
+### Operations
+- Migration `0009`: `abend.gastgeber_id` (prefilled with whoever set the date), table `stabwechsel`,
+  `user.obs_key`. Streaming, program and ending the show now check "host or group admin".
 
 ## 0.7.0 – 2026-10-05
 
-**Gemeinsam statt nebeneinander:** Der Gastgeber öffnet die Filmabend-Kiste und alle sehen live
-zu, Änderungen von Freunden erscheinen ohne Neuladen, und reingekommen wird nur noch mit
-Einladungslink. Dazu ein Profil mit Erfolgen und eigenem Farbschema, eine aufgeräumte Verwaltung
-mit KI-Kosten, Statistiken in der Seitenleiste und eine Über-Seite mit Impressum.
+**Together instead of side by side:** the host opens the movie-night case and everyone watches live,
+friends' changes appear without reloading, and you only get in with an invitation link. Plus a profile with
+awards and your own color theme, a tidier admin area with AI costs, statistics in the sidebar and an about
+page with an imprint.
 
-### Neu
-- **Die Kiste für alle öffnen.** Der Gastgeber des Abends (wer den Termin gesetzt hat) oder ein
-  Admin der Gruppe öffnet die Filmabend-Kiste für alle: Wer screenmates gerade offen hat – egal
-  auf welcher Seite –, bekommt nach einem kurzen Countdown dieselbe Öffnung zu sehen, mit
-  demselben Band und demselben Gewinner, zur selben Zeit. Wer später kommt, steigt mittendrin
-  ein. Der Gewinner bleibt als **„Film des Abends“** stehen, bis er geschaut ist (oder der
-  Gastgeber ihn zurücknimmt), und steht im Aktivitäts-Feed. Den Gewinner zieht der Server.
-  Alle anderen können weiter **probedrehen** – deutlich als Probe markiert, zählt nicht.
-- **Live-Updates.** Bewertet, kommentiert, merkt oder schlägt jemand etwas vor, sehen die anderen
-  es sofort – ohne die Seite neu zu laden. Im Hintergrund-Tab fragt screenmates seltener nach.
-- **Kommentare mit Antworten bleiben als Platzhalter.** Wer einen Kommentar löscht, auf den schon
-  jemand geantwortet hat, hinterlässt „Vom Ersteller gelöscht“ (bzw. „Von einem Admin entfernt“) –
-  die Antworten bleiben im Zusammenhang. Ohne Antworten verschwindet er wie bisher; fällt die
-  letzte Antwort weg, geht auch der leere Platzhalter.
-- **Profil & Erfolge an einem Ort.** Der Profil-Knopf führt zu deinem Profil mit Level, Erfolgen
-  und Vitrine; dort liegen auch deine Einstellungen. Alte Links (`#/erfolge`, `#/einstellungen`)
-  funktionieren weiter.
-- **Darstellung: Farbschema und Schrift.** Sieben dunkle Farbschemata (Kino, Nacht, Neon, Wald,
-  Bernstein, Violett, Schwarz) und sieben Schriften, darunter eine besonders gut lesbare. Gilt
-  nur für dich, auf allen deinen Geräten.
-- **Verwaltung als eigener Bereich**, nur für Admins sichtbar: Gruppen und Einladungen, Anträge,
-  Benutzer, Katalog – getrennt vom eigenen Profil.
-- **KI-Nutzung in der Verwaltung:** Anfragen, Fehlschläge, Tokens und Kosten (OpenRouter meldet
-  sie in US-Dollar) – heute, 7 und 30 Tage, gesamt, pro Person und die letzten Anfragen.
-- **Statistiken in der Seitenleiste** statt der Katalog-Zahl: abwechselnd z. B. wie viele Filme
-  gemeinsam geschaut, Herzen verteilt, Kisten geöffnet, wie viel im Kino gestreamt wurde und wie
-  viele Pakete dabei verloren gingen. Nur Summen, nie etwas über einzelne Personen.
-- **Über screenmates** mit Version, Quellcode-Link und den Abschnitten **Unterstützen**,
-  **Impressum** und **Datenschutz**, die Admins direkt auf der Seite schreiben (Markdown). Die
-  Seite ist auch ohne Einladung erreichbar; leere Abschnitte werden nicht gezeigt.
-- **Einladungslinks statt Zugangsfrage.** Eine gemeinsame Filmfrage passt nicht, wenn auf einem
-  Server mehrere Gruppen ohne gemeinsame Erinnerung sind. Jetzt gilt: nur mit Einladung. Admins
-  einer Gruppe erzeugen Links für ihre Gruppe – „direkt aufnehmen“ oder „mit Freigabe“, mit Ablauf
-  und Nutzungslimit, widerrufbar, zum Kopieren oder Teilen. Wer den Link öffnet, landet direkt
-  bei der Namenswahl für diese Gruppe; wer schon einen Namen hat, tritt mit dem Link bei (oder
-  fragt an). Anträge und Beitrittsanfragen entscheiden die Admins der Gruppe – kein Server-Admin
-  nötig. Notausgang: `python -m app.cli einladung`.
-- **Handy: Profil-Menü.** Der Profil-Knopf oben rechts öffnet ein Menü mit Profil & Erfolgen
-  (samt Level), Einstellungen, Wünschen & Ideen, Verwaltung, Über und Abmelden – auf dem Handy
-  waren Erfolge und Wünsche vorher gar nicht erreichbar.
+### Added
+- **Open the case for everyone.** The host of the night (whoever set the date) or a group admin opens the
+  movie-night case for everyone: anyone with screenmates open – on any page – sees the same reveal after a
+  short countdown, with the same reel and the same winner, at the same time. Latecomers join midway. The
+  winner stays as **"Film of the night"** until it's watched (or the host takes it back) and appears in the
+  activity feed. The server draws the winner. Everyone else can still **test spin** – clearly marked as a
+  test, doesn't count.
+- **Live updates.** When someone rates, comments, saves or suggests something, the others see it
+  immediately – without reloading. In a background tab screenmates polls less often.
+- **Comments with replies stay as placeholders.** Deleting a comment that already has replies leaves
+  "Deleted by the author" (or "Removed by an admin") – the replies keep their context. Without replies it
+  disappears as before; when the last reply goes, the empty placeholder goes too.
+- **Profile & awards in one place.** The profile button leads to your profile with level, awards and
+  showcase; your settings live there too. Old links (`#/erfolge`, `#/einstellungen`) keep working.
+- **Appearance: color theme and font.** Seven dark color themes (Cinema, Night, Neon, Forest, Amber,
+  Violet, Black) and seven fonts, including an especially legible one. Applies only to you, on all your
+  devices.
+- **Admin area as its own section**, visible only to admins: groups and invitations, requests, users,
+  catalog – separate from your own profile.
+- **AI usage in the admin area:** requests, failures, tokens and cost (OpenRouter reports it in US dollars)
+  – today, 7 and 30 days, total, per person and the latest requests.
+- **Statistics in the sidebar** instead of the catalog count: rotating, e.g. how many films were watched
+  together, hearts given, cases opened, how much was streamed in the cinema and how many packets were lost
+  doing it. Only totals, never anything about individuals.
+- **About screenmates** with version, source link and the sections **Support**, **Imprint** and
+  **Privacy**, which admins write right on the page (Markdown). The page is reachable without an
+  invitation; empty sections are hidden.
+- **Invitation links instead of an access question.** A shared film question doesn't fit when one server
+  hosts several groups without shared memories. Now it's invite-only. Group admins create links for their
+  group – "add directly" or "with approval", with expiry and usage limit, revocable, to copy or share.
+  Opening the link leads straight to choosing a name for that group; people who already have a name join
+  with the link (or ask to). The group's admins decide requests and join requests – no server admin
+  needed. Emergency exit: `python -m app.cli einladung`.
+- **Phone: profile menu.** The profile button top right opens a menu with profile & awards (including
+  level), settings, wishes & ideas, admin, about and sign out – on phones, awards and wishes weren't
+  reachable at all before.
 
-### Behoben
-- Die Kisten-Animation misst die Breite jetzt in jedem Bild – vorher konnte die Markierung neben
-  dem Gewinner landen, wenn die Bühne beim Start noch nicht fertig aufgebaut war.
+### Fixed
+- The case animation now measures the width every frame – before, the marker could land next to the
+  winner if the stage wasn't fully laid out at start.
 
-### Entfernt
-- Die Zugangsfrage (ersetzt durch Einladungen). Wer drin ist, bleibt drin.
+### Removed
+- The access question (replaced by invitations). Whoever is in stays in.
 
-### Betrieb
-- Migration `0007`: Tabellen `einladung`, `beitrittsanfrage`; `session.einladung_id`,
-  `user.antrag_gruppe_id`; Tabelle `zugang` entfällt. Danach in Verwaltung → Gruppen
-  Einladungslinks erzeugen und verschicken.
-- Migration `0008`: Tabellen `kistenoeffnung`, `kianfrage`, `zaehler`, `seitentext`;
+### Operations
+- Migration `0007`: tables `einladung`, `beitrittsanfrage`; `session.einladung_id`,
+  `user.antrag_gruppe_id`; table `zugang` is dropped. Afterwards create and send invitation links under
+  Admin → Groups.
+- Migration `0008`: tables `kistenoeffnung`, `kianfrage`, `zaehler`, `seitentext`;
   `watchednote.geloescht`, `user.design`.
-- Live-Updates: jede offene App fragt alle 1,5 s `GET /api/live` (im Hintergrund alle 15 s) –
-  eine kleine Antwort, kein WebSocket nötig, läuft durch jeden Proxy.
-- Mit Kino zählt ein Hintergrund-Task alle 15 s Traffic und verlorene Pakete der
-  MediaMTX-Sitzungen mit (`/v3/webrtcsessions/list`). Was vor dem Update lief, ist nicht erfasst.
-- Impressum und Datenschutz in Über → Bearbeiten eintragen, falls nötig.
+- Live updates: every open app polls `GET /api/live` every 1.5 s (every 15 s in the background) – a small
+  response, no WebSocket needed, works through any proxy.
+- With the cinema enabled, a background task tallies traffic and lost packets of the MediaMTX sessions
+  every 15 s (`/v3/webrtcsessions/list`). Whatever ran before the update isn't counted.
+- Enter imprint and privacy under About → Edit if needed.
 
 ## 0.6.0 – 2026-10-05
 
-**Für eure Gruppe – oder mehrere:** screenmates lässt sich hinter eine Zugangsfrage legen, neue
-Leute beantragen ihren Namen, Admins verwalten Profile, und ein Server trägt mehrere unabhängige
-Freundeskreise mit eigenem Filmabend und eigenem Kino. Dazu Erfolge mit Levels und Vitrine,
-Profilbilder, alle Genres statt nur Horror und eine KI-Suche, die mit OpenRouter günstig läuft.
+**For your group – or several:** screenmates can sit behind an access question, new people request their
+name, admins manage profiles, and one server hosts several independent circles of friends with their own
+movie night and their own cinema. Plus awards with levels and a showcase, profile pictures, all genres
+instead of just horror, and an AI search that runs cheaply with OpenRouter.
 
-### Neu
-- **Gruppen: mehrere unabhängige Freundeskreise auf einem Server.** Jede Gruppe hat ihren eigenen
-  Filmabend (wer dabei ist, Vorschläge, Veto, Kiste, Termin, Infos), ihre Chronik mit Bewertungen
-  und Gästebuch, ihre Merkliste, ihren Aktivitäts-Feed und **ihr eigenes Kino** – mehrere Gruppen
-  können gleichzeitig senden. Sichtbar ist das nur für Mitglieder. Namen, Admins, Profilbilder,
-  Level und Erfolge gelten weiter für den ganzen Server. Server-Admins legen Gruppen an und
-  ernennen Gruppen-Admins; die nehmen Leute auf und machen am Filmabend, was bisher Admins
-  vorbehalten war. Wer in mehreren Gruppen ist, wechselt in der Seitenleiste. Mit nur einer
-  Gruppe landen freigegebene Namen automatisch darin. Alles Bisherige steht in „Unsere Gruppe“.
-- **Erfolge** nach dem Vorbild von Xbox und Steam: 32 Erfolge in Bronze, Silber, Gold und
-  Platin für Filmabende, Kritiken, Gästebuch, Termine, Kino und Profil, dazu sechs geheime.
-  Punkte ergeben ein Level mit Titel, das als Abzeichen an jedem Avatar steht. Neue Erfolge
-  erscheinen als Pop-up und im Aktivitäts-Feed; jede Person hat ein Profil mit Vitrine für bis
-  zu drei Erfolge. Seltenheit und Fortschritt wie bei Steam, aber keine Rangliste.
-  **Ausnutzen lohnt sich nicht:** Punkte gibt es nur für Erfolge, Liken und Abstimmen wird nie
-  belohnt (nur Herzen *von verschiedenen anderen*), ein Filmabend zählt erst, wenn ihn eine andere
-  Person, die dabei war, bestätigt, rückdatierte Einträge zählen nicht. Was es vor dem Start schon
-  gab, zählt rückwirkend. Alle Regeln: [`docs/ERFOLGE.md`](docs/ERFOLGE.md).
-- **Profilbilder.** In den Einstellungen lädt man ein eigenes Bild hoch; es ersetzt überall die
-  Initialen. Der Browser verkleinert Handyfotos vor dem Hochladen, der Server schneidet sie
-  quadratisch zu (256 px, WebP) und kodiert sie neu – Ortsangaben und andere Metadaten der Fotos
-  bleiben dabei nicht erhalten. Admins können Bilder anderer entfernen.
-- **Zugangsfrage: screenmates nur für eure Gruppe.** Admins legen eine Frage fest, z. B. „Welchen
-  Film haben wir zuerst zusammen geschaut?“. Wer die App öffnet, muss erst den richtigen Film
-  anklicken – vorher ist nichts zu sehen, auch nicht über die API. Fehlversuche werden pro IP
-  gedrosselt. Wer schon angemeldet ist, merkt davon nichts.
-- **Namen beantragen, Admins geben frei.** Neue Leute stellen hinter der Zugangsfrage einen Antrag;
-  Admins sehen offene Anträge als Zahl in der Navigation und geben frei oder lehnen ab.
-- **Admins statt Host-Film.** Admin ist jetzt ein Recht einer Person, nicht mehr ein geteilter
-  Film, den jeder kennen kann. Admins ernennen weitere Admins; den letzten kann man weder
-  löschen noch herabstufen. Der erste Name einer neuen Installation wird Admin, bestehende
-  Installationen bekommen ihren ersten Admin mit `python -m app.cli admin "<Name>"`.
-- **Benutzerverwaltung** in den Einstellungen: umbenennen, Farbe ändern, Admin-Recht vergeben
-  oder entziehen, Film-Passwort zurücksetzen, auf allen Geräten abmelden, löschen – mit Anzeige,
-  auf wie vielen Geräten jemand angemeldet ist.
-- **Favicon** im Stil der eingeklappten Leiste („sm“), dazu Icons für den Homescreen von iPhone
-  und Android (`apple-touch-icon`, Web-Manifest).
-- **KI-Suche über OpenRouter.** Statt eines Anthropic-Keys geht auch ein OpenRouter-Key (`sk-or-…`,
-  wird automatisch erkannt) – und damit jedes Modell dort. Standard ist das günstige
-  `deepseek/deepseek-v4.1-flash` (rund 0,12 Cent pro Suche); jeder Vorschlag wird ohnehin gegen TMDB geprüft.
-  Das „Nachdenken“ (Reasoning) wird dabei abgeschaltet: Bei Reasoning-Modellen verbrauchte es das
-  ganze Antwort-Budget, bevor die Liste kam – ohne ist die Suche schneller, billiger und zuverlässig.
-  Fehler der KI werden verständlich gemeldet (Key abgelehnt, Guthaben leer, überlastet, abgeschnitten).
-- **Alle Genres statt nur Horror.** Finden, Stöbern, Suche, Personen und KI-Suche umfassen jetzt
-  jeden Film. Horror ist ein Genre unter vielen und hat sein eigenes Regal – ganz vorn.
-- **Genre-Regale** beim Stöbern: Horror, Komödie, Thriller, Action, Science-Fiction, Drama,
-  Animation, Dokumentarfilm. Die Dienst-Regale zeigen das ganze Angebot.
-- **Filmografien** zeigen alle Filme einer Person, auf Wunsch nach Genre gefiltert.
-- Gezeigt werden nur Filme, die schon erschienen sind. Bei großen Mengen steht „Mehr als 10.000
-  Filme", denn mehr liefert TMDB nicht.
-- „Geheimtipps" an echten Daten neu eingestellt: über alle Genres hinweg verdrängten Filme mit
-  kleiner, begeisterter Fan-Basis alles andere. Jetzt mindestens zwei Jahre alt und in verbreiteten
-  Originalsprachen (u. a. *Harakiri*, *Die sieben Samurai*, *Cinema Paradiso*).
+### Added
+- **Groups: several independent circles of friends on one server.** Each group has its own movie night
+  (who's in, suggestions, veto, case, date, info), its history with ratings and guestbook, its watchlist,
+  its activity feed and **its own cinema** – several groups can stream at once. Only members can see it.
+  Names, admins, profile pictures, levels and awards still apply server-wide. Server admins create groups
+  and appoint group admins, who add people and do on movie night what was previously reserved for admins.
+  People in several groups switch in the sidebar. With only one group, approved names land in it
+  automatically. Everything so far lives in "Our group".
+- **Awards** modeled on Xbox and Steam: 32 awards in Bronze, Silver, Gold and Platinum for movie nights,
+  reviews, guestbook, dates, cinema and profile, plus six secret ones. Points add up to a level with a
+  title, shown as a badge on every avatar. New awards appear as a pop-up and in the activity feed; everyone
+  has a profile with a showcase for up to three awards. Rarity and progress like Steam, but no leaderboard.
+  **Gaming it doesn't pay:** points only come from awards, liking and voting are never rewarded (only
+  hearts *from different other people*), a movie night only counts once another attendee confirms it, and
+  backdated entries don't count. What existed before the launch counts retroactively. All rules:
+  [`docs/AWARDS.md`](docs/AWARDS.md).
+- **Profile pictures.** Upload your own picture in settings; it replaces the initials everywhere. The
+  browser shrinks phone photos before upload, the server crops them square (256 px, WebP) and re-encodes
+  them – location data and other photo metadata are not kept. Admins can remove other people's pictures.
+- **Access question: screenmates just for your group.** Admins set a question, e.g. "Which film did we
+  watch together first?". Whoever opens the app has to click the right film first – nothing is visible
+  before that, not even through the API. Failed attempts are throttled per IP. People already signed in
+  don't notice a thing.
+- **Request names, admins approve.** New people file a request behind the access question; admins see
+  open requests as a count in the navigation and approve or reject.
+- **Admins instead of a host film.** Admin is now a right of a person, no longer a shared film anyone might
+  know. Admins appoint further admins; the last one can be neither deleted nor demoted. The first name of
+  a new installation becomes admin; existing installations get their first admin with
+  `python -m app.cli admin "<name>"`.
+- **User management** in settings: rename, change color, grant or revoke admin, reset film password, sign
+  out on all devices, delete – showing on how many devices someone is signed in.
+- **Favicon** in the style of the collapsed sidebar ("sm"), plus home-screen icons for iPhone and Android
+  (`apple-touch-icon`, web manifest).
+- **AI search via OpenRouter.** Instead of an Anthropic key, an OpenRouter key (`sk-or-…`, detected
+  automatically) works too – and with it any model there. The default is the inexpensive
+  `deepseek/deepseek-v4.1-flash` (around 0.12 cents per search); every suggestion is checked against TMDB
+  anyway. "Thinking" (reasoning) is turned off: with reasoning models it used up the whole answer budget
+  before the list came – without it, search is faster, cheaper and reliable. AI errors are reported clearly
+  (key rejected, credit exhausted, overloaded, truncated).
+- **All genres instead of just horror.** Find, browse, search, people and AI search now cover every film.
+  Horror is one genre among many and has its own shelf – right at the front.
+- **Genre shelves** when browsing: horror, comedy, thriller, action, science fiction, drama, animation,
+  documentary. The service shelves show the whole catalog.
+- **Filmographies** show all of a person's films, optionally filtered by genre.
+- Only films that have already been released are shown. For large result sets it says "More than 10,000
+  films", because TMDB doesn't return more.
+- "Hidden gems" retuned on real data: across all genres, films with a small, enthusiastic fan base crowded
+  out everything else. Now at least two years old and in widely spoken original languages (e.g.
+  *Harakiri*, *Seven Samurai*, *Cinema Paradiso*).
 
-### Entfernt
-- Host-Modus mit Host-Film und `Strg+Shift+H` (ersetzt durch Admins).
+### Removed
+- Host mode with a host film and `Ctrl+Shift+H` (replaced by admins).
 
-### Behoben
-- **Filme aus dem Start-Katalog bekamen nie ein Poster** (u. a. Scream, Hereditary, Shining,
-  Midsommar): Die Detailansicht vervollständigte nur Filme ohne Laufzeit, der Start-Katalog hat
-  aber eine. Jetzt holt sie mit TMDB-Key auch fehlende Poster einmal nach.
-- **Die Seitenleiste springt beim Ein- und Ausklappen nicht mehr:** Logo, Gruppe, Navigation und
-  Profil behalten ihre Höhe; eingeklappt zeigt die Gruppe ihr Kürzel.
-- **Das Kino-Bild hat eine feste Größe:** höchstens 1280 px breit und immer so groß, dass es samt
-  Titelzeile ins Fenster passt – auf großen Monitoren musste man vorher scrollen. Auf dem Handy
-  volle Breite, im Vollbild wie gehabt bildschirmfüllend.
-- **Mit TMDB endeten Raster und Suche nach 20 Filmen**, obwohl es z. B. 320 Horrorfilme bei
-  Netflix gibt: TMDB liefert 20 Filme pro Seite, die App fragte 24 an und hielt „weniger als
-  gefragt" für das Ende. Jetzt meldet der Server, ob es weitergeht und wie viele es insgesamt sind.
+### Fixed
+- **Films from the starter catalog never got a poster** (e.g. Scream, Hereditary, The Shining, Midsommar):
+  the detail view only completed films without a runtime, but the starter catalog has one. With a TMDB key
+  it now fetches missing posters once too.
+- **The sidebar no longer jumps when collapsing and expanding:** logo, group, navigation and profile keep
+  their height; collapsed, the group shows its initials.
+- **The cinema picture has a fixed size:** at most 1280 px wide and always small enough to fit the window
+  together with the title row – on large monitors you had to scroll before. Full width on phones,
+  fullscreen as before.
+- **With TMDB, grids and search ended after 20 films**, although Netflix has e.g. 320 horror films: TMDB
+  returns 20 films per page, the app asked for 24 and took "fewer than requested" as the end. Now the server
+  reports whether there's more and how many there are in total.
 
-### Verbessert
-- Raster laden beim Scrollen von selbst nach („Mehr laden" bleibt als Knopf), und „Alle Filme"
-  zeigt die Gesamtzahl („320 Filme").
+### Improved
+- Grids load more on scroll by themselves ("Load more" stays as a button), and "All films" shows the total
+  ("320 films").
 
-### Betrieb
-- **Sechs Migrationen** (`0003`–`0006`) laufen beim Start automatisch: Zugangsfrage und Admins pro
-  Person, Profilbilder, Erfolge, Gruppen. Alles Bisherige landet in „Unsere Gruppe“; wer vorher
-  angemeldet war, bleibt es.
-- **Erster Admin** einer bestehenden Installation: `python -m app.cli admin "<Name>"` (im
-  Container). `python -m app.cli namen` listet alle Namen, `zugang-aus` hebt die Zugangsfrage auf.
-- **Hinter einem Reverse Proxy** `FORWARDED_ALLOW_IPS` setzen (Proxy-IP, ggf. Cloudflare-Netze),
-  damit die Drossel der Zugangsfrage die echte Client-IP sieht.
-- **Profilbilder** liegen unter `MEDIA_DIR` (Docker: `/data/media`, im selben Volume wie die
-  Datenbank – beim Backup mitnehmen). Neue Abhängigkeit: Pillow.
-- **MediaMTX:** ein Pfad pro Gruppe (`kino-<id>`, Regex in `deploy/mediamtx.yml`) – den
-  Medienserver nach dem Update mit der neuen Konfiguration neu starten.
+### Operations
+- **Six migrations** (`0003`–`0006`) run automatically at startup: access question and per-person admins,
+  profile pictures, awards, groups. Everything so far lands in "Our group"; whoever was signed in stays
+  signed in.
+- **First admin** of an existing installation: `python -m app.cli admin "<name>"` (in the container).
+  `python -m app.cli namen` lists all names, `zugang-aus` lifts the access question.
+- **Behind a reverse proxy** set `FORWARDED_ALLOW_IPS` (proxy IP, possibly Cloudflare ranges), so the
+  access question's throttle sees the real client IP.
+- **Profile pictures** live under `MEDIA_DIR` (Docker: `/data/media`, in the same volume as the database –
+  include it in backups). New dependency: Pillow.
+- **MediaMTX:** one path per group (`kino-<id>`, regex in `deploy/mediamtx.yml`) – restart the media server
+  with the new configuration after the update.
 
 ### Tests
-- 183 Backend-Tests, 40 Browser-Tests (auch gegen den Docker-Stack). Neu u. a.: alle
-  Schutzregeln der Erfolge gegen Ausnutzen, Zugangsfrage samt Drossel, Rechte pro Person und
-  Gruppe, Profilbild-Verarbeitung (EXIF/GPS weg, Bomben-Schutz), Kino pro Gruppe, Migrationen
-  ab einem echten Ausgangsstand.
-- Die Einladungskarte bekommt im Browser-Test 15 statt 5 Sekunden zum Zeichnen (gelegentlicher
-  Zeit-Ausreißer auf ausgelasteten Rechnern).
+- 183 backend tests, 40 browser tests (also against the Docker stack). New among others: all of the awards'
+  anti-gaming rules, access question including throttling, per-person and per-group permissions, profile
+  picture processing (EXIF/GPS stripped, decompression-bomb protection), cinema per group, migrations from a
+  real starting state.
+- The invitation card gets 15 instead of 5 seconds to render in the browser test (occasional timing
+  outlier on busy machines).
 
 ## 0.5.0 – 2026-10-03
 
-**Stöbern, losen, einladen:** „Finden" zeigt das Horror-Angebot von Netflix, Prime & Co. in
-Regalen, die Filmabend-Kiste ersetzt das Glücksrad, und der Abend bekommt Termin, Einladungskarte
-und Erinnerungen. Dazu schätzt screenmates, wem ein Film gefallen wird – ehrlich gemessen.
+**Browse, draw, invite:** "Find" shows what's on Netflix, Prime & co. in shelves, the movie-night case
+replaces the wheel of fortune, and the night gets a date, an invitation card and reminders. Plus
+screenmates estimates who will like a film – honestly measured.
 
-### Neu
-- **Stöbern statt Suchen-müssen:** „Finden" startet mit Regalen wie bei einem Streamingdienst:
-  „Läuft bei uns" (eure Abos), je ein Regal pro Dienst (Netflix, Prime Video, Disney+, Paramount+,
-  Joyn, WOW … eure eigenen zuerst, mit „Euer Abo"), „Kostenlos streamen", „Neu erschienen",
-  „Geheimtipps" und „Klassiker". Seitwärts wischen oder blättern, „Alle zeigen" öffnet das ganze
-  Angebot im Raster.
-- **„Alle Filme" mit Dienst-Auswahl:** Logos zum Filtern nach einem Dienst, dazu „Kostenlos" und
-  „Läuft bei uns". Die gewählte Ansicht wird gemerkt.
-- **Filmabend-Kiste statt Glücksrad**, wie das Öffnen einer Kiste in Counter-Strike 2: Ein Band aus
-  Postern rast unter der Markierung durch, bremst lange ab und enthüllt den Film des Abends. Die
-  **Seltenheitsfarben** (Standard, Limitiert, Geheim, Verdeckt, ★ Legendär) zeigen die echten
-  Chancen, der Kisteninhalt listet sie in Prozent. Mit Klick-Geräuschen und Fanfare (abschaltbar),
-  Beinahe-Treffern, „Überspringen" (auch Escape) und kurzer Animation bei „weniger Bewegung".
-- **„Wem gefällt's?"** in jeder Filmansicht: geschätzte Sterne pro Person aus ihren eigenen
-  Bewertungen, mit Begründung („wie Freitag der 13., ★ 5"). Ab 8 Bewertungen, bis 25 als „erste
-  Tendenz". Im Rückblick-Test bis zu 20 % genauer als der Durchschnitt der Person. Was die
-  Prognose kann und was nicht, steht in `docs/PROGNOSE.md`.
-- **Termin und Einladung:** Datum und Ort für den nächsten Abend. „Einladen" erzeugt eine Karte
-  als Bild (Termin, Poster der Vorschläge ohne Veto, wer dabei ist) und einen Text mit Link. Auf
-  dem Handy geht beides direkt ins Teilen-Menü, sonst Bild speichern und Text kopieren.
-- **„Heute vor einem Jahr":** Auf dem Filmabend erscheint, was ihr um dieses Datum in früheren
-  Jahren geschaut habt, mit euren Sternen und dem beliebtesten Kommentar.
+### Added
+- **Browse instead of having to search:** "Find" starts with shelves like a streaming service: "Streams for
+  us" (your subscriptions), one shelf per service (Netflix, Prime Video, Disney+, Paramount+ … yours first,
+  marked "Your subscription"), "Stream for free", "Just released", "Hidden gems" and "Classics". Swipe or
+  page sideways; "Show all" opens the whole catalog as a grid.
+- **"All films" with a service picker:** logos to filter by a service, plus "Free" and "Streams for us".
+  The chosen view is remembered.
+- **Movie-night case instead of a wheel of fortune**, like opening a case in Counter-Strike 2: a reel of
+  posters races under the marker, slows down for a long time and reveals the film of the night. The
+  **rarity colors** (Standard, Limited, Secret, Covert, ★ Legendary) reflect the real odds, and the case
+  contents list them in percent. With click sounds and a fanfare (can be turned off), near misses, "Skip"
+  (also Escape) and a short animation with "reduced motion".
+- **"Who'll like it?"** in every film view: estimated stars per person from their own ratings, with a
+  reason ("like Friday the 13th, ★ 5"). From 8 ratings on, up to 25 as a "first tendency". In the backtest
+  up to 20 % more accurate than the person's average. What the prediction can and can't do is in
+  [`docs/PREDICTION.md`](docs/PREDICTION.md).
+- **Date and invitation:** date and place for the next night. "Invite" creates a card as an image (date,
+  posters of the suggestions without a veto, who's in) and a text with a link. On phones both go straight
+  to the share menu, otherwise save the image and copy the text.
+- **"On this day":** the movie night shows what you watched around this date in earlier years, with your
+  stars and the most popular comment.
 
-### Betrieb
-- Erste echte Migration (`0002`): Tabelle `abend` und Spalte `movie.keywords`. Fehlende Stichworte
-  älterer Filme holt die Prognose nach und nach aus TMDB (höchstens 30 pro Anfrage).
-- `scripts/prognose-backtest.py` misst die Prognose an echten TMDB-Filmen.
+### Operations
+- First real migration (`0002`): table `abend` and column `movie.keywords`. The prediction gradually
+  fetches missing keywords of older films from TMDB (at most 30 per request).
+- `scripts/prognose-backtest.py` measures the prediction on real TMDB films.
 
 ### Tests
-- 110 Backend-Tests, 34 Browser-Tests (auch gegen den Docker-Stack und in UTC). Neue Prüfungen
-  jeweils mit absichtlich eingebauten Fehlern gegengecheckt; Regale und Prognose zusätzlich mit
-  echten TMDB-Daten, die Migration an einer Kopie einer echten Datenbank.
+- 110 backend tests, 34 browser tests (also against the Docker stack and in UTC). New checks were each
+  verified against deliberately introduced bugs; shelves and prediction additionally with real TMDB data,
+  the migration on a copy of a real database.
 
 ## 0.4.0 – 2026-10-03
 
-Der **Filmabend wird persönlicher**: Wo läuft der Film, wer hat welches Abo, wie fand ihn wer –
-und wer ihn auf keinen Fall sehen will. Dazu eine Datenbank, die künftige Updates ohne
-Datenverlust mitmacht.
+**Movie night gets personal:** where is the film streaming, who has which subscription, who thought what
+of it – and who definitely doesn't want to see it. Plus a database that survives future updates without
+data loss.
 
-### Neu
-- **Seitenleiste einklappbar**: nur Icons (mit Tooltips, Kurzlogo „sm“, Live-Zähler am Kino-Icon),
-  pro Gerät gemerkt. Auf dem Handy unverändert.
-- **Bewerten und Kommentieren direkt in der Detailansicht** jedes gesehenen Films – nicht mehr
-  nur unter Unsere Filme → Gesehen. Dazu der Gruppen-Schnitt „Ihr: ★ 4,7“ neben der TMDB-Wertung.
-- **„Wo läuft's?“** in jeder Filmansicht: Abo, kostenlos, leihen, kaufen in Deutschland (Daten:
-  JustWatch über TMDB). Abos, die jemand aus der Gruppe hat, stehen vorn – mit Namen.
-- **Meine Abos** in den Einstellungen (nur echte Abo-Dienste, keine Leih-Shops) und der Filter
-  **„Läuft bei uns“** in Finden. „Prime Video mit Werbung“ zählt als Prime Video.
-- **Trailer** in der Detailansicht, deutsch bevorzugt; YouTube (nocookie) lädt erst beim Klick.
-- **Veto**: Jede Person kann einen vorgeschlagenen Film ablehnen; das Glücksrad lässt ihn aus.
-  Vetos verfallen, wenn der Film geschaut oder die Vorschläge geleert werden.
+### Added
+- **Collapsible sidebar:** icons only (with tooltips, short logo "sm", live counter on the cinema icon),
+  remembered per device. Unchanged on phones.
+- **Rate and comment directly in the detail view** of every watched film – no longer only under Our films →
+  Watched. Plus the group average "You: ★ 4.7" next to the TMDB score.
+- **"Where's it on?"** in every film view: subscription, free, rent, buy (data: JustWatch via TMDB).
+  Subscriptions someone in the group has come first – with names.
+- **My subscriptions** in settings (real subscription services only, no rental shops) and the filter
+  **"Streams for us"** in Find. "Prime Video with ads" counts as Prime Video.
+- **Trailer** in the detail view, preferring the configured language; YouTube (nocookie) only loads on
+  click.
+- **Veto:** everyone can reject one suggested film; the wheel leaves it out. Vetoes expire when the film
+  is watched or the suggestions are cleared.
 
-### Betrieb
-- **Datenbank-Migrationen mit Alembic.** Die App bringt die Datenbank beim Start selbst auf den
-  neuesten Stand. Datenbanken aus 0.2/0.3 werden ohne Datenverlust übernommen (fehlende Tabellen
-  werden ergänzt). Künftige Schema-Änderungen: `make migration name="…"`. Ein Test schlägt fehl,
-  wenn ein Modell geändert, aber keine Migration geschrieben wurde. Migrationen laufen mit
-  ausgeschalteten Fremdschlüsseln, damit ein Tabellen-Umbau unter SQLite keine Kaskaden auslöst.
+### Operations
+- **Database migrations with Alembic.** The app brings the database up to date by itself at startup.
+  Databases from 0.2/0.3 are taken over without data loss (missing tables are added). Future schema
+  changes: `make migration name="…"`. A test fails if a model was changed but no migration written.
+  Migrations run with foreign keys off, so a table rebuild under SQLite doesn't trigger cascades.
 
-### Behoben
-- Bewertungen und Kommentare aus einer Ansicht erschienen in anderen offenen Ansichten erst nach
-  dem Neuladen.
-- Escape schloss ein Fenster nicht mehr, wenn nach einer Aktion der Fokus aus dem Fenster fiel.
-- Bewertungen überall mit deutschem Komma (4,7 statt 4.7).
+### Fixed
+- Ratings and comments from one view only appeared in other open views after reloading.
+- Escape no longer closed a dialog when focus fell out of it after an action.
+- Ratings everywhere with a German decimal comma (4,7 instead of 4.7) in the German UI.
 
 ### Tests
-- 92 Backend-Tests, 28 Browser-Tests (auch gegen den kompletten Docker-Stack). Anbieter und
-  Trailer zusätzlich mit echten TMDB-Daten, die Migration an einer Kopie einer echten Datenbank
-  geprüft.
+- 92 backend tests, 28 browser tests (also against the full Docker stack). Providers and trailers
+  additionally checked with real TMDB data, the migration on a copy of a real database.
 
 ## 0.3.0 – 2026-10-03
 
-Das **Kino**: gemeinsam live schauen, auch wenn alle an verschiedenen Orten sitzen.
+The **cinema**: watch live together, even when everyone is somewhere else.
 
-### Neu
-- **Kino** als eigener Bereich: Der Host teilt einen Browser-Tab (oder sendet per WHIP aus
-  OBS), alle sehen live dasselbe Bild über WebRTC. Medienserver MediaMTX verteilt; screenmates
-  prüft Rechte und leitet nur die Verbindungsaushandlung weiter.
-- Menüpunkt „Kino“ mit Live-Anzeige und Zahl der Zuschauenden, Banner „Jetzt im Kino“ auf dem
-  Filmabend, Film nach der Vorstellung mit allen Zuschauenden als gesehen eintragen.
-- Sende-Pult mit **Qualität** (Hoch 1080p / Mittel 720p / Sparsam 480p) und **Inhalt**
-  (Film / Spiel bis 60 fps) sowie Live-Anzeige der tatsächlichen Sendewerte.
-- **Navigation in drei Bereiche** statt zehn Punkte: Filmabend · Finden · Unsere Filme
-  (plus Kino). Ein Suchfeld für Entdecken, Titel, Personen und KI. Alte Links werden umgeleitet.
-- Schrift Inter, mit dem eigenen Build ausgeliefert.
+### Added
+- **Cinema** as its own section: the host shares a browser tab (or streams via WHIP from OBS), everyone
+  sees the same picture live over WebRTC. The MediaMTX media server distributes; screenmates checks
+  permissions and only relays the connection negotiation.
+- "Cinema" menu item with a live indicator and viewer count, a "Now in the cinema" banner on the movie
+  night, and after the show the film can be logged as watched with all viewers.
+- Streaming panel with **quality** (High 1080p / Medium 720p / Economy 480p) and **content** (film / game
+  up to 60 fps), plus a live readout of the actual streaming values.
+- **Navigation in three sections** instead of ten items: Movie night · Find · Our films (plus Cinema). One
+  search field for discovery, titles, people and AI. Old links redirect.
+- Inter font, shipped with our own build.
 
-### Verbessert (alles gemessen, Details in `docs/KINO-QUALITAET.md`)
-- **Bild:** 1080p ab der ersten Sekunde statt 480×270 in den ersten ~15 s – Auflösung halten,
-  Startbitrate, H.264 statt VP8.
-- **Ton:** Stereo mit bis zu 192 kbit/s statt Mono mit ~32 kbit/s (Sender *und* Zuschauer
-  fordern Stereo an, sonst mischt Chrome herunter).
-- **Gleichmäßigkeit:** 300 ms Wiedergabepuffer beim Zuschauer – größte Abweichung vom
-  Aufnahmetakt 65 → 24 ms.
-- Personensuche: Leute mit Horror-Bezug zuerst; Filmografien ohne Doku-Auftritte, bekannteste
-  Filme zuerst, Rollen auf Deutsch.
-- Entdecken und TMDB-Abgleich: nur Spielfilme ab 60 min, „Beste Bewertung“ erst ab 200 Stimmen.
+### Improved (all measured, details in [`docs/CINEMA-QUALITY.md`](docs/CINEMA-QUALITY.md))
+- **Picture:** 1080p from the first second instead of 480×270 for the first ~15 s – maintain resolution,
+  start bitrate, H.264 instead of VP8.
+- **Audio:** stereo at up to 192 kbit/s instead of mono at ~32 kbit/s (sender *and* viewer request stereo,
+  otherwise Chrome downmixes).
+- **Smoothness:** a 300 ms playback buffer at the viewer – largest deviation from the capture cadence
+  65 → 24 ms.
+- People search: people with a horror connection first; filmographies without documentary appearances,
+  best-known films first.
+- Discovery and TMDB sync: feature films of 60+ minutes only, "Top rated" only from 200 votes.
 
-### Behoben
-- Sender wie OBS/FFmpeg brachen zufällig ab, wenn MediaMTX einen ICE-TCP-Kandidaten zuerst
-  nannte – sie bekommen jetzt nur UDP-Kandidaten.
-- Glücksrad-Beschriftungen standen teils auf dem Kopf.
+### Fixed
+- Senders like OBS/FFmpeg dropped randomly when MediaMTX listed an ICE-TCP candidate first – they now only
+  get UDP candidates.
+- Some wheel-of-fortune labels were upside down.
 
-### Betrieb & Tests
-- `make kino-install`, MediaMTX in `compose.yaml`; neue Tabelle, bestehende Datenbanken bleiben gültig.
-- CI-Job, der den kompletten `docker compose`-Stack startet und alle E2E-Tests dagegen fährt.
-- 69 Backend-Tests, 23 Browser-Tests – darunter Kino mit echtem Medienserver, OBS-Ersatz per
-  FFmpeg, TCP-Ausweichweg bei gesperrtem UDP und Stereo per Frequenzanalyse.
+### Operations & tests
+- `make kino-install`, MediaMTX in `compose.yaml`; new table, existing databases stay valid.
+- A CI job that starts the full `docker compose` stack and runs all E2E tests against it.
+- 69 backend tests, 23 browser tests – including the cinema with a real media server, an OBS stand-in via
+  FFmpeg, TCP fallback with UDP blocked, and stereo via frequency analysis.
 
-### Noch nicht im echten Einsatz geprüft
-- Zuschauen über das Internet (Checkliste: `docs/KINO-CHECK.md`).
-- Echtes OBS als Sender.
+### Not yet verified in real use
+- Watching over the internet (checklist: [`docs/CINEMA-CHECKLIST.md`](docs/CINEMA-CHECKLIST.md)).
+- Real OBS as a sender.
 
 ## 0.2.0 – 2026-10-03
 
-Senior-Review des ersten Stands; Befunde und Behebungen in `docs/REVIEW.md`.
+A thorough review of the first version, with every finding fixed and covered by a test.
 
-- Rechte-Modell (Name zum Schreiben, Host zum Verwalten), Schutz- und Host-Film werden nie
-  ausgeliefert, Drosselung beim Raten.
-- Schema mit Kaskaden und Unique-Constraints, Schema-Version, Validierung überall.
-- TMDB-Ergebnisse mit Postern, robuster Client; KI-Suche über die Anthropic API.
-- Neues Frontend mit allen Bereichen, Fehlermeldungen, Tastaturbedienung, mobile Ansicht.
-- Tests, Lint, CI, Docker.
+- Permission model (a name to write, the host to manage); protection and host films are never exposed;
+  throttling against guessing.
+- Schema with cascades and unique constraints, a schema version, validation everywhere.
+- TMDB results with posters, a robust client; AI search via the Anthropic API.
+- New frontend with all sections, error messages, keyboard support, mobile view.
+- Tests, lint, CI, Docker.
 
 ## 0.1.0 – 2026-10-03
 
-Erster lauffähiger Nachbau (MVP): Katalog, Suche, Merkliste, Gesehen, Wünsche, Info, Namenswahl.
+First working version (MVP): catalog, search, watchlist, watched, wishes, info, choosing a name.

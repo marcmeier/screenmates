@@ -113,7 +113,7 @@ export function createViewer(video, onState = () => {}) {
   }
 }
 
-// Sending presets, measured with a demanding 1080p source (docs/KINO-QUALITAET.md):
+// Sending presets, measured with a demanding 1080p source (docs/CINEMA-QUALITY.md):
 // keeping the resolution and giving Chrome a start bitrate puts 1080p on screen from
 // the first second instead of ramping up from 480x270 over ~15 s.
 export const QUALITAET = {

@@ -1,258 +1,316 @@
+<div align="center">
+
+<img src="frontend/public/favicon.svg" alt="screenmates logo" width="88" height="88">
+
 # screenmates
 
-**Der Organizer für den gemeinsamen Filmabend** – vom Horror-Marathon bis zur Komödie. Filme entdecken,
-vorschlagen, die Filmabend-Kiste öffnen – und danach bewerten und im
-Gästebuch nachdiskutieren.
+**The self-hosted movie-night app for your circle of friends.**<br>
+Plan the night, let the case pick the film, watch together live – even from different couches.
 
-![Filmabend mit Termin, Vorschlägen und der Filmabend-Kiste](docs/screenshots/filmabend.png)
+[![CI](https://github.com/marcmeier/screenmates/actions/workflows/ci.yml/badge.svg)](https://github.com/marcmeier/screenmates/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/marcmeier/screenmates?color=e50914)](https://github.com/marcmeier/screenmates/releases)
+[![License: AGPL v3](https://img.shields.io/badge/license-AGPL--3.0-blue)](LICENSE)
+![Python](https://img.shields.io/badge/python-3.12%2B-3776ab?logo=python&logoColor=white)
+![Vue](https://img.shields.io/badge/vue-3-42b883?logo=vuedotjs&logoColor=white)
+![Docker](https://img.shields.io/badge/docker-compose-2496ed?logo=docker&logoColor=white)
 
-## Was es kann
+[Features](#-features) ·
+[Quick start](#-quick-start) ·
+[Configuration](#-configuration) ·
+[Cinema setup](#-cinema-watch-together) ·
+[Docs](#-documentation) ·
+[Contributing](#-contributing)
 
-Drei Bereiche für die drei Dinge, für die man herkommt:
+<img src="docs/assets/hero.png" alt="screenmates on desktop and phone" width="100%">
 
-- **Filmabend** – wer ist dabei (**dabei, vielleicht oder kann nicht**), **Termin und
-  Einladungskarte** für den Gruppenchat, eine **Terminumfrage**, wenn der Tag noch offen ist
-  (alle stimmen mit Ja, Vielleicht oder Nein ab, festlegen übernimmt die Antworten als Zusagen),
-  der Termin **im Kalender** (als Datei oder als Abo für alle Gruppen), gerankte
-  Vorschläge der Gruppe, ein **Veto** pro Person,
-  die **Filmabend-Kiste**, die wie eine CS2-Kiste aufgeht (Seltenheitsfarben nach den echten
-  Chancen, Stimmen erhöhen sie) – der Gastgeber öffnet sie **für alle gleichzeitig**, alle sehen
-  live dasselbe Band und denselben Gewinner –, Hausregeln & Infos und ein
-  Aktivitäts-Feed. Dazu **„Heute vor einem Jahr"**: was ihr um dieses Datum früher geschaut habt.
-- **Finden** – zum **Stöbern** Regale wie bei einem Streamingdienst: was bei euch im Abo läuft,
-  das Angebot von Netflix, Prime Video, Disney+ & Co., Genre-Regale (Horror, Komödie, Thriller …),
-  Kostenloses, Neues, Geheimtipps und Klassiker. Unter „Alle Filme" das Raster nach Dienst, Genre,
-  Jahrzehnt, Note und Länge. *Ein* Suchfeld für alles: Getippt findet es Filme und Personen (mit
-  Filmografie), und **„KI fragen“**
-  macht aus „langsamer Folk-Horror, aber nicht zu brutal“ passende, real existierende Filme.
-- **Unsere Filme** – Merkliste und die Chronik des Gesehenen: Sterne und Kommentare pro Person,
-  Teilnehmende, Gästebuch mit Antworten und Herzen.
-- **Kino** – gemeinsam schauen, auch wenn alle in verschiedenen Wohnzimmern sitzen: Der Gastgeber (oder ein Admin)
-  teilt seinen Bildschirm oder sendet aus OBS (eigene Filme, Spiele …), alle sehen live dasselbe
-  Bild mit unter einer Sekunde Verzögerung. Daneben ein **Chat** (30 Tage), und **Reaktionen** (😱 🍿 😂 …)
-  fliegen für alle übers Bild – auch im Vollbild. Der Gastgeber kann eine **Pause** ansagen,
-  Zuschauende schicken „Moment, bin gleich da“. Läuft etwas, leuchtet der Menüpunkt mit der Zahl
-  der Zuschauenden. Danach trägt ein Klick den Film als gesehen ein, mit allen, die dabei waren.
+</div>
 
-Dazu: eine Detailansicht mit Trailer, **„Wo läuft's?“** (Abo, leihen, kaufen; Abos der Gruppe
-zuerst), **„Wem gefällt's?"** (geschätzte Sterne pro Person aus den eigenen Bewertungen, siehe
-[`docs/PROGNOSE.md`](docs/PROGNOSE.md)), Besetzung, ähnlichen Filmen und euren Bewertungen; **Wünsche & Ideen** mit Voting
-und **Film als Passwort** – keine Accounts: Man wählt seinen Namen und schützt ihn optional
-mit einem Film, den man beim Anmelden anklicken muss.
+## Why screenmates?
 
-**Gruppen:** Ein Server kann mehrere Freundeskreise tragen – jede Gruppe hat ihren eigenen
-Filmabend, ihre Chronik, Merkliste und ihr eigenes Kino, sichtbar nur für ihre Mitglieder. Namen,
-Level und Erfolge gelten serverweit. Server-Admins legen Gruppen an, Gruppen-Admins nehmen Leute
-auf ([`docs/GRUPPEN.md`](docs/GRUPPEN.md)).
+Group chats are terrible at movie nights. Nobody knows who's coming, twenty films get suggested and
+nobody decides, and afterwards nobody remembers what you watched or who loved it.
 
-**Gastgeber-Stab:** Eine Person führt den Abend – öffnet die Kiste für alle und bespielt das
-Kino. Der Stab wandert: weitergeben, übernehmen, wenn der Gastgeber nicht da ist, oder die
-Anwesenden stimmen ab (die Stimme des Gastgebers zählt doppelt).
+screenmates gives your group one place for the whole evening: **who's in, what we watch, watching it
+together, and remembering it** – with a loot-box style case that makes picking the film the best part of
+the night. It's self-hosted, invite-only, has no accounts or passwords to manage, and runs in a single
+Docker container.
 
-**Live:** Was Freunde bewerten, kommentieren, merken oder vorschlagen, erscheint bei allen ohne
-Neuladen. Jede Person stellt sich ihr **Farbschema und ihre Schrift** ein (bleibt dunkel).
+## ✨ Features
 
-**Benachrichtigungen:** Auch bei geschlossener App meldet sich screenmates aufs Handy oder den
-Rechner (Web Push) – wenn ein Termin steht oder verschoben wird, eine Terminumfrage startet, am
-Tag des Filmabends, wenn die Kiste aufgeht, das Kino live geht, dir der Gastgeber-Stab angeboten
-wird oder jemand auf deinen Kommentar antwortet. Jede Person wählt, worüber; was gerade live
-passiert, kommt nur bei denen an, die die App nicht offen haben. Auf dem iPhone geht das in der
-App auf dem Home-Bildschirm.
+### 🗓️ Plan the night
+- **Who's in?** – everyone answers *I'm in*, *Maybe* or *Can't make it*.
+- **Date poll** when the day is still open; fixing a date turns the votes into replies.
+- **Invitation card** as an image for your group chat, and the date **in your calendar** – as a file or a
+  live subscription across all your groups.
+- **Evening mode** on the day itself guides through three steps: *Who's here?* → *Open the case* → *Roll film!*
+- **House rules & info**, an **activity feed** and *"On this day"* – what you watched around this date in earlier years.
 
-**Der Abend selbst:** Am Tag des Termins führt ein **Abend-Modus** in drei Schritten durch den Abend
-(Wer ist da? → Kiste → Film ab!), am Tag danach fragt **„Wie war's?“** nach den Sternen. Jeder
-Vorschlag zeigt, wie er **euch gefallen dürfte** („Für euch ≈ 4,2 ★“), **wo er läuft** (Abos der
-Gruppe zuerst) und seine **Chance in der Kiste**. Neue bekommen eine kurze **Einführung**, der
-Aktivitäts-Feed markiert, was **neu seit dem letzten Besuch** ist, und die **Glocke** sammelt alle
-Benachrichtigungen auch in der App. Im Profil steht, wer **geschmacksverwandt** ist.
+### 🎁 Let the case decide
+- Everyone **suggests** films and has **one veto**.
+- The **movie-night case** opens like a CS2 case: a reel of posters races past and slows down to reveal the
+  film of the night. Rarity colors show the **real odds** – more votes, better chances.
+- The host opens it **for everyone at once** – all members see the same reel and the same winner, live.
+- Each suggestion shows **how much your group will probably like it** ("For you ≈ 4.2 ★") and **where it's
+  streaming** – your group's subscriptions first.
 
-**Rückblick:** Unter „Unsere Filme“ euer Filmjahr in Zahlen – Filme, Abende, Stunden, Genres, der
-beste und der umstrittenste Film, Rekorde und Auszeichnungen wie „Stammgast“ oder „Strengste
-Kritik“. Und als **Story** zum Durchtippen, im Dezember und Januar mit Hinweis auf der Startseite.
+### 🍿 Find something to watch
+- **Shelves like a streaming service:** what's on your subscriptions, Netflix, Prime Video, Disney+ & co.,
+  genre shelves, free films, new releases, hidden gems and classics.
+- **All films** grid with filters for service, genre, decade, rating and runtime.
+- **One search field** for films and people (with filmographies).
+- **Ask the AI:** *"slow-burn folk horror, but not too gory"* → real, existing films (optional, bring your own key).
+- Film details with trailer, **"Where's it on?"** (subscription, rent, buy), cast, similar films and
+  **"Who'll like it?"** – estimated stars for each person, learned from their own ratings.
 
-**Erfolge** wie bei Xbox und Steam: Filmabende, Kritiken, Gästebuch, Termine und Kino schalten
-Erfolge frei, Punkte ergeben ein Level am Avatar, jede Person hat ein Profil mit Vitrine – so
-gebaut, dass sich Spammen nicht lohnt ([`docs/ERFOLGE.md`](docs/ERFOLGE.md)).
+### 📺 Cinema: watch together
+- The host **shares a browser tab or streams from OBS** – everyone sees the same picture with
+  **sub-second latency** over WebRTC, in 1080p with stereo sound.
+- **Chat and reactions** (😱 🍿 😂 …) fly across the picture for everyone – fullscreen too.
+- The host can call a **pause**; viewers can send *"Hang on, be right back"*.
+- Afterwards one click logs the film as watched, with everyone who was there.
 
-**Nur mit Einladung:** Wer screenmates öffnet, sieht ohne Einladungslink nichts. Admins einer
-Gruppe erzeugen Links für ihre Gruppe – wahlweise „direkt aufnehmen“ (persönlich verschickt) oder
-„mit Freigabe“ (z. B. im Gruppenchat), mit Ablauf und Nutzungslimit, jederzeit widerrufbar. Wer schon
-einen Namen hat, tritt mit einem Link einer weiteren Gruppe bei. Admins verwalten außerdem alle
-Profile: umbenennen, Farbe, Admin-Recht, Film-Passwort zurücksetzen, überall abmelden, löschen. Der
-erste Name einer neuen Installation wird Admin. In der **Verwaltung** sehen Admins außerdem,
-wie oft die KI-Suche genutzt wurde und was sie gekostet hat. Eine **Über-Seite** nimmt Impressum,
-Datenschutzhinweise und Spendenlinks auf – erreichbar auch ohne Einladung.
+### 📖 Remember it
+- **Our films:** a watchlist and the history of everything you've watched – stars and comments per
+  person, attendees, a **guestbook** with replies and hearts.
+- **"How was it?"** asks for your stars the day after.
+- **Year in review:** your film year in numbers – nights, hours, genres, best and most divisive film,
+  records and awards like *Regular* or *Harshest critic* – also as a **story** to tap through.
 
-Mit TMDB-Key ist der ganze TMDB-Katalog verfügbar, ohne Key gibt es einen Demo-Katalog.
+### 🏆 Awards, profiles & more
+- **Awards like on Xbox and Steam** – Bronze to Platinum, secret ones, levels, a showcase on your profile.
+  Designed so that spamming doesn't pay ([how](docs/AWARDS.md)).
+- **Kindred tastes:** see who in the group rates films most like you.
+- **Your own look:** seven dark color themes and seven fonts, per person.
+- **Live everywhere:** ratings, comments and suggestions show up for everyone without reloading.
+- **Push notifications** (Web Push) for new dates, polls, the case opening, the cinema going live, replies
+  and more – each person picks what they want. Works as a home-screen app on iPhone, too.
+- **German and English**, chosen per person.
 
-| Finden | Detail | Unsere Filme | Kino | Erfolge | Mobil |
-|---|---|---|---|---|---|
-| ![](docs/screenshots/finden.png) | ![](docs/screenshots/detail.png) | ![](docs/screenshots/unsere-filme.png) | ![](docs/screenshots/kino.png) | ![](docs/screenshots/erfolge.png) | ![](docs/screenshots/mobil.png) |
+### 👥 Built for groups of friends
+- **Invite-only:** without an invitation link, there's nothing to see. Links can add people directly or
+  require approval, with expiry and usage limits, revocable any time.
+- **No accounts:** pick your name – and optionally protect it with a **film as your password**.
+- **Several groups per server**, each with its own movie night, history and cinema; names, levels and
+  awards are shared ([how groups work](docs/GROUPS.md)).
+- **Host baton:** one person runs the night; the baton can be handed over, taken over, or voted on.
+- **Admin area** with user management, invitation links, AI cost tracking and a danger zone with automatic
+  backups.
 
-| Kiste für alle | Gastgeber-Stab | Darstellung |
-|---|---|---|
-| ![](docs/screenshots/kiste.png) | ![](docs/screenshots/stab.png) | ![](docs/screenshots/darstellung.png) |
+## 📸 Screenshots
 
-| Heute Abend | Geschmacksverwandte |
+| Movie night | Find |
 |---|---|
-| ![](docs/screenshots/abend-heute.png) | ![](docs/screenshots/geschmack.png) |
+| ![Movie night with date, suggestions and the case](docs/screenshots/movie-night.png) | ![Find with streaming shelves](docs/screenshots/discover.png) |
+| **The case – opened for everyone** | **Film details** |
+| ![The case reveals the film of the night](docs/screenshots/case.png) | ![Film details with trailer and where to watch](docs/screenshots/details.png) |
+| **Cinema** | **Our films** |
+| ![Watching together with chat and reactions](docs/screenshots/watch-party.png) | ![History with ratings and guestbook](docs/screenshots/our-movies.png) |
+| **Tonight: evening mode** | **Profile & awards** |
+| ![Evening mode guides through the night](docs/screenshots/tonight.png) | ![Profile with level, kindred tastes and awards](docs/screenshots/profile.png) |
+| **Year in review** | **Date poll** |
+| ![The group's film year in numbers](docs/screenshots/year-in-review.png) | ![Finding a date by poll](docs/screenshots/date-poll.png) |
 
-| Terminumfrage | Rückblick | Rückblick als Story |
+<details>
+<summary><b>More screenshots</b> – phone, host baton, themes, activity</summary>
+
+| Phone | Cinema on the phone | Year in review as a story |
 |---|---|---|
-| ![](docs/screenshots/umfrage.png) | ![](docs/screenshots/rueckblick.png) | ![](docs/screenshots/rueckblick-story.png) |
+| ![Movie night on a phone](docs/screenshots/mobile.png) | ![Cinema on a phone](docs/screenshots/mobile-watch-party.png) | ![Story](docs/screenshots/story.png) |
 
-## Schnellstart
-
-Voraussetzungen: Python ≥ 3.12, Node ≥ 20.
-
-```bash
-make install   # venv + npm ci
-make dev       # Backend :8000 + Vite :5173 → http://localhost:5173
-```
-
-Ohne Konfiguration läuft screenmates sofort mit einem kleinen Demo-Katalog
-(Horror-Klassiker). Für den echten Katalog `backend/.env.example` nach `backend/.env`
-kopieren, `TMDB_API_KEY` eintragen und als Admin in den Einstellungen
-„Mit TMDB abgleichen“ klicken.
-
-`make help` listet alle Befehle.
-
-### Docker
-
-```bash
-docker compose up --build     # http://localhost:8000, Daten im Volume screenmates-data
-```
-
-## Konfiguration
-
-Alles optional, über `backend/.env` oder Umgebungsvariablen:
-
-| Variable | Zweck |
+| Host baton | Your own look |
 |---|---|
-| `TMDB_API_KEY` | Echter Filmkatalog, Poster, Personen ([Key holen](https://www.themoviedb.org/settings/api)). v3-Key oder v4-Token. |
-| `LLM_API_KEY` | Aktiviert die KI-Suche – ein Key von Anthropic oder [OpenRouter](https://openrouter.ai) (`sk-or-…`, wird erkannt). `LLM_MODEL` wählt das Modell (Standard bei OpenRouter: das günstige `deepseek/deepseek-v4.1-flash`), `LLM_PROVIDER` erzwingt den Anbieter, `LLM_BASE_URL` erlaubt jede OpenAI-kompatible API. |
-| `DATABASE_URL` | Standard: SQLite in `backend/screenmates.db`. |
-| `COOKIE_SECURE` | `true` hinter HTTPS. |
-| `CORS_ORIGINS` | Nur nötig, wenn Frontend und API auf verschiedenen Origins laufen. |
-| `MEDIA_DIR` | Ablage für Profilbilder. Standard `backend/media`, im Docker-Image `/data/media` (im selben Volume wie die Datenbank – beim Backup mitnehmen). |
-| `FORWARDED_ALLOW_IPS` | Hinter einem Reverse Proxy dessen IP (bzw. Netze, kommagetrennt), damit uvicorn die echte Client-IP aus `X-Forwarded-For` übernimmt. Fehlversuche an der Tür werden pro IP gezählt. |
-| `PUSH_KONTAKT` | Kontakt für die Push-Dienste der Browser (`mailto:…` oder eine `https:`-Adresse). Die Schlüssel für Web Push erzeugt screenmates beim ersten Mal selbst und speichert sie in der Datenbank. Push braucht HTTPS (lokal geht `localhost`). |
+| ![Voting on who takes the host baton](docs/screenshots/host-baton.png) | ![Color themes and fonts](docs/screenshots/themes.png) |
 
-### Admin-Werkzeug
+| Activity | Kindred tastes |
+|---|---|
+| ![Activity feed](docs/screenshots/activity.png) | ![Who rates like you](docs/screenshots/taste-match.png) |
 
-Für den Betreiber, im Container bzw. in `backend/` (`.venv/bin/python -m app.cli …`):
+</details>
 
-```bash
-docker compose exec screenmates python -m app.cli namen            # alle Namen mit Stand
-docker compose exec screenmates python -m app.cli admin "Marc"     # jemanden zum Admin machen
-docker compose exec screenmates python -m app.cli einladung       # Notfall-Link (einmal, 24 h, direkt)
-```
+## 🚀 Quick start
 
-So kommt eine bestehende Installation zu ihrem ersten Admin, und so hilft man sich, wenn sich alle
-Admins ausgesperrt haben.
-
-**Aufräumen:** In der Verwaltung gibt es für Server-Admins eine **Gefahrenzone**: einzelne Bereiche
-(Chronik, Filmabend, Kino-Chat, Wünsche, Erfolge, Statistik) leeren oder mit „Alles neu“ zum
-Werkszustand zurück – nur der eigene Admin-Name, die Gruppen, der Katalog und die Einstellungen
-bleiben. Vor jedem Löschen legt screenmates eine Sicherung der Datenbank daneben
-(`backup-vor-reset-*.db`, die letzten fünf).
-
-## Kino
-
-Das Kino überträgt per WebRTC über den Medienserver [MediaMTX](https://github.com/bluenviron/mediamtx):
-Gesendet wird **einmal** dorthin, MediaMTX verteilt an alle. screenmates leitet nur die
-Verbindungsaushandlung (WHIP zum Senden, WHEP zum Schauen) weiter und prüft dabei die Rechte –
-senden darf nur ein Admin, schauen jeder mit Namen. MediaMTX fragt bei jeder Aktion bei
-screenmates nach (`/api/kino/mtx-auth`); seine eigenen HTTP-Ports bleiben intern.
-
-**Einrichten**
+### Docker Compose (recommended)
 
 ```bash
-make kino-install   # lädt MediaMTX (feste Version, Prüfsumme) nach .tools/
-make dev            # startet es automatisch mit, der Menüpunkt „Kino“ erscheint
+git clone https://github.com/marcmeier/screenmates.git
+cd screenmates
+cp backend/.env.example backend/.env   # optional: add your TMDB key here
+docker compose up -d --build
 ```
 
-Mit Docker ist MediaMTX in `compose.yaml` schon dabei.
+Open **http://localhost:8000** – the first name you create becomes the admin. From there, create
+invitation links for your friends under *Admin → Groups*.
 
-**Damit Freunde von außen zuschauen können**, muss screenmates im Internet erreichbar sein
-(Server/VPS, Heimserver mit Portfreigabe oder ein privates Netz wie Tailscale), und zusätzlich:
+The stack includes screenmates and the MediaMTX media server for the cinema. All data (SQLite database,
+push keys, profile pictures) lives in the `screenmates-data` volume – back it up.
 
-- Port **8189** (UDP, TCP als Ausweichweg) zum Medienserver freigeben,
-- `KINO_PUBLIC_HOST=dein.server.de` setzen (Compose) bzw. `MTX_WEBRTCADDITIONALHOSTS`, damit
-  die Zuschauenden eine erreichbare Adresse bekommen,
-- hinter HTTPS `COOKIE_SECURE=true` setzen.
-- gegen Aussetzer in Bild und Ton den UDP-Empfangspuffer vergrößern: auf dem Host
-  `net.core.rmem_max=8388608` (z. B. in `/etc/sysctl.d/`) und für MediaMTX `MTX_UDPREADBUFFERSIZE=8388608`.
-  Der Linux-Standard (208 KB) läuft bei 1080p-Schlüsselbildern über; der Kernel verwirft dann Pakete
-  (sichtbar als `RcvbufErrors` in `/proc/net/snmp` im MediaMTX-Container).
+> [!TIP]
+> Without any configuration screenmates runs on a small built-in demo catalog. For the full film catalog,
+> get a free [TMDB API key](https://www.themoviedb.org/settings/api), put it in `backend/.env`, and click
+> *Sync with TMDB* in the admin area.
 
-Bandbreite: Der Server braucht je nach Qualitätsstufe 2–8 Mbit/s Upload **pro Zuschauer**, gesendet wird nur einmal.
+### From source
 
-**Senden**
-
-- *Bildschirm teilen* – direkt im Browser, ein Klick. Für Ton am einfachsten einen Tab teilen und
-  „Audio teilen“ anhaken. Wählbar: **Qualität** Hoch (1080p) / Mittel (720p) / Sparsam (480p) und
-  **Inhalt** Film (Schärfe zuerst) / Spiel (flüssig, bis 60 fps). Gesendet wird H.264 – warum, steht
-  mit Messwerten in [`docs/KINO-QUALITAET.md`](docs/KINO-QUALITAET.md).
-- *OBS* (ab Version 30) – in OBS unter Einstellungen → Stream den Dienst **WHIP** wählen und
-  Server + Bearer-Token aus der Kino-Seite eintragen; für 1080p 6000–8000 kbit/s,
-  Keyframe-Intervall 1 s, keine B-Frames.
-  Damit gehen Szenen, Spielaufnahme, Filmdateien und voller Ton. **Für Filme die beste Wahl:** die
-  Datei als „Medienquelle“ einbinden – gleichmäßiger als jedes Bildschirmteilen.
-
-**Was automatisch getestet ist** (bei jedem Push, siehe `.github/workflows/ci.yml`): Senden aus dem
-Browser, Senden wie OBS (FFmpeg per WHIP mit Stream-Key, H.264 + Opus), Zuschauen mit Ton, ein
-Zuschauer mit gesperrtem UDP (TCP-Ausweichweg) – und all das zusätzlich gegen den echten
-`docker compose`-Stack. Nicht automatisch prüfbar sind echtes OBS und Verbindungen über das
-Internet; dafür gibt es die Checkliste in [`docs/KINO-CHECK.md`](docs/KINO-CHECK.md).
-
-Gezeigt werden sollte, was ihr zeigen dürft – eigene Aufnahmen, Spiele, DRM-freie Filme.
-Fenster von Netflix & Co. bleiben bei der Aufnahme ohnehin schwarz (DRM).
-
-## Architektur
-
-```
-frontend/  Vue 3 + Vite + Pinia      ─┐  Entwicklung: Vite proxyt /api → :8000
-backend/   FastAPI + SQLModel/SQLite ─┘  Produktion: FastAPI liefert API + gebaute SPA aus
-```
-
-- **Backend** (`backend/app`): Router nach Fachbereichen (`catalog`, `users`, `watched`,
-  `lists`, `features`, `misc`). Autorisierung zentral als FastAPI-Dependencies in `session.py`,
-  TMDB-Zugriff gekapselt in `tmdb.py` mit Fallback auf den lokalen Katalog.
-- **Frontend** (`frontend/src`): Die drei Bereiche plus Wünsche und Einstellungen unter `components/tabs`,
-  ihre Teilansichten in `components/finden` und `components/sammlung`, wiederverwendbare Bausteine
-  (`MovieCard`, `Poster`, `Modal`, `FilmPicker`, `SpinWheel`), Hash-Routing ohne Router-Abhängigkeit,
-  zentrale API-Fehlerbehandlung mit Toasts.
-- **Datenbank:** Schema-Änderungen laufen über Alembic-Migrationen (`backend/migrations`), die
-  die App beim Start selbst anwendet. Datenbanken aus 0.2/0.3 werden ohne Datenverlust
-  übernommen. Neue Migration nach einer Modelländerung: `make migration name="…"`; ein Test
-  schlägt fehl, wenn sie fehlt.
-- **Rechte:** Sobald es einen Namen gibt, kommt nur durch, wer mit einer Einladung kam (oder
-  angemeldet ist) – geprüft zentral als App-weite Dependency in `routers/zugang.py`. Dahinter
-  darf jeder lesen, Schreiben braucht einen freigegebenen Namen; Gruppeninhalte sehen nur Mitglieder.
-  Eigene Kommentare, Wünsche und Ratings verwaltet man selbst, alles Übergreifende machen Admins.
-
-Die vollständige Endpunkt-Übersicht steht in [`docs/api-map.md`](docs/api-map.md), die interaktive
-Doku unter `/docs`, wenn das Backend läuft.
-
-## Qualität
+Requires Python ≥ 3.12 and Node ≥ 20.
 
 ```bash
-make lint        # ruff + eslint
-make test        # 257 Backend-Tests + 51 Playwright-E2E-Schritte gegen das echte Backend
-                 # (die 9 Kino-Schritte mit echtem MediaMTX, falls installiert)
+make install   # backend venv + npm ci
+make dev       # backend :8000 + Vite :5173 → http://localhost:5173
 ```
 
-GitHub Actions führt Lint, Unit- und E2E-Tests bei jedem Push aus. Was beim Review
-gefunden und behoben wurde, steht in [`docs/REVIEW.md`](docs/REVIEW.md).
+`make help` lists every task. See [CONTRIBUTING.md](CONTRIBUTING.md) for the full development setup.
 
-## Herkunft
+### Going public
 
-screenmates ist ein unabhängiger Nachbau der Filmabend-App `horror.marha.de`, rekonstruiert
-aus deren öffentlich ausgeliefertem Frontend und OpenAPI-Schema. Daten der Originalseite
-werden nicht übernommen.
+To use screenmates with friends over the internet, put it behind a reverse proxy with HTTPS (Caddy,
+Traefik, nginx …) and set:
 
-## Roadmap
+```dotenv
+COOKIE_SECURE=true
+FORWARDED_ALLOW_IPS=<your proxy's IP or network>
+```
 
-- Video-Clips (Szenen ausschneiden und teilen) wie im Original
-- Serien (braucht einen Schlüssel `media_type` + `id`)
+For the cinema, see [Cinema setup](#-cinema-watch-together) below.
+
+## 🔧 Configuration
+
+Everything is optional. Set it in `backend/.env` or as environment variables.
+
+| Variable | Default | Purpose |
+|---|---|---|
+| `TMDB_API_KEY` | – | Full film catalog, posters, people, trailers, where to watch ([get a key](https://www.themoviedb.org/settings/api)). v3 key or v4 token. |
+| `TMDB_LANGUAGE` | `de-DE` | Language of film data (titles, plots, genres), e.g. `en-US`. |
+| `TMDB_REGION` | `DE` | Region for streaming availability, e.g. `US`, `GB`. |
+| `LLM_API_KEY` | – | Enables the AI search – an Anthropic key or an [OpenRouter](https://openrouter.ai) key (`sk-or-…`, detected automatically). |
+| `LLM_MODEL` / `LLM_PROVIDER` / `LLM_BASE_URL` | – | Pick the model (OpenRouter default: the inexpensive `deepseek/deepseek-v4.1-flash`), force a provider, or use any OpenAI-compatible API. |
+| `DATABASE_URL` | SQLite | SQLite in `backend/screenmates.db`, in Docker `/data/screenmates.db`. |
+| `MEDIA_DIR` | `backend/media` | Profile pictures; in Docker `/data/media` (same volume as the database). |
+| `COOKIE_SECURE` | `false` | Set to `true` behind HTTPS. |
+| `FORWARDED_ALLOW_IPS` | – | Your reverse proxy's IP(s), comma-separated, so rate limits see the real client IP. |
+| `CORS_ORIGINS` | – | Only needed if frontend and API run on different origins. |
+| `PUSH_KONTAKT` | – | Contact for the browsers' push services (`mailto:…` or `https:` URL). Push keys are generated automatically on first use. Push requires HTTPS (or `localhost`). |
+| `KINO_PUBLIC_HOST` | – | *(Compose)* Public hostname or IP of your server, so cinema viewers outside your network can connect. |
+
+### Admin CLI
+
+For the operator, inside the container (or `backend/.venv/bin/python -m app.cli …`):
+
+```bash
+docker compose exec screenmates python -m app.cli namen          # list all names
+docker compose exec screenmates python -m app.cli admin "Alice"  # make someone an admin
+docker compose exec screenmates python -m app.cli einladung      # emergency link (once, 24 h, direct)
+```
+
+That's how an existing installation gets its first admin, and how you get back in if every admin is
+locked out.
+
+## 📺 Cinema: watch together
+
+The cinema streams via WebRTC through the [MediaMTX](https://github.com/bluenviron/mediamtx) media
+server: the host sends **once**, MediaMTX distributes to every viewer. screenmates only relays the
+connection negotiation (WHIP to stream, WHEP to watch) and checks permissions on every step; MediaMTX's
+own HTTP ports stay internal.
+
+**Locally:** `make kino-install` downloads MediaMTX (pinned version, verified checksum), and `make dev`
+starts it automatically. With Docker it's already part of `compose.yaml`.
+
+**For friends outside your network,** screenmates must be reachable from the internet (VPS, home server
+with port forwarding, or a private network like Tailscale), plus:
+
+1. Open port **8189** (UDP, and TCP as fallback) to the media server.
+2. Set `KINO_PUBLIC_HOST=your.server.example` (Compose) so viewers get a reachable address.
+3. Behind HTTPS, set `COOKIE_SECURE=true`.
+4. Against dropouts, enlarge the UDP receive buffer: on the host `net.core.rmem_max=8388608` (e.g. in
+   `/etc/sysctl.d/`) and for MediaMTX `MTX_UDPREADBUFFERSIZE=8388608`. The Linux default (208 KB)
+   overflows on 1080p keyframes.
+
+**Bandwidth:** the server needs 2–8 Mbit/s upload **per viewer**, depending on the quality level.
+
+**Streaming options:**
+- **Share a screen or tab** right in the browser – one click. For sound, share a tab and tick "Share
+  audio". Choose the **quality** (1080p / 720p / 480p) and the **content** (*Film* – sharpness first, or
+  *Game* – smooth, up to 60 fps). Why H.264 and these settings: [measurements](docs/CINEMA-QUALITY.md).
+- **OBS** (version 30+): under *Settings → Stream* choose **WHIP** and paste server and bearer token from
+  the cinema page; for 1080p use 6000–8000 kbit/s, keyframe interval 1 s, no B-frames. **Best for films:**
+  add the file as a *Media Source* – smoother than any screen capture.
+
+> [!NOTE]
+> Only stream what you're allowed to show – your own recordings, games, DRM-free films. Netflix & co.
+> windows stay black when captured anyway (DRM).
+
+Browser streaming, an OBS-style WHIP sender, watching with sound, and a viewer with UDP blocked (TCP
+fallback) are tested automatically on every push – also against the real `docker compose` stack. For what
+can't be automated (real OBS, viewers across the internet) there's a
+[15-minute checklist](docs/CINEMA-CHECKLIST.md).
+
+## 🏗️ Architecture
+
+```
+frontend/  Vue 3 + Vite + Pinia + vue-i18n   ─┐  development: Vite proxies /api → :8000
+backend/   FastAPI + SQLModel/SQLite         ─┘  production: FastAPI serves API + built SPA
+deploy/    MediaMTX config (cinema)
+```
+
+- **Backend** (`backend/app`): routers by area, authorization as central FastAPI dependencies
+  (`session.py`, invite gate in `routers/zugang.py`), TMDB access with a local fallback catalog
+  (`tmdb.py`), live updates via a lightweight poll (`/api/live`) that works through any proxy.
+- **Frontend** (`frontend/src`): one SPA with hash routing, Pinia stores, central API error handling, a
+  service worker for push notifications, installable as a PWA.
+- **Database:** SQLite with Alembic migrations that the app applies at startup – updates never need manual
+  steps.
+- **Cinema:** WebRTC via MediaMTX, with screenmates as the permission gate (`/api/kino/mtx-auth`).
+
+All endpoints are listed in the [API reference](docs/API.md); interactive OpenAPI docs are served at
+`/docs` while the backend is running.
+
+### Quality
+
+```bash
+make lint   # ruff + eslint
+make test   # 270+ backend tests + Playwright E2E against the real backend (cinema with a real MediaMTX)
+```
+
+GitHub Actions runs lint, unit and E2E tests, and the full E2E suite against the `docker compose` stack
+on every push and pull request.
+
+## 📚 Documentation
+
+| Document | What's inside |
+|---|---|
+| [Groups](docs/GROUPS.md) | Several circles of friends on one server – roles, invitations, what's shared |
+| [Awards](docs/AWARDS.md) | The award catalog, levels, and the rules that keep it fair |
+| [Prediction](docs/PREDICTION.md) | How "Who'll like it?" works – and how accurate it really is |
+| [Cinema quality](docs/CINEMA-QUALITY.md) | Measurements behind the streaming settings (codec, bitrate, audio, buffering) |
+| [Cinema checklist](docs/CINEMA-CHECKLIST.md) | Manual test for OBS and viewers over the internet |
+| [API reference](docs/API.md) | Every endpoint with its permissions |
+| [Changelog](CHANGELOG.md) | What changed in each release |
+
+## 🗺️ Roadmap
+
+- **TV series** (needs a `media_type` + `id` key)
+- **Clips:** cut and share scenes from films
+- Ideas from the community – [open a feature request](https://github.com/marcmeier/screenmates/issues/new?template=feature_request.yml)
+
+## 🤝 Contributing
+
+Contributions are welcome! Read [CONTRIBUTING.md](CONTRIBUTING.md) to get started, and please follow the
+[Code of Conduct](CODE_OF_CONDUCT.md). Found a security issue? See [SECURITY.md](SECURITY.md).
+
+## 📄 License
+
+screenmates is free software under the [GNU Affero General Public License v3.0](LICENSE). If you run a
+modified version as a service for others, you must make your source code available to them.
+
+## 🙏 Acknowledgements
+
+- Film data, images and streaming availability from [TMDB](https://www.themoviedb.org) – *This product
+  uses the TMDB API but is not endorsed or certified by TMDB.* Streaming availability is provided to TMDB
+  by [JustWatch](https://www.justwatch.com).
+- Live streaming powered by [MediaMTX](https://github.com/bluenviron/mediamtx).
+- Built with [FastAPI](https://fastapi.tiangolo.com), [SQLModel](https://sqlmodel.tiangolo.com),
+  [Vue](https://vuejs.org) and [Vite](https://vite.dev).
+- Inspired by [horror.marha.de](https://horror.marha.de).
+
+<div align="center">
+<sub>Made for movie nights with friends. 🍿</sub>
+</div>

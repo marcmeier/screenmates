@@ -1,0 +1,74 @@
+name: Bug report
+description: Something doesn't work as expected
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report a bug! Please check the [existing issues](https://github.com/marcmeier/screenmates/issues) first.
+        **Security issues** belong in a [private report](https://github.com/marcmeier/screenmates/security/advisories/new), not here.
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+      description: A clear description of the bug. Screenshots or a short screen recording help a lot.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Go to …
+        2. Click …
+        3. See …
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What did you expect?
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: screenmates version
+      description: Shown on the app's about page.
+      placeholder: "0.21.2"
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - Movie night / case
+        - Find / catalog / AI search
+        - Our films / history / year in review
+        - Cinema (streaming, watching, chat)
+        - Groups / invitations / admin
+        - Notifications / calendar
+        - Installation / configuration
+        - Other
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Browser and device
+      placeholder: "e.g. Safari on iPhone 15 (home-screen app), Chrome 140 on Windows"
+  - type: dropdown
+    id: install
+    attributes:
+      label: How do you run screenmates?
+      options:
+        - Docker Compose
+        - make dev / from source
+        - Other
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs
+      description: Relevant output from `docker compose logs screenmates` or the browser console. Remove anything private.
+      render: shell

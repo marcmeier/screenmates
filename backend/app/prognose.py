@@ -5,7 +5,7 @@ stars depend on: TMDB keywords ("slasher", "folk horror", …), genres, decade,
 TMDB score and film series. A new film is then rated by what it has in common
 with the films that person rated.
 
-Measured on real TMDB films with simulated tastes (docs/PROGNOSE.md): with
+Measured on real TMDB films with simulated tastes (docs/PREDICTION.md): with
 about 10 ratings no method beats "the person's average"; from about 25 ratings
 this one is up to 20 % closer for tastes that follow quality, era or
 subgenre (slasher fans stay hard: too few slashers among 25 random films).
@@ -24,7 +24,7 @@ MIN_BEWERTUNGEN = 8  # below this a guess is no better than the average
 TENDENZ_AB = 25  # from here on the guess is measurably better than the average
 MAX_BEWERTUNGEN = 150  # newest ratings only; keeps the solve fast
 
-# Feature weights and regularisation, chosen by the backtest in docs/PROGNOSE.md.
+# Feature weights and regularisation, chosen by the backtest in docs/PREDICTION.md.
 STICHWORT, GENRE, JAHRZEHNT, NOTE, REIHE = 0.6, 0.3, 0.6, 0.9, 1.5
 LAMBDA = 2.5
 
