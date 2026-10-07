@@ -135,6 +135,7 @@ function enthuellen() {
   versatz.value = ende()
   if (phase.value === 'enthuellt') return
   phase.value = 'enthuellt'
+  klang(98, 0.5, 'sine', 0.14) // a low thud as it locks in, then the fanfare
   fanfare(seltenheit(props.gewinner).farbe)
 }
 
@@ -235,6 +236,16 @@ onBeforeUnmount(() => {
         </Transition>
       </div>
 
+      <!-- The winner steps out in front of the strip: bigger, lit in its rarity's colour. -->
+      <div v-if="phase === 'enthuellt'" class="sieger-buehne" aria-hidden="true" :style="{ '--farbe': seltenheit(gewinner).farbe }">
+        <div class="strahlen"></div>
+        <div class="sieger-karte">
+          <Poster :movie="gewinner" :title="!gewinner.poster_url" />
+          <span class="glanz"></span>
+        </div>
+      </div>
+      <div v-if="phase === 'enthuellt'" class="blitz" aria-hidden="true" :style="{ '--farbe': seltenheit(gewinner).farbe }"></div>
+
       <div class="fuss" aria-live="polite">
         <template v-if="phase === 'enthuellt'">
           <div class="enthuellung" :style="{ '--farbe': seltenheit(gewinner).farbe }">
@@ -256,7 +267,7 @@ onBeforeUnmount(() => {
 .buehne {
   /* The strip sits in the exact middle and never moves: the rows above and below share the
      rest equally, whatever appears underneath (countdown note, skip button, the winner). */
-  position: fixed; inset: 0; z-index: 200; display: grid; grid-template-rows: minmax(0, 1fr) auto minmax(0, 1fr);
+  position: fixed; inset: 0; z-index: 200; display: grid; grid-template-rows: minmax(0, 1fr) auto minmax(0, 1fr); grid-template-columns: minmax(0, 1fr);
   background: radial-gradient(ellipse at center, rgba(30, 30, 40, 0.97), rgba(5, 5, 8, 0.98)); backdrop-filter: blur(6px);
 }
 .kopf { position: absolute; top: 0; left: 0; right: 0; display: flex; align-items: center; gap: 0.8rem; padding: 1rem 1.4rem; }
@@ -304,23 +315,66 @@ onBeforeUnmount(() => {
 .countdown-leave-to { opacity: 0; }
 .fuss .unsichtbar:disabled { opacity: 0.55; cursor: default; }
 
-.enthuellt .item:not(.sieger) { opacity: 0.25; }
-.enthuellt .item.sieger { transform: scale(1.08); box-shadow: 0 0 0 2px var(--farbe), 0 0 60px var(--farbe); z-index: 1; }
+.enthuellt .item:not(.sieger) { opacity: 0.15; filter: blur(1.5px) saturate(0.6); transition: opacity 0.5s, filter 0.5s; }
+.enthuellt .item.sieger { opacity: 0; } /* the big card takes its place */
+.enthuellt .marke { opacity: 0; transition: opacity 0.4s; }
 
-.fenster { grid-row: 2; }
-.fuss { grid-row: 3; align-self: start; padding-top: 1.6rem; display: flex; flex-direction: column; align-items: center; gap: 0.9rem; }
+/* The moment: the winner out in front, a flash, a halo in its rarity's colour, a shine, slow rays. */
+.sieger-buehne { grid-row: 2; grid-column: 1; z-index: 4; display: grid; place-items: center; pointer-events: none; position: relative; }
+.sieger-karte {
+  position: relative; width: 250px; aspect-ratio: 2 / 3; border-radius: 12px; overflow: hidden; background: #1b1b22;
+  box-shadow: 0 0 0 2px var(--farbe), 0 0 70px color-mix(in srgb, var(--farbe) 75%, transparent), 0 30px 60px rgba(0, 0, 0, 0.6);
+  animation: heraus 0.75s cubic-bezier(0.2, 1.3, 0.35, 1) both, halo 2.4s 0.75s ease-in-out 2;
+}
+.sieger-karte :deep(.poster) { width: 100%; height: 100%; }
+.glanz {
+  position: absolute; inset: 0; transform: translateX(-130%);
+  background: linear-gradient(110deg, transparent 35%, rgba(255, 255, 255, 0.38) 50%, transparent 65%);
+  animation: glanz 1.1s 0.55s ease-out forwards;
+}
+.strahlen {
+  position: absolute; width: 900px; height: 900px; border-radius: 50%; opacity: 0;
+  background: repeating-conic-gradient(from 0deg, color-mix(in srgb, var(--farbe) 26%, transparent) 0deg 5deg, transparent 5deg 18deg);
+  -webkit-mask-image: radial-gradient(circle, #000 0, transparent 62%); mask-image: radial-gradient(circle, #000 0, transparent 62%);
+  animation: strahlen-ein 0.9s 0.2s ease-out forwards, drehen 40s linear infinite;
+}
+.blitz {
+  position: fixed; inset: 0; z-index: 5; pointer-events: none;
+  background: radial-gradient(circle at center, color-mix(in srgb, var(--farbe) 45%, #fff 20%), transparent 60%);
+  animation: blitz 0.7s ease-out forwards;
+}
+@keyframes heraus {
+  0% { transform: scale(0.6); opacity: 0; }
+  55% { transform: scale(1.06); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+@keyframes halo {
+  50% { box-shadow: 0 0 0 3px var(--farbe), 0 0 110px var(--farbe), 0 30px 60px rgba(0, 0, 0, 0.6); }
+}
+@keyframes glanz { to { transform: translateX(130%); } }
+@keyframes strahlen-ein { to { opacity: 0.55; } }
+@keyframes drehen { to { transform: rotate(360deg); } }
+@keyframes blitz { from { opacity: 0.55; } to { opacity: 0; } }
+.enthuellt .fuss { padding-top: 4.4rem; }
+
+.fenster { grid-row: 2; grid-column: 1; }
+.fuss { grid-row: 3; grid-column: 1; align-self: start; padding-top: 1.6rem; display: flex; flex-direction: column; align-items: center; gap: 0.9rem; }
 .enthuellung { display: flex; flex-direction: column; align-items: center; gap: 0.2rem; animation: auf 0.5s cubic-bezier(0.2, 1.4, 0.4, 1); }
 .enthuellung .stufe { color: var(--farbe); font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; font-size: 0.8rem; }
 .enthuellung strong { font-size: clamp(1.4rem, 4vw, 2.2rem); text-align: center; padding: 0 1rem; text-shadow: 0 0 30px var(--farbe); }
 @keyframes auf { from { opacity: 0; transform: translateY(12px) scale(0.9); } }
 
 @media (max-width: 600px) {
+  .sieger-karte { width: 170px; }
+  .strahlen { width: 600px; height: 600px; }
+  .enthuellt .fuss { padding-top: 3.2rem; }
   .fenster { height: 210px; }
   .item { width: 110px; height: 180px; }
   .item :deep(.poster) { height: 145px; }
   .kopf { flex-wrap: wrap; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .item, .enthuellung, .zahl { transition: none; animation: none; }
+  .item, .enthuellung, .zahl, .sieger-karte, .glanz, .strahlen { transition: none; animation: none; }
+  .blitz, .strahlen, .glanz { display: none; }
 }
 </style>

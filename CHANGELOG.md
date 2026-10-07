@@ -10,6 +10,10 @@
   - Abendmodus: Nur der Schritt, der dran ist (oder in dem man gerade etwas tun kann, z. B. die Kiste
     öffnen), ist aufgeklappt – die anderen schrumpfen auf eine Zeile. Der Kisten-Knopf ist so ohne Scrollen
     sichtbar; das LIVE-Abzeichen bleibt einzeilig.
+- **Die Kiste feiert den Gewinner:** Bleibt das Band stehen, tritt der Film als große Karte vor das Band –
+  mit kurzem Lichtblitz, einem Halo in seiner Seltenheitsfarbe, einem Glanz über das Plakat, langsam drehenden
+  Lichtstrahlen und einem tiefen Ton vor der Fanfare; die übrigen Filme treten zurück. Bei „Bewegung
+  reduzieren“ bleibt nur die große Karte.
 
 ## 0.20.2 – 2026-10-07
 
