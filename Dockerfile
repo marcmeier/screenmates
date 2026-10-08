@@ -1,6 +1,6 @@
 # --- build the Vue frontend ---------------------------------------------------
 # Static files, the same for every platform: built natively, also for the arm64 image.
-FROM --platform=$BUILDPLATFORM node:24-alpine AS web
+FROM --platform=$BUILDPLATFORM node:26-alpine AS web
 WORKDIR /web
 COPY frontend/package.json frontend/package-lock.json ./
 RUN npm ci
