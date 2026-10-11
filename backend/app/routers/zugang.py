@@ -13,7 +13,7 @@ its stream key, a login code for a name, see `login.py`).
 from __future__ import annotations
 
 import time
-from collections import defaultdict, deque
+from collections import deque
 from datetime import UTC, datetime
 
 from fastapi import APIRouter, Depends, HTTPException, Request, Response
@@ -45,7 +45,8 @@ OFFEN = (
 # Wrong codes (invitations and login codes): per client IP, plus a cap for everyone
 # together. Neither can be guessed anyway; this keeps the door quiet.
 MAX_PRO_IP, MAX_GESAMT, FENSTER = 10, 100, 900
-_fehl_ip: dict[str, deque[float]] = defaultdict(deque)
+# Only addresses with a recent wrong code are kept, so the table stays small however many clients ask.
+_fehl_ip: dict[str, deque[float]] = {}
 _fehl_alle: deque[float] = deque()
 
 
@@ -96,14 +97,22 @@ def _aktuell(q: deque[float]) -> deque[float]:
 def bremse(request: Request) -> str:
     """Refuse a client (or everyone) after too many wrong codes; returns the client's address."""
     ip = request.client.host if request.client else "?"
-    if len(_aktuell(_fehl_ip[ip])) >= MAX_PRO_IP or len(_aktuell(_fehl_alle)) >= MAX_GESAMT:
+    versuche = _fehl_ip.get(ip)
+    if versuche is not None and not _aktuell(versuche):
+        del _fehl_ip[ip]  # nothing recent: forget the address
+        versuche = None
+    if (versuche is not None and len(versuche) >= MAX_PRO_IP) or len(_aktuell(_fehl_alle)) >= MAX_GESAMT:
         raise HTTPException(429, "Zu viele Fehlversuche – bitte in einer Viertelstunde nochmal.")
     return ip
 
 
 def fehlversuch(ip: str) -> None:
-    _fehl_ip[ip].append(time.monotonic())
-    _fehl_alle.append(time.monotonic())
+    jetzt = time.monotonic()
+    _fehl_ip.setdefault(ip, deque()).append(jetzt)
+    _fehl_alle.append(jetzt)
+    if len(_fehl_ip) > 256:  # addresses that failed once and never came back
+        for alt in [a for a, q in _fehl_ip.items() if not _aktuell(q)]:
+            del _fehl_ip[alt]
 
 
 def zugang_pruefen(request: Request, db: DBSession = Depends(get_session)) -> None:

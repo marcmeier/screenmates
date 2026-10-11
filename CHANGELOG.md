@@ -7,6 +7,10 @@ All notable changes to screenmates are documented here. The format is based on
 
 ## Unreleased
 
+### Fixed
+- The rate limit for wrong codes kept an entry for every address that ever reached the door, and never
+  dropped it. It now only holds addresses with a recent wrong code.
+
 ## 1.0.0 – 2026-10-07
 
 The first public release. Before upgrading an existing installation, read "Upgrading" below and back up
