@@ -7,9 +7,18 @@ All notable changes to screenmates are documented here. The format is based on
 
 ## Unreleased
 
+### Changed
+- The AI search with an Anthropic key uses `claude-haiku-5-5` unless `LLM_MODEL` says otherwise. The default
+  was `claude-opus-5-5`, which costs far more for a search that only needs film knowledge (every title
+  is checked against TMDB). Set `LLM_MODEL` to keep the old one.
+
 ### Fixed
 - The rate limit for wrong codes kept an entry for every address that ever reached the door, and never
   dropped it. It now only holds addresses with a recent wrong code.
+
+### Security
+- The session cookie is marked Secure for every request that arrived over HTTPS (behind a proxy that
+  is trusted through `FORWARDED_ALLOW_IPS`), also when `COOKIE_SECURE` was not set.
 
 ## 1.0.0 – 2026-10-07
 

@@ -157,13 +157,13 @@ All settings are optional and go into `backend/.env` or the environment.
 | `TMDB_LANGUAGE` | `en-US` | Language for film data (titles, plots, genres; also the demo catalog), e.g. `de-DE`. |
 | `TMDB_REGION` | `US` | Region for streaming offers, e.g. `DE`. |
 | `LLM_API_KEY` | | Anthropic or OpenRouter (`sk-or-…`) key for the AI search. |
-| `LLM_MODEL`, `LLM_PROVIDER`, `LLM_BASE_URL` | | Model, provider override, or any OpenAI-compatible endpoint. OpenRouter defaults to `deepseek/deepseek-v4.1-flash`. |
+| `LLM_MODEL`, `LLM_PROVIDER`, `LLM_BASE_URL` | | Model, provider override, or any OpenAI-compatible endpoint. Defaults: `claude-haiku-5-5` for Anthropic, `deepseek/deepseek-v4.1-flash` for OpenRouter. |
 | `LLM_LIMIT_PER_DAY` | `30` | AI searches per person within 24 hours. |
 | `CONTENT_SECURITY_POLICY` | built in | Replaces the Content-Security-Policy header, or `off`. Rarely needed: proxies that inject scripts (Cloudflare's bot protection) pick up the nonce screenmates sends. |
 | `PUBLIC_URL` | | Public address, e.g. `https://movies.example.org`, for links in calendar feeds. Empty: the address the request came to. |
 | `DATABASE_URL` | SQLite | `backend/screenmates.db`, or `/data/screenmates.db` in Docker. |
 | `MEDIA_DIR` | `backend/media` | Profile pictures (`/data/media` in Docker). |
-| `COOKIE_SECURE` | `false` | Set to `true` behind HTTPS. |
+| `COOKIE_SECURE` | `false` | Set to `true` behind HTTPS. A request that arrived over HTTPS through a trusted proxy (`FORWARDED_ALLOW_IPS`) gets a Secure cookie anyway. |
 | `FORWARDED_ALLOW_IPS` | | Reverse proxy IPs, so rate limiting sees the real client IP. |
 | `CORS_ORIGINS` | | Only needed if frontend and API are on different origins. |
 | `SETUP_TOKEN` | | Setup code for the first name (it becomes admin). Empty: one is generated and written to the log until the first name exists. |
