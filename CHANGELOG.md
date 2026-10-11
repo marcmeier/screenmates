@@ -7,6 +7,11 @@ All notable changes to screenmates are documented here. The format is based on
 
 ## Unreleased
 
+## 1.0.1 – 2026-10-11
+
+A small release: a table at the door that grew with every client, the session cookie, and a cheaper
+default model for the AI search. There are no migrations; nothing to do when upgrading.
+
 ### Changed
 - The AI search with an Anthropic key uses `claude-haiku-5-5` unless `LLM_MODEL` says otherwise. The default
   was `claude-opus-5-5`, which costs far more for a search that only needs film knowledge (every title
