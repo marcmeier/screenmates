@@ -1,5 +1,7 @@
 """Who may do what: anonymous reads, user writes, admin-only administration."""
 
+from types import SimpleNamespace
+
 import pytest
 
 from .conftest import SETUP, become_admin, binden, login, rein
@@ -126,6 +128,28 @@ def test_wrong_codes_count_like_wrong_invitations(client, browser):
     code = client.post("/api/login/code").json()["code"]
     assert b.post("/api/login", json={"code": code}).status_code == 429
     assert b.post("/api/zugang", json={"token": "irgendwas-langes"}).status_code == 429
+
+
+def test_the_door_forgets_addresses_that_only_asked(client):
+    """Asking leaves nothing behind: the table holds recent wrong codes only, not every client ever seen."""
+    from app.routers import zugang
+
+    for i in range(50):
+        zugang.bremse(SimpleNamespace(client=SimpleNamespace(host=f"2001:db8::{i:x}")))
+    assert zugang._fehl_ip == {}
+
+
+def test_the_door_drops_old_wrong_codes(client, monkeypatch):
+    from app.routers import zugang
+
+    now = [1000.0]
+    monkeypatch.setattr(zugang.time, "monotonic", lambda: now[0])
+    for i in range(300):
+        zugang.fehlversuch(f"client-{i}")
+    assert len(zugang._fehl_ip) == 300  # nothing is old yet
+    now[0] += zugang.FENSTER + 1
+    zugang.fehlversuch("client-new")  # past the window and many addresses: the old ones go
+    assert set(zugang._fehl_ip) == {"client-new"}
 
 
 def test_signing_out_other_devices(client, browser):
