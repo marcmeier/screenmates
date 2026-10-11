@@ -130,6 +130,28 @@ def test_wrong_codes_count_like_wrong_invitations(client, browser):
     assert b.post("/api/zugang", json={"token": "irgendwas-langes"}).status_code == 429
 
 
+def test_the_session_cookie_is_secure_for_requests_that_came_over_https(client):
+    import secrets
+
+    from fastapi.testclient import TestClient
+    from sqlmodel import Session
+
+    from app.db import engine
+    from app.main import app
+    from app.models import Einladung
+
+    token = secrets.token_urlsafe(18)
+    with Session(engine) as s:
+        s.add(Einladung(token=token, gruppe_id=1))
+        s.commit()
+    plain = client.post("/api/zugang", json={"token": token})
+    assert plain.status_code == 200
+    assert "secure" not in plain.headers["set-cookie"].lower()
+    tls = TestClient(app, base_url="https://testserver").post("/api/zugang", json={"token": token})
+    assert tls.status_code == 200
+    assert "secure" in tls.headers["set-cookie"].lower()
+
+
 def test_the_door_forgets_addresses_that_only_asked(client):
     """Asking leaves nothing behind: the table holds recent wrong codes only, not every client ever seen."""
     from app.routers import zugang

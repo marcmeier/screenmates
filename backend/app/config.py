@@ -106,7 +106,7 @@ class Settings(BaseSettings):
 # OpenRouter defaults to an inexpensive model: every proposed title is checked against
 # TMDB anyway, so the KI-Suche needs film knowledge, not a frontier model.
 LLM_DEFAULTS = {
-    "anthropic": ("https://api.anthropic.com/v1", "claude-opus-5-5"),
+    "anthropic": ("https://api.anthropic.com/v1", "claude-haiku-5-5"),
     "openrouter": ("https://openrouter.ai/api/v1", "deepseek/deepseek-v4.1-flash"),
 }
 

@@ -43,7 +43,9 @@ def ensure_session(request: Request, response: Response, db: DBSession) -> Sessi
         max_age=MAX_AGE,
         httponly=True,
         samesite="lax",
-        secure=settings.cookie_secure,
+        # COOKIE_SECURE is the floor: a request that arrived over HTTPS (behind a proxy that says so and is
+        # trusted, see FORWARDED_ALLOW_IPS) gets a Secure cookie even when the setting was forgotten
+        secure=settings.cookie_secure or request.url.scheme == "https",
         path="/",
     )
     return sess
