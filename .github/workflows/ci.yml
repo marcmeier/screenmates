@@ -45,6 +45,7 @@ jobs:
         working-directory: frontend
       - name: MediaMTX for the Kino tests, FFmpeg as OBS stand-in
         run: ./scripts/mediamtx.sh && ./scripts/ffmpeg-whip.sh
+        env: { GITHUB_TOKEN: "${{ github.token }}" }
       - run: npm run test:e2e
         working-directory: frontend
         env: { PYTHON: python }
@@ -76,6 +77,7 @@ jobs:
       - run: npx playwright install --with-deps chromium
         working-directory: frontend
       - run: ./scripts/ffmpeg-whip.sh
+        env: { GITHUB_TOKEN: "${{ github.token }}" }
       - name: E2E against the containers
         run: npx playwright test
         working-directory: frontend

@@ -7,6 +7,10 @@ All notable changes to screenmates are documented here. The format is based on
 
 ## Unreleased
 
+### Fixed
+- CI: the E2E and Docker jobs fetched a pinned FFmpeg build that BtbN had since deleted (404). The script now
+  takes the latest 9.0 build and checks it against the checksum GitHub publishes for it.
+
 ## 1.0.1 – 2026-10-11
 
 A small release: a table at the door that grew with every client, the session cookie, and a cheaper
