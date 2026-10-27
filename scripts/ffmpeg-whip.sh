@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
 # Fetch a static FFmpeg with the WHIP muxer into .tools/ffmpeg.
 # Only used by the E2E suite, where FFmpeg stands in for OBS (WHIP + stream key).
-# Pinned build, verified by checksum.
+# Latest 9.0 build, verified against the checksum GitHub publishes for the asset. BtbN deletes old
+# autobuilds after a few weeks, so a pinned tag breaks CI sooner or later.
 set -euo pipefail
 
-TAG="autobuild-2026-10-01-13-06"
-FILE="ffmpeg-n9.0.2-22-g46d8f462ee-linux64-gpl-9.0.tar.xz"
-SHA256="a6170faecf757381ad0338d7a6ba26e97c2ebe2b9c1568633421e15d1ed436a9"
+REPO="BtbN/FFmpeg-Builds"
+FILE="ffmpeg-n9.0-latest-linux64-gpl-9.0.tar.xz"
 
 cd "$(dirname "$0")/.."
 if [[ -x .tools/ffmpeg ]] && .tools/ffmpeg -hide_banner -muxers 2>/dev/null | grep -q whip; then
@@ -17,7 +17,11 @@ fi
 
 TMP="$(mktemp -d)"
 trap 'rm -rf "$TMP"' EXIT
-curl -fsSL "https://github.com/BtbN/FFmpeg-Builds/releases/download/$TAG/$FILE" -o "$TMP/$FILE"
+AUTH=()
+[[ -n "${GITHUB_TOKEN:-}" ]] && AUTH=(-H "Authorization: Bearer $GITHUB_TOKEN")
+SHA256="$(curl -fsSL "${AUTH[@]}" "https://api.github.com/repos/$REPO/releases/tags/latest" \
+  | python3 -c 'import json,sys; print(next(a["digest"] for a in json.load(sys.stdin)["assets"] if a["name"]==sys.argv[1]).removeprefix("sha256:"))' "$FILE")"
+curl -fsSL "https://github.com/$REPO/releases/download/latest/$FILE" -o "$TMP/$FILE"
 echo "$SHA256  $TMP/$FILE" | sha256sum -c --quiet
 mkdir -p .tools
 tar -xJf "$TMP/$FILE" -C "$TMP" --wildcards '*/bin/ffmpeg'
