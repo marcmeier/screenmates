@@ -7,6 +7,18 @@ All notable changes to screenmates are documented here. The format is based on
 
 ## Unreleased
 
+## 1.0.2 – 2026-10-28
+
+A security release: updated dependencies, no changes to the app itself. There are no migrations; pull
+the new image and restart.
+
+### Security
+- Pillow 13.0.0 (was 12.3.0): fixes several critical and high advisories in image decoding, among them
+  heap buffer overflows in the JPEG, FlashPix and TIFF code and an argument injection in the Ghostscript call.
+- DOMPurify 3.4.17 (was 3.4.16): fixes a critical `SAFE_FOR_TEMPLATES` bypass and a high `IN_PLACE` issue.
+- certifi 2026.10.18 (was 2026.7.22): current CA bundle.
+- vite 8.3.5 (was 8.3.2), used for the frontend build only.
+
 ### Fixed
 - CI: the E2E and Docker jobs fetched a pinned FFmpeg build that BtbN had since deleted (404). The script now
   takes the latest 9.0 build and checks it against the checksum GitHub publishes for it.
