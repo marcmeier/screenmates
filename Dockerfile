@@ -8,7 +8,7 @@ COPY frontend/ ./
 RUN npm run build
 
 # --- runtime: FastAPI serves API and SPA from one origin ---------------------
-FROM python:3.13-slim
+FROM python:3.15-slim
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     DATABASE_URL=sqlite:////data/screenmates.db \
