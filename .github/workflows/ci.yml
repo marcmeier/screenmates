@@ -49,7 +49,7 @@ jobs:
       - run: npm run test:e2e
         working-directory: frontend
         env: { PYTHON: python }
-      - uses: actions/upload-artifact@v6
+      - uses: actions/upload-artifact@v7
         if: failure()
         with: { name: playwright-report, path: frontend/test-results, retention-days: 7 }
 
@@ -82,7 +82,7 @@ jobs:
         run: npx playwright test
         working-directory: frontend
         env: { E2E_BASE_URL: "http://127.0.0.1:8000", E2E_KINO: "1" }
-      - uses: actions/upload-artifact@v6
+      - uses: actions/upload-artifact@v7
         if: failure()
         with: { name: playwright-report-docker, path: frontend/test-results, retention-days: 7 }
       - name: Container logs
